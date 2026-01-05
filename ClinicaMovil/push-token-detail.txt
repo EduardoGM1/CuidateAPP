@@ -1,0 +1,105 @@
+﻿
+> CuidateApp@0.0.1 test
+> jest src/services/__tests__/pushTokenService.test.js
+
+  console.warn
+    MSW no est├í disponible: Unexpected token 'export'
+
+    [0m [90m 17 |[39m } [36mcatch[39m (error) {
+     [90m 18 |[39m   [90m// MSW no est├í disponible, crear un mock b├ísico[39m
+    [31m[1m>[22m[39m[90m 19 |[39m   console[33m.[39mwarn([32m'MSW no est├í disponible:'[39m[33m,[39m error[33m.[39mmessage)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 20 |[39m   server [33m=[39m {
+     [90m 21 |[39m     listen[33m:[39m jest[33m.[39mfn()[33m,[39m
+     [90m 22 |[39m     resetHandlers[33m:[39m jest[33m.[39mfn()[33m,[39m[0m
+
+      at Object.warn (src/mocks/server.js:19:11)
+      at Object.require (jest.setup.js:67:21)
+
+node.exe : FAIL src/services/__tests__/pushTokenService.test.js
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL src/servic...Service.test.js 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  PushTokenService
+    obtenerTokenAlternativo
+      ÔêÜ debe lanzar error porque el m├®todo est├í deshabilitado (148 ms)
+      ÔêÜ debe indicar que Firebase debe estar configurado (5 ms)
+      ÔêÜ debe registrar el error en el logger (8 ms)
+    registrarToken
+      ÔêÜ debe validar que el token tenga longitud correcta antes de registrar 
+(53 ms)
+      ÔêÜ debe rechazar tokens muy cortos sin generar alternativo (2 ms)
+      ÔêÜ debe registrar token v├ílido en el servidor (11 ms)
+    obtenerTokenDirecto
+      ├ù debe limpiar tokens inv├ílidos del almacenamiento (9 ms)
+      ├ù debe retornar token v├ílido si tiene longitud correcta (2 ms)
+    isTokenRegistrado
+      ÔêÜ debe retornar true si el token est├í registrado en memoria (2 ms)
+      ÔêÜ debe verificar AsyncStorage si no est├í en memoria (4 ms)
+
+  ÔùÅ PushTokenService ÔÇ║ obtenerTokenDirecto ÔÇ║ debe limpiar tokens 
+inv├ílidos del almacenamiento
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "push_token_7"
+
+    Number of calls: 0
+
+    [0m [90m 164 |[39m       expect(token)[33m.[39mtoBeNull()[33m;[39m
+     [90m 165 |[39m       [90m// Verificar que se intent├│ limpiar el token 
+inv├ílido[39m
+    [31m[1m>[22m[39m[90m 166 |[39m       expect(mockRemoveItem)[33m.[39
+mtoHaveBeenCalledWith([32m`push_token_${userId}`[39m)[33m;[39m
+     [90m     |[39m                              [31m[1m^[22m[39m
+     [90m 167 |[39m     })[33m;[39m
+     [90m 168 |[39m
+     [90m 169 |[39m     it([32m'debe retornar token v├ílido si tiene 
+longitud correcta'[39m[33m,[39m [36masync[39m () [33m=>[39m {[0m
+
+      at Object.toHaveBeenCalledWith 
+(src/services/__tests__/pushTokenService.test.js:166:30)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ PushTokenService ÔÇ║ obtenerTokenDirecto ÔÇ║ debe retornar token v├ílido 
+si tiene longitud correcta
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 
+"fcm_temp_device_1234567890_abc123_timestamp_random_xxxxxxxxxxxxxxxxxxxx"
+    Received: null
+
+    [0m [90m 182 |[39m       [36mconst[39m token [33m=[39m 
+[36mawait[39m pushTokenService[33m.[39mobtenerTokenDirecto()[33m;[39m
+     [90m 183 |[39m
+    [31m[1m>[22m[39m[90m 184 |[39m       
+expect(token)[33m.[39mtoBe(tokenValido)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 185 |[39m       
+expect(mockRemoveItem)[33m.[39mnot[33m.[39mtoHaveBeenCalled()[33m;[39m
+     [90m 186 |[39m     })[33m;[39m
+     [90m 187 |[39m   })[33m;[39m[0m
+
+      at Object.toBe (src/services/__tests__/pushTokenService.test.js:184:21)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 8 passed, 10 total
+Snapshots:   0 total
+Time:        2.694 s, estimated 3 s
+Ran all test suites matching 
+/src\\services\\__tests__\\pushTokenService.test.js/i.
+Jest did not exit one second after the test run has completed.
+
+'This usually means that there are asynchronous operations that weren't 
+stopped in your tests. Consider running Jest with `--detectOpenHandles` to 
+troubleshoot this issue.

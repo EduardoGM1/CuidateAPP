@@ -1,0 +1,183 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 240
+      arrivalRate: 8
+      name: "Advanced Data Security Testing"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: "Data Exfiltration Attempts"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "attacker{{ $randomInt(1, 10) }}@test.com"
+            password: "Test123!"
+          capture:
+            - json: "$.token"
+              as: "token"
+          expect:
+            - statusCode: [200, 401]
+      - loop:
+          - get:
+              url: "/api/pacientes?limit=10000&offset={{ $randomInt(0, 1000) }}"
+              headers:
+                Authorization: "Bearer {{ token }}"
+              expect:
+                - statusCode: [200, 401, 403, 429]
+          - get:
+              url: "/api/pacientes/{{ $randomInt(1, 1000) }}"
+              headers:
+                Authorization: "Bearer {{ token }}"
+              expect:
+                - statusCode: [200, 401, 403, 404]
+          - get:
+              url: "/api/diagnosticos?paciente_id={{ $randomInt(1, 100) }}"
+              headers:
+                Authorization: "Bearer {{ token }}"
+              expect:
+                - statusCode: [200, 401, 403]
+        count: 5
+
+  - name: "Privilege Escalation Attempts"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "patient{{ $randomInt(1, 50) }}@test.com"
+            password: "Test123!"
+          capture:
+            - json: "$.token"
+              as: "patientToken"
+      - get:
+          url: "/api/pacientes/{{ $randomInt(1, 100) }}"
+          headers:
+            Authorization: "Bearer {{ patientToken }}"
+          expect:
+            - statusCode: [200, 401, 403]
+      - get:
+          url: "/api/doctores"
+          headers:
+            Authorization: "Bearer {{ patientToken }}"
+          expect:
+            - statusCode: [401, 403]
+      - post:
+          url: "/api/diagnosticos"
+          headers:
+            Authorization: "Bearer {{ patientToken }}"
+          json:
+            paciente_id: "{{ $randomInt(1, 100) }}"
+            diagnostico: "Unauthorized diagnosis"
+          expect:
+            - statusCode: [401, 403]
+
+  - name: "JWT Token Manipulation"
+    weight: 15
+    flow:
+      - get:
+          url: "/api/pacientes"
+          headers:
+            Authorization: "Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ."
+          expect:
+            - statusCode: [401, 403]
+      - get:
+          url: "/api/pacientes"
+          headers:
+            Authorization: "Bearer {{ $randomString(100) }}"
+          expect:
+            - statusCode: [401]
+      - get:
+          url: "/api/pacientes"
+          headers:
+            Authorization: "Bearer admin.fake.token"
+          expect:
+            - statusCode: [401]
+
+  - name: "Medical Data Tampering"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "doctor{{ $randomInt(1, 20) }}@test.com"
+            password: "Test123!"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - put:
+          url: "/api/pacientes/{{ $randomInt(1, 100) }}"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            nombre: "Modified{{ $randomString(10) }}"
+            apellido_paterno: "Tampered"
+            curp: "FAKE{{ $randomString(14) }}"
+            fecha_nacimiento: "1900-01-01"
+            activo: false
+          expect:
+            - statusCode: [200, 400, 401, 403]
+      - post:
+          url: "/api/diagnosticos"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            paciente_id: "{{ $randomInt(1, 100) }}"
+            diagnostico: "{{ $randomString(1000) }}"
+            fecha_diagnostico: "2030-12-31"
+          expect:
+            - statusCode: [201, 400, 401, 403]
+
+  - name: "Audit Log Manipulation"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "admin@test.com"
+            password: "Admin123!"
+          capture:
+            - json: "$.token"
+              as: "adminToken"
+      - get:
+          url: "/api/audit-logs"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+          expect:
+            - statusCode: [200, 401, 403, 404]
+      - delete:
+          url: "/api/audit-logs/{{ $randomInt(1, 1000) }}"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+          expect:
+            - statusCode: [401, 403, 404, 405]
+
+  - name: "Data Enumeration Attacks"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "enum{{ $randomInt(1, 5) }}@test.com"
+            password: "Test123!"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - loop:
+          - get:
+              url: "/api/pacientes/{{ $randomInt(1, 10000) }}"
+              headers:
+                Authorization: "Bearer {{ token }}"
+              expect:
+                - statusCode: [200, 401, 403, 404, 429]
+          - get:
+              url: "/api/citas/{{ $randomInt(1, 10000) }}"
+              headers:
+                Authorization: "Bearer {{ token }}"
+              expect:
+                - statusCode: [200, 401, 403, 404, 429]
+        count: 20

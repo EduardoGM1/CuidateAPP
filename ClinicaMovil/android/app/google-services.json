@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "401596854545",
+    "project_id": "clinicamovil-f70e0",
+    "storage_bucket": "clinicamovil-f70e0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:401596854545:android:79e18d61e1be9c72471cb0",
+        "android_client_info": {
+          "package_name": "com.clinicamovil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDyJZfvW7GiTC_WXYlS-uTc0AQUYbmJiqY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,91 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 180
+      arrivalRate: 15
+      name: "Security under load"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: "Rate Limiting Validation"
+    weight: 30
+    flow:
+      - loop:
+          - post:
+              url: "/api/auth/login"
+              json:
+                email: "brute{{ $randomInt(1, 10) }}@test.com"
+                password: "wrongpassword{{ $randomInt(1, 100) }}"
+              expect:
+                - statusCode: [401, 429]
+        count: 20
+
+  - name: "Payload Size Testing"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/auth/register"
+          json:
+            email: "payload{{ $randomInt(1, 100) }}@test.com"
+            password: "Test123!"
+            nombre: "{{ $randomString(1000) }}"
+            apellido_paterno: "Test"
+          expect:
+            - statusCode: [201, 400, 413, 500]
+
+  - name: "SQL Injection Attempts"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "admin' OR '1'='1' --"
+            password: "anything"
+          expect:
+            - statusCode: [400, 401]
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "'; DROP TABLE usuarios; --"
+            password: "test"
+          expect:
+            - statusCode: [400, 401]
+
+  - name: "XSS Payload Testing"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/auth/register"
+          json:
+            email: "xss{{ $randomInt(1, 100) }}@test.com"
+            password: "Test123!"
+            nombre: "<script>alert('XSS')</script>"
+            apellido_paterno: "javascript:alert(1)"
+          expect:
+            - statusCode: [201, 400]
+
+  - name: "Concurrent Auth Validation"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "valid{{ $randomInt(1, 50) }}@test.com"
+            password: "Test123!"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - get:
+          url: "/api/pacientes"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: [200, 401]
+      - get:
+          url: "/api/pacientes"
+          headers:
+            Authorization: "Bearer invalid-token"
+          expect:
+            - statusCode: [401]

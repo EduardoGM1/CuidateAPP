@@ -1,0 +1,121 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 120
+      arrivalRate: 10
+      name: "Encryption & Cryptography Testing"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: "Transit Encryption Testing"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "crypto{{ $randomInt(1, 10) }}@test.com"
+            password: "Test123!"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - post:
+          url: "/api/pacientes"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            nombre: "Sensitive{{ $randomString(10) }}"
+            apellido_paterno: "Data"
+            curp: "SENS{{ $randomString(14) }}"
+            diagnosticos_sensibles: "Información médica confidencial"
+            notas_privadas: "Datos que deben estar cifrados"
+          expect:
+            - statusCode: [201, 400, 401, 403]
+
+  - name: "Password Security Testing"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/auth/register"
+          json:
+            email: "weak{{ $randomInt(1, 50) }}@test.com"
+            password: "123"
+            nombre: "Weak"
+            apellido_paterno: "Password"
+          expect:
+            - statusCode: [400]
+      - post:
+          url: "/api/auth/register"
+          json:
+            email: "strong{{ $randomInt(1, 50) }}@test.com"
+            password: "StrongP@ssw0rd123!"
+            nombre: "Strong"
+            apellido_paterno: "Password"
+          expect:
+            - statusCode: [201, 400]
+
+  - name: "Hash Collision Testing"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/register"
+          json:
+            email: "hash1@test.com"
+            password: "password1"
+            nombre: "Hash"
+            apellido_paterno: "Test1"
+          expect:
+            - statusCode: [201, 400]
+      - post:
+          url: "/api/auth/register"
+          json:
+            email: "hash2@test.com"
+            password: "password1"
+            nombre: "Hash"
+            apellido_paterno: "Test2"
+          expect:
+            - statusCode: [201, 400]
+
+  - name: "Session Token Security"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "session{{ $randomInt(1, 10) }}@test.com"
+            password: "Test123!"
+          capture:
+            - json: "$.token"
+              as: "originalToken"
+      - get:
+          url: "/api/pacientes"
+          headers:
+            Authorization: "Bearer {{ originalToken }}"
+          expect:
+            - statusCode: [200, 401]
+      - post:
+          url: "/api/auth/logout"
+          headers:
+            Authorization: "Bearer {{ originalToken }}"
+          expect:
+            - statusCode: [200, 401, 404]
+      - get:
+          url: "/api/pacientes"
+          headers:
+            Authorization: "Bearer {{ originalToken }}"
+          expect:
+            - statusCode: [401]
+
+  - name: "Cryptographic Timing Attacks"
+    weight: 10
+    flow:
+      - loop:
+          - post:
+              url: "/api/auth/login"
+              json:
+                email: "timing@test.com"
+                password: "{{ $randomString(20) }}"
+              expect:
+                - statusCode: [401]
+        count: 10

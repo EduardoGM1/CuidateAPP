@@ -1,0 +1,1637 @@
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import {
+  View,
+  StyleSheet,
+  Text,
+  ScrollView,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  RefreshControl,
+  Alert,
+  ActivityIndicator,
+  Modal,
+} from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Card, Title, Paragraph, Searchbar, Button, IconButton } from 'react-native-paper';
+import { useAuth } from '../../context/AuthContext';
+import Logger from '../../services/logger';
+import gestionService from '../../api/gestionService';
+import { useDoctores, usePacientes, clearDoctorCache } from '../../hooks/useGestion';
+import useRealtimeList from '../../hooks/useRealtimeList';
+import useWebSocket from '../../hooks/useWebSocket';
+import useDebounce from '../../hooks/useDebounce';
+import { COLORES } from '../../utils/constantes';
+
+const GestionAdmin = ({ navigation }) => {
+  const { userData, userRole } = useAuth();
+  const [activeTab, setActiveTab] = useState('doctores'); // 'doctores' o 'pacientes'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredDoctores, setFilteredDoctores] = useState([]);
+  const [filteredPacientes, setFilteredPacientes] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [doctorFilter, setDoctorFilter] = useState('activos'); // 'activos', 'inactivos', 'todos'
+  const [pacienteFilter, setPacienteFilter] = useState('activos'); // 'activos', 'inactivos', 'todos'
+  const [comorbilidadFilter, setComorbilidadFilter] = useState('todas'); // 'todas', 'Diabetes', 'Hipertensión', etc.
+  const [dateFilter, setDateFilter] = useState('recent'); // 'recent', 'oldest'
+  const [showFiltersModal, setShowFiltersModal] = useState(false);
+
+  // Lista de comorbilidades disponibles
+  const comorbilidadesDisponibles = [
+    'todas',
+    'Diabetes',
+    'Hipertensión', 
+    'Obesidad',
+    'Dislipidemia',
+    'Enfermedad renal crónica',
+    'EPOC',
+    'Enfermedad cardiovascular',
+    'Tuberculosis',
+    'Asma',
+    'Tabaquismo',
+    'SÍNDROME METABÓLICO'
+  ];
+
+  // Hooks para datos dinámicos
+  const { doctores, loading: doctoresLoading, error: doctoresError, refresh: refreshDoctores } = useDoctores(doctorFilter, dateFilter);
+  const { pacientes, loading: pacientesLoading, error: pacientesError, refresh: refreshPacientes } = usePacientes(pacienteFilter, dateFilter, comorbilidadFilter);
+
+  // Hooks para tiempo real
+  const { isConnected } = useWebSocket();
+  const realtimePacientes = useRealtimeList('patients', pacientes || []);
+  const realtimeDoctores = useRealtimeList('doctors', doctores || []);
+
+  // Debounce para búsqueda (300ms de delay)
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Función para cambiar el filtro de fecha con validación
+  const handleDateFilterChange = (filter) => {
+    // Validar que el filtro sea válido
+    if (!filter || !['recent', 'oldest'].includes(filter)) {
+      Logger.warn('Filtro de fecha inválido', { filter });
+      return;
+    }
+    
+    setDateFilter(filter);
+    setShowDateFilter(false);
+    Logger.info('Filtro de fecha cambiado', { filter, activeTab });
+  };
+
+  // Función para alternar el filtro de fecha
+  const toggleDateFilter = () => {
+    const newFilter = dateFilter === 'recent' ? 'oldest' : 'recent';
+    handleDateFilterChange(newFilter);
+  };
+
+  // Función para refrescar datos
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      if (activeTab === 'doctores') {
+        await refreshDoctores();
+      } else {
+        await refreshPacientes();
+      }
+    } catch (error) {
+      Logger.error('Error refrescando datos', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Función de búsqueda segura con sanitización
+  const sanitizeSearchQuery = (query) => {
+    if (!query || typeof query !== 'string') return '';
+    // Remover caracteres especiales que podrían causar problemas
+    return query.trim().replace(/[<>]/g, '');
+  };
+
+  // Filtrar doctores cuando cambien los datos, búsqueda o filtros
+  useEffect(() => {
+    // Usar datos de tiempo real si están disponibles, sino usar datos normales
+    const dataSource = realtimeDoctores.items && realtimeDoctores.items.length > 0 ? realtimeDoctores.items : doctores;
+    
+    if (!dataSource || !Array.isArray(dataSource)) return;
+    
+    const sanitizedQuery = sanitizeSearchQuery(debouncedSearchQuery);
+    
+    let filtered = dataSource;
+    
+    // Aplicar filtro de búsqueda si existe
+    if (sanitizedQuery !== '') {
+      filtered = dataSource.filter(doctor => {
+        if (!doctor || typeof doctor !== 'object') return false;
+        
+        // Mapear campos correctos según BD para búsqueda
+        const nombre = doctor.nombre || '';
+        const apellido = `${doctor.apellido_paterno || ''} ${doctor.apellido_materno || ''}`.trim();
+        const especialidad = doctor.grado_estudio || '';
+        const modulo = doctor.modulo_nombre ? `Módulo ${doctor.id_modulo}` : 'Sin módulo';
+        const email = doctor.email || '';
+        const institucion = doctor.institucion_hospitalaria || '';
+        
+        const searchLower = sanitizedQuery.toLowerCase();
+        
+        return nombre.toLowerCase().includes(searchLower) ||
+               apellido.toLowerCase().includes(searchLower) ||
+               especialidad.toLowerCase().includes(searchLower) ||
+               modulo.toLowerCase().includes(searchLower) ||
+               email.toLowerCase().includes(searchLower) ||
+               institucion.toLowerCase().includes(searchLower);
+      });
+    }
+    
+    Logger.info('Filtros aplicados a doctores', { 
+      doctorFilter, 
+      dateFilter, 
+      searchQuery: sanitizedQuery,
+      totalDoctores: dataSource.length,
+      doctoresFiltrados: filtered.length 
+    });
+    
+    setFilteredDoctores(filtered);
+  }, [debouncedSearchQuery, doctores, realtimeDoctores.items, doctorFilter, dateFilter]);
+
+  // Filtrar pacientes cuando cambien los datos, búsqueda o filtros
+  useEffect(() => {
+    // Usar datos de tiempo real si están disponibles, sino usar datos normales
+    const dataSource = realtimePacientes.items && realtimePacientes.items.length > 0 ? realtimePacientes.items : pacientes;
+    
+    if (!dataSource || !Array.isArray(dataSource)) return;
+    
+    const sanitizedQuery = sanitizeSearchQuery(debouncedSearchQuery);
+    
+    let filtered = dataSource;
+    
+    // Aplicar filtro de búsqueda si existe
+    if (sanitizedQuery !== '') {
+      filtered = dataSource.filter(paciente => {
+        if (!paciente || typeof paciente !== 'object') return false;
+        
+        const searchLower = sanitizedQuery.toLowerCase();
+        
+        return paciente.nombre?.toLowerCase().includes(searchLower) ||
+               paciente.apellido?.toLowerCase().includes(searchLower) ||
+               paciente.email?.toLowerCase().includes(searchLower) ||
+               paciente.doctor_asignado?.toLowerCase().includes(searchLower);
+      });
+    }
+    
+    Logger.info('Filtros aplicados a pacientes', { 
+      dateFilter, 
+      searchQuery: sanitizedQuery,
+      totalPacientes: dataSource.length,
+      pacientesFiltrados: filtered.length 
+    });
+    
+    setFilteredPacientes(filtered);
+  }, [debouncedSearchQuery, pacientes, realtimePacientes.items, dateFilter]);
+
+  // Forzar actualización cuando cambien los filtros
+  useEffect(() => {
+    Logger.info('Filtros cambiados, forzando actualización', { 
+      activeTab, 
+      doctorFilter, 
+      pacienteFilter,
+      comorbilidadFilter,
+      dateFilter 
+    });
+    
+    if (activeTab === 'doctores') {
+      refreshDoctores();
+    } else {
+      refreshPacientes();
+    }
+  }, [doctorFilter, pacienteFilter, comorbilidadFilter, dateFilter, activeTab]);
+
+  // Refrescar datos cuando el usuario regrese a la pantalla
+  useFocusEffect(
+    React.useCallback(() => {
+      Logger.info('Pantalla enfocada, refrescando datos', { activeTab });
+      
+      if (activeTab === 'doctores') {
+        refreshDoctores();
+      } else {
+        refreshPacientes();
+      }
+    }, [activeTab, refreshDoctores, refreshPacientes])
+  );
+
+  // Sincronizar datos de tiempo real con datos locales
+  useEffect(() => {
+    if (realtimeDoctores.items && realtimeDoctores.items.length > 0) {
+      Logger.info('Datos de tiempo real de doctores actualizados', { 
+        totalRealtime: realtimeDoctores.items.length,
+        totalLocal: doctores?.length || 0
+      });
+      
+      // Forzar actualización si hay diferencias
+      if (realtimeDoctores.items.length !== (doctores?.length || 0)) {
+        refreshDoctores();
+      }
+    }
+  }, [realtimeDoctores.items, doctores?.length, refreshDoctores]);
+
+  useEffect(() => {
+    if (realtimePacientes.items && realtimePacientes.items.length > 0) {
+      Logger.info('Datos de tiempo real de pacientes actualizados', { 
+        totalRealtime: realtimePacientes.items.length,
+        totalLocal: pacientes?.length || 0
+      });
+      
+      // Forzar actualización si hay diferencias
+      if (realtimePacientes.items.length !== (pacientes?.length || 0)) {
+        refreshPacientes();
+      }
+    }
+  }, [realtimePacientes.items, pacientes?.length, refreshPacientes]);
+
+  // Validar que solo administradores puedan acceder
+  useEffect(() => {
+    if (!userRole || !['Admin', 'admin', 'administrador'].includes(userRole)) {
+      Logger.warn('Acceso no autorizado a gestión administrativa', { userRole });
+      navigation.navigate('MainTabs', { screen: 'Dashboard' });
+    }
+  }, [userRole, navigation]);
+
+
+  const handleAddDoctor = () => {
+    try {
+      Logger.navigation('GestionAdmin', 'AgregarDoctor');
+      navigation.navigate('AgregarDoctor');
+    } catch (error) {
+      Logger.error('Error navegando a AgregarDoctor', error);
+      Alert.alert('Error', 'No se pudo abrir el formulario de agregar doctor');
+    }
+  };
+
+  const handleAddPatient = () => {
+    try {
+      Logger.navigation('GestionAdmin', 'AgregarPaciente');
+      navigation.navigate('AgregarPaciente');
+    } catch (error) {
+      Logger.error('Error navegando a AgregarPaciente', error);
+      Alert.alert('Error', 'No se pudo abrir el formulario de agregar paciente');
+    }
+  };
+
+  const handleEditDoctor = (doctor) => {
+    try {
+      Logger.navigation('GestionAdmin', 'EditarDoctor', { doctorId: doctor.id_doctor });
+      navigation.navigate('EditarDoctor', { doctor });
+    } catch (error) {
+      Logger.error('Error navegando a EditarDoctor', error);
+      Alert.alert('Error', 'No se pudo abrir el formulario de editar doctor');
+    }
+  };
+
+  // Memoizar función de navegación a paciente
+  const handleViewPatient = useCallback((paciente) => {
+    // Validación robusta de datos antes de navegar
+    if (!paciente) {
+      Logger.error('handleViewPatient: Paciente es null o undefined');
+      Alert.alert('Error', 'No se pudo cargar la información del paciente');
+      return;
+    }
+
+    // Buscar ID en diferentes campos posibles
+    const pacienteId = paciente.id_paciente || paciente.id || paciente.pacienteId || paciente.paciente_id;
+    
+    // Log para debug del ID
+    Logger.info('GestionAdmin: Debug de ID del paciente', {
+      pacienteId: pacienteId,
+      pacienteIdPaciente: paciente.id_paciente,
+      pacienteIdSimple: paciente.id,
+      availableKeys: Object.keys(paciente)
+    });
+    
+    if (!pacienteId) {
+      Logger.error('handleViewPatient: Paciente sin ID válido', { 
+        paciente, 
+        availableKeys: Object.keys(paciente)
+      });
+      Alert.alert('Error', 'Información del paciente incompleta');
+      return;
+    }
+
+    // Validar estructura mínima requerida
+    const pacienteData = {
+      id_paciente: pacienteId,
+      nombre: paciente.nombre || paciente.nombre_completo?.split(' ')[0] || 'Sin nombre',
+      apellido_paterno: paciente.apellido_paterno || paciente.apellido || 'Sin apellido',
+      apellido_materno: paciente.apellido_materno || '',
+      sexo: paciente.sexo || 'No especificado',
+      fecha_nacimiento: paciente.fecha_nacimiento || new Date().toISOString(),
+      activo: paciente.activo !== undefined ? paciente.activo : true,
+      // Datos adicionales desde el backend
+      nombre_completo: paciente.nombreCompleto || `${paciente.nombre} ${paciente.apellido_paterno}`.trim(),
+      doctorNombre: paciente.doctorNombre || 'Sin doctor asignado',
+      edad: paciente.edad,
+      institucion_salud: paciente.institucion_salud || 'No especificada'
+    };
+
+    Logger.navigation('GestionAdmin', 'DetallePaciente', { 
+      pacienteId: pacienteData.id_paciente,
+      pacienteName: pacienteData.nombre_completo
+    });
+    
+    try {
+      navigation.navigate('DetallePaciente', { 
+        paciente: pacienteData
+      });
+    } catch (error) {
+      Logger.error('Error navegando a DetallePaciente', error);
+      Alert.alert('Error', 'No se pudo abrir los detalles del paciente');
+    }
+  }, [navigation]);
+
+  const handleEditPatient = (paciente) => {
+    try {
+      Logger.navigation('GestionAdmin', 'EditarPaciente', { pacienteId: paciente.id_paciente });
+      navigation.navigate('EditarPaciente', { paciente });
+    } catch (error) {
+      Logger.error('Error navegando a EditarPaciente', error);
+      Alert.alert('Error', 'No se pudo abrir el formulario de editar paciente');
+    }
+  };
+
+  const handleDeletePatient = (paciente) => {
+    // Validación robusta de datos
+    if (!paciente) {
+      Logger.error('handleDeletePatient: Paciente es null o undefined');
+      Alert.alert('Error', 'No se pudo cargar la información del paciente');
+      return;
+    }
+
+    const pacienteId = paciente.id_paciente || paciente.id || paciente.pacienteId || paciente.paciente_id;
+    const fullName = paciente.nombreCompleto || `${paciente.nombre} ${paciente.apellido_paterno}`.trim() || 'Sin nombre';
+    
+    if (!pacienteId) {
+      Logger.error('handleDeletePatient: Paciente sin ID válido', { 
+        paciente, 
+        availableKeys: Object.keys(paciente)
+      });
+      Alert.alert('Error', 'No se puede identificar el paciente');
+      return;
+    }
+
+    // Confirmación con alerta destructiva
+    Alert.alert(
+      'Eliminar Paciente',
+      `¿Estás seguro de que deseas eliminar a ${fullName}?\n\nEsta acción marcará el paciente como eliminado (soft delete) y no podrá ser deshecha fácilmente.`,
+      [
+        { 
+          text: 'Cancelar', 
+          style: 'cancel'
+        },
+        { 
+          text: 'Eliminar', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              Logger.info('Iniciando eliminación de paciente', { 
+                pacienteId, 
+                nombre: fullName 
+              });
+              
+              // Llamar a API para soft delete
+              await gestionService.deletePaciente(pacienteId);
+              
+              Logger.info('Paciente eliminado correctamente', { 
+                pacienteId, 
+                nombre: fullName 
+              });
+              
+              // Limpiar cache y refrescar lista
+              Logger.info('Limpiando cache y refrescando lista de pacientes');
+              await refreshPacientes();
+              
+              // Mostrar confirmación de éxito
+              Alert.alert(
+                'Éxito', 
+                'Paciente eliminado correctamente',
+                [{ text: 'OK' }]
+              );
+            } catch (error) {
+              Logger.error('Error eliminando paciente', { 
+                pacienteId, 
+                nombre: fullName,
+                error: error.message,
+                stack: error.stack
+              });
+              Alert.alert('Error', 'No se pudo eliminar el paciente. Por favor, intenta nuevamente.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleToggleStatus = (item, type) => {
+    // Validación de entrada
+    if (!item || typeof item !== 'object' || !type) {
+      Logger.error('handleToggleStatus: Parámetros inválidos', { item, type });
+      Alert.alert('Error', 'Información inválida para cambiar estado');
+      return;
+    }
+
+    const action = item.activo ? 'desactivar' : 'activar';
+    const itemName = type === 'doctor' ? 'doctor' : 'paciente';
+    const fullName = `${item.nombre || 'Sin nombre'} ${item.apellido || ''}`.trim();
+    const itemId = item.id_doctor || item.id_paciente;
+    
+    if (!itemId) {
+      Logger.error('handleToggleStatus: Item sin ID válido', { item, type });
+      Alert.alert('Error', 'No se puede identificar el elemento');
+      return;
+    }
+    
+    Alert.alert(
+      `${action.charAt(0).toUpperCase() + action.slice(1)} ${itemName.charAt(0).toUpperCase() + itemName.slice(1)}`,
+      `¿Estás seguro de que quieres ${action} a ${fullName}?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: action.charAt(0).toUpperCase() + action.slice(1), 
+          style: item.activo ? 'destructive' : 'default',
+          onPress: async () => {
+            try {
+              if (type === 'doctor') {
+                // Limpiar cache antes de actualizar
+                clearDoctorCache(item.id_doctor);
+                
+                // Usar el hook de tiempo real para actualizar
+                realtimeDoctores.updateItem({ ...item, activo: !item.activo });
+                // Refrescar datos para sincronizar con backend
+                await refreshDoctores();
+              } else {
+                // Usar el hook de tiempo real para actualizar
+                realtimePacientes.updateItem({ ...item, activo: !item.activo });
+                // Refrescar datos para sincronizar con backend
+                await refreshPacientes();
+              }
+              
+              Logger.info(`${action.charAt(0).toUpperCase() + action.slice(1)} ${itemName}`, { 
+                id: itemId, 
+                name: fullName,
+                newStatus: !item.activo
+              });
+              
+              // Mostrar confirmación
+              Alert.alert(
+                'Éxito', 
+                `${itemName.charAt(0).toUpperCase() + itemName.slice(1)} ${action} correctamente`,
+                [{ text: 'OK' }]
+              );
+            } catch (error) {
+              Logger.error('Error actualizando estado', error);
+              Alert.alert('Error', 'No se pudo cambiar el estado del elemento');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Memoizar función de navegación a doctor
+  const handleViewDoctor = useCallback((doctor) => {
+    // Validación robusta de datos antes de navegar
+    if (!doctor) {
+      Logger.error('handleViewDoctor: Doctor es null o undefined');
+      Alert.alert('Error', 'No se pudo cargar la información del doctor');
+      return;
+    }
+
+    // DEBUG: Log de estructura del doctor
+    Logger.debug('handleViewDoctor: Estructura del doctor', {
+      doctor,
+      keys: Object.keys(doctor)
+    });
+
+    // Buscar ID en diferentes campos posibles
+    const doctorId = doctor.id_doctor || doctor.id || doctor.doctorId || doctor.doctor_id;
+    
+    // Log específico para debug del ID
+    Logger.info('GestionAdmin: Debug de ID del doctor', {
+      doctorId: doctorId,
+      doctorIdDoctor: doctor.id_doctor,
+      doctorIdSimple: doctor.id,
+      doctorDoctorId: doctor.doctorId,
+      doctorDoctor_id: doctor.doctor_id,
+      availableKeys: Object.keys(doctor),
+      doctor: doctor
+    });
+    
+    if (!doctorId) {
+      Logger.error('handleViewDoctor: Doctor sin ID válido', { 
+        doctor, 
+        availableKeys: Object.keys(doctor)
+      });
+      Alert.alert('Error', 'Información del doctor incompleta');
+      return;
+    }
+
+    // Validar estructura mínima requerida - mapear campos correctos según BD
+    const doctorData = {
+      id_doctor: doctorId,
+      nombre: doctor.nombre || 'Sin nombre',
+      apellido: `${doctor.apellido_paterno || ''} ${doctor.apellido_materno || ''}`.trim() || 'Sin apellido',
+      especialidad: doctor.grado_estudio || 'Sin especialidad',
+      modulo: doctor.modulo_nombre ? `Módulo ${doctor.id_modulo}` : 'Sin módulo asignado',
+      email: doctor.email || 'Sin email',
+      telefono: doctor.telefono || 'Sin teléfono',
+      activo: doctor.activo !== undefined ? doctor.activo : true,
+      fecha_registro: doctor.fecha_registro || new Date().toISOString(),
+      pacientes_asignados: doctor.pacientes_asignados || doctor.assigned_patients || doctor.pacientes_count || 0,
+      // Campos adicionales de la BD
+      institucion_hospitalaria: doctor.institucion_hospitalaria || 'Sin institución',
+      anos_servicio: doctor.anos_servicio || 0,
+      id_modulo: doctor.id_modulo
+    };
+
+    Logger.navigation('GestionAdmin', 'ViewDoctor', { 
+      doctorId: doctorData.id_doctor,
+      doctorName: `${doctorData.nombre} ${doctorData.apellido}`
+    });
+    
+    try {
+      navigation.navigate('DetalleDoctor', { 
+        doctor: doctorData
+      });
+    } catch (error) {
+      Logger.error('Error navegando a DetalleDoctor', error);
+      Alert.alert('Error', 'No se pudo abrir los detalles del doctor');
+    }
+  }, [navigation]);
+
+  // Memoizar función de renderizado de doctor card
+  const renderDoctorCard = useCallback(({ item: doctor }) => {
+    // Validación robusta de datos del doctor
+    if (!doctor) {
+      Logger.error('renderDoctorCard: Doctor es null o undefined');
+      return null;
+    }
+
+    // Buscar ID en diferentes campos posibles
+    const doctorId = doctor.id_doctor || doctor.id || doctor.doctorId || doctor.doctor_id;
+    
+    if (!doctorId) {
+      Logger.error('renderDoctorCard: Doctor sin ID válido', { 
+        doctor, 
+        availableKeys: Object.keys(doctor),
+        id_doctor: doctor.id_doctor,
+        id: doctor.id,
+        doctorId: doctor.doctorId,
+        doctor_id: doctor.doctor_id
+      });
+      return null;
+    }
+
+    // Datos seguros con fallbacks - mapear campos correctos según BD
+    const safeDoctor = {
+      id_doctor: doctorId,
+      nombre: doctor.nombre || 'Sin nombre',
+      apellido: `${doctor.apellido_paterno || ''} ${doctor.apellido_materno || ''}`.trim() || 'Sin apellido',
+      especialidad: doctor.grado_estudio || 'Sin especialidad',
+      modulo: doctor.modulo_nombre ? `Módulo ${doctor.id_modulo}` : 'Sin módulo asignado',
+      activo: doctor.activo !== undefined ? doctor.activo : true,
+      pacientes_asignados: doctor.pacientes_asignados || doctor.assigned_patients || doctor.pacientes_count || 0,
+      email: doctor.email || 'Sin email',
+      telefono: doctor.telefono || 'Sin teléfono',
+      fecha_registro: doctor.fecha_registro || new Date().toISOString(),
+      // Campos adicionales de la BD
+      institucion_hospitalaria: doctor.institucion_hospitalaria || 'Sin institución',
+      anos_servicio: doctor.anos_servicio || 0,
+      id_modulo: doctor.id_modulo
+    };
+
+    return (
+      <TouchableOpacity 
+        onPress={() => handleViewDoctor(doctor)} // Pasar el doctor original para validación
+        style={[styles.simpleCard, !safeDoctor.activo && styles.inactiveCard]}
+      >
+        <View style={styles.simpleCardContent}>
+          <View style={styles.simpleCardHeader}>
+            <View style={styles.simpleCardInfo}>
+              <Text style={[styles.simpleCardTitle, !safeDoctor.activo && styles.inactiveText]}>
+                {safeDoctor.nombre} {safeDoctor.apellido}
+              </Text>
+              <Text style={[styles.simpleCardSubtitle, !safeDoctor.activo && styles.inactiveText]}>
+                {safeDoctor.especialidad}
+              </Text>
+              <View style={styles.moduleRow}>
+                <Text style={[styles.simpleCardModule, !safeDoctor.activo && styles.inactiveText]}>
+                  📍 {safeDoctor.modulo}
+                </Text>
+                <Text style={[styles.patientsCount, !safeDoctor.activo && styles.inactiveText]}>
+                  👥  {safeDoctor.pacientes_asignados}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.simpleCardStatus}>
+              <View style={[
+                styles.statusIndicator, 
+                safeDoctor.activo ? styles.activeIndicator : styles.inactiveIndicator
+              ]}>
+                <Text style={styles.statusIndicatorText}>
+                  {safeDoctor.activo ? 'Activo' : 'Inactivo'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }, [handleViewDoctor]);
+
+  // Memoizar función de renderizado de paciente card
+  const renderPatientCard = useCallback(({ item: paciente }) => (
+    <TouchableOpacity 
+      onPress={() => handleViewPatient(paciente)}
+      activeOpacity={0.7}
+    >
+      <Card style={[styles.card, !paciente.activo && styles.inactiveCard]}>
+        <Card.Content>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardTitleContainer}>
+              <Title style={[styles.cardTitle, !paciente.activo && styles.inactiveText]}>
+                {paciente.nombreCompleto || `${paciente.nombre} ${paciente.apellido_paterno}`.trim()}
+              </Title>
+              <Text style={[styles.cardSubtitle, !paciente.activo && styles.inactiveText]}>
+                {paciente.sexo === 'Mujer' ? '👩' : '👨'} • {paciente.edad || (new Date().getFullYear() - new Date(paciente.fecha_nacimiento).getFullYear())} años
+              </Text>
+            </View>
+          </View>
+          
+          <View style={styles.cardDetails}>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>👨‍⚕️ Doctor:</Text>
+              <Text style={[styles.detailValue, !paciente.activo && styles.inactiveText]}>
+                {paciente.doctorNombre || 'Sin doctor asignado'}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>🏥 Institución:</Text>
+              <Text style={[styles.detailValue, !paciente.activo && styles.inactiveText]}>
+                {paciente.institucion_salud || 'No especificada'}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>📅 Registro:</Text>
+              <Text style={[styles.detailValue, !paciente.activo && styles.inactiveText]}>
+                {new Date(paciente.fecha_registro).toLocaleDateString('es-ES')}
+              </Text>
+            </View>
+          </View>
+          
+          <View style={[styles.statusBadge, paciente.activo ? styles.activeBadge : styles.inactiveBadge]}>
+            <Text style={styles.statusText}>
+              {paciente.activo ? 'Activo' : 'Inactivo'}
+            </Text>
+          </View>
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
+  ), [handleViewPatient]);
+
+  // Memoizar keyExtractors para FlatList
+  const keyExtractorDoctor = useCallback((item, index) => {
+    const doctorId = item?.id_doctor || item?.id || item?.doctorId || item?.doctor_id || `doctor-${index}`;
+    return `doctor-${doctorId}`;
+  }, []);
+
+  const keyExtractorPaciente = useCallback((item, index) => {
+    const pacienteId = item?.id_paciente || item?.id || `paciente-${index}`;
+    return `paciente-${pacienteId}`;
+  }, []);
+
+  // Si no es administrador, no renderizar nada
+  if (!userRole || !['Admin', 'admin', 'administrador'].includes(userRole)) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.accessDeniedContainer}>
+          <Text style={styles.accessDeniedTitle}>🚫 Acceso Denegado</Text>
+          <Text style={styles.accessDeniedMessage}>
+            Solo los administradores pueden acceder a esta pantalla.
+          </Text>
+          <TouchableOpacity 
+            style={styles.goBackButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.goBackText}>Volver</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerText}>
+            <Text style={styles.headerTitle}>Gestión Administrativa</Text>
+            <Text style={styles.headerSubtitle}>
+              {activeTab === 'doctores' ? 'Gestión de Doctores' : 'Gestión de Pacientes'}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+        {/* Tabs */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'doctores' && styles.activeTab]}
+            onPress={() => setActiveTab('doctores')}
+          >
+            <Text style={[styles.tabText, activeTab === 'doctores' && styles.activeTabText]}>
+              👨‍⚕️ Doctores ({doctores?.length || 0})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'pacientes' && styles.activeTab]}
+            onPress={() => setActiveTab('pacientes')}
+          >
+            <Text style={[styles.tabText, activeTab === 'pacientes' && styles.activeTabText]}>
+              👥 Pacientes ({pacientes?.length || 0})
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Searchbar
+          placeholder={`Buscar ${activeTab === 'doctores' ? 'doctores' : 'pacientes'}...`}
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={styles.searchBar}
+          showClearIcon={false}
+        />
+        
+      </View>
+
+      {/* Botones de Filtros y Agregar */}
+      <View style={styles.buttonsContainer}>
+        <TouchableOpacity
+          style={styles.filtersButton}
+          onPress={() => setShowFiltersModal(true)}
+        >
+          <Text style={styles.filtersButtonIcon}>🔧</Text>
+          <Text style={styles.filtersButtonText}>FILTROS</Text>
+        </TouchableOpacity>
+        
+        <Button
+          mode="contained"
+          onPress={activeTab === 'doctores' ? handleAddDoctor : handleAddPatient}
+          style={styles.addButton}
+          icon="plus"
+        >
+          Agregar {activeTab === 'doctores' ? 'Doctor' : 'Paciente'}
+        </Button>
+      </View>
+
+        {/* Content */}
+        {/* Loading States */}
+        {(doctoresLoading || pacientesLoading) && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#1976D2" />
+            <Text style={styles.loadingText}>Cargando datos...</Text>
+          </View>
+        )}
+
+        {/* Error States */}
+        {(doctoresError || pacientesError) && (
+          <Card style={styles.errorCard}>
+            <Card.Content>
+              <Text style={styles.errorText}>
+                Error al cargar los datos. Desliza hacia abajo para intentar nuevamente.
+              </Text>
+            </Card.Content>
+          </Card>
+        )}
+
+        {/* Content */}
+        {!doctoresLoading && !pacientesLoading && (
+          <>
+            {activeTab === 'doctores' ? (
+              filteredDoctores.length > 0 ? (
+                <FlatList
+                  data={filteredDoctores}
+                  renderItem={renderDoctorCard}
+                  keyExtractor={keyExtractorDoctor}
+                  style={styles.listContainer}
+                  contentContainerStyle={styles.listContentContainer}
+                  showsVerticalScrollIndicator={false}
+                  removeClippedSubviews={true}
+                  maxToRenderPerBatch={10}
+                  updateCellsBatchingPeriod={50}
+                  initialNumToRender={10}
+                  windowSize={10}
+                  getItemLayout={(data, index) => ({
+                    length: 120, // Altura aproximada de cada card
+                    offset: 120 * index,
+                    index,
+                  })}
+                  ListHeaderComponent={
+                    <View style={styles.sortingIndicator}>
+                      <Text style={styles.sortingText}>
+                        📋 Mostrando doctores ordenados por fecha de registro
+                        {dateFilter === 'recent' ? ' (más recientes primero)' : ' (más antiguos primero)'}
+                      </Text>
+                    </View>
+                  }
+                  ListEmptyComponent={
+                    <Card style={styles.noDataCard}>
+                      <Card.Content>
+                        <Text style={styles.noDataText}>
+                          {searchQuery ? 'No se encontraron doctores con ese criterio' : 'No hay doctores registrados'}
+                        </Text>
+                      </Card.Content>
+                    </Card>
+                  }
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={refreshing}
+                      onRefresh={handleRefresh}
+                      colors={['#1976D2']}
+                      tintColor="#1976D2"
+                    />
+                  }
+                />
+              ) : (
+                <Card style={styles.noDataCard}>
+                  <Card.Content>
+                    <Text style={styles.noDataText}>
+                      {searchQuery ? 'No se encontraron doctores con ese criterio' : 'No hay doctores registrados'}
+                    </Text>
+                  </Card.Content>
+                </Card>
+              )
+            ) : (
+              filteredPacientes.length > 0 ? (
+                <FlatList
+                  data={filteredPacientes}
+                  renderItem={renderPatientCard}
+                  keyExtractor={keyExtractorPaciente}
+                  style={styles.listContainer}
+                  contentContainerStyle={styles.listContentContainer}
+                  showsVerticalScrollIndicator={false}
+                  removeClippedSubviews={true}
+                  maxToRenderPerBatch={10}
+                  updateCellsBatchingPeriod={50}
+                  initialNumToRender={10}
+                  windowSize={10}
+                  getItemLayout={(data, index) => ({
+                    length: 180, // Altura aproximada de cada card
+                    offset: 180 * index,
+                    index,
+                  })}
+                  ListHeaderComponent={
+                    <View style={styles.sortingIndicator}>
+                      <Text style={styles.sortingText}>
+                        📋 Mostrando pacientes ordenados por fecha de registro
+                        {dateFilter === 'recent' ? ' (más recientes primero)' : ' (más antiguos primero)'}
+                      </Text>
+                    </View>
+                  }
+                  ListEmptyComponent={
+                    <Card style={styles.noDataCard}>
+                      <Card.Content>
+                        <Text style={styles.noDataText}>
+                          {searchQuery ? 'No se encontraron pacientes con ese criterio' : 'No hay pacientes registrados'}
+                        </Text>
+                      </Card.Content>
+                    </Card>
+                  }
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={refreshing}
+                      onRefresh={handleRefresh}
+                      colors={['#1976D2']}
+                      tintColor="#1976D2"
+                    />
+                  }
+                />
+              ) : (
+                <Card style={styles.noDataCard}>
+                  <Card.Content>
+                    <Text style={styles.noDataText}>
+                      {searchQuery ? 'No se encontraron pacientes con ese criterio' : 'No hay pacientes registrados'}
+                    </Text>
+                  </Card.Content>
+                </Card>
+              )
+            )}
+          </>
+        )}
+
+      {/* Modal de Filtros */}
+      <Modal
+        visible={showFiltersModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowFiltersModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>🔧 Filtros Disponibles</Text>
+              <TouchableOpacity
+                onPress={() => setShowFiltersModal(false)}
+              >
+                <Text style={styles.closeButtonX}>X</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody}>
+              {/* Filtros para Doctores */}
+              {activeTab === 'doctores' && (
+                <View style={styles.filterSection}>
+                  <Text style={styles.filterSectionTitle}>👨‍⚕️ Filtros de Doctores</Text>
+                  
+                  <Text style={styles.filterSubtitle}>Estado:</Text>
+                  <View style={styles.filterOptions}>
+                    <TouchableOpacity
+                      style={[
+                        styles.filterOption,
+                        doctorFilter === 'activos' && styles.activeFilterOption
+                      ]}
+                      onPress={() => setDoctorFilter('activos')}
+                    >
+                      <Text style={[
+                        styles.filterOptionText,
+                        doctorFilter === 'activos' && styles.activeFilterOptionText
+                      ]}>
+                        ✅ Activos
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.filterOption,
+                        doctorFilter === 'inactivos' && styles.activeFilterOption
+                      ]}
+                      onPress={() => setDoctorFilter('inactivos')}
+                    >
+                      <Text style={[
+                        styles.filterOptionText,
+                        doctorFilter === 'inactivos' && styles.activeFilterOptionText
+                      ]}>
+                        ❌ Inactivos
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.filterOption,
+                        doctorFilter === 'todos' && styles.activeFilterOption
+                      ]}
+                      onPress={() => setDoctorFilter('todos')}
+                    >
+                      <Text style={[
+                        styles.filterOptionText,
+                        doctorFilter === 'todos' && styles.activeFilterOptionText
+                      ]}>
+                        📋 Todos
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={styles.filterSubtitle}>Ordenar por fecha:</Text>
+                  <View style={styles.filterOptions}>
+                    <TouchableOpacity
+                      style={[
+                        styles.filterOption,
+                        dateFilter === 'recent' && styles.activeFilterOption
+                      ]}
+                      onPress={() => setDateFilter('recent')}
+                    >
+                      <Text style={[
+                        styles.filterOptionText,
+                        dateFilter === 'recent' && styles.activeFilterOptionText
+                      ]}>
+                        ⬇️ Más Recientes Primero
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.filterOption,
+                        dateFilter === 'oldest' && styles.activeFilterOption
+                      ]}
+                      onPress={() => setDateFilter('oldest')}
+                    >
+                      <Text style={[
+                        styles.filterOptionText,
+                        dateFilter === 'oldest' && styles.activeFilterOptionText
+                      ]}>
+                        ⬆️ Más Antiguos Primero
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+
+              {/* Filtros para Pacientes */}
+              {activeTab === 'pacientes' && (
+                <View style={styles.filterSection}>
+                  <Text style={styles.filterSectionTitle}>👥 Filtros de Pacientes</Text>
+                  
+                  <Text style={styles.filterSubtitle}>Estado:</Text>
+                  <View style={styles.filterOptions}>
+                    <TouchableOpacity
+                      style={[
+                        styles.filterOption,
+                        pacienteFilter === 'activos' && styles.activeFilterOption
+                      ]}
+                      onPress={() => setPacienteFilter('activos')}
+                    >
+                      <Text style={[
+                        styles.filterOptionText,
+                        pacienteFilter === 'activos' && styles.activeFilterOptionText
+                      ]}>
+                        ✅ Activos
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.filterOption,
+                        pacienteFilter === 'inactivos' && styles.activeFilterOption
+                      ]}
+                      onPress={() => setPacienteFilter('inactivos')}
+                    >
+                      <Text style={[
+                        styles.filterOptionText,
+                        pacienteFilter === 'inactivos' && styles.activeFilterOptionText
+                      ]}>
+                        ❌ Inactivos
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.filterOption,
+                        pacienteFilter === 'todos' && styles.activeFilterOption
+                      ]}
+                      onPress={() => setPacienteFilter('todos')}
+                    >
+                      <Text style={[
+                        styles.filterOptionText,
+                        pacienteFilter === 'todos' && styles.activeFilterOptionText
+                      ]}>
+                        👥 Todos
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <Text style={styles.filterSubtitle}>Filtrar por comorbilidad:</Text>
+                  <View style={styles.filterOptions}>
+                    {comorbilidadesDisponibles.map((comorbilidad) => (
+                      <TouchableOpacity
+                        key={comorbilidad}
+                        style={[
+                          styles.filterOption,
+                          comorbilidadFilter === comorbilidad && styles.activeFilterOption
+                        ]}
+                        onPress={() => setComorbilidadFilter(comorbilidad)}
+                      >
+                        <Text style={[
+                          styles.filterOptionText,
+                          comorbilidadFilter === comorbilidad && styles.activeFilterOptionText
+                        ]}>
+                          {comorbilidad === 'todas' ? '🏥 Todas' : 
+                           comorbilidad === 'Diabetes' ? '🩸 Diabetes' :
+                           comorbilidad === 'Hipertensión' ? '❤️ Hipertensión' :
+                           comorbilidad === 'Obesidad' ? '⚖️ Obesidad' :
+                           comorbilidad === 'Dislipidemia' ? '🩸 Dislipidemia' :
+                           comorbilidad === 'Enfermedad renal crónica' ? '🫘 Enfermedad renal crónica' :
+                           comorbilidad === 'EPOC' ? '🫁 EPOC' :
+                           comorbilidad === 'Enfermedad cardiovascular' ? '❤️ Enfermedad cardiovascular' :
+                           comorbilidad === 'Tuberculosis' ? '🦠 Tuberculosis' :
+                           comorbilidad === 'Asma' ? '🫁 Asma' :
+                           comorbilidad === 'Tabaquismo' ? '🚭 Tabaquismo' :
+                           comorbilidad === 'SÍNDROME METABÓLICO' ? '⚕️ Síndrome Metabólico' :
+                           comorbilidad}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  
+                  <Text style={styles.filterSubtitle}>Ordenar por fecha:</Text>
+                  <View style={styles.filterOptions}>
+                    <TouchableOpacity
+                      style={[
+                        styles.filterOption,
+                        dateFilter === 'recent' && styles.activeFilterOption
+                      ]}
+                      onPress={() => setDateFilter('recent')}
+                    >
+                      <Text style={[
+                        styles.filterOptionText,
+                        dateFilter === 'recent' && styles.activeFilterOptionText
+                      ]}>
+                        ⬇️ Más Recientes Primero
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.filterOption,
+                        dateFilter === 'oldest' && styles.activeFilterOption
+                      ]}
+                      onPress={() => setDateFilter('oldest')}
+                    >
+                      <Text style={[
+                        styles.filterOptionText,
+                        dateFilter === 'oldest' && styles.activeFilterOptionText
+                      ]}>
+                        ⬆️ Más Antiguos Primero
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+
+              {/* Información adicional */}
+              <View style={styles.filterSection}>
+                <Text style={styles.filterSectionTitle}>ℹ️ Información</Text>
+                <Text style={styles.filterInfo}>
+                  • Los filtros se aplican automáticamente
+                </Text>
+                <Text style={styles.filterInfo}>
+                  • Los cambios se reflejan inmediatamente en la lista
+                </Text>
+                <Text style={styles.filterInfo}>
+                  • Puedes combinar múltiples filtros simultáneamente
+                </Text>
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.modalApplyButton}
+                onPress={() => setShowFiltersModal(false)}
+              >
+                <Text style={styles.modalApplyButtonText}>✅ Aplicar Filtros</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORES.FONDO,
+  },
+  header: {
+    padding: 20,
+    backgroundColor: COLORES.PRIMARIO,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  headerContent: {
+    alignItems: 'center',
+  },
+  headerText: {
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORES.BLANCO,
+    marginBottom: 5,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: COLORES.INFO_LIGHT,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: COLORES.BLANCO,
+    marginHorizontal: 20,
+    marginTop: 20,
+    borderRadius: 12,
+    elevation: 2,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 15,
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  activeTab: {
+    backgroundColor: COLORES.PRIMARIO,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORES.TEXTO_SECUNDARIO,
+  },
+  activeTabText: {
+    color: COLORES.BLANCO,
+  },
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  searchBar: {
+    elevation: 2,
+    marginBottom: 15,
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    gap: 15,
+  },
+  filtersButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORES.BLANCO,
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: COLORES.PRIMARIO,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  filtersButtonIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  filtersButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORES.PRIMARIO,
+  },
+  addButton: {
+    flex: 1,
+    borderRadius: 12,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  listContainer: {
+    flex: 1,
+    paddingBottom: 20,
+  },
+  listContentContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  sortingIndicator: {
+    backgroundColor: COLORES.INFO_LIGHT,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    marginHorizontal: 20,
+    marginBottom: 15,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#1976D2',
+  },
+  sortingText: {
+    fontSize: 13,
+    color: '#1976D2',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  card: {
+    marginBottom: 15,
+    elevation: 3,
+    borderRadius: 12,
+  },
+  inactiveCard: {
+    opacity: 0.6,
+    backgroundColor: '#F5F5F5',
+  },
+  cardHeader: {
+    marginBottom: 15,
+  },
+  cardTitleContainer: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  cardActions: {
+    flexDirection: 'row',
+  },
+  cardDetails: {
+    marginBottom: 15,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+    alignItems: 'center',
+  },
+  detailLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    width: 80,
+  },
+  detailValue: {
+    fontSize: 14,
+    color: '#333',
+    flex: 1,
+  },
+  statusBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  activeBadge: {
+    backgroundColor: '#E8F5E8',
+  },
+  inactiveBadge: {
+    backgroundColor: '#FFEBEE',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#4CAF50',
+  },
+  inactiveText: {
+    color: '#999',
+  },
+  noDataCard: {
+    elevation: 1,
+    backgroundColor: '#F9F9F9',
+  },
+  noDataText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  accessDeniedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  accessDeniedTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#F44336',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  accessDeniedMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 30,
+    lineHeight: 24,
+  },
+  goBackButton: {
+    backgroundColor: '#1976D2',
+    borderRadius: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+  },
+  goBackText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Estilos para vista simplificada de doctores
+  simpleCard: {
+    marginBottom: 15,
+    elevation: 3,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  simpleCardContent: {
+    padding: 20,
+  },
+  simpleCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 15,
+  },
+  simpleCardInfo: {
+    flex: 1,
+  },
+  simpleCardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  simpleCardSubtitle: {
+    fontSize: 16,
+    color: '#1976D2',
+    fontWeight: '600',
+    marginBottom: 5,
+  },
+  simpleCardModule: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+    flex: 1,
+  },
+  moduleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  patientsCount: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '600',
+  },
+  simpleCardStatus: {
+    alignItems: 'flex-end',
+  },
+  statusIndicator: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  activeIndicator: {
+    backgroundColor: '#E8F5E8',
+  },
+  inactiveIndicator: {
+    backgroundColor: '#FFEBEE',
+  },
+  statusIndicatorText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#4CAF50',
+  },
+  simpleCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  simpleCardFooterText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  simpleCardArrow: {
+    fontSize: 18,
+    color: '#1976D2',
+    fontWeight: 'bold',
+  },
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  // Estilos para loading y error states
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorCard: {
+    margin: 20,
+    elevation: 2,
+    backgroundColor: '#FFEBEE',
+    borderLeftWidth: 4,
+    borderLeftColor: '#F44336',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#D32F2F',
+    textAlign: 'center',
+  },
+  // Estilos del Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+    minHeight: '60%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1976D2',
+  },
+  closeButtonX: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#f44336',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    minWidth: 40,
+    textAlign: 'center',
+  },
+  modalBody: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  filterSection: {
+    marginVertical: 15,
+  },
+  filterSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+  },
+  filterSubtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+    marginBottom: 8,
+    marginTop: 10,
+  },
+  filterOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  filterOption: {
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  activeFilterOption: {
+    backgroundColor: '#1976D2',
+    borderColor: '#1976D2',
+  },
+  filterOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+  },
+  activeFilterOptionText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  filterInfo: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 5,
+    lineHeight: 18,
+  },
+  modalFooter: {
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  modalApplyButton: {
+    backgroundColor: '#1976D2',
+    paddingVertical: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalApplyButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+});
+
+export default GestionAdmin;

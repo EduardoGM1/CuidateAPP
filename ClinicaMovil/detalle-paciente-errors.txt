@@ -1,0 +1,2146 @@
+﻿
+> CuidateApp@0.0.1 test
+> jest src/__tests__/DetallePaciente.test.js
+
+  console.warn
+    MSW no est├í disponible: Unexpected token 'export'
+
+    [0m [90m 17 |[39m } [36mcatch[39m (error) {
+     [90m 18 |[39m   [90m// MSW no est├í disponible, crear un mock b├ísico[39m
+    [31m[1m>[22m[39m[90m 19 |[39m   console[33m.[39mwarn([32m'MSW no est├í disponible:'[39m[33m,[39m error[33m.[39mmessage)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 20 |[39m   server [33m=[39m {
+     [90m 21 |[39m     listen[33m:[39m jest[33m.[39mfn()[33m,[39m
+     [90m 22 |[39m     resetHandlers[33m:[39m jest[33m.[39mfn()[33m,[39m[0m
+
+      at Object.warn (src/mocks/server.js:19:11)
+      at Object.require (jest.setup.js:67:21)
+
+node.exe : FAIL src/__tests__/DetallePaciente.test.js (12.88 s)
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL src/__test...st.js (12.88 s) 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  DetallePaciente - Tests Automatizados
+    Renderizado B├ísico
+      ÔêÜ debe renderizar el componente sin errores (376 ms)
+      ÔêÜ debe mostrar informaci├│n del paciente (68 ms)
+      ÔêÜ debe mostrar todas las secciones principales (62 ms)
+    Crear Nueva Cita
+      ÔêÜ debe abrir modal de agregar cita (110 ms)
+      ├ù debe validar campos requeridos al guardar cita (1264 ms)
+      ÔêÜ debe permitir seleccionar doctor para la cita (253 ms)
+    Crear Signos Vitales
+      ÔêÜ debe abrir modal de agregar signos vitales (47 ms)
+      ├ù debe calcular IMC autom├íticamente (1058 ms)
+      ├ù debe validar que sist├│lica sea mayor que diast├│lica (1049 ms)
+      ├ù debe validar rangos de glucosa (1098 ms)
+    Crear Diagn├│sticos
+      ÔêÜ debe abrir modal de agregar diagn├│stico (27 ms)
+      ├ù debe validar descripci├│n m├¡nima de 10 caracteres (1056 ms)
+      ├ù debe permitir seleccionar cita para diagn├│stico (1051 ms)
+    Crear Red de Apoyo
+      ÔêÜ debe abrir modal de agregar contacto (31 ms)
+      ÔêÜ debe validar nombre de contacto requerido (52 ms)
+      ÔêÜ debe validar formato de email (70 ms)
+    Navegaci├│n y Modales
+      ÔêÜ debe abrir y cerrar modales correctamente (49 ms)
+      ÔêÜ debe manejar m├║ltiples modales simult├íneamente (31 ms)
+    Permisos y Seguridad
+      ÔêÜ debe verificar permisos de Admin (18 ms)
+      ├ù debe validar datos antes de enviar (3047 ms)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Crear Nueva Cita ÔÇ║ debe 
+validar campos requeridos al guardar cita
+
+    Unable to find an element with text: /requerido/
+
+    [36m<View>[39m
+      [36m<View>[39m
+        [36m<RCTScrollView>[39m
+          [36m<RCTRefreshControl />[39m
+          [36m<View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"patient-header"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mMar├¡a[0m
+                [0m [0m
+                [0mGarc├¡a[0m
+                [0m [0m
+                [0mL├│pez[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mN/A[0m
+                [0m a├▒os[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"patient-general-info"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0m45[0m
+                [0m a├▒os[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"medical-summary"[39m
+            [36m/>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒôà Citas Recientes ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay citas registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆô Signos Vitales ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay signos vitales registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒ®║ Diagn├│sticos ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay diagn├│sticos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆè Medicamentos ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay medicamentos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒæÑ Red de Apoyo[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay contactos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆë Esquema de Vacunaci├│n[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay vacunas registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÅÑ Comorbilidades Cr├│nicas[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay comorbilidades registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mEditar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mCambiar Doctor[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+              [36m<View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mDesactivar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mEliminar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</RCTScrollView>[39m
+        [36m<Modal>[39m
+          [36m<View[39m
+            [33maccessible[39m=[32m{true}[39m
+          [36m>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text>[39m
+                  [0m­ƒôà Agregar Nueva Cita[0m
+                [36m</Text>[39m
+                [36m<View>[39m
+                  [36m<View[39m
+                    [33maccessibilityState[39m=[32m{
+                      {
+                        "disabled": false,
+                      }
+                    }[39m
+                    [33maccessible[39m=[32m{true}[39m
+                  [36m>[39m
+                    [36m<Text>[39m
+                      [0m­ƒÄ▓[0m
+                    [36m</Text>[39m
+                  [36m</View>[39m
+                  [36m<View[39m
+                    [33maccessibilityState[39m=[32m{
+                      {
+                        "disabled": false,
+                      }
+                    }[39m
+                    [33maccessible[39m=[32m{true}[39m
+                  [36m>[39m
+                    [36m<Text>[39m
+                      [0mX[0m
+                    [36m</Text>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+              [36m<RCTScrollView>[39m
+                [36m<View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒæ¿ÔÇìÔÜò´©Å Doctor (Opcional)[0m
+                    [36m</Text>[39m
+                    [36m<RCTScrollView>[39m
+                      [36m<View>[39m
+                        [36m<View[39m
+                          [33maccessible[39m=[32m{true}[39m
+                        [36m>[39m
+                          [36m<Text>[39m
+                            [0mSin asignar[0m
+                          [36m</Text>[39m
+                        [36m</View>[39m
+                        [36m<View[39m
+                          [33maccessible[39m=[32m{true}[39m
+                        [36m>[39m
+                          [36m<Text>[39m
+                            [0mDr. Juan[0m
+                            [0m [0m
+                            [0mP├®rez[0m
+                          [36m</Text>[39m
+                        [36m</View>[39m
+                      [36m</View>[39m
+                    [36m</RCTScrollView>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒôà Fecha y Hora de la Cita *[0m
+                    [36m</Text>[39m
+                    [36m<View>[39m
+                      [36m<TextInput[39m
+                        [33mplaceholder[39m=[32m""[39m
+                        [33mvalue[39m=[32m""[39m
+                      [36m/>[39m
+                    [36m</View>[39m
+                    [36m<Text>[39m
+                      [0mSelecciona la fecha y hora para la cita m├®dica[0m
+                    [36m</Text>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒ®║ Motivo de la Cita *[0m
+                    [36m</Text>[39m
+                    [36m<TextInput[39m
+                      [33meditable[39m=[32m{true}[39m
+                      [33mplaceholder[39m=[32m"Ej: Control de glucosa, 
+Revisi├│n general..."[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessibilityState[39m=[32m{
+                        {
+                          "disabled": false,
+                        }
+                      }[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<View />[39m
+                      [36m<Text>[39m
+                        [0mPrimera consulta m├®dica[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒôØ Observaciones[0m
+                    [36m</Text>[39m
+                    [36m<TextInput[39m
+                      [33meditable[39m=[32m{true}[39m
+                      [33mplaceholder[39m=[32m"Notas adicionales sobre la 
+cita..."[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mCancelar[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                    [36m<View[39m
+                      [33maccessibilityState[39m=[32m{
+                        {
+                          "disabled": false,
+                        }
+                      }[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mGuardar Cita[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+              [36m</RCTScrollView>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</Modal>[39m
+      [36m</View>[39m
+    [36m</View>[39m
+
+    [0m [90m 128 |[39m
+     [90m 129 |[39m       [90m// Debe mostrar error de validaci├│n[39m
+    [31m[1m>[22m[39m[90m 130 |[39m       [36mawait[39m waitFor(() 
+[33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 131 |[39m         
+expect(getByText([35m/requerido/[39m))[33m.[39mtoBeTruthy()[33m;[39m
+     [90m 132 |[39m       })[33m;[39m
+     [90m 133 |[39m     })[33m;[39m[0m
+
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:130:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Crear Signos Vitales ÔÇ║ debe 
+calcular IMC autom├íticamente
+
+    Unable to find an element with placeholder: /peso/i
+
+    [36m<View>[39m
+      [36m<View>[39m
+        [36m<RCTScrollView>[39m
+          [36m<RCTRefreshControl />[39m
+          [36m<View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"patient-header"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mMar├¡a[0m
+                [0m [0m
+                [0mGarc├¡a[0m
+                [0m [0m
+                [0mL├│pez[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mN/A[0m
+                [0m a├▒os[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"patient-general-info"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0m45[0m
+                [0m a├▒os[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"medical-summary"[39m
+            [36m/>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒôà Citas Recientes ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay citas registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆô Signos Vitales ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay signos vitales registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒ®║ Diagn├│sticos ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay diagn├│sticos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆè Medicamentos ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay medicamentos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒæÑ Red de Apoyo[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay contactos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆë Esquema de Vacunaci├│n[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay vacunas registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÅÑ Comorbilidades Cr├│nicas[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay comorbilidades registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mEditar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mCambiar Doctor[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+              [36m<View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mDesactivar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mEliminar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</RCTScrollView>[39m
+        [36m<Modal>[39m
+          [36m<View[39m
+            [33maccessible[39m=[32m{true}[39m
+          [36m>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text>[39m
+                  [0m­ƒôè Registrar Signos Vitales[0m
+                [36m</Text>[39m
+                [36m<View>[39m
+                  [36m<View[39m
+                    [33maccessibilityState[39m=[32m{
+                      {
+                        "disabled": false,
+                      }
+                    }[39m
+                    [33maccessible[39m=[32m{true}[39m
+                  [36m>[39m
+                    [36m<Text>[39m
+                      [0m­ƒÄ▓[0m
+                    [36m</Text>[39m
+                  [36m</View>[39m
+                  [36m<View[39m
+                    [33maccessibilityState[39m=[32m{
+                      {
+                        "disabled": false,
+                      }
+                    }[39m
+                    [33maccessible[39m=[32m{true}[39m
+                  [36m>[39m
+                    [36m<Text>[39m
+                      [0mX[0m
+                    [36m</Text>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+              [36m<RCTScrollView>[39m
+                [36m<View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒôà Asociar a Cita (Opcional)[0m
+                    [36m</Text>[39m
+                    [36m<Text>[39m
+                      [0mSelecciona una cita para asociar estos signos 
+vitales a una consulta espec├¡fica[0m
+                    [36m</Text>[39m
+                    [36m<View>[39m
+                      [36m<Text>[39m
+                        [0mNo hay citas disponibles para este paciente[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒôÅ Antropom├®tricos[0m
+                    [36m</Text>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mPeso (kg)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 75.5"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mTalla (m)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 1.70"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mCintura (cm)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 85"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒ®║ Presi├│n Arterial[0m
+                    [36m</Text>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mSist├│lica (mmHg)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 120"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mDiast├│lica (mmHg)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 80"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒº¬ Ex├ímenes de Laboratorio[0m
+                    [36m</Text>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mGlucosa (mg/dL)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 95"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mColesterol (mg/dL)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 180"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mTriglic├®ridos (mg/dL)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 120"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒôØ Observaciones (opcional)[0m
+                    [36m</Text>[39m
+                    [36m<TextInput[39m
+                      [33meditable[39m=[32m{true}[39m
+                      [33mplaceholder[39m=[32m"Notas adicionales..."[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mCancelar[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                    [36m<View[39m
+                      [33maccessibilityState[39m=[32m{
+                        {
+                          "disabled": false,
+                        }
+                      }[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mGuardar[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+              [36m</RCTScrollView>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</Modal>[39m
+      [36m</View>[39m
+    [36m</View>[39m
+
+    [0m [90m 189 |[39m
+     [90m 190 |[39m       [90m// Ingresar peso y talla[39m
+    [31m[1m>[22m[39m[90m 191 |[39m       [36mawait[39m waitFor(() 
+[33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 192 |[39m         [36mconst[39m pesoInput [33m=[39m 
+getByPlaceholderText([35m/peso/i[39m)[33m;[39m
+     [90m 193 |[39m         [36mconst[39m tallaInput [33m=[39m 
+getByPlaceholderText([35m/talla/i[39m)[33m;[39m
+     [90m 194 |[39m[0m
+
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:191:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Crear Signos Vitales ÔÇ║ debe 
+validar que sist├│lica sea mayor que diast├│lica
+
+    Unable to find an element with placeholder: /sist├│lica/i
+
+    [36m<View>[39m
+      [36m<View>[39m
+        [36m<RCTScrollView>[39m
+          [36m<RCTRefreshControl />[39m
+          [36m<View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"patient-header"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mMar├¡a[0m
+                [0m [0m
+                [0mGarc├¡a[0m
+                [0m [0m
+                [0mL├│pez[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mN/A[0m
+                [0m a├▒os[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"patient-general-info"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0m45[0m
+                [0m a├▒os[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"medical-summary"[39m
+            [36m/>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒôà Citas Recientes ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay citas registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆô Signos Vitales ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay signos vitales registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒ®║ Diagn├│sticos ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay diagn├│sticos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆè Medicamentos ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay medicamentos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒæÑ Red de Apoyo[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay contactos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆë Esquema de Vacunaci├│n[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay vacunas registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÅÑ Comorbilidades Cr├│nicas[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay comorbilidades registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mEditar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mCambiar Doctor[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+              [36m<View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mDesactivar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mEliminar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</RCTScrollView>[39m
+        [36m<Modal>[39m
+          [36m<View[39m
+            [33maccessible[39m=[32m{true}[39m
+          [36m>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text>[39m
+                  [0m­ƒôè Registrar Signos Vitales[0m
+                [36m</Text>[39m
+                [36m<View>[39m
+                  [36m<View[39m
+                    [33maccessibilityState[39m=[32m{
+                      {
+                        "disabled": false,
+                      }
+                    }[39m
+                    [33maccessible[39m=[32m{true}[39m
+                  [36m>[39m
+                    [36m<Text>[39m
+                      [0m­ƒÄ▓[0m
+                    [36m</Text>[39m
+                  [36m</View>[39m
+                  [36m<View[39m
+                    [33maccessibilityState[39m=[32m{
+                      {
+                        "disabled": false,
+                      }
+                    }[39m
+                    [33maccessible[39m=[32m{true}[39m
+                  [36m>[39m
+                    [36m<Text>[39m
+                      [0mX[0m
+                    [36m</Text>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+              [36m<RCTScrollView>[39m
+                [36m<View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒôà Asociar a Cita (Opcional)[0m
+                    [36m</Text>[39m
+                    [36m<Text>[39m
+                      [0mSelecciona una cita para asociar estos signos 
+vitales a una consulta espec├¡fica[0m
+                    [36m</Text>[39m
+                    [36m<View>[39m
+                      [36m<Text>[39m
+                        [0mNo hay citas disponibles para este paciente[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒôÅ Antropom├®tricos[0m
+                    [36m</Text>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mPeso (kg)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 75.5"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mTalla (m)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 1.70"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mCintura (cm)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 85"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒ®║ Presi├│n Arterial[0m
+                    [36m</Text>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mSist├│lica (mmHg)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 120"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mDiast├│lica (mmHg)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 80"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒº¬ Ex├ímenes de Laboratorio[0m
+                    [36m</Text>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mGlucosa (mg/dL)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 95"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mColesterol (mg/dL)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 180"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mTriglic├®ridos (mg/dL)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 120"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒôØ Observaciones (opcional)[0m
+                    [36m</Text>[39m
+                    [36m<TextInput[39m
+                      [33meditable[39m=[32m{true}[39m
+                      [33mplaceholder[39m=[32m"Notas adicionales..."[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mCancelar[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                    [36m<View[39m
+                      [33maccessibilityState[39m=[32m{
+                        {
+                          "disabled": false,
+                        }
+                      }[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mGuardar[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+              [36m</RCTScrollView>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</Modal>[39m
+      [36m</View>[39m
+    [36m</View>[39m
+
+    [0m [90m 213 |[39m
+     [90m 214 |[39m       [90m// Ingresar valores incorrectos[39m
+    [31m[1m>[22m[39m[90m 215 |[39m       [36mawait[39m waitFor(() 
+[33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 216 |[39m         [36mconst[39m sistolicaInput [33m=[39m 
+getByPlaceholderText([35m/sist├│lica/i[39m)[33m;[39m
+     [90m 217 |[39m         [36mconst[39m diastolicaInput [33m=[39m 
+getByPlaceholderText([35m/diast├│lica/i[39m)[33m;[39m
+     [90m 218 |[39m[0m
+
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:215:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Crear Signos Vitales ÔÇ║ debe 
+validar rangos de glucosa
+
+    Unable to find an element with placeholder: /glucosa/i
+
+    [36m<View>[39m
+      [36m<View>[39m
+        [36m<RCTScrollView>[39m
+          [36m<RCTRefreshControl />[39m
+          [36m<View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"patient-header"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mMar├¡a[0m
+                [0m [0m
+                [0mGarc├¡a[0m
+                [0m [0m
+                [0mL├│pez[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mN/A[0m
+                [0m a├▒os[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"patient-general-info"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0m45[0m
+                [0m a├▒os[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"medical-summary"[39m
+            [36m/>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒôà Citas Recientes ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay citas registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆô Signos Vitales ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay signos vitales registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒ®║ Diagn├│sticos ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay diagn├│sticos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆè Medicamentos ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay medicamentos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒæÑ Red de Apoyo[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay contactos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆë Esquema de Vacunaci├│n[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay vacunas registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÅÑ Comorbilidades Cr├│nicas[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay comorbilidades registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mEditar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mCambiar Doctor[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+              [36m<View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mDesactivar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mEliminar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</RCTScrollView>[39m
+        [36m<Modal>[39m
+          [36m<View[39m
+            [33maccessible[39m=[32m{true}[39m
+          [36m>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text>[39m
+                  [0m­ƒôè Registrar Signos Vitales[0m
+                [36m</Text>[39m
+                [36m<View>[39m
+                  [36m<View[39m
+                    [33maccessibilityState[39m=[32m{
+                      {
+                        "disabled": false,
+                      }
+                    }[39m
+                    [33maccessible[39m=[32m{true}[39m
+                  [36m>[39m
+                    [36m<Text>[39m
+                      [0m­ƒÄ▓[0m
+                    [36m</Text>[39m
+                  [36m</View>[39m
+                  [36m<View[39m
+                    [33maccessibilityState[39m=[32m{
+                      {
+                        "disabled": false,
+                      }
+                    }[39m
+                    [33maccessible[39m=[32m{true}[39m
+                  [36m>[39m
+                    [36m<Text>[39m
+                      [0mX[0m
+                    [36m</Text>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+              [36m<RCTScrollView>[39m
+                [36m<View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒôà Asociar a Cita (Opcional)[0m
+                    [36m</Text>[39m
+                    [36m<Text>[39m
+                      [0mSelecciona una cita para asociar estos signos 
+vitales a una consulta espec├¡fica[0m
+                    [36m</Text>[39m
+                    [36m<View>[39m
+                      [36m<Text>[39m
+                        [0mNo hay citas disponibles para este paciente[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒôÅ Antropom├®tricos[0m
+                    [36m</Text>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mPeso (kg)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 75.5"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mTalla (m)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 1.70"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mCintura (cm)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 85"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒ®║ Presi├│n Arterial[0m
+                    [36m</Text>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mSist├│lica (mmHg)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 120"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mDiast├│lica (mmHg)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 80"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒº¬ Ex├ímenes de Laboratorio[0m
+                    [36m</Text>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mGlucosa (mg/dL)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 95"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mColesterol (mg/dL)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 180"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                    [36m<View>[39m
+                      [36m<View>[39m
+                        [36m<Text>[39m
+                          [0mTriglic├®ridos (mg/dL)[0m
+                        [36m</Text>[39m
+                        [36m<TextInput[39m
+                          [33meditable[39m=[32m{true}[39m
+                          [33mplaceholder[39m=[32m"Ej: 120"[39m
+                          [33mvalue[39m=[32m""[39m
+                        [36m/>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒôØ Observaciones (opcional)[0m
+                    [36m</Text>[39m
+                    [36m<TextInput[39m
+                      [33meditable[39m=[32m{true}[39m
+                      [33mplaceholder[39m=[32m"Notas adicionales..."[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mCancelar[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                    [36m<View[39m
+                      [33maccessibilityState[39m=[32m{
+                        {
+                          "disabled": false,
+                        }
+                      }[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mGuardar[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+              [36m</RCTScrollView>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</Modal>[39m
+      [36m</View>[39m
+    [36m</View>[39m
+
+    [0m [90m 247 |[39m
+     [90m 248 |[39m       [90m// Esperar a que se abra el modal de 
+formulario[39m
+    [31m[1m>[22m[39m[90m 249 |[39m       [36mawait[39m waitFor(() 
+[33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 250 |[39m         [36mconst[39m glucosaInput [33m=[39m 
+getByPlaceholderText([35m/glucosa/i[39m)[33m;[39m
+     [90m 251 |[39m         
+fireEvent[33m.[39mchangeText(glucosaInput[33m,[39m 
+[32m'500'[39m)[33m;[39m [90m// Muy alta[39m
+     [90m 252 |[39m[0m
+
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:249:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Crear Diagn├│sticos ÔÇ║ debe 
+validar descripci├│n m├¡nima de 10 caracteres
+
+    Unable to find an element with placeholder: /descripci├│n|Descripci├│n/i
+
+    [36m<View>[39m
+      [36m<View>[39m
+        [36m<RCTScrollView>[39m
+          [36m<RCTRefreshControl />[39m
+          [36m<View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"patient-header"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0mMar├¡a[0m
+                [0m [0m
+                [0mGarc├¡a[0m
+                [0m [0m
+                [0mL├│pez[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mN/A[0m
+                [0m a├▒os[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"patient-general-info"[39m
+            [36m>[39m
+              [36m<Text>[39m
+                [0m45[0m
+                [0m a├▒os[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+            [36m<View[39m
+              [33mtestID[39m=[32m"medical-summary"[39m
+            [36m/>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒôà Citas Recientes ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay citas registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆô Signos Vitales ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay signos vitales registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒ®║ Diagn├│sticos ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay diagn├│sticos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆè Medicamentos ([0m
+                    [0m0[0m
+                    [0m)[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay medicamentos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒæÑ Red de Apoyo[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay contactos registrados[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÆë Esquema de Vacunaci├│n[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay vacunas registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m­ƒÅÑ Comorbilidades Cr├│nicas[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mOpciones[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo hay comorbilidades registradas[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mEditar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mCambiar Doctor[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+              [36m<View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mDesactivar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mEliminar[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</RCTScrollView>[39m
+        [36m<Modal>[39m
+          [36m<View[39m
+            [33maccessible[39m=[32m{true}[39m
+          [36m>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<Text>[39m
+                  [0m­ƒ®║ Registrar Diagn├│stico[0m
+                [36m</Text>[39m
+                [36m<View>[39m
+                  [36m<View[39m
+                    [33maccessibilityState[39m=[32m{
+                      {
+                        "disabled": false,
+                      }
+                    }[39m
+                    [33maccessible[39m=[32m{true}[39m
+                  [36m>[39m
+                    [36m<Text>[39m
+                      [0m­ƒÄ▓[0m
+                    [36m</Text>[39m
+                  [36m</View>[39m
+                  [36m<View[39m
+                    [33maccessibilityState[39m=[32m{
+                      {
+                        "disabled": false,
+                      }
+                    }[39m
+                    [33maccessible[39m=[32m{true}[39m
+                  [36m>[39m
+                    [36m<Text>[39m
+                      [0mX[0m
+                    [36m</Text>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+              [36m<RCTScrollView>[39m
+                [36m<View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒôà Cita Asociada *[0m
+                    [36m</Text>[39m
+                    [36m<Text>[39m
+                      [0mNo hay citas disponibles[0m
+                    [36m</Text>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m­ƒôØ Descripci├│n del Diagn├│stico *[0m
+                    [36m</Text>[39m
+                    [36m<TextInput[39m
+                      [33meditable[39m=[32m{true}[39m
+                      [33mplaceholder[39m=[32m"Ej: Hipertensi├│n arterial 
+leve, requiere seguimiento m├®dico..."[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                    [36m<Text>[39m
+                      [0mM├¡nimo 10 caracteres[0m
+                    [36m</Text>[39m
+                  [36m</View>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mCancelar[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                    [36m<View[39m
+                      [33maccessibilityState[39m=[32m{
+                        {
+                          "disabled": false,
+                        }
+                      }[39m
+                      [33maccessible[39m=[32m{true}[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mGuardar[0m
+                      [36m</Text>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+              [36m</RCTScrollView>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</Modal>[39m
+      [36m</View>[39m
+    [36m</View>[39m
+
+    [0m [90m 302 |[39m
+     [90m 303 |[39m       [90m// Esperar a que se abra el modal de 
+formulario y buscar el campo de descripci├│n[39m
+    [31m[1m>[22m[39m[90m 304 |[39m       [36mawait[39m waitFor(() 
+[33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 305 |[39m         [90m// Buscar el campo de descripci├│n (puede 
+tener diferentes placeholders)[39m
+     [90m 306 |[39m         [36mconst[39m descripcionInput [33m=[39m 
+getByPlaceholderText([35m/descripci├│n|Descripci├│n/i[39m)[33m;[39m
+     [90m 307 |[39m         
+fireEvent[33m.[39mchangeText(descripcionInput[33m,[39m 
+[32m'OK'[39m)[33m;[39m[0m
+
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:304:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Crear Diagn├│sticos ÔÇ║ debe 
+permitir seleccionar cita para diagn├│stico
+
+    Found multiple elements with text: /Diagn├│stico/
+
+    [0m [90m 328 |[39m
+     [90m 329 |[39m       [90m// Buscar selector de cita[39m
+    [31m[1m>[22m[39m[90m 330 |[39m       [36mawait[39m waitFor(() 
+[33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 331 |[39m         
+expect(getByText([35m/Diagn├│stico/[39m))[33m.[39mtoBeTruthy()[33m;[39m
+     [90m 332 |[39m       })[33m;[39m
+     [90m 333 |[39m     })[33m;[39m[0m
+
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:330:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Permisos y Seguridad ÔÇ║ debe 
+validar datos antes de enviar
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "Validaci├│n", StringMatching /requerido|obligatorio|necesario/i
+    Received: "Error", "Error al validar los datos de la cita. Por favor, 
+intente nuevamente."
+
+    Number of calls: 1
+
+    [0m [90m 527 |[39m
+     [90m 528 |[39m       [90m// Debe mostrar errores de validaci├│n usando 
+Alert.alert[39m
+    [31m[1m>[22m[39m[90m 529 |[39m       [36mawait[39m waitFor(() 
+[33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 530 |[39m         expect(alertSpy)[33m.[39mtoHaveBeenCalledWith(
+     [90m 531 |[39m           [32m'Validaci├│n'[39m[33m,[39m
+     [90m 532 |[39m           expect[33m.[39mstringMatching([35m/requerido
+|obligatorio|necesario/i[39m)[0m
+
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:529:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+Test Suites: 1 failed, 1 total
+Tests:       7 failed, 13 passed, 20 total
+Snapshots:   0 total
+Time:        13.269 s, estimated 14 s
+Ran all test suites matching /src\\__tests__\\DetallePaciente.test.js/i.

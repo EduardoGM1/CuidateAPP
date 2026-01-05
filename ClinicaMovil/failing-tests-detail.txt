@@ -1,0 +1,1246 @@
+﻿
+> CuidateApp@0.0.1 test
+> jest
+
+  console.warn
+    MSW no est├í disponible: Unexpected token 'export'
+
+    [0m [90m 17 |[39m } [36mcatch[39m (error) {
+     [90m 18 |[39m   [90m// MSW no est├í disponible, crear un mock b├ísico[39m
+    [31m[1m>[22m[39m[90m 19 |[39m   console[33m.[39mwarn([32m'MSW no est├í disponible:'[39m[33m,[39m error[33m.[39mmessage)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 20 |[39m   server [33m=[39m {
+     [90m 21 |[39m     listen[33m:[39m jest[33m.[39mfn()[33m,[39m
+     [90m 22 |[39m     resetHandlers[33m:[39m jest[33m.[39mfn()[33m,[39m[0m
+
+      at Object.warn (src/mocks/server.js:19:11)
+      at Object.require (jest.setup.js:67:21)
+
+  console.warn
+    MSW no est├í disponible: Unexpected token 'export'
+
+    [0m [90m 17 |[39m } [36mcatch[39m (error) {
+     [90m 18 |[39m   [90m// MSW no est├í disponible, crear un mock b├ísico[39m
+    [31m[1m>[22m[39m[90m 19 |[39m   console[33m.[39mwarn([32m'MSW no est├í disponible:'[39m[33m,[39m error[33m.[39mmessage)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 20 |[39m   server [33m=[39m {
+     [90m 21 |[39m     listen[33m:[39m jest[33m.[39mfn()[33m,[39m
+     [90m 22 |[39m     resetHandlers[33m:[39m jest[33m.[39mfn()[33m,[39m[0m
+
+      at Object.warn (src/mocks/server.js:19:11)
+      at Object.require (jest.setup.js:67:21)
+
+  console.warn
+    MSW no est├í disponible: Unexpected token 'export'
+
+    [0m [90m 17 |[39m } [36mcatch[39m (error) {
+     [90m 18 |[39m   [90m// MSW no est├í disponible, crear un mock b├ísico[39m
+    [31m[1m>[22m[39m[90m 19 |[39m   console[33m.[39mwarn([32m'MSW no est├í disponible:'[39m[33m,[39m error[33m.[39mmessage)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 20 |[39m   server [33m=[39m {
+     [90m 21 |[39m     listen[33m:[39m jest[33m.[39mfn()[33m,[39m
+     [90m 22 |[39m     resetHandlers[33m:[39m jest[33m.[39mfn()[33m,[39m[0m
+
+      at Object.warn (src/mocks/server.js:19:11)
+      at Object.require (jest.setup.js:67:21)
+
+  console.warn
+    MSW no est├í disponible: Unexpected token 'export'
+
+    [0m [90m 17 |[39m } [36mcatch[39m (error) {
+     [90m 18 |[39m   [90m// MSW no est├í disponible, crear un mock b├ísico[39m
+    [31m[1m>[22m[39m[90m 19 |[39m   console[33m.[39mwarn([32m'MSW no est├í disponible:'[39m[33m,[39m error[33m.[39mmessage)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 20 |[39m   server [33m=[39m {
+     [90m 21 |[39m     listen[33m:[39m jest[33m.[39mfn()[33m,[39m
+     [90m 22 |[39m     resetHandlers[33m:[39m jest[33m.[39mfn()[33m,[39m[0m
+
+      at Object.warn (src/mocks/server.js:19:11)
+      at Object.require (jest.setup.js:67:21)
+
+  console.warn
+    MSW no est├í disponible: Unexpected token 'export'
+
+    [0m [90m 17 |[39m } [36mcatch[39m (error) {
+     [90m 18 |[39m   [90m// MSW no est├í disponible, crear un mock b├ísico[39m
+    [31m[1m>[22m[39m[90m 19 |[39m   console[33m.[39mwarn([32m'MSW no est├í disponible:'[39m[33m,[39m error[33m.[39mmessage)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 20 |[39m   server [33m=[39m {
+     [90m 21 |[39m     listen[33m:[39m jest[33m.[39mfn()[33m,[39m
+     [90m 22 |[39m     resetHandlers[33m:[39m jest[33m.[39mfn()[33m,[39m[0m
+
+      at Object.warn (src/mocks/server.js:19:11)
+      at Object.require (jest.setup.js:67:21)
+
+node.exe : FAIL src/services/__tests__/pushTokenService.test.js
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL src/servic...Service.test.js 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  PushTokenService
+    obtenerTokenAlternativo
+      ÔêÜ debe lanzar error porque el m├®todo est├í deshabilitado (169 ms)
+      ÔêÜ debe indicar que Firebase debe estar configurado (18 ms)
+      ÔêÜ debe registrar el error en el logger (10 ms)
+    registrarToken
+      ÔêÜ debe validar que el token tenga longitud correcta antes de registrar 
+(51 ms)
+      ÔêÜ debe rechazar tokens muy cortos sin generar alternativo (1 ms)
+      ├ù debe registrar token v├ílido en el servidor (6 ms)
+    obtenerTokenDirecto
+      ├ù debe limpiar tokens inv├ílidos del almacenamiento (2 ms)
+      ├ù debe retornar token v├ílido si tiene longitud correcta (8 ms)
+    isTokenRegistrado
+      ÔêÜ debe retornar true si el token est├í registrado en memoria (16 ms)
+      ÔêÜ debe verificar AsyncStorage si no est├í en memoria (1 ms)
+
+  ÔùÅ PushTokenService ÔÇ║ registrarToken ÔÇ║ debe registrar token v├ílido en 
+el servidor
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "/mobile/device/register", ObjectContaining {"device_info": 
+Any<Object>, "device_token": 
+"fcm_temp_device_1234567890_abc123_timestamp_random_xxxxxxxxxxxxxxxxxxxx", 
+"platform": "android"}
+    Received: "/mobile/device/register", {"device_info": {"brand": "Unknown", 
+"manufacturer": "Unknown", "model": "Unknown", "os_version": "Unknown", 
+"platform": "ios"}, "device_token": 
+"fcm_temp_device_1234567890_abc123_timestamp_random_xxxxxxxxxxxxxxxxxxxx", 
+"platform": "ios"}
+
+    Number of calls: 1
+
+    [0m [90m 121 |[39m       [36mawait[39m 
+pushTokenService[33m.[39mregistrarToken(userId[33m,[39m 
+tokenValido)[33m;[39m
+     [90m 122 |[39m
+    [31m[1m>[22m[39m[90m 123 |[39m       
+expect(servicioApi[33m.[39mpost)[33m.[39mtoHaveBeenCalledWith(
+     [90m     |[39m                                [31m[1m^[22m[39m
+     [90m 124 |[39m         [32m'/mobile/device/register'[39m[33m,[39m
+     [90m 125 |[39m         expect[33m.[39mobjectContaining({
+     [90m 126 |[39m           device_token[33m:[39m 
+tokenValido[33m,[39m[0m
+
+      at Object.toHaveBeenCalledWith 
+(src/services/__tests__/pushTokenService.test.js:123:32)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ PushTokenService ÔÇ║ obtenerTokenDirecto ÔÇ║ debe limpiar tokens 
+inv├ílidos del almacenamiento
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "push_token_7"
+
+    Number of calls: 0
+
+    [0m [90m 152 |[39m
+     [90m 153 |[39m       expect(token)[33m.[39mtoBeNull()[33m;[39m
+    [31m[1m>[22m[39m[90m 154 |[39m       expect(mockRemoveItem)[33m.[39
+mtoHaveBeenCalledWith([32m`push_token_${userId}`[39m)[33m;[39m
+     [90m     |[39m                              [31m[1m^[22m[39m
+     [90m 155 |[39m     })[33m;[39m
+     [90m 156 |[39m
+     [90m 157 |[39m     it([32m'debe retornar token v├ílido si tiene 
+longitud correcta'[39m[33m,[39m [36masync[39m () [33m=>[39m {[0m
+
+      at Object.toHaveBeenCalledWith 
+(src/services/__tests__/pushTokenService.test.js:154:30)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ PushTokenService ÔÇ║ obtenerTokenDirecto ÔÇ║ debe retornar token v├ílido 
+si tiene longitud correcta
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 
+"fcm_temp_device_1234567890_abc123_timestamp_random_xxxxxxxxxxxxxxxxxxxx"
+    Received: null
+
+    [0m [90m 167 |[39m       [36mconst[39m token [33m=[39m 
+[36mawait[39m pushTokenService[33m.[39mobtenerTokenDirecto()[33m;[39m
+     [90m 168 |[39m
+    [31m[1m>[22m[39m[90m 169 |[39m       
+expect(token)[33m.[39mtoBe(tokenValido)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 170 |[39m       
+expect(mockRemoveItem)[33m.[39mnot[33m.[39mtoHaveBeenCalled()[33m;[39m
+     [90m 171 |[39m     })[33m;[39m
+     [90m 172 |[39m   })[33m;[39m[0m
+
+      at Object.toBe (src/services/__tests__/pushTokenService.test.js:169:21)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  console.warn
+    MSW no est├í disponible: Unexpected token 'export'
+
+    [0m [90m 17 |[39m } [36mcatch[39m (error) {
+     [90m 18 |[39m   [90m// MSW no est├í disponible, crear un mock b├ísico[39m
+    [31m[1m>[22m[39m[90m 19 |[39m   console[33m.[39mwarn([32m'MSW no est├í disponible:'[39m[33m,[39m error[33m.[39mmessage)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 20 |[39m   server [33m=[39m {
+     [90m 21 |[39m     listen[33m:[39m jest[33m.[39mfn()[33m,[39m
+     [90m 22 |[39m     resetHandlers[33m:[39m jest[33m.[39mfn()[33m,[39m[0m
+
+      at Object.warn (src/mocks/server.js:19:11)
+      at Object.require (jest.setup.js:67:21)
+
+PASS src/__tests__/DetallePaciente-Formularios.test.js (5.412 s)
+  DetallePaciente - Formularios
+    Formulario de Comorbilidades
+      ÔêÜ debe tener funcionalidad de agregar comorbilidad disponible (15 ms)
+      ÔêÜ debe tener funcionalidad de actualizar comorbilidad disponible (64 
+ms)
+      ÔêÜ debe tener funcionalidad de eliminar comorbilidad disponible (1 ms)
+    Formulario de Red de Apoyo
+      ÔêÜ debe tener servicio de red de apoyo disponible
+    Formulario de Esquema de Vacunaci├│n
+      ÔêÜ debe tener servicio de esquema de vacunaci├│n disponible (1 ms)
+    Formulario de Asignaci├│n de Doctor
+      ÔêÜ debe tener servicios de asignaci├│n de doctor disponibles (5 ms)
+    Validaciones Generales de Formularios
+      ÔêÜ debe tener todos los servicios de formularios disponibles (2 ms)
+      ÔêÜ debe tener hooks de datos disponibles (1 ms)
+
+  console.warn
+    MSW no est├í disponible: Unexpected token 'export'
+
+    [0m [90m 17 |[39m } [36mcatch[39m (error) {
+     [90m 18 |[39m   [90m// MSW no est├í disponible, crear un mock b├ísico[39m
+    [31m[1m>[22m[39m[90m 19 |[39m   console[33m.[39mwarn([32m'MSW no est├í disponible:'[39m[33m,[39m error[33m.[39mmessage)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 20 |[39m   server [33m=[39m {
+     [90m 21 |[39m     listen[33m:[39m jest[33m.[39mfn()[33m,[39m
+     [90m 22 |[39m     resetHandlers[33m:[39m jest[33m.[39mfn()[33m,[39m[0m
+
+      at Object.warn (src/mocks/server.js:19:11)
+      at Object.require (jest.setup.js:67:21)
+
+PASS src/__tests__/paciente-interface.test.js
+  Interfaz de Paciente - Testing Base
+    1. Servicios Base
+      ÔêÜ TTS Service debe inicializarse correctamente (2 ms)
+      ÔêÜ Haptic Service debe estar disponible (2 ms)
+      ÔêÜ Audio Feedback Service debe estar disponible (1 ms)
+    2. Hooks
+      ÔêÜ useTTS debe exportarse correctamente (52 ms)
+      ÔêÜ usePacienteData debe exportarse correctamente (370 ms)
+    3. Componentes
+      ÔêÜ BigIconButton debe exportarse correctamente (268 ms)
+      ÔêÜ ValueCard debe exportarse correctamente (10 ms)
+      ÔêÜ MedicationCard debe exportarse correctamente (13 ms)
+      ÔêÜ SimpleForm debe exportarse correctamente (9 ms)
+    4. Pantallas
+      ÔêÜ InicioPaciente debe exportarse correctamente (1497 ms)
+      ÔêÜ RegistrarSignosVitales debe exportarse correctamente (17 ms)
+    5. Navegaci├│n
+      ÔêÜ NavegacionPaciente debe tener el archivo correcto (1 ms)
+  Testing Manual - Requiere App Corriendo
+    ÔêÜ VERIFICACI├ôN MANUAL 1: TTS debe hablar al iniciar InicioPaciente
+    ÔêÜ VERIFICACI├ôN MANUAL 2: Botones deben tener feedback h├íptico
+    ÔêÜ VERIFICACI├ôN MANUAL 3: Formulario SimpleForm debe funcionar paso a 
+paso
+    ÔêÜ VERIFICACI├ôN MANUAL 4: Navegaci├│n entre pantallas (1 ms)
+
+  console.warn
+    MSW no est├í disponible: Unexpected token 'export'
+
+    [0m [90m 17 |[39m } [36mcatch[39m (error) {
+     [90m 18 |[39m   [90m// MSW no est├í disponible, crear un mock b├ísico[39m
+    [31m[1m>[22m[39m[90m 19 |[39m   console[33m.[39mwarn([32m'MSW no est├í disponible:'[39m[33m,[39m error[33m.[39mmessage)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 20 |[39m   server [33m=[39m {
+     [90m 21 |[39m     listen[33m:[39m jest[33m.[39mfn()[33m,[39m
+     [90m 22 |[39m     resetHandlers[33m:[39m jest[33m.[39mfn()[33m,[39m[0m
+
+      at Object.warn (src/mocks/server.js:19:11)
+      at Object.require (jest.setup.js:67:21)
+
+PASS src/__tests__/frontend-validation.test.js
+  Frontend Validation Tests
+    Validaci├│n de Formularios
+      ÔêÜ debe validar campos requeridos de cita (1 ms)
+      ÔêÜ debe validar formato de fecha (1 ms)
+      ÔêÜ debe rechazar fecha inv├ílida
+    C├ílculos M├®dicos Frontend
+      ÔêÜ debe calcular IMC correctamente (2 ms)
+      ÔêÜ debe clasificar IMC seg├║n est├índares (1 ms)
+      ÔêÜ debe validar presi├│n arterial (1 ms)
+      ÔêÜ debe rechazar presi├│n arterial inv├ílida
+    Validaci├│n de Email
+      ÔêÜ debe validar email correcto (1 ms)
+      ÔêÜ debe rechazar email sin @
+      ÔêÜ debe rechazar email sin dominio
+    Validaci├│n de Tel├®fono
+      ÔêÜ debe validar tel├®fono mexicano (1 ms)
+      ÔêÜ debe rechazar tel├®fono muy corto
+      ÔêÜ debe rechazar tel├®fono con letras
+    Sanitizaci├│n de Datos
+      ÔêÜ debe sanitizar HTML (1 ms)
+      ÔêÜ debe sanitizar caracteres especiales SQL (1 ms)
+      ÔêÜ debe limitar longitud de texto
+    Formato de Datos
+      ÔêÜ debe formatear fecha correctamente (5 ms)
+      ÔêÜ debe formatear nombre completo (1 ms)
+      ÔêÜ debe manejar apellido materno opcional (1 ms)
+    Validaci├│n de Rangos
+      ÔêÜ debe validar rango de glucosa (8 ms)
+      ÔêÜ debe rechazar glucosa fuera de rango (1 ms)
+      ÔêÜ debe validar rango de peso (1 ms)
+      ÔêÜ debe validar rango de talla
+    Validaci├│n de Longitud
+      ÔêÜ debe validar descripci├│n m├¡nima
+      ÔêÜ debe rechazar descripci├│n muy corta
+      ÔêÜ debe validar observaciones dentro del l├¡mite
+      ÔêÜ debe rechazar observaciones muy largas
+    Validaci├│n de Arrays
+      ÔêÜ debe validar que haya medicamentos (1 ms)
+      ÔêÜ debe rechazar array vac├¡o de medicamentos
+      ÔêÜ debe validar comorbilidades (1 ms)
+    Validaci├│n de Fechas
+      ÔêÜ debe validar fecha futura (1 ms)
+      ÔêÜ debe rechazar fecha pasada (1 ms)
+      ÔêÜ debe validar rango de fechas
+
+  console.warn
+    MSW no est├í disponible: Unexpected token 'export'
+
+    [0m [90m 17 |[39m } [36mcatch[39m (error) {
+     [90m 18 |[39m   [90m// MSW no est├í disponible, crear un mock b├ísico[39m
+    [31m[1m>[22m[39m[90m 19 |[39m   console[33m.[39mwarn([32m'MSW no est├í disponible:'[39m[33m,[39m error[33m.[39mmessage)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 20 |[39m   server [33m=[39m {
+     [90m 21 |[39m     listen[33m:[39m jest[33m.[39mfn()[33m,[39m
+     [90m 22 |[39m     resetHandlers[33m:[39m jest[33m.[39mfn()[33m,[39m[0m
+
+      at Object.warn (src/mocks/server.js:19:11)
+      at Object.require (jest.setup.js:67:21)
+
+PASS src/__tests__/signos-vitales-create.test.js
+  ClinicaMovil - createPacienteSignosVitales
+    ÔêÜ env├¡a id_cita en el payload y recibe respuesta formateada (3 ms)
+    ÔêÜ incluye encabezados de autenticaci├│n y dispositivo en requests (1 ms)
+
+PASS src/components/DetallePaciente/shared/__tests__/OptionsModal.test.js
+  OptionsModal
+    Renderizado
+      ÔêÜ debe renderizar cuando visible es true (1052 ms)
+      ÔêÜ no debe renderizar cuando visible es false (15 ms)
+      ÔêÜ debe usar t├¡tulo por defecto si no se proporciona (26 ms)
+      ÔêÜ debe renderizar lista vac├¡a sin errores (15 ms)
+    Interacciones con opciones
+      ÔêÜ debe renderizar opciones con onPress (10 ms)
+      ÔêÜ debe renderizar opciones sin onPress (33 ms)
+      ÔêÜ debe renderizar m├║ltiples opciones correctamente (36 ms)
+    Cerrar modal
+      ÔêÜ debe renderizar bot├│n de cerrar (21 ms)
+    Estilos personalizados
+      ÔêÜ debe aplicar estilos personalizados a opciones (24 ms)
+      ÔêÜ debe aplicar estilos de texto personalizados (30 ms)
+    Iconos
+      ÔêÜ debe renderizar icono si est├í presente (38 ms)
+      ÔêÜ debe funcionar sin icono (24 ms)
+      ÔêÜ debe usar color por defecto si no se especifica (33 ms)
+
+PASS src/components/DetallePaciente/shared/__tests__/FormModal.test.js (8.632 
+s)
+  FormModal
+    Renderizado
+      ÔêÜ debe renderizar cuando visible es true (538 ms)
+      ÔêÜ no debe renderizar cuando visible es false (2 ms)
+      ÔêÜ debe mostrar el t├¡tulo correcto (41 ms)
+    Botones
+      ÔêÜ debe mostrar bot├│n Guardar por defecto (24 ms)
+      ÔêÜ debe mostrar bot├│n Cancelar por defecto (36 ms)
+      ÔêÜ debe permitir personalizar labels de botones (27 ms)
+      ÔêÜ debe ocultar bot├│n Guardar cuando showSaveButton es false (8 ms)
+      ÔêÜ debe ocultar bot├│n Cancelar cuando showCancelButton es false (14 ms)
+    Interacciones
+      ÔêÜ debe llamar onSave cuando se presiona Guardar (22 ms)
+      ÔêÜ debe llamar onClose cuando se presiona Cancelar (30 ms)
+      ÔêÜ debe deshabilitar bot├│n Guardar cuando saving es true (251 ms)
+      ÔêÜ debe deshabilitar bot├│n Guardar cuando disabled es true (17 ms)
+      ÔêÜ no debe llamar onSave cuando est├í deshabilitado (18 ms)
+    Contenido del formulario
+      ÔêÜ debe renderizar children correctamente (27 ms)
+      ÔêÜ debe permitir scroll en formularios largos (24 ms)
+
+FAIL src/__tests__/integration.test.js (12.403 s)
+  Integration Tests - Flujo Completo
+    Flujo GestionAdmin ÔåÆ DetallePaciente
+      ├ù debe navegar desde lista de pacientes a detalle (298 ms)
+    Creaci├│n Completa de Datos M├®dicos
+      ├ù debe crear cita completa con validaciones (62 ms)
+      ├ù debe crear signos vitales con c├ílculo de IMC (61 ms)
+      ├ù debe crear diagn├│stico con validaci├│n de longitud (42 ms)
+      ├ù debe crear contacto de red de apoyo con validaciones (48 ms)
+    Validaciones Cruzadas
+      ├ù debe validar que no se puedan crear datos sin paciente v├ílido (47 ms)
+      ├ù debe manejar errores de red correctamente (43 ms)
+    Rendimiento
+      ├ù debe cargar DetallePaciente en menos de 2 segundos (40 ms)
+
+  ÔùÅ Integration Tests - Flujo Completo ÔÇ║ Flujo GestionAdmin ÔåÆ 
+DetallePaciente ÔÇ║ debe navegar desde lista de pacientes a detalle
+
+    Element type is invalid: expected a string (for built-in components) or a 
+class/function (for composite components) but got: undefined. You likely 
+forgot to export your component from the file it's defined in, or you might 
+have mixed up default and named imports.
+
+    Check the render method of `PanGestureHandler`.
+
+    [0m [90m 112 |[39m       }[33m;[39m
+     [90m 113 |[39m
+    [31m[1m>[22m[39m[90m 114 |[39m       [36mconst[39m { 
+getByText[33m,[39m getByTestId } [33m=[39m render(
+     [90m     |[39m                                                
+[31m[1m^[22m[39m
+     [90m 115 |[39m         [33m<[39m[33mTestNavigator[39m[33m>[39m
+     [90m 116 |[39m           [33m<[39m[33mGestionAdmin[39m 
+navigation[33m=[39m{mockNavigation} [33m/[39m[33m>[39m
+     [90m 117 |[39m         
+[33m<[39m[33m/[39m[33mTestNavigator[39m[33m>[39m[0m
+
+      at createFiberFromTypeAndProps (node_modules/react-test-renderer/cjs/reac
+t-test-renderer.development.js:12185:28)
+      at createFiberFromElement (node_modules/react-test-renderer/cjs/react-tes
+t-renderer.development.js:12199:14)
+      at reconcileChildFibersImpl (node_modules/react-test-renderer/cjs/react-t
+est-renderer.development.js:5049:31)
+      at 
+node_modules/react-test-renderer/cjs/react-test-renderer.development.js:5227:33
+      at reconcileChildren (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:5735:13)
+      at beginWork (node_modules/react-test-renderer/cjs/react-test-renderer.de
+velopment.js:7640:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:1574:13)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10980:22)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer
+.development.js:10816:41)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-render
+er.development.js:10797:11)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10384:39)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-test-renderer/cj
+s/react-test-renderer.development.js:2094:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act 
+(node_modules/react/cjs/react.development.js:860:10)
+      at actImplementation 
+(node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct 
+(node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/integration.test.js:114:48)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ÔùÅ Integration Tests - Flujo Completo ÔÇ║ Creaci├│n Completa de Datos 
+M├®dicos ÔÇ║ debe crear cita completa con validaciones
+
+    Element type is invalid: expected a string (for built-in components) or a 
+class/function (for composite components) but got: undefined. You likely 
+forgot to export your component from the file it's defined in, or you might 
+have mixed up default and named imports.
+
+    Check the render method of `PanGestureHandler`.
+
+    [0m [90m 170 |[39m
+     [90m 171 |[39m     it([32m'debe crear cita completa con 
+validaciones'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 172 |[39m       [36mconst[39m { 
+getByText[33m,[39m getAllByText[33m,[39m queryByPlaceholderText } 
+[33m=[39m render(
+     [90m     |[39m                                                          
+               [31m[1m^[22m[39m
+     [90m 173 |[39m         [33m<[39m[33mTestNavigator[39m[33m>[39m
+     [90m 174 |[39m           [33m<[39m[33mDetallePaciente[39m 
+route[33m=[39m{mockRoute} navigation[33m=[39m{mockNavigation} 
+[33m/[39m[33m>[39m
+     [90m 175 |[39m         
+[33m<[39m[33m/[39m[33mTestNavigator[39m[33m>[39m[0m
+
+      at createFiberFromTypeAndProps (node_modules/react-test-renderer/cjs/reac
+t-test-renderer.development.js:12185:28)
+      at createFiberFromElement (node_modules/react-test-renderer/cjs/react-tes
+t-renderer.development.js:12199:14)
+      at reconcileChildFibersImpl (node_modules/react-test-renderer/cjs/react-t
+est-renderer.development.js:5049:31)
+      at 
+node_modules/react-test-renderer/cjs/react-test-renderer.development.js:5227:33
+      at reconcileChildren (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:5735:13)
+      at beginWork (node_modules/react-test-renderer/cjs/react-test-renderer.de
+velopment.js:7640:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:1574:13)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10980:22)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer
+.development.js:10816:41)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-render
+er.development.js:10797:11)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10384:39)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-test-renderer/cj
+s/react-test-renderer.development.js:2094:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act 
+(node_modules/react/cjs/react.development.js:860:10)
+      at actImplementation 
+(node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct 
+(node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/integration.test.js:172:73)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ÔùÅ Integration Tests - Flujo Completo ÔÇ║ Creaci├│n Completa de Datos 
+M├®dicos ÔÇ║ debe crear signos vitales con c├ílculo de IMC
+
+    Element type is invalid: expected a string (for built-in components) or a 
+class/function (for composite components) but got: undefined. You likely 
+forgot to export your component from the file it's defined in, or you might 
+have mixed up default and named imports.
+
+    Check the render method of `PanGestureHandler`.
+
+    [0m [90m 219 |[39m
+     [90m 220 |[39m     it([32m'debe crear signos vitales con c├ílculo de 
+IMC'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 221 |[39m       [36mconst[39m { 
+getByText[33m,[39m getAllByText[33m,[39m queryByPlaceholderText } 
+[33m=[39m render(
+     [90m     |[39m                                                          
+               [31m[1m^[22m[39m
+     [90m 222 |[39m         [33m<[39m[33mTestNavigator[39m[33m>[39m
+     [90m 223 |[39m           [33m<[39m[33mDetallePaciente[39m 
+route[33m=[39m{mockRoute} navigation[33m=[39m{mockNavigation} 
+[33m/[39m[33m>[39m
+     [90m 224 |[39m         
+[33m<[39m[33m/[39m[33mTestNavigator[39m[33m>[39m[0m
+
+      at createFiberFromTypeAndProps (node_modules/react-test-renderer/cjs/reac
+t-test-renderer.development.js:12185:28)
+      at createFiberFromElement (node_modules/react-test-renderer/cjs/react-tes
+t-renderer.development.js:12199:14)
+      at reconcileChildFibersImpl (node_modules/react-test-renderer/cjs/react-t
+est-renderer.development.js:5049:31)
+      at 
+node_modules/react-test-renderer/cjs/react-test-renderer.development.js:5227:33
+      at reconcileChildren (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:5735:13)
+      at beginWork (node_modules/react-test-renderer/cjs/react-test-renderer.de
+velopment.js:7640:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:1574:13)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10980:22)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer
+.development.js:10816:41)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-render
+er.development.js:10797:11)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10384:39)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-test-renderer/cj
+s/react-test-renderer.development.js:2094:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act 
+(node_modules/react/cjs/react.development.js:860:10)
+      at actImplementation 
+(node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct 
+(node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/integration.test.js:221:73)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ÔùÅ Integration Tests - Flujo Completo ÔÇ║ Creaci├│n Completa de Datos 
+M├®dicos ÔÇ║ debe crear diagn├│stico con validaci├│n de longitud
+
+    Element type is invalid: expected a string (for built-in components) or a 
+class/function (for composite components) but got: undefined. You likely 
+forgot to export your component from the file it's defined in, or you might 
+have mixed up default and named imports.
+
+    Check the render method of `PanGestureHandler`.
+
+    [0m [90m 265 |[39m
+     [90m 266 |[39m     it([32m'debe crear diagn├│stico con validaci├│n de 
+longitud'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 267 |[39m       [36mconst[39m { 
+getByText[33m,[39m getAllByText[33m,[39m queryByPlaceholderText } 
+[33m=[39m render(
+     [90m     |[39m                                                          
+               [31m[1m^[22m[39m
+     [90m 268 |[39m         [33m<[39m[33mTestNavigator[39m[33m>[39m
+     [90m 269 |[39m           [33m<[39m[33mDetallePaciente[39m 
+route[33m=[39m{mockRoute} navigation[33m=[39m{mockNavigation} 
+[33m/[39m[33m>[39m
+     [90m 270 |[39m         
+[33m<[39m[33m/[39m[33mTestNavigator[39m[33m>[39m[0m
+
+      at createFiberFromTypeAndProps (node_modules/react-test-renderer/cjs/reac
+t-test-renderer.development.js:12185:28)
+      at createFiberFromElement (node_modules/react-test-renderer/cjs/react-tes
+t-renderer.development.js:12199:14)
+      at reconcileChildFibersImpl (node_modules/react-test-renderer/cjs/react-t
+est-renderer.development.js:5049:31)
+      at 
+node_modules/react-test-renderer/cjs/react-test-renderer.development.js:5227:33
+      at reconcileChildren (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:5735:13)
+      at beginWork (node_modules/react-test-renderer/cjs/react-test-renderer.de
+velopment.js:7640:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:1574:13)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10980:22)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer
+.development.js:10816:41)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-render
+er.development.js:10797:11)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10384:39)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-test-renderer/cj
+s/react-test-renderer.development.js:2094:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act 
+(node_modules/react/cjs/react.development.js:860:10)
+      at actImplementation 
+(node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct 
+(node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/integration.test.js:267:73)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ÔùÅ Integration Tests - Flujo Completo ÔÇ║ Creaci├│n Completa de Datos 
+M├®dicos ÔÇ║ debe crear contacto de red de apoyo con validaciones
+
+    Element type is invalid: expected a string (for built-in components) or a 
+class/function (for composite components) but got: undefined. You likely 
+forgot to export your component from the file it's defined in, or you might 
+have mixed up default and named imports.
+
+    Check the render method of `PanGestureHandler`.
+
+    [0m [90m 306 |[39m
+     [90m 307 |[39m     it([32m'debe crear contacto de red de apoyo con 
+validaciones'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 308 |[39m       [36mconst[39m { 
+getByText[33m,[39m getAllByText[33m,[39m queryByPlaceholderText } 
+[33m=[39m render(
+     [90m     |[39m                                                          
+               [31m[1m^[22m[39m
+     [90m 309 |[39m         [33m<[39m[33mTestNavigator[39m[33m>[39m
+     [90m 310 |[39m           [33m<[39m[33mDetallePaciente[39m 
+route[33m=[39m{mockRoute} navigation[33m=[39m{mockNavigation} 
+[33m/[39m[33m>[39m
+     [90m 311 |[39m         
+[33m<[39m[33m/[39m[33mTestNavigator[39m[33m>[39m[0m
+
+      at createFiberFromTypeAndProps (node_modules/react-test-renderer/cjs/reac
+t-test-renderer.development.js:12185:28)
+      at createFiberFromElement (node_modules/react-test-renderer/cjs/react-tes
+t-renderer.development.js:12199:14)
+      at reconcileChildFibersImpl (node_modules/react-test-renderer/cjs/react-t
+est-renderer.development.js:5049:31)
+      at 
+node_modules/react-test-renderer/cjs/react-test-renderer.development.js:5227:33
+      at reconcileChildren (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:5735:13)
+      at beginWork (node_modules/react-test-renderer/cjs/react-test-renderer.de
+velopment.js:7640:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:1574:13)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10980:22)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer
+.development.js:10816:41)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-render
+er.development.js:10797:11)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10384:39)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-test-renderer/cj
+s/react-test-renderer.development.js:2094:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act 
+(node_modules/react/cjs/react.development.js:860:10)
+      at actImplementation 
+(node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct 
+(node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/integration.test.js:308:73)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ÔùÅ Integration Tests - Flujo Completo ÔÇ║ Validaciones Cruzadas ÔÇ║ debe 
+validar que no se puedan crear datos sin paciente v├ílido
+
+    Element type is invalid: expected a string (for built-in components) or a 
+class/function (for composite components) but got: undefined. You likely 
+forgot to export your component from the file it's defined in, or you might 
+have mixed up default and named imports.
+
+    Check the render method of `PanGestureHandler`.
+
+    [0m [90m 366 |[39m       }[33m;[39m
+     [90m 367 |[39m
+    [31m[1m>[22m[39m[90m 368 |[39m       [36mconst[39m { getByText } 
+[33m=[39m render(
+     [90m     |[39m                                   [31m[1m^[22m[39m
+     [90m 369 |[39m         [33m<[39m[33mTestNavigator[39m[33m>[39m
+     [90m 370 |[39m           [33m<[39m[33mDetallePaciente[39m 
+route[33m=[39m{invalidRoute} navigation[33m=[39m{{}} [33m/[39m[33m>[39m
+     [90m 371 |[39m         
+[33m<[39m[33m/[39m[33mTestNavigator[39m[33m>[39m[0m
+
+      at createFiberFromTypeAndProps (node_modules/react-test-renderer/cjs/reac
+t-test-renderer.development.js:12185:28)
+      at createFiberFromElement (node_modules/react-test-renderer/cjs/react-tes
+t-renderer.development.js:12199:14)
+      at reconcileChildFibersImpl (node_modules/react-test-renderer/cjs/react-t
+est-renderer.development.js:5049:31)
+      at 
+node_modules/react-test-renderer/cjs/react-test-renderer.development.js:5227:33
+      at reconcileChildren (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:5735:13)
+      at beginWork (node_modules/react-test-renderer/cjs/react-test-renderer.de
+velopment.js:7640:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:1574:13)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10980:22)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer
+.development.js:10816:41)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-render
+er.development.js:10797:11)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10384:39)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-test-renderer/cj
+s/react-test-renderer.development.js:2094:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act 
+(node_modules/react/cjs/react.development.js:860:10)
+      at actImplementation 
+(node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct 
+(node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/integration.test.js:368:35)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ÔùÅ Integration Tests - Flujo Completo ÔÇ║ Validaciones Cruzadas ÔÇ║ debe 
+manejar errores de red correctamente
+
+    Element type is invalid: expected a string (for built-in components) or a 
+class/function (for composite components) but got: undefined. You likely 
+forgot to export your component from the file it's defined in, or you might 
+have mixed up default and named imports.
+
+    Check the render method of `PanGestureHandler`.
+
+    [0m [90m 396 |[39m       }[33m;[39m
+     [90m 397 |[39m
+    [31m[1m>[22m[39m[90m 398 |[39m       [36mconst[39m { 
+getByText[33m,[39m getAllByText[33m,[39m queryByPlaceholderText } 
+[33m=[39m render(
+     [90m     |[39m                                                          
+               [31m[1m^[22m[39m
+     [90m 399 |[39m         [33m<[39m[33mTestNavigator[39m[33m>[39m
+     [90m 400 |[39m           [33m<[39m[33mDetallePaciente[39m 
+route[33m=[39m{mockRoute} navigation[33m=[39m{{}} [33m/[39m[33m>[39m
+     [90m 401 |[39m         
+[33m<[39m[33m/[39m[33mTestNavigator[39m[33m>[39m[0m
+
+      at createFiberFromTypeAndProps (node_modules/react-test-renderer/cjs/reac
+t-test-renderer.development.js:12185:28)
+      at createFiberFromElement (node_modules/react-test-renderer/cjs/react-tes
+t-renderer.development.js:12199:14)
+      at reconcileChildFibersImpl (node_modules/react-test-renderer/cjs/react-t
+est-renderer.development.js:5049:31)
+      at 
+node_modules/react-test-renderer/cjs/react-test-renderer.development.js:5227:33
+      at reconcileChildren (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:5735:13)
+      at beginWork (node_modules/react-test-renderer/cjs/react-test-renderer.de
+velopment.js:7640:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:1574:13)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10980:22)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer
+.development.js:10816:41)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-render
+er.development.js:10797:11)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10384:39)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-test-renderer/cj
+s/react-test-renderer.development.js:2094:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act 
+(node_modules/react/cjs/react.development.js:860:10)
+      at actImplementation 
+(node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct 
+(node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/integration.test.js:398:73)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ÔùÅ Integration Tests - Flujo Completo ÔÇ║ Rendimiento ÔÇ║ debe cargar 
+DetallePaciente en menos de 2 segundos
+
+    Element type is invalid: expected a string (for built-in components) or a 
+class/function (for composite components) but got: undefined. You likely 
+forgot to export your component from the file it's defined in, or you might 
+have mixed up default and named imports.
+
+    Check the render method of `PanGestureHandler`.
+
+    [0m [90m 470 |[39m       }[33m;[39m
+     [90m 471 |[39m
+    [31m[1m>[22m[39m[90m 472 |[39m       [36mconst[39m { getByText } 
+[33m=[39m render(
+     [90m     |[39m                                   [31m[1m^[22m[39m
+     [90m 473 |[39m         [33m<[39m[33mTestNavigator[39m[33m>[39m
+     [90m 474 |[39m           [33m<[39m[33mDetallePaciente[39m 
+route[33m=[39m{mockRoute} navigation[33m=[39m{{}} [33m/[39m[33m>[39m
+     [90m 475 |[39m         
+[33m<[39m[33m/[39m[33mTestNavigator[39m[33m>[39m[0m
+
+      at createFiberFromTypeAndProps (node_modules/react-test-renderer/cjs/reac
+t-test-renderer.development.js:12185:28)
+      at createFiberFromElement (node_modules/react-test-renderer/cjs/react-tes
+t-renderer.development.js:12199:14)
+      at reconcileChildFibersImpl (node_modules/react-test-renderer/cjs/react-t
+est-renderer.development.js:5049:31)
+      at 
+node_modules/react-test-renderer/cjs/react-test-renderer.development.js:5227:33
+      at reconcileChildren (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:5735:13)
+      at beginWork (node_modules/react-test-renderer/cjs/react-test-renderer.de
+velopment.js:7640:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:1574:13)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10980:22)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer
+.development.js:10816:41)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-render
+er.development.js:10797:11)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-ren
+derer.development.js:10384:39)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-test-renderer/cj
+s/react-test-renderer.development.js:2094:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act 
+(node_modules/react/cjs/react.development.js:860:10)
+      at actImplementation 
+(node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct 
+(node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal 
+(node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at Object.<anonymous> (src/__tests__/integration.test.js:472:35)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+FAIL src/__tests__/DetallePaciente.test.js (28.663 s)
+  DetallePaciente - Tests Automatizados
+    Renderizado B├ísico
+      ÔêÜ debe renderizar el componente sin errores (1045 ms)
+      ÔêÜ debe mostrar informaci├│n del paciente (213 ms)
+      ÔêÜ debe mostrar todas las secciones principales (156 ms)
+    Crear Nueva Cita
+      ÔêÜ debe abrir modal de agregar cita (292 ms)
+      ├ù debe validar campos requeridos al guardar cita (3724 ms)
+      ÔêÜ debe permitir seleccionar doctor para la cita (417 ms)
+    Crear Signos Vitales
+      ÔêÜ debe abrir modal de agregar signos vitales (82 ms)
+      ├ù debe calcular IMC autom├íticamente (3100 ms)
+      ├ù debe validar que sist├│lica sea mayor que diast├│lica (3076 ms)
+      ├ù debe validar rangos de glucosa (3086 ms)
+    Crear Diagn├│sticos
+      ÔêÜ debe abrir modal de agregar diagn├│stico (81 ms)
+      ├ù debe validar descripci├│n m├¡nima de 10 caracteres (3096 ms)
+      ├ù debe permitir seleccionar cita para diagn├│stico (1062 ms)
+    Crear Red de Apoyo
+      ÔêÜ debe abrir modal de agregar contacto (46 ms)
+      ÔêÜ debe validar nombre de contacto requerido (88 ms)
+      ÔêÜ debe validar formato de email (128 ms)
+    Navegaci├│n y Modales
+      ÔêÜ debe abrir y cerrar modales correctamente (83 ms)
+      ÔêÜ debe manejar m├║ltiples modales simult├íneamente (59 ms)
+    Permisos y Seguridad
+      ÔêÜ debe verificar permisos de Admin (23 ms)
+      ├ù debe validar datos antes de enviar (3066 ms)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Crear Nueva Cita ÔÇ║ debe 
+validar campos requeridos al guardar cita
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: Any<String>, StringMatching /requerido|obligatorio|necesario/i
+    Received: "Error", "Error al validar los datos de la cita. Por favor, 
+intente nuevamente."
+
+    Number of calls: 1
+
+    [0m [90m 134 |[39m
+     [90m 135 |[39m       [90m// Debe mostrar error de validaci├│n usando 
+Alert.alert[39m
+    [31m[1m>[22m[39m[90m 136 |[39m       [36mawait[39m waitFor(() 
+[33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 137 |[39m         expect(alertSpy)[33m.[39mtoHaveBeenCalledWith(
+     [90m 138 |[39m           
+expect[33m.[39many([33mString[39m)[33m,[39m
+     [90m 139 |[39m           expect[33m.[39mstringMatching([35m/requerido
+|obligatorio|necesario/i[39m)[0m
+
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:136:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Crear Signos Vitales ÔÇ║ debe 
+calcular IMC autom├íticamente
+
+    Found multiple elements with text: /Signos Vitales|Guardar|IMC/i
+
+    [0m [90m 203 |[39m
+     [90m 204 |[39m       [90m// Ingresar peso y talla[39m
+    [31m[1m>[22m[39m[90m 205 |[39m       [36mawait[39m waitFor(() 
+[33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 206 |[39m         [90m// Buscar inputs con diferentes 
+m├®todos[39m
+     [90m 207 |[39m         [36mconst[39m pesoInput [33m=[39m 
+queryByPlaceholderText([35m/peso|Peso|kg/i[39m) [33m||[39m 
+     [90m 208 |[39m                          
+queryByTestId([32m'peso-input'[39m) [33m||[39m[0m
+
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:205:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Crear Signos Vitales ÔÇ║ debe 
+validar que sist├│lica sea mayor que diast├│lica
+
+    TypeError: Cannot read properties of undefined (reading 'isValid')
+
+    [0m [90m 1876 |[39m     [36mconst[39m validation [33m=[39m 
+validateSignosVitales(formDataSignosVitales)[33m;[39m
+     [90m 1877 |[39m     
+    [31m[1m>[22m[39m[90m 1878 |[39m     [36mif[39m 
+([33m![39mvalidation[33m.[39misValid) {
+     [90m      |[39m                     [31m[1m^[22m[39m
+     [90m 1879 |[39m       [36mconst[39m firstError [33m=[39m [33mObject
+[39m[33m.[39mvalues(validation[33m.[39merrors)[[35m0[39m][33m;[39m
+     [90m 1880 |[39m       
+[33mAlert[39m[33m.[39malert([32m'Validaci├│n'[39m[33m,[39m 
+firstError)[33m;[39m
+     [90m 1881 |[39m       [33mLogger[39m[33m.[39mwarn([32m'Validaci├│n 
+fallida en signos vitales'[39m[33m,[39m 
+validation[33m.[39merrors)[33m;[39m[0m
+
+      at isValid (src/screens/admin/DetallePaciente.js:1878:21)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12
+      at apply (src/screens/admin/DetallePaciente.js:1867:32)
+      at handler 
+(node_modules/@testing-library/react-native/src/fire-event.ts:123:19)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act 
+(node_modules/react/cjs/react.development.js:790:22)
+      at actImplementation 
+(node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at fireEvent 
+(node_modules/@testing-library/react-native/src/fire-event.ts:122:11)
+      at fireEvent [as press] 
+(node_modules/@testing-library/react-native/src/fire-event.ts:130:3)
+      at press (src/__tests__/DetallePaciente.test.js:260:37)
+      at expectation 
+(node_modules/@testing-library/react-native/src/wait-for.ts:127:24)
+      at checkExpectation 
+(node_modules/@testing-library/react-native/src/wait-for.ts:90:7)
+      at waitForInternal 
+(node_modules/@testing-library/react-native/src/wait-for.ts:32:10)
+      at waitForInternal 
+(node_modules/@testing-library/react-native/src/wait-for.ts:190:26)
+      at callback 
+(node_modules/@testing-library/react-native/src/helpers/wrap-async.ts:17:26)
+      at waitFor 
+(node_modules/@testing-library/react-native/src/wait-for.ts:190:19)
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:246:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Crear Signos Vitales ÔÇ║ debe 
+validar que sist├│lica sea mayor que diast├│lica
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: Any<String>, StringMatching 
+/sist├│lica|diast├│lica|presi├│n|mayor|menor/i
+
+    Number of calls: 0
+
+    [0m [90m 263 |[39m
+     [90m 264 |[39m       [90m// Debe mostrar error usando Alert.alert[39m
+    [31m[1m>[22m[39m[90m 265 |[39m       [36mawait[39m waitFor(() 
+[33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 266 |[39m         expect(alertSpy)[33m.[39mtoHaveBeenCalledWith(
+     [90m 267 |[39m           
+expect[33m.[39many([33mString[39m)[33m,[39m
+     [90m 268 |[39m           expect[33m.[39mstringMatching([35m/sist├│lic
+a|diast├│lica|presi├│n|mayor|menor/i[39m)[0m
+
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:265:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Crear Signos Vitales ÔÇ║ debe 
+validar rangos de glucosa
+
+    TypeError: Cannot read properties of undefined (reading 'isValid')
+
+    [0m [90m 1876 |[39m     [36mconst[39m validation [33m=[39m 
+validateSignosVitales(formDataSignosVitales)[33m;[39m
+     [90m 1877 |[39m     
+    [31m[1m>[22m[39m[90m 1878 |[39m     [36mif[39m 
+([33m![39mvalidation[33m.[39misValid) {
+     [90m      |[39m                     [31m[1m^[22m[39m
+     [90m 1879 |[39m       [36mconst[39m firstError [33m=[39m [33mObject
+[39m[33m.[39mvalues(validation[33m.[39merrors)[[35m0[39m][33m;[39m
+     [90m 1880 |[39m       
+[33mAlert[39m[33m.[39malert([32m'Validaci├│n'[39m[33m,[39m 
+firstError)[33m;[39m
+     [90m 1881 |[39m       [33mLogger[39m[33m.[39mwarn([32m'Validaci├│n 
+fallida en signos vitales'[39m[33m,[39m 
+validation[33m.[39merrors)[33m;[39m[0m
+
+      at isValid (src/screens/admin/DetallePaciente.js:1878:21)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12
+      at apply (src/screens/admin/DetallePaciente.js:1867:32)
+      at handler 
+(node_modules/@testing-library/react-native/src/fire-event.ts:123:19)
+      at callback (node_modules/@testing-library/react-native/src/act.ts:31:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act 
+(node_modules/react/cjs/react.development.js:790:22)
+      at actImplementation 
+(node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at fireEvent 
+(node_modules/@testing-library/react-native/src/fire-event.ts:122:11)
+      at fireEvent [as press] 
+(node_modules/@testing-library/react-native/src/fire-event.ts:130:3)
+      at press (src/__tests__/DetallePaciente.test.js:303:35)
+      at expectation 
+(node_modules/@testing-library/react-native/src/wait-for.ts:127:24)
+      at checkExpectation 
+(node_modules/@testing-library/react-native/src/wait-for.ts:90:7)
+      at waitForInternal 
+(node_modules/@testing-library/react-native/src/wait-for.ts:32:10)
+      at waitForInternal 
+(node_modules/@testing-library/react-native/src/wait-for.ts:190:26)
+      at callback 
+(node_modules/@testing-library/react-native/src/helpers/wrap-async.ts:17:26)
+      at waitFor 
+(node_modules/@testing-library/react-native/src/wait-for.ts:190:19)
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:295:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Crear Signos Vitales ÔÇ║ debe 
+validar rangos de glucosa
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: Any<String>, StringMatching /rango|v├ílido|glucosa|alta|baja/i
+
+    Number of calls: 0
+
+    [0m [90m 305 |[39m
+     [90m 306 |[39m       [90m// Debe mostrar error de rango usando 
+Alert.alert[39m
+    [31m[1m>[22m[39m[90m 307 |[39m       [36mawait[39m waitFor(() 
+[33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 308 |[39m         expect(alertSpy)[33m.[39mtoHaveBeenCalledWith(
+     [90m 309 |[39m           
+expect[33m.[39many([33mString[39m)[33m,[39m
+     [90m 310 |[39m           expect[33m.[39mstringMatching([35m/rango|v├í
+lido|glucosa|alta|baja/i[39m)[0m
+
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:307:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Crear Diagn├│sticos ÔÇ║ debe 
+validar descripci├│n m├¡nima de 10 caracteres
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: Any<String>, StringMatching /10 caracteres|m├¡nimo|descripci├│n/i
+    Received: "Validaci├│n", "Por favor seleccione una cita"
+
+    Number of calls: 1
+
+    [0m [90m 371 |[39m
+     [90m 372 |[39m       [90m// Debe mostrar error usando Alert.alert[39m
+    [31m[1m>[22m[39m[90m 373 |[39m       [36mawait[39m waitFor(() 
+[33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 374 |[39m         expect(alertSpy)[33m.[39mtoHaveBeenCalledWith(
+     [90m 375 |[39m           
+expect[33m.[39many([33mString[39m)[33m,[39m
+     [90m 376 |[39m           expect[33m.[39mstringMatching([35m/10 
+caracteres|m├¡nimo|descripci├│n/i[39m)[0m
+
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:373:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Crear Diagn├│sticos ÔÇ║ debe 
+permitir seleccionar cita para diagn├│stico
+
+    Found multiple elements with text: /Diagn├│stico/
+
+    [0m [90m 392 |[39m
+     [90m 393 |[39m       [90m// Buscar selector de cita[39m
+    [31m[1m>[22m[39m[90m 394 |[39m       [36mawait[39m waitFor(() 
+[33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 395 |[39m         
+expect(getByText([35m/Diagn├│stico/[39m))[33m.[39mtoBeTruthy()[33m;[39m
+     [90m 396 |[39m       })[33m;[39m
+     [90m 397 |[39m     })[33m;[39m[0m
+
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:394:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ÔùÅ DetallePaciente - Tests Automatizados ÔÇ║ Permisos y Seguridad ÔÇ║ debe 
+validar datos antes de enviar
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "Validaci├│n", StringMatching /requerido|obligatorio|necesario/i
+    Received: "Error", "Error al validar los datos de la cita. Por favor, 
+intente nuevamente."
+
+    Number of calls: 1
+
+    [0m [90m 591 |[39m
+     [90m 592 |[39m       [90m// Debe mostrar errores de validaci├│n usando 
+Alert.alert[39m
+    [31m[1m>[22m[39m[90m 593 |[39m       [36mawait[39m waitFor(() 
+[33m=>[39m {
+     [90m     |[39m                    [31m[1m^[22m[39m
+     [90m 594 |[39m         expect(alertSpy)[33m.[39mtoHaveBeenCalledWith(
+     [90m 595 |[39m           [32m'Validaci├│n'[39m[33m,[39m
+     [90m 596 |[39m           expect[33m.[39mstringMatching([35m/requerido
+|obligatorio|necesario/i[39m)[0m
+
+      at Object.<anonymous> (src/__tests__/DetallePaciente.test.js:593:20)
+      at asyncGeneratorStep 
+(node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+Test Suites: 3 failed, 6 passed, 9 total
+Tests:       18 failed, 107 passed, 125 total
+Snapshots:   0 total
+Time:        30.785 s, estimated 61 s
+Ran all test suites.

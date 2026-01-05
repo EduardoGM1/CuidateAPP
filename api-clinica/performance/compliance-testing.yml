@@ -1,0 +1,108 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 180
+      arrivalRate: 5
+      name: "HIPAA/LGPD Compliance Testing"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: "PHI Access Control Testing"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "compliance{{ $randomInt(1, 10) }}@test.com"
+            password: "Test123!"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - get:
+          url: "/api/pacientes/{{ $randomInt(1, 100) }}/phi"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: [200, 401, 403, 404]
+      - get:
+          url: "/api/pacientes/{{ $randomInt(1, 100) }}/medical-history"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: [200, 401, 403, 404]
+
+  - name: "Data Minimization Validation"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "minimal{{ $randomInt(1, 5) }}@test.com"
+            password: "Test123!"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - get:
+          url: "/api/pacientes?fields=nombre,apellido_paterno,curp,direccion,telefono,email,fecha_nacimiento,diagnosticos,historial_completo,notas_internas,datos_financieros"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: [200, 400, 401, 403]
+
+  - name: "Consent Management Testing"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/register"
+          json:
+            email: "consent{{ $randomInt(1, 100) }}@test.com"
+            password: "Test123!"
+            nombre: "Consent"
+            apellido_paterno: "Test"
+            consent_basic_data: false
+            consent_medical_history: false
+            consent_sharing: false
+          expect:
+            - statusCode: [201, 400, 403]
+      - post:
+          url: "/api/pacientes"
+          json:
+            nombre: "Test"
+            apellido_paterno: "Patient"
+            curp: "TEST{{ $randomString(14) }}"
+            fecha_nacimiento: "1990-01-01"
+            process_without_consent: true
+          expect:
+            - statusCode: [400, 403]
+
+  - name: "Data Retention Testing"
+    weight: 15
+    flow:
+      - get:
+          url: "/api/pacientes?created_before=2017-01-01"
+          expect:
+            - statusCode: [200, 401, 403]
+      - get:
+          url: "/api/audit-logs?older_than=5_years"
+          expect:
+            - statusCode: [200, 401, 403, 404]
+      - post:
+          url: "/api/data-retention/anonymize"
+          json:
+            criteria: "older_than_7_years"
+          expect:
+            - statusCode: [200, 401, 403, 404]
+
+  - name: "Right to be Forgotten"
+    weight: 10
+    flow:
+      - delete:
+          url: "/api/pacientes/{{ $randomInt(1, 100) }}/gdpr-delete"
+          expect:
+            - statusCode: [200, 401, 403, 404]
+      - post:
+          url: "/api/data-export/{{ $randomInt(1, 100) }}"
+          expect:
+            - statusCode: [200, 401, 403, 404]

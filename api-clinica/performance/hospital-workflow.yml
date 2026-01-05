@@ -1,0 +1,114 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 300
+      arrivalRate: 10
+      name: "Hospital Day Simulation"
+    - duration: 180
+      arrivalRate: 25
+      name: "Peak Hours"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: "Doctor Workflow"
+    weight: 40
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "doctor{{ $randomInt(1, 50) }}@hospital.com"
+            password: "Test123!"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - think: 3
+      - get:
+          url: "/api/pacientes"
+          headers:
+            Authorization: "Bearer {{ token }}"
+      - think: 5
+      - post:
+          url: "/api/citas"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            paciente_id: "{{ $randomInt(1, 100) }}"
+            fecha: "2024-12-20"
+            hora: "{{ $randomInt(8, 17) }}:00"
+            motivo: "Consulta general"
+      - think: 2
+      - post:
+          url: "/api/diagnosticos"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            paciente_id: "{{ $randomInt(1, 100) }}"
+            diagnostico: "Consulta de rutina"
+            tratamiento: "Observación"
+
+  - name: "Patient Access"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "patient{{ $randomInt(1, 200) }}@test.com"
+            password: "Test123!"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - think: 2
+      - get:
+          url: "/api/citas"
+          headers:
+            Authorization: "Bearer {{ token }}"
+      - think: 3
+      - get:
+          url: "/api/diagnosticos"
+          headers:
+            Authorization: "Bearer {{ token }}"
+
+  - name: "Admin Operations"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "admin@hospital.com"
+            password: "Admin123!"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - think: 1
+      - get:
+          url: "/api/doctores"
+          headers:
+            Authorization: "Bearer {{ token }}"
+      - get:
+          url: "/api/pacientes"
+          headers:
+            Authorization: "Bearer {{ token }}"
+
+  - name: "Emergency Spike"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "emergency{{ $randomInt(1, 10) }}@hospital.com"
+            password: "Emergency123!"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - post:
+          url: "/api/citas"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            paciente_id: "{{ $randomInt(1, 50) }}"
+            fecha: "2024-12-20"
+            hora: "{{ $randomInt(0, 23) }}:{{ $randomInt(0, 59) }}"
+            motivo: "EMERGENCIA"
+            prioridad: "ALTA"

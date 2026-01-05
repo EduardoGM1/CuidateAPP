@@ -1,0 +1,265 @@
+===============================================================================
+                        INFORME DE PROCESOS - API CLINICA
+===============================================================================
+
+FECHA: 08 de Octubre 2024
+PROYECTO: API Clínica - Sistema Médico
+DOCUMENTACIÓN: Procesos y Flujos de Trabajo
+
+===============================================================================
+1. ARQUITECTURA DEL SISTEMA
+===============================================================================
+
+1.1 ESTRUCTURA DE CAPAS
+┌─────────────────────────────────────────────────────────────────┐
+│                        CAPA DE PRESENTACIÓN                    │
+│                     (Apps Móviles / Web)                       │
+└─────────────────────────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        CAPA DE SEGURIDAD                       │
+│        HTTPS/TLS │ JWT │ CORS │ Rate Limiting │ XSS             │
+└─────────────────────────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        CAPA DE APLICACIÓN                      │
+│              Controllers │ Middlewares │ Routes                │
+└─────────────────────────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        CAPA DE NEGOCIO                         │
+│                Models │ Validations │ Business Logic            │
+└─────────────────────────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        CAPA DE DATOS                           │
+│                    MySQL │ Sequelize ORM                       │
+└─────────────────────────────────────────────────────────────────┘
+
+1.2 COMPONENTES PRINCIPALES
+- Express.js: Framework web
+- Sequelize: ORM para base de datos
+- MySQL: Base de datos relacional
+- Winston: Sistema de logging
+- JWT: Autenticación
+- Bcrypt: Hashing de contraseñas
+
+===============================================================================
+2. FLUJO DE AUTENTICACIÓN
+===============================================================================
+
+2.1 PROCESO DE LOGIN
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Cliente   │    │    API      │    │  Validador  │    │  Base Datos │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │                   │
+       │ POST /api/auth/   │                   │                   │
+       │ login             │                   │                   │
+       ├──────────────────►│                   │                   │
+       │                   │ Validar formato   │                   │
+       │                   ├──────────────────►│                   │
+       │                   │                   │ Buscar usuario    │
+       │                   │                   ├──────────────────►│
+       │                   │                   │                   │
+       │                   │                   │ Usuario encontrado│
+       │                   │                   │◄──────────────────┤
+       │                   │ Verificar password│                   │
+       │                   │◄──────────────────┤                   │
+       │                   │                   │                   │
+       │                   │ Generar JWT       │                   │
+       │                   │ + Refresh Token   │                   │
+       │ JWT + User Info   │                   │                   │
+       │◄──────────────────┤                   │                   │
+
+2.2 VALIDACIÓN DE TOKENS
+- Verificación de firma JWT
+- Validación de expiración
+- Verificación de rol y permisos
+- Rate limiting por usuario
+
+===============================================================================
+3. FLUJO DE DATOS MÉDICOS
+===============================================================================
+
+3.1 CREACIÓN DE PACIENTE
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Doctor    │    │ Middleware  │    │ Controller  │    │  Database   │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │                   │
+       │ POST /api/        │                   │                   │
+       │ pacientes         │                   │                   │
+       ├──────────────────►│                   │                   │
+       │                   │ 1. Autenticar     │                   │
+       │                   │ 2. Autorizar      │                   │
+       │                   │ 3. Sanitizar      │                   │
+       │                   │ 4. Validar        │                   │
+       │                   │ 5. Encriptar PII  │                   │
+       │                   ├──────────────────►│                   │
+       │                   │                   │ Crear paciente    │
+       │                   │                   ├──────────────────►│
+       │                   │                   │                   │
+       │                   │                   │ Paciente creado   │
+       │                   │                   │◄──────────────────┤
+       │                   │ 6. Desencriptar   │                   │
+       │                   │ 7. Log auditoría  │                   │
+       │ Paciente creado   │◄──────────────────┤                   │
+       │◄──────────────────┤                   │                   │
+
+3.2 CONSULTA DE PACIENTES
+- Verificación de permisos por rol
+- Filtrado por doctor asignado
+- Desencriptación automática de datos PII
+- Paginación y búsqueda optimizada
+
+===============================================================================
+4. PROCESO DE ENCRIPTACIÓN
+===============================================================================
+
+4.1 ENCRIPTACIÓN DE DATOS PII
+┌─────────────────────────────────────────────────────────────────┐
+│                    FLUJO DE ENCRIPTACIÓN                        │
+└─────────────────────────────────────────────────────────────────┘
+
+Datos de entrada → Middleware autoEncrypt → AES-256-GCM → Base de datos
+"5551234567"    →  Generar IV aleatorio  →  Encriptar   → "a1b2:c3d4:e5f6"
+                →  Crear tag auth        →  Combinar    → 
+                →  Derivar clave         →  Almacenar   →
+
+4.2 DESENCRIPTACIÓN AUTOMÁTICA
+Base de datos → Middleware autoDecrypt → AES-256-GCM → Respuesta API
+"a1b2:c3d4:e5f6" → Separar componentes → Desencriptar → "5551234567"
+                 → Verificar integridad → Validar     →
+                 → Usar clave derivada  → Entregar    →
+
+===============================================================================
+5. SISTEMA DE MONITOREO
+===============================================================================
+
+5.1 MÉTRICAS RECOLECTADAS
+- Número total de requests
+- Tiempo promedio de respuesta
+- Tasa de errores por endpoint
+- Uso de memoria del servidor
+- Conexiones activas a BD
+- Intentos de autenticación fallidos
+
+5.2 ALERTAS AUTOMÁTICAS
+┌─────────────────────────────────────────────────────────────────┐
+│                    SISTEMA DE ALERTAS                          │
+└─────────────────────────────────────────────────────────────────┘
+
+Evento detectado → Evaluación → Clasificación → Notificación → Acción
+Ataque SQL      → Middleware → Crítico       → Email admin  → Bloquear IP
+Memoria alta    → Monitor    → Advertencia   → Log sistema  → Limpiar cache
+BD desconectada → Health     → Crítico       → Email + SMS  → Reintentar
+
+===============================================================================
+6. PROCESO DE BACKUP
+===============================================================================
+
+6.1 BACKUP AUTOMÁTICO DIARIO
+┌─────────────────────────────────────────────────────────────────┐
+│                    FLUJO DE BACKUP                              │
+└─────────────────────────────────────────────────────────────────┘
+
+02:00 AM → Iniciar backup → mysqldump → Encriptar → Almacenar → Verificar
+         → Logs backup   → Comprimir → Validar   → Limpiar   → Notificar
+
+6.2 RETENCIÓN DE BACKUPS
+- Backups diarios: 7 días
+- Backups semanales: 4 semanas  
+- Backups mensuales: 12 meses
+- Backups anuales: 7 años (regulación médica)
+
+===============================================================================
+7. FLUJO DE CITAS MÉDICAS
+===============================================================================
+
+7.1 CREACIÓN DE CITA
+Doctor/Admin → Validar disponibilidad → Crear cita → Notificar paciente
+            → Verificar permisos     → Asignar ID → Log auditoría
+            → Validar datos          → Guardar BD → Confirmar
+
+7.2 GESTIÓN DE CITAS
+- Programación automática
+- Recordatorios por email/SMS
+- Cancelación con notificación
+- Reprogramación automática
+- Historial completo de cambios
+
+===============================================================================
+8. PROCESO DE DIAGNÓSTICOS
+===============================================================================
+
+8.1 REGISTRO DE DIAGNÓSTICO
+┌─────────────────────────────────────────────────────────────────┐
+│                  FLUJO DE DIAGNÓSTICO                           │
+└─────────────────────────────────────────────────────────────────┘
+
+Doctor → Seleccionar paciente → Crear diagnóstico → Encriptar → Guardar
+      → Verificar permisos    → Validar formato   → Auditar  → Notificar
+      → Consultar historial   → Asociar a cita    → Log     → Confirmar
+
+8.2 CONSULTA DE HISTORIAL
+- Acceso por rol y permisos
+- Desencriptación automática
+- Filtrado por fechas
+- Búsqueda por palabras clave
+- Exportación segura
+
+===============================================================================
+9. GESTIÓN DE ERRORES
+===============================================================================
+
+9.1 MANEJO DE ERRORES
+┌─────────────────────────────────────────────────────────────────┐
+│                    FLUJO DE ERRORES                             │
+└─────────────────────────────────────────────────────────────────┘
+
+Error → Capturar → Clasificar → Log → Notificar → Responder
+     → Stack     → Severidad  → BD  → Admin    → Cliente
+     → Context   → Tipo       → File→ Email    → JSON
+
+9.2 TIPOS DE ERRORES
+- Errores de validación: 400 Bad Request
+- Errores de autenticación: 401 Unauthorized  
+- Errores de autorización: 403 Forbidden
+- Errores de recursos: 404 Not Found
+- Errores del servidor: 500 Internal Server Error
+
+===============================================================================
+10. PROCESO DE DESPLIEGUE
+===============================================================================
+
+10.1 PIPELINE DE DESPLIEGUE
+Desarrollo → Testing → Auditorías → Staging → Producción
+          → Unit    → Seguridad  → QA      → Deploy
+          → Integration → Performance → UAT → Monitor
+
+10.2 VERIFICACIONES PRE-PRODUCCIÓN
+- Auditorías de seguridad completas
+- Tests de carga y rendimiento
+- Verificación de certificados SSL
+- Configuración de variables de entorno
+- Validación de backups automáticos
+
+===============================================================================
+CONCLUSIÓN
+===============================================================================
+
+El sistema API Clínica implementa procesos robustos y automatizados que
+garantizan la seguridad, integridad y disponibilidad de los datos médicos.
+Todos los flujos están diseñados con redundancia y monitoreo continuo.
+
+PRÓXIMAS MEJORAS:
+- Implementación de microservicios
+- Cache distribuido con Redis
+- Balanceador de carga
+- Contenedorización con Docker
+- Orquestación con Kubernetes
+
+===============================================================================

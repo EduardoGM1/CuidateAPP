@@ -1,0 +1,64 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 20
+      name: "Load test"
+    - duration: 60
+      arrivalRate: 50
+      name: "Stress test"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: "Doctor Login Flow"
+    weight: 70
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "doctor{{ $randomInt(1, 100) }}@hospital.com"
+            password: "Test123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+          expect:
+            - statusCode: [200, 401]
+      - think: 2
+      - get:
+          url: "/api/pacientes"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: [200, 401]
+
+  - name: "Patient Registration"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/register"
+          json:
+            email: "patient{{ $randomInt(1, 1000) }}@test.com"
+            password: "Test123!"
+            nombre: "Paciente"
+            apellido_paterno: "Test"
+            rol: "Paciente"
+          expect:
+            - statusCode: [201, 400, 429]
+
+  - name: "Rate Limit Test"
+    weight: 10
+    flow:
+      - loop:
+          - post:
+              url: "/api/auth/login"
+              json:
+                email: "attacker@test.com"
+                password: "wrongpassword"
+              expect:
+                - statusCode: [401, 429]
+        count: 10

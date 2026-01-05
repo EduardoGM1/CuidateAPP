@@ -1,0 +1,71 @@
+# Configuración de Artillery para Spike Testing
+config:
+  target: 'http://localhost:3000'
+  phases:
+    # Carga normal - 2 minutos
+    - duration: 120
+      arrivalRate: 10
+      name: "Normal load"
+    
+    # Spike súbito - 30 segundos
+    - duration: 30
+      arrivalRate: 100
+      name: "Sudden spike"
+    
+    # Vuelta a normal - 2 minutos
+    - duration: 120
+      arrivalRate: 10
+      name: "Return to normal"
+    
+    # Segundo spike - 30 segundos
+    - duration: 30
+      arrivalRate: 150
+      name: "Second spike"
+    
+    # Enfriamiento - 1 minuto
+    - duration: 60
+      arrivalRate: 5
+      name: "Cool down"
+  
+  # Configuraciones para spike testing
+  http:
+    timeout: 45
+  processor: './performance/spike-processors.js'
+
+# Escenarios de spike
+scenarios:
+  # Escenario 1: Health checks durante spike (60% del tráfico)
+  - name: "Health Check Spikes"
+    weight: 60
+    flow:
+      - get:
+          url: "/health"
+          headers:
+            X-Test-Mode: "true"
+      - think: 0.1
+
+  # Escenario 2: Autenticación durante spike (25% del tráfico)
+  - name: "Authentication Spikes"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/auth/login"
+          headers:
+            X-Test-Mode: "true"
+            Content-Type: "application/json"
+          json:
+            email: "spiketest@test.com"
+            password: "SpikeTest123"
+      - think: 0.5
+
+  # Escenario 3: CRUD durante spike (15% del tráfico)
+  - name: "CRUD Spikes"
+    weight: 15
+    flow:
+      - function: "generateAuthToken"
+      - get:
+          url: "/api/pacientes"
+          headers:
+            X-Test-Mode: "true"
+            Authorization: "Bearer {{ token }}"
+      - think: 0.2

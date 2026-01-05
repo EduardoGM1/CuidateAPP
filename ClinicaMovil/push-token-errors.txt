@@ -1,0 +1,554 @@
+﻿
+> CuidateApp@0.0.1 test
+> jest src/services/__tests__/pushTokenService.test.js
+
+  console.warn
+    MSW no est├í disponible: Unexpected token 'export'
+
+    [0m [90m 17 |[39m } [36mcatch[39m (error) {
+     [90m 18 |[39m   [90m// MSW no est├í disponible, crear un mock b├ísico[39m
+    [31m[1m>[22m[39m[90m 19 |[39m   console[33m.[39mwarn([32m'MSW no est├í disponible:'[39m[33m,[39m error[33m.[39mmessage)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 20 |[39m   server [33m=[39m {
+     [90m 21 |[39m     listen[33m:[39m jest[33m.[39mfn()[33m,[39m
+     [90m 22 |[39m     resetHandlers[33m:[39m jest[33m.[39mfn()[33m,[39m[0m
+
+      at Object.warn (src/mocks/server.js:19:11)
+      at Object.require (jest.setup.js:67:21)
+
+  console.warn
+    ProgressBarAndroid has been extracted from react-native core and will be removed in a future release. It can now be installed and imported from '@react-native-community/progress-bar-android' instead of 'react-native'. See https://github.com/react-native-progress-view/progress-bar-android
+
+    [0m [90m 54 |[39m jest[33m.[39mmock([32m'react-native'[39m[33m,[39m () [33m=>[39m {
+     [90m 55 |[39m   [36mconst[39m [33mRN[39m [33m=[39m jest[33m.[39mrequireActual([32m'react-native'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 56 |[39m   [36mreturn[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 57 |[39m     [33m...[39m[33mRN[39m[33m,[39m
+     [90m 58 |[39m     [33mPlatform[39m[33m:[39m {
+     [90m 59 |[39m       [33mOS[39m[33m:[39m [32m'android'[39m[33m,[39m[0m
+
+      at warn (node_modules/react-native/Libraries/Utilities/warnOnce.js:27:11)
+      at Object.warnOnce [as ProgressBarAndroid] (node_modules/react-native/index.js:73:5)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/VirtualizedListCellRenderer.js:23:1)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:36:1)
+      at Object.require [as VirtualizedList] (node_modules/@react-native/virtualized-lists/index.js:46:12)
+      at Object.VirtualizedList (node_modules/react-native/Libraries/Lists/FlatList.js:33:42)
+      at Object.require [as FlatList] (node_modules/react-native/index.js:46:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (src/services/pushTokenService.js:11:1)
+      at Object.require (src/services/__tests__/pushTokenService.test.js:83:24)
+
+  console.warn
+    SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context
+
+    [0m [90m 54 |[39m jest[33m.[39mmock([32m'react-native'[39m[33m,[39m () [33m=>[39m {
+     [90m 55 |[39m   [36mconst[39m [33mRN[39m [33m=[39m jest[33m.[39mrequireActual([32m'react-native'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 56 |[39m   [36mreturn[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 57 |[39m     [33m...[39m[33mRN[39m[33m,[39m
+     [90m 58 |[39m     [33mPlatform[39m[33m:[39m {
+     [90m 59 |[39m       [33mOS[39m[33m:[39m [32m'android'[39m[33m,[39m[0m
+
+      at warn (node_modules/react-native/Libraries/Utilities/warnOnce.js:27:11)
+      at Object.warnOnce [as SafeAreaView] (node_modules/react-native/index.js:92:5)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/VirtualizedListCellRenderer.js:23:1)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:36:1)
+      at Object.require [as VirtualizedList] (node_modules/@react-native/virtualized-lists/index.js:46:12)
+      at Object.VirtualizedList (node_modules/react-native/Libraries/Lists/FlatList.js:33:42)
+      at Object.require [as FlatList] (node_modules/react-native/index.js:46:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (src/services/pushTokenService.js:11:1)
+      at Object.require (src/services/__tests__/pushTokenService.test.js:83:24)
+
+  console.warn
+    Clipboard has been extracted from react-native core and will be removed in a future release. It can now be installed and imported from '@react-native-clipboard/clipboard' instead of 'react-native'. See https://github.com/react-native-clipboard/clipboard
+
+    [0m [90m 54 |[39m jest[33m.[39mmock([32m'react-native'[39m[33m,[39m () [33m=>[39m {
+     [90m 55 |[39m   [36mconst[39m [33mRN[39m [33m=[39m jest[33m.[39mrequireActual([32m'react-native'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 56 |[39m   [36mreturn[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 57 |[39m     [33m...[39m[33mRN[39m[33m,[39m
+     [90m 58 |[39m     [33mPlatform[39m[33m:[39m {
+     [90m 59 |[39m       [33mOS[39m[33m:[39m [32m'android'[39m[33m,[39m[0m
+
+      at warn (node_modules/react-native/Libraries/Utilities/warnOnce.js:27:11)
+      at Object.warnOnce [as Clipboard] (node_modules/react-native/index.js:181:5)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/VirtualizedListCellRenderer.js:23:1)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:36:1)
+      at Object.require [as VirtualizedList] (node_modules/@react-native/virtualized-lists/index.js:46:12)
+      at Object.VirtualizedList (node_modules/react-native/Libraries/Lists/FlatList.js:33:42)
+      at Object.require [as FlatList] (node_modules/react-native/index.js:46:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (src/services/pushTokenService.js:11:1)
+      at Object.require (src/services/__tests__/pushTokenService.test.js:83:24)
+
+node.exe : FAIL src/services/__tests__/pushTokenService.test.js
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL src/servic...Service.test.js 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  PushTokenService
+    obtenerTokenAlternativo
+      ├ù debe lanzar error porque el m├®todo est├í deshabilitado (1963 ms)
+      ├ù debe indicar que Firebase debe estar configurado (9 ms)
+      ├ù debe registrar el error en el logger (4 ms)
+    registrarToken
+      ├ù debe validar que el token tenga longitud correcta antes de registrar 
+(7 ms)
+      ├ù debe rechazar tokens muy cortos sin generar alternativo (7 ms)
+      ├ù debe registrar token v├ílido en el servidor (5 ms)
+    obtenerTokenDirecto
+      ├ù debe limpiar tokens inv├ílidos del almacenamiento (7 ms)
+      ├ù debe retornar token v├ílido si tiene longitud correcta (5 ms)
+    isTokenRegistrado
+      ├ù debe retornar true si el token est├í registrado en memoria (8 ms)
+      ├ù debe verificar AsyncStorage si no est├í en memoria (6 ms)
+
+  ÔùÅ PushTokenService ÔÇ║ obtenerTokenAlternativo ÔÇ║ debe lanzar error 
+porque el m├®todo est├í deshabilitado
+
+    Invariant Violation: TurboModuleRegistry.getEnforcing(...): 'DevMenu' 
+could not be found. Verify that a module by this name is registered in the 
+native binary.
+
+    [0m [90m 54 |[39m 
+jest[33m.[39mmock([32m'react-native'[39m[33m,[39m () [33m=>[39m {
+     [90m 55 |[39m   [36mconst[39m [33mRN[39m [33m=[39m 
+jest[33m.[39mrequireActual([32m'react-native'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 56 |[39m   [36mreturn[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 57 |[39m     [33m...[39m[33mRN[39m[33m,[39m
+     [90m 58 |[39m     [33mPlatform[39m[33m:[39m {
+     [90m 59 |[39m       [33mOS[39m[33m:[39m 
+[32m'android'[39m[33m,[39m[0m
+
+      at invariant (node_modules/invariant/invariant.js:40:15)
+      at Object.getEnforcing 
+(node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js:47:12)
+      at Object.getEnforcing (node_modules/react-native/src/private/devsupport/
+devmenu/specs/NativeDevMenu.js:22:37)
+      at Object.require 
+(node_modules/react-native/src/private/devsupport/devmenu/DevMenu.js:11:1)
+      at Object.require (node_modules/react-native/index.js:202:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/Vir
+tualizedListCellRenderer.js:23:1)
+      at Object.require 
+(node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:36:1)
+      at Object.require [as VirtualizedList] 
+(node_modules/@react-native/virtualized-lists/index.js:46:12)
+      at Object.VirtualizedList 
+(node_modules/react-native/Libraries/Lists/FlatList.js:33:42)
+      at Object.require [as FlatList] 
+(node_modules/react-native/index.js:46:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (src/services/pushTokenService.js:11:1)
+      at Object.require (src/services/__tests__/pushTokenService.test.js:83:24)
+
+  ÔùÅ PushTokenService ÔÇ║ obtenerTokenAlternativo ÔÇ║ debe indicar que 
+Firebase debe estar configurado
+
+    Invariant Violation: TurboModuleRegistry.getEnforcing(...): 'DevMenu' 
+could not be found. Verify that a module by this name is registered in the 
+native binary.
+
+    [0m [90m 54 |[39m 
+jest[33m.[39mmock([32m'react-native'[39m[33m,[39m () [33m=>[39m {
+     [90m 55 |[39m   [36mconst[39m [33mRN[39m [33m=[39m 
+jest[33m.[39mrequireActual([32m'react-native'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 56 |[39m   [36mreturn[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 57 |[39m     [33m...[39m[33mRN[39m[33m,[39m
+     [90m 58 |[39m     [33mPlatform[39m[33m:[39m {
+     [90m 59 |[39m       [33mOS[39m[33m:[39m 
+[32m'android'[39m[33m,[39m[0m
+
+      at invariant (node_modules/invariant/invariant.js:40:15)
+      at Object.getEnforcing 
+(node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js:47:12)
+      at Object.getEnforcing (node_modules/react-native/src/private/devsupport/
+devmenu/specs/NativeDevMenu.js:22:37)
+      at Object.require 
+(node_modules/react-native/src/private/devsupport/devmenu/DevMenu.js:11:1)
+      at Object.require (node_modules/react-native/index.js:202:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/Vir
+tualizedListCellRenderer.js:23:1)
+      at Object.require 
+(node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:36:1)
+      at Object.require [as VirtualizedList] 
+(node_modules/@react-native/virtualized-lists/index.js:46:12)
+      at Object.VirtualizedList 
+(node_modules/react-native/Libraries/Lists/FlatList.js:33:42)
+      at Object.require [as FlatList] 
+(node_modules/react-native/index.js:46:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (src/services/pushTokenService.js:11:1)
+      at Object.require (src/services/__tests__/pushTokenService.test.js:83:24)
+
+  ÔùÅ PushTokenService ÔÇ║ obtenerTokenAlternativo ÔÇ║ debe registrar el error 
+en el logger
+
+    Invariant Violation: TurboModuleRegistry.getEnforcing(...): 'DevMenu' 
+could not be found. Verify that a module by this name is registered in the 
+native binary.
+
+    [0m [90m 54 |[39m 
+jest[33m.[39mmock([32m'react-native'[39m[33m,[39m () [33m=>[39m {
+     [90m 55 |[39m   [36mconst[39m [33mRN[39m [33m=[39m 
+jest[33m.[39mrequireActual([32m'react-native'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 56 |[39m   [36mreturn[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 57 |[39m     [33m...[39m[33mRN[39m[33m,[39m
+     [90m 58 |[39m     [33mPlatform[39m[33m:[39m {
+     [90m 59 |[39m       [33mOS[39m[33m:[39m 
+[32m'android'[39m[33m,[39m[0m
+
+      at invariant (node_modules/invariant/invariant.js:40:15)
+      at Object.getEnforcing 
+(node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js:47:12)
+      at Object.getEnforcing (node_modules/react-native/src/private/devsupport/
+devmenu/specs/NativeDevMenu.js:22:37)
+      at Object.require 
+(node_modules/react-native/src/private/devsupport/devmenu/DevMenu.js:11:1)
+      at Object.require (node_modules/react-native/index.js:202:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/Vir
+tualizedListCellRenderer.js:23:1)
+      at Object.require 
+(node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:36:1)
+      at Object.require [as VirtualizedList] 
+(node_modules/@react-native/virtualized-lists/index.js:46:12)
+      at Object.VirtualizedList 
+(node_modules/react-native/Libraries/Lists/FlatList.js:33:42)
+      at Object.require [as FlatList] 
+(node_modules/react-native/index.js:46:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (src/services/pushTokenService.js:11:1)
+      at Object.require (src/services/__tests__/pushTokenService.test.js:83:24)
+
+  ÔùÅ PushTokenService ÔÇ║ registrarToken ÔÇ║ debe validar que el token tenga 
+longitud correcta antes de registrar
+
+    Invariant Violation: TurboModuleRegistry.getEnforcing(...): 'DevMenu' 
+could not be found. Verify that a module by this name is registered in the 
+native binary.
+
+    [0m [90m 54 |[39m 
+jest[33m.[39mmock([32m'react-native'[39m[33m,[39m () [33m=>[39m {
+     [90m 55 |[39m   [36mconst[39m [33mRN[39m [33m=[39m 
+jest[33m.[39mrequireActual([32m'react-native'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 56 |[39m   [36mreturn[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 57 |[39m     [33m...[39m[33mRN[39m[33m,[39m
+     [90m 58 |[39m     [33mPlatform[39m[33m:[39m {
+     [90m 59 |[39m       [33mOS[39m[33m:[39m 
+[32m'android'[39m[33m,[39m[0m
+
+      at invariant (node_modules/invariant/invariant.js:40:15)
+      at Object.getEnforcing 
+(node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js:47:12)
+      at Object.getEnforcing (node_modules/react-native/src/private/devsupport/
+devmenu/specs/NativeDevMenu.js:22:37)
+      at Object.require 
+(node_modules/react-native/src/private/devsupport/devmenu/DevMenu.js:11:1)
+      at Object.require (node_modules/react-native/index.js:202:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/Vir
+tualizedListCellRenderer.js:23:1)
+      at Object.require 
+(node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:36:1)
+      at Object.require [as VirtualizedList] 
+(node_modules/@react-native/virtualized-lists/index.js:46:12)
+      at Object.VirtualizedList 
+(node_modules/react-native/Libraries/Lists/FlatList.js:33:42)
+      at Object.require [as FlatList] 
+(node_modules/react-native/index.js:46:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (src/services/pushTokenService.js:11:1)
+      at Object.require (src/services/__tests__/pushTokenService.test.js:83:24)
+
+  ÔùÅ PushTokenService ÔÇ║ registrarToken ÔÇ║ debe rechazar tokens muy cortos 
+sin generar alternativo
+
+    Invariant Violation: TurboModuleRegistry.getEnforcing(...): 'DevMenu' 
+could not be found. Verify that a module by this name is registered in the 
+native binary.
+
+    [0m [90m 54 |[39m 
+jest[33m.[39mmock([32m'react-native'[39m[33m,[39m () [33m=>[39m {
+     [90m 55 |[39m   [36mconst[39m [33mRN[39m [33m=[39m 
+jest[33m.[39mrequireActual([32m'react-native'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 56 |[39m   [36mreturn[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 57 |[39m     [33m...[39m[33mRN[39m[33m,[39m
+     [90m 58 |[39m     [33mPlatform[39m[33m:[39m {
+     [90m 59 |[39m       [33mOS[39m[33m:[39m 
+[32m'android'[39m[33m,[39m[0m
+
+      at invariant (node_modules/invariant/invariant.js:40:15)
+      at Object.getEnforcing 
+(node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js:47:12)
+      at Object.getEnforcing (node_modules/react-native/src/private/devsupport/
+devmenu/specs/NativeDevMenu.js:22:37)
+      at Object.require 
+(node_modules/react-native/src/private/devsupport/devmenu/DevMenu.js:11:1)
+      at Object.require (node_modules/react-native/index.js:202:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/Vir
+tualizedListCellRenderer.js:23:1)
+      at Object.require 
+(node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:36:1)
+      at Object.require [as VirtualizedList] 
+(node_modules/@react-native/virtualized-lists/index.js:46:12)
+      at Object.VirtualizedList 
+(node_modules/react-native/Libraries/Lists/FlatList.js:33:42)
+      at Object.require [as FlatList] 
+(node_modules/react-native/index.js:46:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (src/services/pushTokenService.js:11:1)
+      at Object.require (src/services/__tests__/pushTokenService.test.js:83:24)
+
+  ÔùÅ PushTokenService ÔÇ║ registrarToken ÔÇ║ debe registrar token v├ílido en 
+el servidor
+
+    Invariant Violation: TurboModuleRegistry.getEnforcing(...): 'DevMenu' 
+could not be found. Verify that a module by this name is registered in the 
+native binary.
+
+    [0m [90m 54 |[39m 
+jest[33m.[39mmock([32m'react-native'[39m[33m,[39m () [33m=>[39m {
+     [90m 55 |[39m   [36mconst[39m [33mRN[39m [33m=[39m 
+jest[33m.[39mrequireActual([32m'react-native'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 56 |[39m   [36mreturn[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 57 |[39m     [33m...[39m[33mRN[39m[33m,[39m
+     [90m 58 |[39m     [33mPlatform[39m[33m:[39m {
+     [90m 59 |[39m       [33mOS[39m[33m:[39m 
+[32m'android'[39m[33m,[39m[0m
+
+      at invariant (node_modules/invariant/invariant.js:40:15)
+      at Object.getEnforcing 
+(node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js:47:12)
+      at Object.getEnforcing (node_modules/react-native/src/private/devsupport/
+devmenu/specs/NativeDevMenu.js:22:37)
+      at Object.require 
+(node_modules/react-native/src/private/devsupport/devmenu/DevMenu.js:11:1)
+      at Object.require (node_modules/react-native/index.js:202:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/Vir
+tualizedListCellRenderer.js:23:1)
+      at Object.require 
+(node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:36:1)
+      at Object.require [as VirtualizedList] 
+(node_modules/@react-native/virtualized-lists/index.js:46:12)
+      at Object.VirtualizedList 
+(node_modules/react-native/Libraries/Lists/FlatList.js:33:42)
+      at Object.require [as FlatList] 
+(node_modules/react-native/index.js:46:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (src/services/pushTokenService.js:11:1)
+      at Object.require (src/services/__tests__/pushTokenService.test.js:83:24)
+
+  ÔùÅ PushTokenService ÔÇ║ obtenerTokenDirecto ÔÇ║ debe limpiar tokens 
+inv├ílidos del almacenamiento
+
+    Invariant Violation: TurboModuleRegistry.getEnforcing(...): 'DevMenu' 
+could not be found. Verify that a module by this name is registered in the 
+native binary.
+
+    [0m [90m 54 |[39m 
+jest[33m.[39mmock([32m'react-native'[39m[33m,[39m () [33m=>[39m {
+     [90m 55 |[39m   [36mconst[39m [33mRN[39m [33m=[39m 
+jest[33m.[39mrequireActual([32m'react-native'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 56 |[39m   [36mreturn[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 57 |[39m     [33m...[39m[33mRN[39m[33m,[39m
+     [90m 58 |[39m     [33mPlatform[39m[33m:[39m {
+     [90m 59 |[39m       [33mOS[39m[33m:[39m 
+[32m'android'[39m[33m,[39m[0m
+
+      at invariant (node_modules/invariant/invariant.js:40:15)
+      at Object.getEnforcing 
+(node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js:47:12)
+      at Object.getEnforcing (node_modules/react-native/src/private/devsupport/
+devmenu/specs/NativeDevMenu.js:22:37)
+      at Object.require 
+(node_modules/react-native/src/private/devsupport/devmenu/DevMenu.js:11:1)
+      at Object.require (node_modules/react-native/index.js:202:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/Vir
+tualizedListCellRenderer.js:23:1)
+      at Object.require 
+(node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:36:1)
+      at Object.require [as VirtualizedList] 
+(node_modules/@react-native/virtualized-lists/index.js:46:12)
+      at Object.VirtualizedList 
+(node_modules/react-native/Libraries/Lists/FlatList.js:33:42)
+      at Object.require [as FlatList] 
+(node_modules/react-native/index.js:46:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (src/services/pushTokenService.js:11:1)
+      at Object.require (src/services/__tests__/pushTokenService.test.js:83:24)
+
+  ÔùÅ PushTokenService ÔÇ║ obtenerTokenDirecto ÔÇ║ debe retornar token v├ílido 
+si tiene longitud correcta
+
+    Invariant Violation: TurboModuleRegistry.getEnforcing(...): 'DevMenu' 
+could not be found. Verify that a module by this name is registered in the 
+native binary.
+
+    [0m [90m 54 |[39m 
+jest[33m.[39mmock([32m'react-native'[39m[33m,[39m () [33m=>[39m {
+     [90m 55 |[39m   [36mconst[39m [33mRN[39m [33m=[39m 
+jest[33m.[39mrequireActual([32m'react-native'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 56 |[39m   [36mreturn[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 57 |[39m     [33m...[39m[33mRN[39m[33m,[39m
+     [90m 58 |[39m     [33mPlatform[39m[33m:[39m {
+     [90m 59 |[39m       [33mOS[39m[33m:[39m 
+[32m'android'[39m[33m,[39m[0m
+
+      at invariant (node_modules/invariant/invariant.js:40:15)
+      at Object.getEnforcing 
+(node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js:47:12)
+      at Object.getEnforcing (node_modules/react-native/src/private/devsupport/
+devmenu/specs/NativeDevMenu.js:22:37)
+      at Object.require 
+(node_modules/react-native/src/private/devsupport/devmenu/DevMenu.js:11:1)
+      at Object.require (node_modules/react-native/index.js:202:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/Vir
+tualizedListCellRenderer.js:23:1)
+      at Object.require 
+(node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:36:1)
+      at Object.require [as VirtualizedList] 
+(node_modules/@react-native/virtualized-lists/index.js:46:12)
+      at Object.VirtualizedList 
+(node_modules/react-native/Libraries/Lists/FlatList.js:33:42)
+      at Object.require [as FlatList] 
+(node_modules/react-native/index.js:46:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (src/services/pushTokenService.js:11:1)
+      at Object.require (src/services/__tests__/pushTokenService.test.js:83:24)
+
+  ÔùÅ PushTokenService ÔÇ║ isTokenRegistrado ÔÇ║ debe retornar true si el 
+token est├í registrado en memoria
+
+    Invariant Violation: TurboModuleRegistry.getEnforcing(...): 'DevMenu' 
+could not be found. Verify that a module by this name is registered in the 
+native binary.
+
+    [0m [90m 54 |[39m 
+jest[33m.[39mmock([32m'react-native'[39m[33m,[39m () [33m=>[39m {
+     [90m 55 |[39m   [36mconst[39m [33mRN[39m [33m=[39m 
+jest[33m.[39mrequireActual([32m'react-native'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 56 |[39m   [36mreturn[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 57 |[39m     [33m...[39m[33mRN[39m[33m,[39m
+     [90m 58 |[39m     [33mPlatform[39m[33m:[39m {
+     [90m 59 |[39m       [33mOS[39m[33m:[39m 
+[32m'android'[39m[33m,[39m[0m
+
+      at invariant (node_modules/invariant/invariant.js:40:15)
+      at Object.getEnforcing 
+(node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js:47:12)
+      at Object.getEnforcing (node_modules/react-native/src/private/devsupport/
+devmenu/specs/NativeDevMenu.js:22:37)
+      at Object.require 
+(node_modules/react-native/src/private/devsupport/devmenu/DevMenu.js:11:1)
+      at Object.require (node_modules/react-native/index.js:202:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/Vir
+tualizedListCellRenderer.js:23:1)
+      at Object.require 
+(node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:36:1)
+      at Object.require [as VirtualizedList] 
+(node_modules/@react-native/virtualized-lists/index.js:46:12)
+      at Object.VirtualizedList 
+(node_modules/react-native/Libraries/Lists/FlatList.js:33:42)
+      at Object.require [as FlatList] 
+(node_modules/react-native/index.js:46:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (src/services/pushTokenService.js:11:1)
+      at Object.require (src/services/__tests__/pushTokenService.test.js:83:24)
+
+  ÔùÅ PushTokenService ÔÇ║ isTokenRegistrado ÔÇ║ debe verificar AsyncStorage 
+si no est├í en memoria
+
+    Invariant Violation: TurboModuleRegistry.getEnforcing(...): 'DevMenu' 
+could not be found. Verify that a module by this name is registered in the 
+native binary.
+
+    [0m [90m 54 |[39m 
+jest[33m.[39mmock([32m'react-native'[39m[33m,[39m () [33m=>[39m {
+     [90m 55 |[39m   [36mconst[39m [33mRN[39m [33m=[39m 
+jest[33m.[39mrequireActual([32m'react-native'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 56 |[39m   [36mreturn[39m {
+     [90m    |[39m   [31m[1m^[22m[39m
+     [90m 57 |[39m     [33m...[39m[33mRN[39m[33m,[39m
+     [90m 58 |[39m     [33mPlatform[39m[33m:[39m {
+     [90m 59 |[39m       [33mOS[39m[33m:[39m 
+[32m'android'[39m[33m,[39m[0m
+
+      at invariant (node_modules/invariant/invariant.js:40:15)
+      at Object.getEnforcing 
+(node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js:47:12)
+      at Object.getEnforcing (node_modules/react-native/src/private/devsupport/
+devmenu/specs/NativeDevMenu.js:22:37)
+      at Object.require 
+(node_modules/react-native/src/private/devsupport/devmenu/DevMenu.js:11:1)
+      at Object.require (node_modules/react-native/index.js:202:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (node_modules/@react-native/virtualized-lists/Lists/Vir
+tualizedListCellRenderer.js:23:1)
+      at Object.require 
+(node_modules/@react-native/virtualized-lists/Lists/VirtualizedList.js:36:1)
+      at Object.require [as VirtualizedList] 
+(node_modules/@react-native/virtualized-lists/index.js:46:12)
+      at Object.VirtualizedList 
+(node_modules/react-native/Libraries/Lists/FlatList.js:33:42)
+      at Object.require [as FlatList] 
+(node_modules/react-native/index.js:46:12)
+          at Object.assign (<anonymous>)
+      at assign (src/services/__tests__/pushTokenService.test.js:56:3)
+      at Object.require (src/services/pushTokenService.js:11:1)
+      at Object.require (src/services/__tests__/pushTokenService.test.js:83:24)
+
+Test Suites: 1 failed, 1 total
+Tests:       10 failed, 10 total
+Snapshots:   0 total
+Time:        3.693 s, estimated 4 s
+Ran all test suites matching 
+/src\\services\\__tests__\\pushTokenService.test.js/i.

@@ -1,0 +1,15 @@
+{
+  "react-native": {
+    "messaging_android_notification_channel_id": "clinica-movil-reminders",
+    "messaging_android_notification_color": "@android:color/holo_blue_dark",
+    "messaging_android_headless_task_timeout": 60000,
+    "messaging_ios_auto_register_for_remote_messages": true,
+    "messaging_ios_foreground_presentation_options": ["badge", "sound", "list", "banner"],
+    "analytics_auto_collection_enabled": true,
+    "messaging_auto_init_enabled": true
+  }
+}
+
+
+
+

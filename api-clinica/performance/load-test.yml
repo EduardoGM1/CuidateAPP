@@ -1,0 +1,87 @@
+# Configuración de Artillery para Load Testing
+config:
+  target: 'http://localhost:3000'
+  phases:
+    # Fase de calentamiento - 2 minutos
+    - duration: 120
+      arrivalRate: 5
+      name: "Warm up"
+    
+    # Fase de carga normal - 5 minutos
+    - duration: 300
+      arrivalRate: 10
+      name: "Normal load"
+    
+    # Fase de carga pesada - 3 minutos
+    - duration: 180
+      arrivalRate: 20
+      name: "Heavy load"
+    
+    # Fase de enfriamiento - 1 minuto
+    - duration: 60
+      arrivalRate: 5
+      name: "Cool down"
+  
+  # Configuraciones globales
+  http:
+    timeout: 30
+  processor: './performance/load-processors.js'
+
+# Escenarios de carga
+scenarios:
+  # Escenario 1: Health Checks (40% del tráfico)
+  - name: "Health Checks"
+    weight: 40
+    flow:
+      - get:
+          url: "/health"
+          headers:
+            X-Test-Mode: "true"
+      - think: 1
+
+  # Escenario 2: Autenticación (30% del tráfico)
+  - name: "Authentication Flow"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/auth/login"
+          headers:
+            X-Test-Mode: "true"
+            Content-Type: "application/json"
+          json:
+            email: "loadtest.admin@test.com"
+            password: "LoadTest123"
+      - think: 2
+
+  # Escenario 3: Operaciones CRUD (20% del tráfico)
+  - name: "CRUD Operations"
+    weight: 20
+    flow:
+      - function: "generateAuthToken"
+      - get:
+          url: "/api/pacientes"
+          headers:
+            X-Test-Mode: "true"
+            Authorization: "Bearer {{ token }}"
+      - think: 1
+      - get:
+          url: "/api/doctores"
+          headers:
+            X-Test-Mode: "true"
+            Authorization: "Bearer {{ token }}"
+      - think: 1
+
+  # Escenario 4: Creación de pacientes (10% del tráfico)
+  - name: "Patient Creation"
+    weight: 10
+    flow:
+      - function: "generateAuthToken"
+      - function: "generatePatientData"
+      - post:
+          url: "/api/pacientes"
+          headers:
+            X-Test-Mode: "true"
+            Authorization: "Bearer {{ token }}"
+            Content-Type: "application/json"
+          json: "{{ pacienteData }}"
+      - think: 3

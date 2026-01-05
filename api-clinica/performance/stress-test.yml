@@ -1,0 +1,94 @@
+# Configuración de Artillery para Stress Testing
+config:
+  target: 'http://localhost:3000'
+  phases:
+    # Fase de calentamiento gradual - 1 minuto
+    - duration: 60
+      arrivalRate: 5
+      name: "Gradual warm up"
+    
+    # Incremento gradual hasta límite - 3 minutos
+    - duration: 180
+      arrivalRate: 10
+      rampTo: 50
+      name: "Gradual ramp up"
+    
+    # Carga sostenida alta - 5 minutos
+    - duration: 300
+      arrivalRate: 50
+      name: "Sustained high load"
+    
+    # Pico de carga máxima - 2 minutos
+    - duration: 120
+      arrivalRate: 100
+      name: "Peak load spike"
+    
+    # Recuperación - 2 minutos
+    - duration: 120
+      arrivalRate: 10
+      name: "Recovery phase"
+  
+  # Configuraciones para stress testing
+  http:
+    timeout: 60
+  processor: './performance/stress-processors.js'
+
+# Escenarios de estrés
+scenarios:
+  # Escenario 1: Health checks masivos (50% del tráfico)
+  - name: "Massive Health Checks"
+    weight: 50
+    flow:
+      - get:
+          url: "/health"
+          headers:
+            X-Test-Mode: "true"
+      - think: 0.5
+
+  # Escenario 2: Login masivo (25% del tráfico)
+  - name: "Massive Login Attempts"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/auth/login"
+          headers:
+            X-Test-Mode: "true"
+            Content-Type: "application/json"
+          json:
+            email: "{{ $randomString() }}@test.com"
+            password: "{{ $randomString() }}"
+      - think: 1
+
+  # Escenario 3: Operaciones de lectura masiva (15% del tráfico)
+  - name: "Massive Read Operations"
+    weight: 15
+    flow:
+      - function: "generateAuthToken"
+      - loop:
+        - get:
+            url: "/api/pacientes"
+            headers:
+              X-Test-Mode: "true"
+              Authorization: "Bearer {{ token }}"
+        - get:
+            url: "/api/doctores"
+            headers:
+              X-Test-Mode: "true"
+              Authorization: "Bearer {{ token }}"
+        count: 3
+      - think: 1
+
+  # Escenario 4: Creación masiva (10% del tráfico)
+  - name: "Massive Creation Operations"
+    weight: 10
+    flow:
+      - function: "generateAuthToken"
+      - function: "generatePatientData"
+      - post:
+          url: "/api/pacientes"
+          headers:
+            X-Test-Mode: "true"
+            Authorization: "Bearer {{ token }}"
+            Content-Type: "application/json"
+          json: "{{ pacienteData }}"
+      - think: 2
