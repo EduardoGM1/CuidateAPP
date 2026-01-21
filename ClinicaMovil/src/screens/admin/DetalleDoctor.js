@@ -718,8 +718,27 @@ const DetalleDoctor = ({ route, navigation }) => {
   };
 
   const handleViewAppointment = (cita) => {
-    Logger.navigation('DetalleDoctor', 'ViewAppointment', { citaId: cita.id_cita });
-    Alert.alert('Ver Cita', `Ver detalles de cita con ${cita.paciente}`);
+    try {
+      // Validar que la cita tenga id_cita
+      const citaId = cita?.id_cita || cita?.id;
+      
+      if (!citaId) {
+        Logger.error('DetalleDoctor: Cita sin ID válido', { cita });
+        Alert.alert('Error', 'No se pudo obtener la información de la cita');
+        return;
+      }
+      
+      Logger.navigation('DetalleDoctor', 'VerTodasCitas', { citaId });
+      
+      // Navegar a VerTodasCitas con highlightCitaId para resaltar la cita específica
+      navigation.navigate('VerTodasCitas', { highlightCitaId: citaId });
+    } catch (error) {
+      Logger.error('DetalleDoctor: Error navegando a VerTodasCitas', { 
+        error: error.message,
+        cita: cita 
+      });
+      Alert.alert('Error', 'No se pudo abrir los detalles de la cita');
+    }
   };
 
   const renderPatientCard = (paciente) => {
@@ -1074,7 +1093,7 @@ const DetalleDoctor = ({ route, navigation }) => {
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Fecha de Registro:</Text>
                 <Text style={styles.infoValue}>
-                  {currentDoctor.fecha_registro ? new Date(currentDoctor.fecha_registro).toLocaleDateString('es-ES') : 'No disponible'}
+                  {currentDoctor.fecha_registro ? formatDate(new Date(currentDoctor.fecha_registro)) : 'No disponible'}
                 </Text>
               </View>
             </View>

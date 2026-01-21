@@ -28,8 +28,10 @@ const VerTodasCitas = ({ navigation }) => {
   const { userData, userRole } = useAuth();
   const route = useRoute();
   
-  // Obtener parámetros de ruta (si viene desde dashboard)
-  const { id_cita, desde_dashboard } = route.params || {};
+  // Obtener parámetros de ruta (si viene desde dashboard o DetalleDoctor)
+  const { id_cita, highlightCitaId, desde_dashboard } = route.params || {};
+  // Usar highlightCitaId si está disponible, sino usar id_cita
+  const citaIdToHighlight = highlightCitaId || id_cita;
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDoctor, setFilterDoctor] = useState(null);
@@ -138,11 +140,11 @@ const VerTodasCitas = ({ navigation }) => {
     setFilteredCitas(filtered);
   }, [citas, searchQuery, userRole, pacientesIdsDoctor, loading, hasLoadedOnce]);
 
-  // Efecto para resaltar y hacer scroll a la cita cuando viene desde dashboard
+  // Efecto para resaltar y hacer scroll a la cita cuando viene desde dashboard o DetalleDoctor
   useEffect(() => {
-    if (id_cita && filteredCitas.length > 0 && desde_dashboard) {
+    if (citaIdToHighlight && filteredCitas.length > 0) {
       // Convertir id_cita a número para comparación robusta
-      const idCitaNum = typeof id_cita === 'string' ? parseInt(id_cita) : id_cita;
+      const idCitaNum = typeof citaIdToHighlight === 'string' ? parseInt(citaIdToHighlight) : citaIdToHighlight;
       
       // Buscar la cita en la lista con comparación robusta
       const index = filteredCitas.findIndex(cita => {
@@ -193,7 +195,7 @@ const VerTodasCitas = ({ navigation }) => {
         });
       }
     }
-  }, [id_cita, filteredCitas, desde_dashboard]);
+  }, [citaIdToHighlight, filteredCitas]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
