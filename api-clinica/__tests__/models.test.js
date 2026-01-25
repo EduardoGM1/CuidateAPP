@@ -1,11 +1,5 @@
 import { DataTypes } from 'sequelize';
 
-// Mock de sequelize
-const mockSequelize = {
-  define: jest.fn(),
-  sync: jest.fn()
-};
-
 // Mock de Sequelize
 const mockSequelize = {
   define: jest.fn(),

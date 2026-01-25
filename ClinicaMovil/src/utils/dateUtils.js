@@ -221,6 +221,81 @@ export const formatAppointmentDate = (timestamp) => {
   }
 };
 
+/**
+ * Formatea una fecha con día de la semana completo en español
+ * @param {string|Date} timestamp - Fecha a formatear
+ * @returns {string} Fecha formateada con día de la semana (ej: "lunes, 6 de noviembre del 2025")
+ */
+export const formatDateWithWeekday = (timestamp) => {
+  if (!timestamp) return 'Fecha no disponible';
+  
+  const date = new Date(timestamp);
+  
+  if (isNaN(date.getTime())) {
+    return 'Fecha inválida';
+  }
+  
+  const diasSemana = [
+    'domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'
+  ];
+  
+  const diaSemana = diasSemana[date.getDay()];
+  const fechaFormateada = formatDate(timestamp);
+  
+  return `${diaSemana}, ${fechaFormateada}`;
+};
+
+/**
+ * Formatea una fecha con mes abreviado en español
+ * @param {string|Date} timestamp - Fecha a formatear
+ * @param {boolean} includeYear - Si incluir el año (default: true)
+ * @returns {string} Fecha formateada (ej: "6 nov" o "6 nov 2025")
+ */
+export const formatDateShort = (timestamp, includeYear = true) => {
+  if (!timestamp) return 'Fecha no disponible';
+  
+  const date = new Date(timestamp);
+  
+  if (isNaN(date.getTime())) {
+    return 'Fecha inválida';
+  }
+  
+  const mesesAbreviados = [
+    'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+    'jul', 'ago', 'sep', 'oct', 'nov', 'dic'
+  ];
+  
+  const dia = date.getDate();
+  const mes = mesesAbreviados[date.getMonth()];
+  const año = date.getFullYear();
+  
+  if (includeYear) {
+    return `${dia} ${mes} ${año}`;
+  }
+  return `${dia} ${mes}`;
+};
+
+/**
+ * Formatea una fecha con formato DD/MM/YYYY
+ * @param {string|Date} timestamp - Fecha a formatear
+ * @returns {string} Fecha formateada (ej: "06/11/2025")
+ */
+export const formatDateNumeric = (timestamp) => {
+  if (!timestamp) return 'Fecha no disponible';
+  
+  const date = new Date(timestamp);
+  
+  if (isNaN(date.getTime())) {
+    return 'Fecha inválida';
+  }
+  
+  const dia = String(date.getDate()).padStart(2, '0');
+  const mes = String(date.getMonth() + 1).padStart(2, '0');
+  const año = date.getFullYear();
+  
+  return `${dia}/${mes}/${año}`;
+};
+
 export default {
   formatDate,
   formatDateTime,
@@ -228,6 +303,9 @@ export default {
   formatRelativeTime,
   isValidDate,
   getDaysDifference,
-  formatAppointmentDate
+  formatAppointmentDate,
+  formatDateWithWeekday,
+  formatDateShort,
+  formatDateNumeric
 };
 

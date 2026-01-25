@@ -27,7 +27,7 @@ const OfflineDebugButton = () => {
       
       const queueDetails = queue.length > 0 
         ? queue.map((item, index) => 
-            `${index + 1}. ${item.resource} (${item.operation}) - ${item.status}\n   ID: ${item.id}\n   Timestamp: ${new Date(item.timestamp).toLocaleString()}`
+            `${index + 1}. ${item.resource} (${item.operation}) - ${item.status}\n   ID: ${item.id}\n   Timestamp: ${new Date(item.timestamp).toLocaleString('es-ES')}`
           ).join('\n\n')
         : 'No hay operaciones en la cola';
 

@@ -19,6 +19,7 @@ jest.mock('express-validator', () => ({
   validationResult: jest.fn()
 }));
 
+// Importar después del mock
 import { body, param, validationResult } from 'express-validator';
 
 describe('Middlewares', () => {

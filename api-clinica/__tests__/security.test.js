@@ -248,9 +248,6 @@ describe('🛡️ PRUEBAS DE SEGURIDAD', () => {
         'doctor@hospital.mx'
       ];
       
-      // Regex mejorado que no acepta emails inválidos como "user@domain"
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-      
       invalidEmails.forEach(email => {
         const isValid = emailRegex.test(email);
         expect(isValid).toBe(false);

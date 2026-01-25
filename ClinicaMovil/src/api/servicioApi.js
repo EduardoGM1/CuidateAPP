@@ -1,6 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import Logger from '../services/logger';
 
 // Importar configuración de API centralizada
 import { getApiConfigWithFallback, getApiConfigSync } from '../config/apiConfig';
@@ -153,36 +154,58 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Manejar token expirado (401 Unauthorized o 403 Forbidden)
+    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
       originalRequest._retry = true;
       
       try {
-        // Importar storageService para acceso seguro
-        const { storageService } = await import('../services/storageService');
+        // Usar sessionService para manejar el refresh de forma centralizada
+        const sessionService = (await import('../services/sessionService.js')).default;
         
-        // Intentar renovar token
-        const refreshToken = await storageService.getRefreshToken();
-        if (refreshToken) {
-          const currentConfig = getApiConfig();
-          const currentApiUrl = API_URL || `${currentConfig.baseURL}/api`;
-          const refreshResponse = await axios.post(`${currentApiUrl}/mobile/refresh-token`, {
-            refresh_token: refreshToken
+        Logger.info('🔄 [INTERCEPTOR] Token expirado (401/403), intentando renovar automáticamente...', {
+          url: originalRequest.url,
+          method: originalRequest.method,
+          status: error.response?.status
+        });
+        
+        const newToken = await sessionService.refreshToken();
+        
+        if (newToken) {
+          // Token renovado exitosamente, reintentar request original
+          Logger.success('✅ [INTERCEPTOR] Token renovado exitosamente, reintentando request original', {
+            url: originalRequest.url,
+            method: originalRequest.method
           });
           
-          const { token, refresh_token } = refreshResponse.data;
-          // Guardar tokens de forma segura (encriptados)
-          await storageService.saveAuthToken(token);
-          await storageService.saveRefreshToken(refresh_token);
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
           
-          // Reintentar request original
-          originalRequest.headers.Authorization = `Bearer ${token}`;
+          // Pequeño delay para asegurar que el token se guardó correctamente
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
           return api(originalRequest);
+        } else {
+          // No se pudo renovar, la sesión ha expirada
+          Logger.warn('⚠️ [INTERCEPTOR] No se pudo renovar el token, cerrando sesión y redirigiendo al login', {
+            url: originalRequest.url
+          });
+          
+          // Asegurar que se cierre la sesión y redirija al login
+          await sessionService.handleSessionExpired();
         }
       } catch (refreshError) {
-        // Si falla la renovación, limpiar tokens de forma segura
-        const { storageService } = await import('../services/storageService');
-        await storageService.clearAuthData();
-        // Aquí podríamos dispatchar una acción para cerrar sesión
+        Logger.error('❌ [INTERCEPTOR] Error en proceso de renovación de token', {
+          error: refreshError.message,
+          stack: refreshError.stack,
+          url: originalRequest.url
+        });
+        
+        // Si hay error en el proceso de renovación, manejar sesión expirada
+        try {
+          const sessionService = (await import('../services/sessionService.js')).default;
+          await sessionService.handleSessionExpired();
+        } catch (handleError) {
+          Logger.error('❌ [INTERCEPTOR] Error manejando sesión expirada', handleError);
+        }
       }
     }
     

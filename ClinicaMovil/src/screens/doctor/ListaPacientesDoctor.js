@@ -30,6 +30,7 @@ import Logger from '../../services/logger';
 import gestionService from '../../api/gestionService';
 import { usePacientes } from '../../hooks/useGestion';
 import useDebounce from '../../hooks/useDebounce';
+import { formatDate } from '../../utils/dateUtils';
 
 const ListaPacientesDoctor = ({ navigation }) => {
   const { userData, userRole } = useAuth();
@@ -230,7 +231,7 @@ const ListaPacientesDoctor = ({ navigation }) => {
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>📅 Registro:</Text>
                   <Text style={[styles.detailValue, !paciente.activo && styles.inactiveText]}>
-                    {new Date(paciente.fecha_registro).toLocaleDateString('es-ES')}
+                    {formatDate(new Date(paciente.fecha_registro))}
                   </Text>
                 </View>
               )}

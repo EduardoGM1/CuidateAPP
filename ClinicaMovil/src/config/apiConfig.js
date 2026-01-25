@@ -11,7 +11,8 @@ const getLocalIP = () => {
   // IPs comunes para desarrollo local
   // NOTA: Estas IPs deben coincidir con la IP real de tu PC en la red local
   const commonIPs = [
-    '192.168.1.74',    // IP actual detectada (2025-01-XX)
+    '192.168.1.79',    // IP actual detectada (2026-01-18)
+    '192.168.1.74',    // IP anterior
     '192.168.1.65',    // IP anterior
     '192.168.1.100',   // IP alternativa común
     '192.168.0.100',    // IP para redes 192.168.0.x
@@ -21,19 +22,19 @@ const getLocalIP = () => {
   
   // Usar la IP actual detectada
   // Para encontrar tu IP: ipconfig (Windows) o ifconfig (Linux/Mac)
-  return commonIPs[0]; // 192.168.1.74
+  return commonIPs[0]; // 192.168.1.79
 };
 
 // Configuración de API por entorno
 const API_CONFIG = {
   development: {
     baseURL: 'http://localhost:3000',
-    timeout: 10000,
+    timeout: 30000, // Aumentado de 10000 a 30000 para peticiones grandes
     description: 'Desarrollo local con adb reverse'
   },
   localNetwork: {
     baseURL: `http://${getLocalIP()}:3000`,
-    timeout: 15000,
+    timeout: 30000, // Aumentado de 15000 a 30000 para peticiones grandes
     description: 'Red local sin adb reverse'
   },
   emulator: {
@@ -175,19 +176,19 @@ export const setApiEnvironment = (environment) => {
 
 // Función para probar conectividad con una URL específica
 export const testApiConnectivity = async (urlToTest = null) => {
-  const config = urlToTest ? { baseURL: urlToTest, timeout: 5000 } : getApiConfigSync();
+  const config = urlToTest ? { baseURL: urlToTest, timeout: 8000 } : getApiConfigSync();
   
   // Probar primero con el endpoint raíz (más simple)
   const endpointsToTest = [
+    `${config.baseURL}/health`,  // Health check (más rápido)
     `${config.baseURL}/`,  // Endpoint raíz
     `${config.baseURL}/api/mobile/config`,  // Endpoint móvil
-    `${config.baseURL}/health`,  // Health check
   ];
   
   for (const testUrl of endpointsToTest) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), config.timeout || 5000);
+      const timeoutId = setTimeout(() => controller.abort(), config.timeout || 8000);
       
       if (__DEV__) {
         console.log(`🔄 Probando conectividad: ${testUrl}`);
@@ -298,17 +299,22 @@ export const getApiConfigWithFallback = async () => {
         }
       } else {
         // Para dispositivos físicos: Probar localhost primero (con adb reverse)
+        // PERO con timeout más corto para fallback rápido
         if (__DEV__) {
           console.log('🔍 Dispositivo físico detectado - probando localhost primero');
         }
         
-        // PRIMERO: Probar localhost (adb reverse) - más rápido y confiable para dispositivos físicos
+        // PRIMERO: Probar localhost (adb reverse) con timeout corto
         const localhostConfig = API_CONFIG.development;
         if (__DEV__) {
           console.log(`🔄 Probando localhost (adb reverse): ${localhostConfig.baseURL}`);
         }
         
-        const localhostTest = await testApiConnectivity(localhostConfig.baseURL);
+        // Usar timeout más corto para localhost en dispositivos físicos (3 segundos)
+        const localhostTest = await Promise.race([
+          testApiConnectivity(localhostConfig.baseURL),
+          new Promise((resolve) => setTimeout(() => resolve({ success: false, error: 'Timeout' }), 3000))
+        ]);
         
         if (localhostTest.success) {
           cachedEnvironment = 'development';
@@ -318,9 +324,9 @@ export const getApiConfigWithFallback = async () => {
           return localhostConfig;
         }
         
-        // SEGUNDO: Si localhost falla, probar con IP de red local
+        // SEGUNDO: Si localhost falla rápidamente, probar con IP de red local inmediatamente
         if (__DEV__) {
-          console.log(`🔄 Probando red local: ${API_CONFIG.localNetwork.baseURL}`);
+          console.log(`⚠️ Localhost falló, probando red local: ${API_CONFIG.localNetwork.baseURL}`);
         }
         
         const localNetworkTest = await testApiConnectivity(API_CONFIG.localNetwork.baseURL);

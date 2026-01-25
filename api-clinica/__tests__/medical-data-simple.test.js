@@ -5,11 +5,7 @@
  * @date 2025-10-28
  */
 
-import request from 'supertest';
-import express from 'express';
-import jwt from 'jsonwebtoken';
-
-// Mock de models
+// Mock de models (debe ir antes de los imports en ES modules)
 const mockCita = {
   create: jest.fn(),
   findAll: jest.fn(),
@@ -73,6 +69,11 @@ jest.mock('../controllers/pacienteMedicalData.js', () => ({
 jest.mock('../controllers/medicamento.js', () => ({
   createPlanMedicacion: mockCreatePlanMedicacion
 }));
+
+// Imports después de los mocks
+import request from 'supertest';
+import express from 'express';
+import jwt from 'jsonwebtoken';
 
 describe('Medical Data - Unit Tests', () => {
   beforeEach(() => {

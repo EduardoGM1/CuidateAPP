@@ -99,7 +99,7 @@ const ConsultaCard = ({
               <Text style={styles.estadoIcon}>{estadoIcon}</Text>
               <View style={styles.headerText}>
                 <Text style={styles.fecha}>
-                  📅 {formatearFecha(cita.fecha_cita)}
+                  {formatearFecha(cita.fecha_cita)}
                 </Text>
                 {cita.doctor_nombre && (
                   <Text style={styles.doctor}>

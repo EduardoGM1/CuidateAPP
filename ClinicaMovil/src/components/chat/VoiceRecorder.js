@@ -1,17 +1,15 @@
 /**
  * Componente: VoiceRecorder
  * 
- * Componente para grabar mensajes de voz y permitir preview antes de enviar.
- * Usa audioService para toda la lógica de grabación y reproducción.
+ * Componente para grabar mensajes de voz y enviarlos al chat.
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import audioService from '../../services/audioService';
 import Logger from '../../services/logger';
 import hapticService from '../../services/hapticService';
 import audioFeedbackService from '../../services/audioFeedbackService';
-import AudioWaveform from './AudioWaveform';
 import { uploadAudioFile } from '../../api/chatService';
 
 const VoiceRecorder = ({ onRecordingComplete, onCancel }) => {
@@ -21,7 +19,6 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }) => {
   const [audioFilePath, setAudioFilePath] = useState(null);
   const [audioDuration, setAudioDuration] = useState(0);
   const [currentPosition, setCurrentPosition] = useState(0);
-  const [error, setError] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const timerRef = useRef(null);
@@ -35,13 +32,10 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }) => {
 
   const cleanup = async () => {
     try {
-      // Limpiar timers
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-
-      // Limpiar recursos de audio (solo si no estamos subiendo)
       if (!isUploading) {
         await audioService.cleanup();
       }
@@ -52,17 +46,13 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }) => {
 
   const startRecording = async () => {
     try {
-      setError(null);
       setRecordingTime(0);
       setAudioFilePath(null);
       setAudioDuration(0);
       setCurrentPosition(0);
 
-      Logger.info('VoiceRecorder: Iniciando grabación');
-
-      // Iniciar grabación usando el servicio
       await audioService.startRecording({
-        onProgress: ({ currentPosition, duration }) => {
+        onProgress: ({ currentPosition }) => {
           setRecordingTime(currentPosition);
         },
       });
@@ -71,17 +61,12 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }) => {
       audioFeedbackService.playSuccess();
       hapticService.medium();
 
-      // Iniciar timer para mostrar tiempo transcurrido
+      // Timer para mostrar tiempo transcurrido
       timerRef.current = setInterval(() => {
         setRecordingTime((prev) => prev + 1);
       }, 1000);
     } catch (error) {
-      Logger.error('VoiceRecorder: Error iniciando grabación', {
-        error: error.message,
-        code: error.code,
-        stack: error.stack,
-      });
-      setError(error.message || 'No se pudo iniciar la grabación. Verifica los permisos.');
+      Logger.error('VoiceRecorder: Error iniciando grabación', error);
       audioFeedbackService.playError();
       setIsRecording(false);
     }
@@ -94,22 +79,12 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }) => {
         timerRef.current = null;
       }
 
-      Logger.info('VoiceRecorder: Deteniendo grabación');
-
-      // Detener grabación usando el servicio
       const result = await audioService.stopRecording();
-
-      // Validar que el archivo existe
       const fileExists = await audioService.fileExists(result.path);
+      
       if (!fileExists) {
-        throw new Error('El archivo de audio no se encontró después de la grabación');
+        throw new Error('El archivo de audio no se encontró');
       }
-
-      Logger.info('VoiceRecorder: Grabación detenida', {
-        path: result.path,
-        duration: recordingTime,
-        fileExists,
-      });
 
       setIsRecording(false);
       setAudioFilePath(result.path);
@@ -117,68 +92,35 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }) => {
       audioFeedbackService.playSuccess();
       hapticService.medium();
     } catch (error) {
-      Logger.error('VoiceRecorder: Error deteniendo grabación', {
-        error: error.message,
-        code: error.code,
-        stack: error.stack,
-      });
-      setError(error.message || 'No se pudo detener la grabación');
+      Logger.error('VoiceRecorder: Error deteniendo grabación', error);
       audioFeedbackService.playError();
       setIsRecording(false);
     }
   };
 
   const playPreview = async () => {
-    if (!audioFilePath) {
-      setError('No hay audio para reproducir');
-      return;
-    }
+    if (!audioFilePath) return;
 
     try {
-      // Actualizar UI inmediatamente para feedback instantáneo
       setIsPlayingPreview(true);
-      setError(null);
       audioFeedbackService.playSuccess();
       hapticService.light();
 
-      // Validar que el archivo existe
       const fileExists = await audioService.fileExists(audioFilePath);
       if (!fileExists) {
         throw new Error('El archivo de audio no existe');
       }
 
-      Logger.info('VoiceRecorder: Iniciando reproducción de preview', { path: audioFilePath });
-
-      // Reproducir usando el servicio (no await para no bloquear UI)
-      // El estado ya está actualizado, así que la UI se muestra inmediatamente
-      audioService.playAudio(audioFilePath, {
-        onProgress: ({ currentPosition, duration }) => {
+      await audioService.playAudio(audioFilePath, {
+        onProgress: ({ currentPosition }) => {
           setCurrentPosition(Math.floor(currentPosition));
-          // Si llegó al final, se detendrá automáticamente
         },
         onComplete: () => {
           stopPreview();
         },
-      }).catch((error) => {
-        // Si hay error después de iniciar, resetear estado
-        Logger.error('VoiceRecorder: Error reproduciendo preview', {
-          error: error.message,
-          code: error.code,
-          path: audioFilePath,
-          stack: error.stack,
-        });
-        setError(error.message || 'No se pudo reproducir el audio');
-        audioFeedbackService.playError();
-        setIsPlayingPreview(false);
       });
     } catch (error) {
-      Logger.error('VoiceRecorder: Error iniciando reproducción', {
-        error: error.message,
-        code: error.code,
-        path: audioFilePath,
-        stack: error.stack,
-      });
-      setError(error.message || 'No se pudo reproducir el audio');
+      Logger.error('VoiceRecorder: Error reproduciendo preview', error);
       audioFeedbackService.playError();
       setIsPlayingPreview(false);
     }
@@ -190,94 +132,73 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }) => {
       setIsPlayingPreview(false);
       setCurrentPosition(0);
     } catch (error) {
-      Logger.error('VoiceRecorder: Error deteniendo reproducción', error);
+      Logger.error('VoiceRecorder: Error deteniendo preview', error);
       setIsPlayingPreview(false);
     }
   };
 
   const cancelRecording = async () => {
     try {
-      // Detener grabación si está activa
       if (isRecording) {
         await audioService.cancelRecording();
       }
-
-      // Detener reproducción si está activa
       if (isPlayingPreview) {
         await audioService.stopPlayback();
       }
-
-      // Limpiar timers
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-
-      // Eliminar archivo temporal si existe
       if (audioFilePath) {
-        try {
-          await audioService.deleteFile(audioFilePath);
-          Logger.info('VoiceRecorder: Archivo temporal eliminado al cancelar');
-        } catch (e) {
-          Logger.warn('VoiceRecorder: Error eliminando archivo al cancelar', e);
-        }
+        await audioService.deleteFile(audioFilePath);
       }
 
-      // Resetear estados
       setIsRecording(false);
       setIsPlayingPreview(false);
       setRecordingTime(0);
       setAudioFilePath(null);
       setAudioDuration(0);
       setCurrentPosition(0);
-      setError(null);
 
       if (onCancel) {
         onCancel();
       }
     } catch (error) {
-      Logger.error('VoiceRecorder: Error cancelando grabación', error);
+      Logger.error('VoiceRecorder: Error cancelando', error);
     }
   };
 
   const handleSend = async () => {
-    if (!audioFilePath) {
-      setError('No hay audio para enviar');
-      return;
-    }
+    if (!audioFilePath) return;
 
     try {
       setIsUploading(true);
       setUploadProgress(0);
       hapticService.medium();
 
-      // Subir archivo con indicador de progreso
+      // Subir archivo
       const audioUrl = await uploadAudioFile(audioFilePath, {
-        onProgress: ({ percent, loaded, total }) => {
-          Logger.debug('VoiceRecorder: Progreso de upload recibido', { percent, loaded, total });
+        onProgress: ({ percent }) => {
           setUploadProgress(percent || 0);
         },
       });
 
-      // Pasar URL del servidor y duración al callback
+      // Pasar al callback
       if (onRecordingComplete) {
         await onRecordingComplete({
           audioFilePath,
-          audioUrl, // URL del servidor
+          audioUrl,
           duration: audioDuration,
         });
       }
 
-      // Limpiar después de éxito
       setIsUploading(false);
       setUploadProgress(0);
     } catch (error) {
       Logger.error('VoiceRecorder: Error enviando audio', error);
-      setError(error.message || 'No se pudo enviar el audio');
+      audioFeedbackService.playError();
       setIsUploading(false);
       setUploadProgress(0);
-      audioFeedbackService.playError();
-      // NO eliminar el archivo si hay error - permitir reintento
     }
   };
 
@@ -291,111 +212,58 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }) => {
   if (isRecording) {
     return (
       <View style={styles.container}>
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>⚠️ {error}</Text>
-          </View>
-        )}
-
         <View style={styles.recordingContainer}>
           <View style={styles.recordingIndicator}>
             <View style={styles.recordingDot} />
             <Text style={styles.recordingTime}>{formatTime(recordingTime)}</Text>
           </View>
-          
-          {/* Waveform visual durante grabación */}
-          <View style={styles.waveformContainer}>
-            <AudioWaveform 
-              isActive={isRecording} 
-              height={50}
-              color="#F44336"
-              barCount={25}
-            />
-          </View>
-
-          <TouchableOpacity
-            style={styles.pauseButton}
-            onPress={stopRecording}
-          >
-            <Text style={styles.pauseButtonText}>⏸️ Pausar</Text>
+          <TouchableOpacity style={styles.stopButton} onPress={stopRecording}>
+            <Text style={styles.stopButtonText}>⏹️ Detener</Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   }
 
-  // Estado: Preview (después de grabar)
+  // Estado: Preview
   if (audioFilePath) {
     return (
       <View style={styles.container}>
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>⚠️ {error}</Text>
-          </View>
-        )}
-
         <View style={styles.previewContainer}>
           <Text style={styles.previewTitle}>Audio grabado</Text>
-          <Text style={styles.previewDuration}>
-            Duración: {formatTime(audioDuration)}
-          </Text>
-
-          {/* Waveform visual durante preview */}
-          <View style={styles.waveformContainer}>
-            <AudioWaveform 
-              isActive={isPlayingPreview} 
-              height={50}
-              color="#2196F3"
-              barCount={25}
-            />
-          </View>
+          <Text style={styles.previewDuration}>Duración: {formatTime(audioDuration)}</Text>
 
           {isPlayingPreview ? (
             <View style={styles.playbackContainer}>
               <Text style={styles.playbackTime}>
                 {formatTime(currentPosition)} / {formatTime(audioDuration)}
               </Text>
-
-              <TouchableOpacity
-                style={styles.pauseButton}
-                onPress={stopPreview}
-              >
+              <TouchableOpacity style={styles.pauseButton} onPress={stopPreview}>
                 <Text style={styles.pauseButtonText}>⏸️ Pausar</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity
-              style={styles.playButton}
-              onPress={playPreview}
-            >
+            <TouchableOpacity style={styles.playButton} onPress={playPreview}>
               <Text style={styles.playButtonText}>▶️ Escuchar</Text>
             </TouchableOpacity>
           )}
 
-          {/* Indicador de progreso de upload */}
           {isUploading && (
             <View style={styles.uploadContainer}>
-              <Text style={styles.uploadText}>
-                Subiendo audio... {uploadProgress}%
-              </Text>
+              <Text style={styles.uploadText}>Subiendo... {uploadProgress}%</Text>
               <View style={styles.progressBarContainer}>
-                <View 
-                  style={[
-                    styles.progressBarFill, 
-                    { width: `${Math.max(0, Math.min(100, uploadProgress))}%` }
-                  ]} 
-                />
+                <View style={[styles.progressBarFill, { width: `${uploadProgress}%` }]} />
               </View>
             </View>
           )}
 
           <View style={styles.previewActions}>
             <TouchableOpacity
-              style={styles.cancelPreviewButton}
+              style={styles.cancelButton}
               onPress={cancelRecording}
               disabled={isUploading}
             >
-              <Text style={styles.cancelPreviewButtonText}>✗ Cancelar</Text>
+              <Text style={styles.cancelButtonText}>✗ Cancelar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -418,18 +286,9 @@ const VoiceRecorder = ({ onRecordingComplete, onCancel }) => {
   // Estado: Inicial
   return (
     <View style={styles.container}>
-      {error && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>⚠️ {error}</Text>
-        </View>
-      )}
-
       <View style={styles.initialContainer}>
-        <TouchableOpacity
-          style={styles.recordButton}
-          onPress={startRecording}
-        >
-          <Text style={styles.recordButtonText}>🎤 Iniciar grabación</Text>
+        <TouchableOpacity style={styles.recordButton} onPress={startRecording}>
+          <Text style={styles.recordButtonText}>🎤 Grabar</Text>
         </TouchableOpacity>
         <Text style={styles.helpText}>Presiona para comenzar a grabar</Text>
       </View>
@@ -443,19 +302,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     marginVertical: 8,
-    minHeight: 200,
-    justifyContent: 'center',
-  },
-  errorContainer: {
-    backgroundColor: '#FFEBEE',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  errorText: {
-    color: '#F44336',
-    fontSize: 14,
-    textAlign: 'center',
   },
   initialContainer: {
     alignItems: 'center',
@@ -467,14 +313,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     minWidth: 200,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   recordButtonText: {
     color: '#FFFFFF',
@@ -508,37 +346,16 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   stopButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#F44336',
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 8,
-    minWidth: 180,
-    marginBottom: 12,
+    minWidth: 150,
   },
   stopButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  waveformContainer: {
-    width: '100%',
-    marginVertical: 16,
-    paddingHorizontal: 20,
-  },
-  pauseButton: {
-    backgroundColor: '#FF9800',
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 8,
-    minWidth: 150,
-    marginTop: 12,
-  },
-  pauseButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
   },
   previewContainer: {
     alignItems: 'center',
@@ -576,7 +393,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
-    textAlign: 'center',
   },
   pauseButton: {
     backgroundColor: '#FF9800',
@@ -589,15 +405,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
-    textAlign: 'center',
   },
   previewActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
     maxWidth: 300,
+    marginTop: 20,
   },
-  cancelPreviewButton: {
+  cancelButton: {
     backgroundColor: '#F44336',
     paddingVertical: 14,
     paddingHorizontal: 24,
@@ -606,7 +422,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
     alignItems: 'center',
   },
-  cancelPreviewButtonText: {
+  cancelButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',

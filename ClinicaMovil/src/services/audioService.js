@@ -2,88 +2,108 @@
  * Servicio: Audio
  * 
  * Servicio centralizado para grabación y reproducción de audio.
- * Abstrae la complejidad de las librerías nativas y proporciona una API simple y robusta.
- * 
- * Funcionalidades:
- * - Grabación de audio con manejo de permisos
- * - Reproducción de audio
- * - Gestión de archivos temporales
- * - Limpieza automática de recursos
+ * Flujo: grabar → enviar → reproducir
  */
 
 import { Platform } from 'react-native';
-import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import RNFS from 'react-native-fs';
 import Sound from 'react-native-sound';
 import Logger from './logger';
 import permissionsService from './permissionsService';
 
-// Habilitar modo de reproducción en modo silencioso (iOS)
-Sound.setCategory('Playback');
+// Configurar Sound para reproducción
+if (Sound && typeof Sound.setCategory === 'function') {
+  try {
+    Sound.setCategory('Playback');
+  } catch (error) {
+    Logger.warn('AudioService: No se pudo configurar categoría de Sound', error);
+  }
+}
+
+// Lazy import de AudioRecorderPlayer
+let AudioRecorderPlayerModule = null;
 
 class AudioService {
   constructor() {
-    this.recorderPlayer = new AudioRecorderPlayer();
+    this.recorderPlayer = null;
     this.currentRecordingPath = null;
     this.currentSound = null;
     this.recordingListeners = [];
   }
 
   /**
-   * Iniciar grabación de audio
-   * @param {Object} options - Opciones de grabación
-   * @param {string} options.path - Ruta opcional para el archivo (se genera automáticamente si no se proporciona)
-   * @param {Function} options.onProgress - Callback para actualizar progreso (recibe {currentPosition, duration})
-   * @returns {Promise<{path: string, duration: number}>} Información del archivo grabado
+   * Inicializar AudioRecorderPlayer
+   */
+  _initializeRecorder() {
+    if (this.recorderPlayer) {
+      return this.recorderPlayer;
+    }
+
+    try {
+      if (!AudioRecorderPlayerModule) {
+        AudioRecorderPlayerModule = require('react-native-audio-recorder-player');
+      }
+
+      // Intentar diferentes formas de obtener la instancia
+      if (AudioRecorderPlayerModule && typeof AudioRecorderPlayerModule.startRecorder === 'function') {
+        this.recorderPlayer = AudioRecorderPlayerModule;
+      } else if (AudioRecorderPlayerModule?.default && typeof AudioRecorderPlayerModule.default.startRecorder === 'function') {
+        this.recorderPlayer = AudioRecorderPlayerModule.default;
+      } else if (AudioRecorderPlayerModule?.default && typeof AudioRecorderPlayerModule.default === 'function') {
+        this.recorderPlayer = new AudioRecorderPlayerModule.default();
+      } else if (AudioRecorderPlayerModule?.AudioRecorderPlayer && typeof AudioRecorderPlayerModule.AudioRecorderPlayer === 'function') {
+        this.recorderPlayer = new AudioRecorderPlayerModule.AudioRecorderPlayer();
+      } else {
+        throw new Error('No se pudo inicializar AudioRecorderPlayer');
+      }
+
+      Logger.info('AudioService: AudioRecorderPlayer inicializado');
+      return this.recorderPlayer;
+    } catch (error) {
+      Logger.error('AudioService: Error inicializando AudioRecorderPlayer', error);
+      throw new Error('No se pudo inicializar el grabador de audio');
+    }
+  }
+
+  /**
+   * Iniciar grabación
    */
   async startRecording(options = {}) {
     try {
       // Verificar permisos
       const hasPermission = await permissionsService.requestMicrophonePermission();
       if (!hasPermission) {
-        throw new Error('Se requiere permiso de micrófono para grabar audio');
+        throw new Error('Se requiere permiso de micrófono');
       }
 
-      // Generar ruta si no se proporciona
-      let audioPath = options.path;
-      if (!audioPath) {
-        const timestamp = Date.now();
-        const basePath = Platform.select({
-          ios: RNFS.DocumentDirectoryPath,
-          android: RNFS.CacheDirectoryPath || RNFS.ExternalDirectoryPath || RNFS.DocumentDirectoryPath,
-        });
+      // Generar ruta del archivo
+      const timestamp = Date.now();
+      const basePath = Platform.select({
+        ios: RNFS.DocumentDirectoryPath,
+        android: RNFS.CacheDirectoryPath || RNFS.DocumentDirectoryPath,
+      });
 
-        if (!basePath) {
-          throw new Error('No se pudo obtener la ruta del directorio para guardar el audio');
-        }
-
-        // Asegurar que el directorio existe
-        const dirExists = await RNFS.exists(basePath);
-        if (!dirExists) {
-          await RNFS.mkdir(basePath);
-        }
-
-        audioPath = `${basePath}/audio_${timestamp}.m4a`;
+      if (!basePath) {
+        throw new Error('No se pudo obtener la ruta del directorio');
       }
 
+      // Asegurar que el directorio existe
+      const dirExists = await RNFS.exists(basePath);
+      if (!dirExists) {
+        await RNFS.mkdir(basePath);
+      }
+
+      const audioPath = `${basePath}/audio_${timestamp}.m4a`;
       this.currentRecordingPath = audioPath;
 
-      Logger.info('AudioService: Iniciando grabación', { path: audioPath });
+      // Inicializar y empezar grabación
+      const recorder = this._initializeRecorder();
+      const recordingPath = await recorder.startRecorder(audioPath);
+      this.currentRecordingPath = recordingPath || audioPath;
 
-      // Iniciar grabación
-      let recordingPath;
-      try {
-        recordingPath = await this.recorderPlayer.startRecorder(audioPath);
-      } catch (error) {
-        // Si falla con ruta personalizada, intentar sin ruta (usará ruta por defecto)
-        Logger.warn('AudioService: Error con ruta personalizada, usando ruta por defecto', error);
-        recordingPath = await this.recorderPlayer.startRecorder();
-        this.currentRecordingPath = recordingPath;
-      }
-
-      // Configurar listener para progreso si se proporciona
+      // Configurar listener de progreso
       if (options.onProgress) {
-        const listener = this.recorderPlayer.addRecordBackListener((e) => {
+        const listener = recorder.addRecordBackListener((e) => {
           options.onProgress({
             currentPosition: Math.floor(e.currentPosition / 1000),
             duration: Math.floor(e.duration / 1000),
@@ -92,12 +112,8 @@ class AudioService {
         this.recordingListeners.push(listener);
       }
 
-      Logger.info('AudioService: Grabación iniciada', { path: recordingPath });
-
-      return {
-        path: recordingPath,
-        duration: 0, // Se actualizará cuando se detenga
-      };
+      Logger.info('AudioService: Grabación iniciada', { path: this.currentRecordingPath });
+      return { path: this.currentRecordingPath, duration: 0 };
     } catch (error) {
       Logger.error('AudioService: Error iniciando grabación', error);
       this.currentRecordingPath = null;
@@ -106,8 +122,7 @@ class AudioService {
   }
 
   /**
-   * Detener grabación de audio
-   * @returns {Promise<{path: string, duration: number}>} Información del archivo grabado
+   * Detener grabación
    */
   async stopRecording() {
     try {
@@ -115,35 +130,24 @@ class AudioService {
         throw new Error('No hay grabación activa');
       }
 
+      const recorder = this._initializeRecorder();
+
       // Remover listeners
       this.recordingListeners.forEach(() => {
-        this.recorderPlayer.removeRecordBackListener();
+        if (recorder.removeRecordBackListener) {
+          recorder.removeRecordBackListener();
+        }
       });
       this.recordingListeners = [];
 
       // Detener grabación
-      const result = await this.recorderPlayer.stopRecorder();
-      const finalPath = result || this.currentRecordingPath;
+      await recorder.stopRecorder();
 
-      // Obtener duración del archivo
-      let duration = 0;
-      try {
-        const fileInfo = await RNFS.stat(finalPath);
-        // La duración se obtiene del listener o se calcula después
-        // Por ahora, retornamos 0 y se actualizará en el componente
-      } catch (e) {
-        Logger.warn('AudioService: No se pudo obtener información del archivo', e);
-      }
-
-      Logger.info('AudioService: Grabación detenida', { path: finalPath, duration });
-
-      const recordingInfo = {
-        path: finalPath,
-        duration,
-      };
-
+      const path = this.currentRecordingPath;
       this.currentRecordingPath = null;
-      return recordingInfo;
+
+      Logger.info('AudioService: Grabación detenida', { path });
+      return { path, duration: 0 };
     } catch (error) {
       Logger.error('AudioService: Error deteniendo grabación', error);
       this.currentRecordingPath = null;
@@ -152,38 +156,40 @@ class AudioService {
   }
 
   /**
-   * Cancelar grabación actual
+   * Cancelar grabación
    */
   async cancelRecording() {
     try {
       if (this.currentRecordingPath) {
-        // Detener grabación si está activa
+        const recorder = this._initializeRecorder();
+        
+        // Detener grabación
         try {
-          await this.recorderPlayer.stopRecorder();
-          this.recorderPlayer.removeRecordBackListener();
+          await recorder.stopRecorder();
         } catch (e) {
           Logger.warn('AudioService: Error deteniendo grabación al cancelar', e);
         }
+
+        // Remover listeners
+        this.recordingListeners.forEach(() => {
+          if (recorder.removeRecordBackListener) {
+            recorder.removeRecordBackListener();
+          }
+        });
+        this.recordingListeners = [];
 
         // Eliminar archivo
         try {
           const exists = await RNFS.exists(this.currentRecordingPath);
           if (exists) {
             await RNFS.unlink(this.currentRecordingPath);
-            Logger.info('AudioService: Archivo de grabación eliminado', { path: this.currentRecordingPath });
           }
         } catch (e) {
-          Logger.warn('AudioService: Error eliminando archivo al cancelar', e);
+          Logger.warn('AudioService: Error eliminando archivo', e);
         }
 
         this.currentRecordingPath = null;
       }
-
-      // Limpiar listeners
-      this.recordingListeners.forEach(() => {
-        this.recorderPlayer.removeRecordBackListener();
-      });
-      this.recordingListeners = [];
     } catch (error) {
       Logger.error('AudioService: Error cancelando grabación', error);
     }
@@ -191,28 +197,20 @@ class AudioService {
 
   /**
    * Reproducir audio
-   * @param {string} audioUrl - URL o ruta del archivo de audio
-   * @param {Object} options - Opciones de reproducción
-   * @param {Function} options.onProgress - Callback para actualizar progreso
-   * @param {Function} options.onComplete - Callback cuando termine la reproducción
-   * @param {number} options.speed - Velocidad de reproducción (0.5, 1.0, 1.5, 2.0) - default: 1.0
-   * @returns {Promise<void>}
    */
-  async playAudio(audioUrl, options = {}) {
-    const { speed = 1.0 } = options;
+  async playAudio(audioPath, options = {}) {
     try {
-      // Detener reproducción anterior si existe
+      // Detener reproducción anterior
       await this.stopPlayback();
 
-      Logger.info('AudioService: Iniciando reproducción', { url: audioUrl });
-
-      // Preparar ruta para reproducción
-      let playPath = audioUrl;
+      // Normalizar ruta para Android
+      let playPath = audioPath;
       if (Platform.OS === 'android' && !playPath.startsWith('file://') && !playPath.startsWith('http') && !playPath.startsWith('content://')) {
         playPath = `file://${playPath}`;
       }
 
-      // Crear instancia de Sound
+      Logger.info('AudioService: Reproduciendo audio', { path: playPath });
+
       return new Promise((resolve, reject) => {
         const sound = new Sound(playPath, '', (error) => {
           if (error) {
@@ -224,25 +222,11 @@ class AudioService {
           this.currentSound = sound;
           const duration = sound.getDuration();
 
-          Logger.info('AudioService: Audio cargado', { duration });
-
-          // Configurar velocidad de reproducción si se proporciona (solo Android)
-          if (Platform.OS === 'android' && speed !== 1.0) {
-            try {
-              // react-native-sound no soporta velocidad directamente
-              // Usar setSpeed si está disponible (requiere patch o librería alternativa)
-              // Por ahora, solo loguear
-              Logger.info('AudioService: Velocidad solicitada', { speed, note: 'Solo disponible en Android con librería compatible' });
-            } catch (e) {
-              Logger.warn('AudioService: No se pudo configurar velocidad', e);
-            }
-          }
-
-          // Configurar callback de progreso si se proporciona
+          // Configurar callback de progreso
           if (options.onProgress) {
             const progressInterval = setInterval(() => {
-              if (this.currentSound) {
-                this.currentSound.getCurrentTime((seconds) => {
+              if (this.currentSound === sound) {
+                sound.getCurrentTime((seconds) => {
                   options.onProgress({
                     currentPosition: seconds,
                     duration,
@@ -254,21 +238,19 @@ class AudioService {
             }, 100);
           }
 
-          // Iniciar reproducción
+          // Reproducir
           sound.play((success) => {
             if (this.currentSound === sound) {
               this.currentSound = null;
             }
 
             if (success) {
-              Logger.info('AudioService: Reproducción completada');
               if (options.onComplete) {
                 options.onComplete();
               }
               sound.release();
               resolve();
             } else {
-              Logger.warn('AudioService: Reproducción no completada correctamente');
               sound.release();
               reject(new Error('Error en la reproducción'));
             }
@@ -282,7 +264,7 @@ class AudioService {
   }
 
   /**
-   * Detener reproducción actual
+   * Detener reproducción
    */
   async stopPlayback() {
     try {
@@ -290,7 +272,6 @@ class AudioService {
         this.currentSound.stop();
         this.currentSound.release();
         this.currentSound = null;
-        Logger.info('AudioService: Reproducción detenida');
       }
     } catch (error) {
       Logger.error('AudioService: Error deteniendo reproducción', error);
@@ -298,24 +279,19 @@ class AudioService {
   }
 
   /**
-   * Verificar si un archivo de audio existe
-   * @param {string} filePath - Ruta del archivo
-   * @returns {Promise<boolean>}
+   * Verificar si archivo existe
    */
   async fileExists(filePath) {
     try {
       const normalizedPath = filePath.replace(/^file:\/\/+/, '');
       return await RNFS.exists(normalizedPath);
     } catch (error) {
-      Logger.error('AudioService: Error verificando existencia de archivo', error);
       return false;
     }
   }
 
   /**
-   * Eliminar archivo de audio
-   * @param {string} filePath - Ruta del archivo
-   * @returns {Promise<void>}
+   * Eliminar archivo
    */
   async deleteFile(filePath) {
     try {
@@ -323,7 +299,6 @@ class AudioService {
       const exists = await RNFS.exists(normalizedPath);
       if (exists) {
         await RNFS.unlink(normalizedPath);
-        Logger.info('AudioService: Archivo eliminado', { path: normalizedPath });
       }
     } catch (error) {
       Logger.error('AudioService: Error eliminando archivo', error);
@@ -332,13 +307,12 @@ class AudioService {
   }
 
   /**
-   * Limpiar todos los recursos (grabación y reproducción)
+   * Limpiar recursos
    */
   async cleanup() {
     try {
       await this.cancelRecording();
       await this.stopPlayback();
-      Logger.info('AudioService: Recursos limpiados');
     } catch (error) {
       Logger.error('AudioService: Error en cleanup', error);
     }
@@ -347,6 +321,4 @@ class AudioService {
 
 // Singleton
 const audioService = new AudioService();
-
 export default audioService;
-

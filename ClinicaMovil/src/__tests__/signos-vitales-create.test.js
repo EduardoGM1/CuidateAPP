@@ -141,7 +141,7 @@ describe('ClinicaMovil - createPacienteSignosVitales', () => {
 		expect(mockCreateFn).toHaveBeenCalled();
 		// Verifica URL y payload
 		expect(mockPost).toHaveBeenCalledWith(
-			`/api/pacientes/${pacienteId}/signos-vitales`, 
+			`/pacientes/${pacienteId}/signos-vitales`, 
 			expect.objectContaining({ id_cita: 123 })
 		);
 		// Verifica respuesta propagada (createPacienteSignosVitales retorna response.data)
@@ -162,7 +162,7 @@ describe('ClinicaMovil - createPacienteSignosVitales', () => {
 		// Los interceptores se ejecutan automáticamente cuando se hace el request
 		// En un entorno real, los interceptores añaden los headers de autenticación
 		expect(mockPost).toHaveBeenCalledWith(
-			`/api/pacientes/${pacienteId}/signos-vitales`,
+			`/pacientes/${pacienteId}/signos-vitales`,
 			payload
 		);
 		// Verificamos que el request se hizo correctamente

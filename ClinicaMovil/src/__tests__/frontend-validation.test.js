@@ -320,8 +320,10 @@ describe('Frontend Validation Tests', () => {
    */
   describe('Validación de Fechas', () => {
     it('debe validar fecha futura', () => {
-      const fecha = new Date('2025-12-31');
+      // Crear una fecha futura (mañana)
       const hoy = new Date();
+      const fecha = new Date(hoy);
+      fecha.setDate(fecha.getDate() + 1); // Mañana
       const isValid = fecha > hoy;
 
       expect(isValid).toBe(true);

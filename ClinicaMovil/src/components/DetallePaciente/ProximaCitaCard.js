@@ -41,7 +41,8 @@ const ProximaCitaCard = ({
     consultasAgrupadas,
     loading,
     error,
-    totalCitas
+    totalCitas,
+    refresh
   } = useConsultasAgrupadas(pacienteId);
 
   // Obtener próxima o última cita
@@ -87,8 +88,30 @@ const ProximaCitaCard = ({
     return (
       <Card style={styles.card}>
         <Card.Content>
+          <View style={styles.cardHeader}>
+            <Title style={styles.cardTitle}>📅 Citas</Title>
+            <TouchableOpacity onPress={onOpenOptions}>
+              <Text style={styles.optionsText}>Opciones</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>Error al cargar citas</Text>
+            <Text style={styles.errorText}>
+              ⚠️ Error al cargar citas
+            </Text>
+            <Text style={styles.errorSubtext}>
+              {error.message || 'Intenta refrescar la pantalla'}
+            </Text>
+            <TouchableOpacity 
+              style={styles.retryButton}
+              onPress={() => {
+                Logger.info('ProximaCitaCard: Reintentando cargar citas');
+                if (refresh && typeof refresh === 'function') {
+                  refresh();
+                }
+              }}
+            >
+              <Text style={styles.retryButtonText}>🔄 Reintentar</Text>
+            </TouchableOpacity>
           </View>
         </Card.Content>
       </Card>
@@ -180,7 +203,27 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: '#F44336'
+    color: '#F44336',
+    fontWeight: '600',
+    marginBottom: 4
+  },
+  errorSubtext: {
+    fontSize: 12,
+    color: '#757575',
+    textAlign: 'center',
+    marginBottom: 12
+  },
+  retryButton: {
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignSelf: 'center'
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600'
   },
   emptyContainer: {
     padding: 20,

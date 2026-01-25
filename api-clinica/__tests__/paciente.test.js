@@ -118,7 +118,7 @@ describe('Paciente Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('data');
-      expect(response.body.data).toBeInstanceOf(Array);
+      expect(Array.isArray(response.body.data)).toBe(true);
       expect(Paciente.findAndCountAll).toHaveBeenCalledTimes(1);
     });
 

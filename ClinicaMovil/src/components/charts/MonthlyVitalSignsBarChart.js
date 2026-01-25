@@ -20,14 +20,14 @@ import {
 import { VictoryChart, VictoryBar, VictoryAxis, VictoryLabel } from 'victory-native';
 import { format, startOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { 
-  estaFueraDeRango, 
-  presionFueraDeRango, 
-  glucosaFueraDeRango, 
+import {
+  presionFueraDeRango,
+  glucosaFueraDeRango,
   imcFueraDeRango,
   colesterolFueraDeRango,
-  trigliceridosFueraDeRango
+  trigliceridosFueraDeRango,
 } from '../../utils/vitalSignsRanges';
+import SimpleSelect from '../common/SimpleSelect';
 
 // Funciones de evaluación removidas - el gráfico ahora es simple sin clasificaciones
 
@@ -164,11 +164,16 @@ const MonthlyVitalSignsBarChart = ({ signosVitales = [], loading = false, filtro
   const [mesSeleccionado, setMesSeleccionado] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
-  const [diaFiltroSeleccionado, setDiaFiltroSeleccionado] = useState(null); // null = todos los días
+  const [diaFiltro, setDiaFiltro] = useState('todos'); // Estado para el filtro por día
   
   // signosVitalesCompletos se usa para la comparativa (siempre desde el inicio)
   // Si no se proporciona, usar signosVitales (que ya puede estar filtrado)
   const signosParaComparativa = signosVitalesCompletos || signosVitales;
+  
+  // Resetear el filtro cuando se cambia el mes seleccionado
+  useEffect(() => {
+    setDiaFiltro('todos');
+  }, [mesSeleccionado]);
 
   // Detectar cambios en el tamaño de la pantalla
   useEffect(() => {
@@ -527,12 +532,46 @@ const MonthlyVitalSignsBarChart = ({ signosVitales = [], loading = false, filtro
     ));
   };
 
-  // Resetear filtro de día cuando se cierra el modal
-  useEffect(() => {
-    if (!modalVisible) {
-      setDiaFiltroSeleccionado(null);
-    }
-  }, [modalVisible]);
+  // Extraer días únicos de los registros del mes seleccionado
+  const diasUnicos = useMemo(() => {
+    if (!mesSeleccionado) return [];
+    
+    const { signosVitales: signosMes } = mesSeleccionado;
+    const dias = new Set();
+    
+    signosMes.forEach(signo => {
+      const fecha = signo.fecha_medicion || signo.fecha_registro || signo.fecha_creacion;
+      if (fecha) {
+        try {
+          const date = new Date(fecha);
+          if (!isNaN(date.getTime())) {
+            // Formato: YYYY-MM-DD para comparación
+            const diaKey = format(date, 'yyyy-MM-dd');
+            
+            // Formato para mostrar: "17/enero/2026" (día/mes en español/año)
+            const meses = [
+              'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+              'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+            ];
+            const dia = date.getDate();
+            const mes = meses[date.getMonth()];
+            const año = date.getFullYear();
+            const diaLabel = `${dia}/${mes}/${año}`;
+            
+            dias.add(JSON.stringify({ key: diaKey, label: diaLabel }));
+          }
+        } catch (e) {
+          console.warn('Error al procesar fecha:', fecha, e);
+        }
+      }
+    });
+    
+    const diasArray = Array.from(dias).map(d => JSON.parse(d));
+    // Ordenar por fecha (más reciente primero)
+    diasArray.sort((a, b) => b.key.localeCompare(a.key));
+    
+    return [{ key: 'todos', label: 'Todos los días' }, ...diasArray];
+  }, [mesSeleccionado]);
 
   // Renderizar desglose del mes
   const renderDesgloseMes = () => {
@@ -594,24 +633,27 @@ const MonthlyVitalSignsBarChart = ({ signosVitales = [], loading = false, filtro
       );
     }
 
-    // Ordenar registros por fecha y hora (más reciente primero)
-    const registrosConFecha = [...signosMes]
+    // Ordenar registros por fecha y hora (más reciente primero) y aplicar filtro por día
+    const registrosOrdenados = [...signosMes]
       .map(signo => {
         const fechaStr = signo.fecha_medicion || signo.fecha_registro || signo.fecha_creacion;
         const fecha = new Date(fechaStr);
         const fechaFormateada = formatearFechaHora(fechaStr);
-        
-        // Extraer solo la fecha (sin hora) para el filtro
-        const fechaSolo = fecha.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+        const diaKey = format(fecha, 'yyyy-MM-dd');
         
         return {
           ...signo,
           fechaOrdenamiento: fecha.getTime(),
           fechaFormateada: fechaFormateada,
-          fechaSolo: fechaSolo // Para el filtro de días
+          diaKey: diaKey
         };
       })
       .filter(signo => {
+        // Aplicar filtro por día
+        if (diaFiltro !== 'todos' && signo.diaKey !== diaFiltro) {
+          return false;
+        }
+        
         const isValid = !isNaN(signo.fechaOrdenamiento) && 
                         signo.fechaFormateada && 
                         typeof signo.fechaFormateada === 'object' &&
@@ -628,41 +670,6 @@ const MonthlyVitalSignsBarChart = ({ signosVitales = [], loading = false, filtro
         return isValid;
       })
       .sort((a, b) => b.fechaOrdenamiento - a.fechaOrdenamiento); // Más reciente primero
-
-    // Extraer días únicos disponibles en los registros
-    const diasSet = new Set();
-    registrosConFecha.forEach(registro => {
-      if (registro.fechaSolo) {
-        diasSet.add(registro.fechaSolo);
-      }
-    });
-    const diasDisponibles = Array.from(diasSet).sort().reverse(); // Más reciente primero
-
-    // Formatear día para mostrar en el filtro
-    const formatearDiaFiltro = (fechaStr) => {
-      try {
-        const fecha = new Date(fechaStr + 'T00:00:00');
-        if (isNaN(fecha.getTime())) return fechaStr;
-        
-        const meses = [
-          'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-          'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
-        ];
-        
-        const dia = fecha.getDate();
-        const mes = meses[fecha.getMonth()];
-        const año = fecha.getFullYear();
-        
-        return `${dia} de ${mes} de ${año}`;
-      } catch {
-        return fechaStr;
-      }
-    };
-
-    // Filtrar registros por día seleccionado
-    const registrosOrdenados = diaFiltroSeleccionado
-      ? registrosConFecha.filter(registro => registro.fechaSolo === diaFiltroSeleccionado)
-      : registrosConFecha;
 
     console.log('📊 Registros ordenados:', registrosOrdenados.length, 'de', signosMes.length, 'totales');
     
@@ -703,48 +710,20 @@ const MonthlyVitalSignsBarChart = ({ signosVitales = [], loading = false, filtro
                 </View>
               </View>
 
-              {/* Filtro de días */}
-              {diasDisponibles.length > 1 && (
-                <View style={styles.filtroDiasContainer}>
-                  <Text style={styles.filtroDiasTitulo}>Filtrar por día:</Text>
-                  <ScrollView 
-                    horizontal 
-                    showsHorizontalScrollIndicator={true}
-                    style={styles.filtroDiasScroll}
-                    contentContainerStyle={styles.filtroDiasContent}
-                  >
-                    <TouchableOpacity
-                      style={[
-                        styles.filtroDiaButton,
-                        diaFiltroSeleccionado === null && styles.filtroDiaButtonActive
-                      ]}
-                      onPress={() => setDiaFiltroSeleccionado(null)}
-                    >
-                      <Text style={[
-                        styles.filtroDiaButtonText,
-                        diaFiltroSeleccionado === null && styles.filtroDiaButtonTextActive
-                      ]}>
-                        Todos
-                      </Text>
-                    </TouchableOpacity>
-                    {diasDisponibles.map((dia) => (
-                      <TouchableOpacity
-                        key={dia}
-                        style={[
-                          styles.filtroDiaButton,
-                          diaFiltroSeleccionado === dia && styles.filtroDiaButtonActive
-                        ]}
-                        onPress={() => setDiaFiltroSeleccionado(dia)}
-                      >
-                        <Text style={[
-                          styles.filtroDiaButtonText,
-                          diaFiltroSeleccionado === dia && styles.filtroDiaButtonTextActive
-                        ]}>
-                          {formatearDiaFiltro(dia)}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
+              {/* Filtro por día */}
+              {diasUnicos.length > 1 && (
+                <View style={styles.filtroDiaContainer}>
+                  <SimpleSelect
+                    label="Filtrar por día:"
+                    value={diaFiltro}
+                    options={diasUnicos.map(dia => ({
+                      value: dia.key,
+                      label: dia.label
+                    }))}
+                    onValueChange={(value) => setDiaFiltro(value)}
+                    placeholder="Todos los días"
+                    style={styles.filtroDiaSelect}
+                  />
                 </View>
               )}
 
@@ -752,7 +731,6 @@ const MonthlyVitalSignsBarChart = ({ signosVitales = [], loading = false, filtro
               <View style={styles.registrosContainer}>
                 <Text style={styles.registrosTitulo}>
                   Registros ({registrosOrdenados.length})
-                  {diaFiltroSeleccionado && ` - ${formatearDiaFiltro(diaFiltroSeleccionado)}`}
                 </Text>
                 {registrosOrdenados.length > 0 ? (
                   registrosOrdenados.map((signo, idx) => {
@@ -1156,9 +1134,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     flex: 1,
   },
-  valorTextoFueraDeRango: {
-    color: '#F44336', // Rojo para valores fuera de rango
-  },
   sinValoresContainer: {
     paddingVertical: 12,
     alignItems: 'center',
@@ -1178,46 +1153,19 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
   },
-  // Estilos del filtro de días
-  filtroDiasContainer: {
+  valorTextoFueraDeRango: {
+    color: '#D32F2F', // Rojo para valores fuera de rango
+    fontWeight: '700',
+  },
+  filtroDiaContainer: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    padding: 12,
     marginTop: 16,
     marginBottom: 16,
-    paddingHorizontal: 16,
   },
-  filtroDiasTitulo: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 12,
-  },
-  filtroDiasScroll: {
-    maxHeight: 50,
-  },
-  filtroDiasContent: {
-    paddingRight: 16,
-    gap: 8,
-  },
-  filtroDiaButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    marginRight: 8,
-  },
-  filtroDiaButtonActive: {
-    backgroundColor: '#2196F3',
-    borderColor: '#2196F3',
-  },
-  filtroDiaButtonText: {
-    fontSize: 13,
-    color: '#666',
-    fontWeight: '500',
-  },
-  filtroDiaButtonTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+  filtroDiaSelect: {
+    marginBottom: 0,
   },
 });
 

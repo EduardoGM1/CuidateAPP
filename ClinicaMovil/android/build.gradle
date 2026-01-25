@@ -4,7 +4,8 @@ buildscript {
         minSdkVersion = 24
         compileSdkVersion = 36
         targetSdkVersion = 36
-        ndkVersion = "27.1.12297006"
+        // NDK version - Dejar que Gradle use la versión por defecto o detecte automáticamente
+        // Si necesitas especificar una versión, descomenta y usa: ndkVersion = "25.2.9519653"
         kotlinVersion = "2.1.20"
     }
     repositories {

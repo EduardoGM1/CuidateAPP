@@ -1,21 +1,26 @@
 import request from 'supertest';
-import express from 'express';
+import app from '../test-app.js';
 import sequelize from '../config/db.js';
-import authRoutes from '../routes/auth.js';
-import { globalErrorHandler } from '../middlewares/errorHandler.js';
 
-const app = express();
-app.use(express.json());
-app.use('/api/auth', authRoutes);
-app.use(globalErrorHandler);
+// Usar la aplicación de test que ya tiene las rutas configuradas
 
 describe('✅ VALIDATION TESTS', () => {
   beforeAll(async () => {
-    await sequelize.sync({ force: true });
+    // Solo sincronizar si la BD está disponible
+    try {
+      await sequelize.authenticate();
+      await sequelize.sync({ force: false }); // No forzar para evitar pérdida de datos
+    } catch (error) {
+      console.warn('No se pudo conectar a la BD de test:', error.message);
+    }
   });
 
   afterAll(async () => {
-    await sequelize.close();
+    try {
+      await sequelize.close();
+    } catch (error) {
+      // Ignorar errores al cerrar
+    }
   });
 
   describe('🔐 VALIDACIONES DE REGISTRO', () => {

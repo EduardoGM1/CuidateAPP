@@ -474,11 +474,12 @@ const HistorialAuditoria = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <IconButton
-          icon="arrow-left"
-          size={24}
+        <TouchableOpacity 
+          style={styles.backButton}
           onPress={() => navigation.goBack()}
-        />
+        >
+          <Text style={styles.backButtonText}>←</Text>
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>📋 Historial de Auditoría</Text>
         <View style={styles.headerActions}>
           <IconButton
@@ -497,11 +498,12 @@ const HistorialAuditoria = ({ navigation }) => {
             }}
             disabled={exportando || auditoria.length === 0}
           />
-          <IconButton
-            icon="filter"
-            size={24}
+          <TouchableOpacity 
+            style={styles.filterButton}
             onPress={() => setShowFiltersModal(true)}
-          />
+          >
+            <Text style={styles.filterButtonText}>🔍</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -922,6 +924,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
+  backButton: {
+    padding: 8,
+    marginRight: 4,
+  },
+  backButtonText: {
+    fontSize: 24,
+    color: '#333',
+    fontWeight: 'bold',
+  },
+  filterButton: {
+    padding: 8,
+  },
+  filterButtonText: {
+    fontSize: 22,
+  },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -984,14 +1001,17 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   badgeChip: {
-    height: 28,
-    maxWidth: '100%',
+    minHeight: 28,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 6,
+    marginBottom: 4,
   },
   badgeText: {
     fontSize: 11,
     color: '#FFFFFF',
     fontWeight: '600',
-    textAlign: 'center',
+    lineHeight: 14,
   },
   loadMoreContainer: {
     padding: 16,

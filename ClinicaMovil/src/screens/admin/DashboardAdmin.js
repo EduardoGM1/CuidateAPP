@@ -18,7 +18,7 @@ import Logger from '../../services/logger';
 import { useAdminDashboard } from '../../hooks/useDashboard';
 import { COLORES } from '../../utils/constantes';
 import { modalStyles } from '../../utils/sharedStyles';
-import { formatDateTime } from '../../utils/dateUtils';
+import { formatDateTime, formatDateWithWeekday } from '../../utils/dateUtils';
 import gestionService from '../../api/gestionService';
 import SeveridadBadge from '../../components/common/SeveridadBadge';
 import AlertBanner from '../../components/common/AlertBanner';
@@ -448,12 +448,7 @@ const DashboardAdmin = ({ navigation }) => {
             />
           </View>
           <Text style={styles.headerTitle}>Dashboard Administrativo</Text>
-          <Text style={styles.headerDate}>{new Date().toLocaleDateString('es-ES', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          })}</Text>
+          <Text style={styles.headerDate}>{formatDateWithWeekday(new Date())}</Text>
         </View>
 
         {/* Alertas Críticas */}
@@ -550,6 +545,17 @@ const DashboardAdmin = ({ navigation }) => {
             <TouchableOpacity style={[styles.quickAccessButton, styles.primaryButton]} onPress={handleViewTodasCitas}>
               <Text style={styles.quickAccessIcon}>📅</Text>
               <Text style={styles.quickAccessText}>Todas las Citas</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.quickAccessButton, styles.primaryButton]} 
+              onPress={() => {
+                Logger.navigation('DashboardAdmin', 'ReportesAdmin');
+                navigation.navigate('ReportesAdmin');
+              }}
+            >
+              <Text style={styles.quickAccessIcon}>📊</Text>
+              <Text style={styles.quickAccessText}>Reportes</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton]} onPress={handleViewAuditoria}>

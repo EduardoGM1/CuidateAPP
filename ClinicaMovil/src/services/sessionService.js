@@ -18,9 +18,10 @@ class SessionService {
     this.onSessionExpiredCallback = null;
     this.onTokenRefreshedCallback = null;
     // ✅ Cache para evitar múltiples verificaciones simultáneas
+    // Reducido a 10 segundos para tokens de corta duración (2 minutos)
     this.lastCheckTime = 0;
     this.lastCheckResult = null;
-    this.CHECK_CACHE_DURATION = 30 * 1000; // 30 segundos de cache
+    this.CHECK_CACHE_DURATION = 10 * 1000; // 10 segundos de cache
     // ✅ Período de gracia para tokens nuevos (10 minutos)
     this.TOKEN_GRACE_PERIOD = 10 * 60 * 1000; // 10 minutos
   }
@@ -48,7 +49,7 @@ class SessionService {
   async refreshToken() {
     // Evitar múltiples intentos simultáneos
     if (this.isRefreshing) {
-      Logger.info('Renovación de token ya en progreso, esperando...');
+      Logger.info('🔄 [REFRESH TOKEN] Renovación de token ya en progreso, esperando...');
       return new Promise((resolve) => {
         this.failedQueue.push(resolve);
       });
@@ -57,16 +58,20 @@ class SessionService {
     this.isRefreshing = true;
 
     try {
-      Logger.info('Intentando renovar token automáticamente...');
+      Logger.info('🔄 [REFRESH TOKEN] Iniciando renovación automática de token...');
       
       const refreshToken = await storageService.getRefreshToken();
       
       if (!refreshToken) {
-        Logger.warn('No hay refresh token disponible');
+        Logger.warn('⚠️ [REFRESH TOKEN] No hay refresh token disponible, cerrando sesión');
         this.isRefreshing = false;
         this.processQueue(null);
+        // Si no hay refresh token, la sesión ha expirado - cerrar sesión
+        await this.handleSessionExpired();
         return null;
       }
+
+      Logger.debug('🔄 [REFRESH TOKEN] Refresh token encontrado, enviando solicitud al servidor...');
 
       // Intentar renovar usando el servicio de autenticación
       // Nota: El endpoint de refresh puede variar según el tipo de usuario
@@ -75,14 +80,17 @@ class SessionService {
       
       // Verificar que la respuesta sea válida
       if (!response) {
-        Logger.error('No se recibió respuesta del servidor al renovar token');
+        Logger.error('❌ [REFRESH TOKEN] No se recibió respuesta del servidor al renovar token');
         throw new Error('No se recibió respuesta del servidor');
       }
 
-      Logger.debug('Respuesta de refresh token recibida', {
+      Logger.debug('✅ [REFRESH TOKEN] Respuesta del servidor recibida', {
         hasToken: !!response.token,
         hasAccessToken: !!response.accessToken,
         hasData: !!response.data,
+        hasRefreshToken: !!response.refresh_token,
+        success: response.success,
+        expiresIn: response.expires_in,
         keys: Object.keys(response)
       });
 
@@ -94,16 +102,21 @@ class SessionService {
       if (newToken) {
         // Guardar nuevo token (esto también guardará el timestamp)
         await storageService.saveAuthToken(newToken);
+        Logger.debug('✅ [REFRESH TOKEN] Nuevo access token guardado en storage');
         
         if (newRefreshToken) {
           await storageService.saveRefreshToken(newRefreshToken);
+          Logger.debug('✅ [REFRESH TOKEN] Nuevo refresh token guardado en storage');
         }
 
         // ✅ Limpiar cache de verificación al renovar token
         this.lastCheckTime = 0;
         this.lastCheckResult = null;
 
-        Logger.success('Token renovado exitosamente');
+        Logger.success('✅ [REFRESH TOKEN] Token renovado exitosamente', {
+          expiresIn: response.expires_in || 'N/A',
+          refreshTokenExpiresIn: response.refresh_token_expires_in || 'N/A'
+        });
         
         // Notificar que el token fue renovado
         if (this.onTokenRefreshedCallback) {
@@ -115,7 +128,10 @@ class SessionService {
         
         return newToken;
       } else {
-        Logger.error('Respuesta de refresh token inválida', { response });
+        Logger.error('❌ [REFRESH TOKEN] Respuesta de refresh token inválida - no se recibió token', { 
+          responseKeys: Object.keys(response),
+          hasSuccess: !!response.success
+        });
         throw new Error('No se recibió token en la respuesta del servidor');
       }
     } catch (error) {
@@ -242,10 +258,11 @@ class SessionService {
       const now = Date.now();
       const timeUntilExpiry = exp - now;
       
-      // ✅ Aumentar umbral a 10 minutos (más conservador)
-      const tenMinutes = 10 * 60 * 1000;
+      // ✅ Renovar si falta menos de 1 minuto (60 segundos)
+      // Esto asegura renovación proactiva antes de que expire
+      const oneMinute = 60 * 1000;
       
-      return timeUntilExpiry < tenMinutes;
+      return timeUntilExpiry < oneMinute;
     } catch (error) {
       Logger.warn('Error verificando expiración de token', error);
       return true; // Si no se puede verificar, asumir que está próximo a expirar
@@ -272,16 +289,26 @@ class SessionService {
   async checkAndRefreshTokenIfNeeded(forceCheck = false) {
     try {
       // ✅ Usar cache para evitar verificaciones múltiples en corto tiempo
+      // Pero si el token está próximo a expirar, verificar más frecuentemente
       const now = Date.now();
-      if (!forceCheck && this.lastCheckResult !== null && (now - this.lastCheckTime) < this.CHECK_CACHE_DURATION) {
+      const token = await storageService.getAuthToken();
+      
+      // Si hay token, verificar si está próximo a expirar antes de usar cache
+      let shouldSkipCache = false;
+      if (token) {
+        const isNearExpiry = this.isTokenNearExpiry(token);
+        const isExpired = this.isTokenExpired(token);
+        // Si está próximo a expirar o ya expiró, no usar cache
+        shouldSkipCache = isNearExpiry || isExpired;
+      }
+      
+      if (!forceCheck && !shouldSkipCache && this.lastCheckResult !== null && (now - this.lastCheckTime) < this.CHECK_CACHE_DURATION) {
         Logger.debug('Usando resultado cacheado de verificación de token', {
           cached: this.lastCheckResult,
           age: now - this.lastCheckTime
         });
         return this.lastCheckResult;
       }
-
-      const token = await storageService.getAuthToken();
       
       if (!token) {
         Logger.warn('No hay token disponible');
@@ -308,7 +335,7 @@ class SessionService {
       const isExpired = this.isTokenExpired(token);
       
       if (isExpired) {
-        Logger.warn('Token ya expirado, renovando inmediatamente...');
+        Logger.warn('⚠️ [TOKEN CHECK] Token ya expirado, renovando inmediatamente...');
         const newToken = await this.refreshToken();
         const result = newToken !== null;
         this.lastCheckTime = now;
@@ -317,7 +344,7 @@ class SessionService {
       }
       
       if (isNearExpiry) {
-        Logger.info('Token próximo a expirar, renovando proactivamente...');
+        Logger.info('🔄 [TOKEN CHECK] Token próximo a expirar, renovando proactivamente...');
         const newToken = await this.refreshToken();
         const result = newToken !== null;
         this.lastCheckTime = now;

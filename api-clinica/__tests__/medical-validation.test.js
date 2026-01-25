@@ -37,8 +37,10 @@ describe('Medical Data Validation Tests', () => {
     });
 
     it('debe aceptar fechas futuras', () => {
-      const fechaCita = new Date('2025-12-31');
+      // Crear una fecha futura (mañana)
       const hoy = new Date();
+      const fechaCita = new Date(hoy);
+      fechaCita.setDate(fechaCita.getDate() + 1); // Mañana
       const isValid = fechaCita > hoy;
 
       expect(isValid).toBe(true);

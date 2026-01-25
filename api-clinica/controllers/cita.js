@@ -164,10 +164,20 @@ const obtenerTituloMensajeNotificacionDoctor = (tipo, data) => {
  * @param {Object} data - Datos del evento
  * @returns {Promise<Object|null>} - Notificación creada o null si hay error
  */
-export const crearNotificacionDoctor = async (doctorId, tipo, data) => {
+/**
+ * Crear notificación para doctor (en BD y push automático)
+ * @param {number} doctorId - ID del doctor
+ * @param {string} tipo - Tipo de notificación
+ * @param {Object} data - Datos de la notificación
+ * @param {Object} options - Opciones adicionales
+ * @param {boolean} options.enviarPush - Si enviar push automáticamente (default: true)
+ * @returns {Promise<NotificacionDoctor|null>} - Notificación creada o null si falla
+ */
+export const crearNotificacionDoctor = async (doctorId, tipo, data, options = {}) => {
   try {
     const { titulo, mensaje } = obtenerTituloMensajeNotificacionDoctor(tipo, data);
     
+    // 1. Guardar notificación en BD
     const notificacion = await NotificacionDoctor.create({
       id_doctor: doctorId,
       id_paciente: data.id_paciente || null,
@@ -186,6 +196,22 @@ export const crearNotificacionDoctor = async (doctorId, tipo, data) => {
       doctorId,
       tipo
     });
+
+    // 2. Enviar push automáticamente (si no está deshabilitado)
+    const enviarPush = options.enviarPush !== false;
+    if (enviarPush) {
+      try {
+        await enviarNotificacionPushDoctor(doctorId, tipo, data);
+      } catch (pushError) {
+        // No crítico - la notificación ya está guardada en BD
+        logger.warn(`⚠️ [PUSH] No se pudo enviar push automático (no crítico):`, {
+          error: pushError.message,
+          doctorId,
+          tipo,
+          id_notificacion: notificacion.id_notificacion
+        });
+      }
+    }
 
     return notificacion;
   } catch (error) {
@@ -2080,7 +2106,7 @@ export const solicitarReprogramacion = async (req, res) => {
           attributes: ['id_doctor', 'id_usuario']
         });
         if (doctor?.id_usuario) {
-          // Crear notificación en base de datos (para sección de notificaciones del dashboard)
+          // Crear notificación en base de datos y enviar push automáticamente
           await crearNotificacionDoctor(
             solicitudCompleta.Cita.id_doctor,
             'solicitud_reprogramacion',
@@ -2088,6 +2114,7 @@ export const solicitarReprogramacion = async (req, res) => {
               ...solicitudData,
               id_solicitud: solicitud.id_solicitud
             }
+            // Push se envía automáticamente por crearNotificacionDoctor
           );
 
           // Enviar WebSocket para notificación en tiempo real (si la app está abierta)
@@ -2097,13 +2124,6 @@ export const solicitarReprogramacion = async (req, res) => {
             enviado,
             id_solicitud: solicitudData.id_solicitud
           });
-
-          // Enviar notificación push (funciona incluso si la app está cerrada)
-          await enviarNotificacionPushDoctor(
-            solicitudCompleta.Cita.id_doctor,
-            'solicitud_reprogramacion',
-            solicitudData
-          );
         }
       } catch (notifError) {
         logger.error('❌ [NOTIFICACION] Error enviando notificación al doctor (no crítico):', notifError);

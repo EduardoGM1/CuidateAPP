@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Logger from '../services/logger';
+import { requestWithRetry } from '../utils/requestWithRetry';
 
 /**
  * =====================================================
@@ -60,6 +61,9 @@ export const usePacienteCitas = (pacienteId, options = {}) => {
     autoFetch = true
   } = options;
 
+  // AbortController para cancelar requests pendientes
+  const abortControllerRef = useRef(null);
+
   const fetchCitas = useCallback(async () => {
     if (!pacienteId) {
       Logger.debug(`usePacienteCitas: pacienteId no disponible, saltando fetch`);
@@ -68,6 +72,14 @@ export const usePacienteCitas = (pacienteId, options = {}) => {
       setTotal(0);
       return;
     }
+
+    // Cancelar request anterior si existe
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Crear nuevo AbortController para este request
+    abortControllerRef.current = new AbortController();
 
     // Generar cacheKey dentro de la función para evitar dependencias
     const currentCacheKey = `citas_${pacienteId}_${limit}_${offset}_${sort}`;
@@ -90,30 +102,69 @@ export const usePacienteCitas = (pacienteId, options = {}) => {
       Logger.info(`usePacienteCitas (${pacienteId}): Obteniendo citas del paciente`);
       
       const gestionService = (await import('../api/gestionService.js')).default;
-      const response = await gestionService.getPacienteCitas(pacienteId, {
-        limit,
-        offset,
-        sort
-      });
+      
+      // Usar requestWithRetry para manejo robusto de errores
+      const response = await requestWithRetry(
+        async (signal) => {
+          return await gestionService.getPacienteCitas(pacienteId, {
+            limit,
+            offset,
+            sort
+          });
+        },
+        {
+          maxRetries: 5, // Aumentar reintentos
+          retryDelay: 2000, // Aumentar delay entre reintentos
+          timeout: 20000, // Aumentar timeout a 20 segundos
+          abortController: abortControllerRef.current
+        }
+      );
+
+      // Verificar si el request fue cancelado
+      if (abortControllerRef.current?.signal.aborted) {
+        Logger.debug(`usePacienteCitas (${pacienteId}): Request cancelado`);
+        return;
+      }
 
       Logger.debug('📋 Citas response:', { response, keys: Object.keys(response) });
       
-      // El response ya viene con {success: true, data: [...], total: ...}
-      const citasData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+      // Validar y normalizar datos
+      const citasData = Array.isArray(response.data) 
+        ? response.data 
+        : (response.data?.data || []);
+      
+      // Validar que los datos sean válidos
+      if (!Array.isArray(citasData)) {
+        throw new Error('Datos de citas inválidos: no es un array');
+      }
+
       setCitas(citasData);
-      setTotal(response.total || 0);
+      setTotal(response.total || citasData.length);
 
       // Guardar en cache usando la clave actual
       medicalDataCache.citas[currentCacheKey] = {
         data: citasData,
-        total: response.total || 0,
+        total: response.total || citasData.length,
         timestamp: Date.now()
       };
 
       Logger.debug(`usePacienteCitas (${pacienteId}): Datos actualizados y cacheado`);
     } catch (err) {
+      // No establecer error si el request fue cancelado
+      if (err.name === 'AbortError' || err.message === 'Request cancelado') {
+        Logger.debug(`usePacienteCitas (${pacienteId}): Request cancelado, no establecer error`);
+        return;
+      }
+      
       Logger.error(`usePacienteCitas (${pacienteId}): Error al obtener citas`, err);
-      setError(err);
+      
+      // Crear error más descriptivo
+      const errorMessage = err.response?.data?.message || err.message || 'Error al obtener citas';
+      const enhancedError = new Error(errorMessage);
+      enhancedError.originalError = err;
+      enhancedError.status = err.response?.status;
+      
+      setError(enhancedError);
     } finally {
       setLoading(false);
     }
@@ -145,6 +196,14 @@ export const usePacienteCitas = (pacienteId, options = {}) => {
       setTotal(0);
       setLoading(false);
     }
+    
+    // Cleanup: cancelar requests pendientes cuando cambia pacienteId o se desmonta
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        Logger.debug('usePacienteCitas: Request cancelado en cleanup');
+      }
+    };
   }, [pacienteId]);
 
   // Solo ejecutar fetchCitas cuando cambien los parámetros relevantes
@@ -178,12 +237,16 @@ export const usePacienteSignosVitales = (pacienteId, options = {}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
+  
+  // AbortController para cancelar requests pendientes
+  const abortControllerRef = useRef(null);
 
   const {
     limit = 10,
     offset = 0,
     sort = 'DESC',
-    autoFetch = true
+    autoFetch = true,
+    getAll = false // Si es true, obtiene TODOS los signos vitales (monitoreo continuo + consultas)
   } = options;
 
   const fetchSignosVitales = useCallback(async () => {
@@ -195,8 +258,18 @@ export const usePacienteSignosVitales = (pacienteId, options = {}) => {
       return;
     }
 
+    // Cancelar request anterior si existe
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Crear nuevo AbortController para este request
+    abortControllerRef.current = new AbortController();
+
     // Generar cacheKey dentro de la función para evitar dependencias
-    const currentCacheKey = `signos_${pacienteId}_${limit}_${offset}_${sort}`;
+    const currentCacheKey = getAll 
+      ? `signos_all_${pacienteId}_${sort}`
+      : `signos_${pacienteId}_${limit}_${offset}_${sort}`;
 
     // Verificar cache (solo si el cache es muy reciente < 10 segundos)
     // Para cache más antiguo, siempre recargar para asegurar datos frescos
@@ -224,35 +297,92 @@ export const usePacienteSignosVitales = (pacienteId, options = {}) => {
     setError(null);
 
     try {
-      Logger.info(`usePacienteSignosVitales (${pacienteId}): Obteniendo signos vitales del paciente`);
-      
       const gestionService = (await import('../api/gestionService.js')).default;
-      const response = await gestionService.getPacienteSignosVitales(pacienteId, {
-        limit,
-        offset,
-        sort
-      });
+      
+      // Usar requestWithRetry para manejo robusto de errores
+      let response;
+      if (getAll) {
+        // Obtener TODOS los signos vitales (monitoreo continuo + consultas) para evolución completa
+        Logger.info(`usePacienteSignosVitales (${pacienteId}): Obteniendo TODOS los signos vitales (evolución completa)`);
+        response = await requestWithRetry(
+          async (signal) => {
+            return await gestionService.getAllPacienteSignosVitales(pacienteId, { sort });
+          },
+          {
+            maxRetries: 3,
+            retryDelay: 1000,
+            timeout: 15000, // Timeout más largo para getAll
+            abortController: abortControllerRef.current
+          }
+        );
+      } else {
+        Logger.info(`usePacienteSignosVitales (${pacienteId}): Obteniendo signos vitales del paciente`);
+        response = await requestWithRetry(
+          async (signal) => {
+            return await gestionService.getPacienteSignosVitales(pacienteId, {
+              limit,
+              offset,
+              sort
+            });
+          },
+          {
+            maxRetries: 5, // Aumentar reintentos
+            retryDelay: 2000, // Aumentar delay entre reintentos
+            timeout: 20000, // Aumentar timeout a 20 segundos
+            abortController: abortControllerRef.current
+          }
+        );
+      }
+
+      // Verificar si el request fue cancelado
+      if (abortControllerRef.current?.signal.aborted) {
+        Logger.debug(`usePacienteSignosVitales (${pacienteId}): Request cancelado`);
+        return;
+      }
 
       Logger.debug('💓 Signos response:', { response, keys: Object.keys(response) });
       
-      const signosData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+      // Validar y normalizar datos
+      const signosData = Array.isArray(response.data) 
+        ? response.data 
+        : (response.data?.data || []);
+      
+      // Validar que los datos sean válidos
+      if (!Array.isArray(signosData)) {
+        throw new Error('Datos de signos vitales inválidos: no es un array');
+      }
+
       setSignosVitales(signosData);
-      setTotal(response.total || 0);
+      setTotal(response.total || signosData.length);
 
       // Guardar en cache usando la clave actual
       medicalDataCache.signosVitales[currentCacheKey] = {
         data: signosData,
+        total: response.total || signosData.length,
         timestamp: Date.now()
       };
 
-      Logger.debug(`usePacienteSignosVitales (${pacienteId}): Datos actualizados y cacheado`);
+      Logger.debug(`usePacienteSignosVitales (${pacienteId}): Datos actualizados y cacheado (${signosData.length} registros)`);
     } catch (err) {
+      // No establecer error si el request fue cancelado
+      if (err.name === 'AbortError' || err.message === 'Request cancelado') {
+        Logger.debug(`usePacienteSignosVitales (${pacienteId}): Request cancelado, no establecer error`);
+        return;
+      }
+      
       Logger.error(`usePacienteSignosVitales (${pacienteId}): Error al obtener signos vitales`, err);
-      setError(err);
+      
+      // Crear error más descriptivo
+      const errorMessage = err.response?.data?.message || err.message || 'Error al obtener signos vitales';
+      const enhancedError = new Error(errorMessage);
+      enhancedError.originalError = err;
+      enhancedError.status = err.response?.status;
+      
+      setError(enhancedError);
     } finally {
       setLoading(false);
     }
-  }, [pacienteId, limit, offset, sort]);
+  }, [pacienteId, limit, offset, sort, getAll]);
 
   const refreshSignosVitales = useCallback(() => {
     if (pacienteId) {
@@ -295,6 +425,7 @@ export const usePacienteDiagnosticos = (pacienteId, options = {}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
+  const abortControllerRef = useRef(null);
 
   const {
     limit = 10,
@@ -333,11 +464,30 @@ export const usePacienteDiagnosticos = (pacienteId, options = {}) => {
       Logger.info(`usePacienteDiagnosticos (${pacienteId}): Obteniendo diagnósticos del paciente`);
       
       const gestionService = (await import('../api/gestionService.js')).default;
-      const response = await gestionService.getPacienteDiagnosticos(pacienteId, {
-        limit,
-        offset,
-        sort
-      });
+      const requestWithRetry = (await import('../utils/requestWithRetry.js')).requestWithRetry;
+      
+      // Usar requestWithRetry para manejo robusto de errores
+      const response = await requestWithRetry(
+        async (signal) => {
+          return await gestionService.getPacienteDiagnosticos(pacienteId, {
+            limit,
+            offset,
+            sort
+          });
+        },
+        {
+          maxRetries: 5, // Aumentar reintentos
+          retryDelay: 2000, // Aumentar delay entre reintentos
+          timeout: 20000, // Aumentar timeout a 20 segundos
+          abortController: abortControllerRef.current
+        }
+      );
+      
+      // Verificar si el request fue cancelado
+      if (abortControllerRef.current?.signal.aborted) {
+        Logger.debug(`usePacienteDiagnosticos (${pacienteId}): Request cancelado`);
+        return;
+      }
 
       Logger.debug('🩺 Diagnósticos response:', { response, keys: Object.keys(response) });
       
@@ -353,8 +503,21 @@ export const usePacienteDiagnosticos = (pacienteId, options = {}) => {
 
       Logger.debug(`usePacienteDiagnosticos (${pacienteId}): Datos actualizados y cacheado`);
     } catch (err) {
+      // No establecer error si el request fue cancelado
+      if (err.name === 'AbortError' || err.message === 'Request cancelado' || abortControllerRef.current?.signal.aborted) {
+        Logger.debug(`usePacienteDiagnosticos (${pacienteId}): Request cancelado, no establecer error`);
+        return;
+      }
+      
       Logger.error(`usePacienteDiagnosticos (${pacienteId}): Error al obtener diagnósticos`, err);
-      setError(err);
+      
+      // Crear error más descriptivo
+      const errorMessage = err.response?.data?.message || err.message || 'Error al obtener diagnósticos';
+      const enhancedError = new Error(errorMessage);
+      enhancedError.originalError = err;
+      enhancedError.status = err.response?.status;
+      
+      setError(enhancedError);
     } finally {
       setLoading(false);
     }
@@ -370,6 +533,9 @@ export const usePacienteDiagnosticos = (pacienteId, options = {}) => {
   }, [pacienteId, limit, offset, sort, fetchDiagnosticos]);
 
   useEffect(() => {
+    // Crear nuevo AbortController para cada request
+    abortControllerRef.current = new AbortController();
+    
     if (autoFetch && pacienteId) {
       Logger.debug(`usePacienteDiagnosticos: Ejecutando fetchDiagnosticos`, { pacienteId, limit, offset, sort });
       fetchDiagnosticos();
@@ -379,6 +545,14 @@ export const usePacienteDiagnosticos = (pacienteId, options = {}) => {
       setTotal(0);
       setLoading(false);
     }
+    
+    return () => {
+      // Cleanup: cancelar request pendiente si el componente se desmonta o cambia pacienteId
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
   }, [pacienteId, limit, offset, sort, autoFetch, fetchDiagnosticos]);
 
   return {

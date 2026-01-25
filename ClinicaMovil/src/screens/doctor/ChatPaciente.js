@@ -184,22 +184,17 @@ const ChatPaciente = () => {
       // Eliminar archivo temporal después de subirlo exitosamente (solo si existe localmente)
       if (audioFilePath) {
         try {
-          const pathToDelete = audioFilePath.replace(/^file:\/\/+/, '');
-          const RNFS = require('react-native-fs').default;
-          const exists = await RNFS.exists(pathToDelete);
-          if (exists) {
-            await RNFS.unlink(pathToDelete);
-            Logger.info('ChatPaciente: Archivo temporal eliminado después de subir', { path: pathToDelete });
-          } else {
-            Logger.debug('ChatPaciente: Archivo temporal ya no existe (probablemente ya fue eliminado)', { path: pathToDelete });
-          }
+          // Usar audioService para eliminar el archivo (maneja RNFS correctamente)
+          const audioService = (await import('../../services/audioService')).default;
+          await audioService.deleteFile(audioFilePath);
+          Logger.info('ChatPaciente: Archivo temporal eliminado después de subir', { path: audioFilePath });
         } catch (deleteError) {
           // Solo registrar como warning si el error es significativo
           const errorMessage = deleteError?.message || String(deleteError);
           const errorCode = deleteError?.code;
           
           // Ignorar errores de "archivo no encontrado" ya que el archivo puede haber sido eliminado por otro proceso
-          if (errorCode !== 'ENOENT' && !errorMessage.includes('ENOENT') && !errorMessage.includes('no such file')) {
+          if (errorCode !== 'ENOENT' && !errorMessage.includes('ENOENT') && !errorMessage.includes('no such file') && !errorMessage.includes('exists')) {
             Logger.warn('ChatPaciente: Error eliminando archivo temporal', {
               error: errorMessage,
               code: errorCode,

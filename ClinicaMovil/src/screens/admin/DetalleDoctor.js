@@ -37,6 +37,11 @@ const DetalleDoctor = ({ route, navigation }) => {
   const [assignLoading, setAssignLoading] = useState(false);
   const [unassignLoading, setUnassignLoading] = useState({});
   
+  // Estados para búsqueda de pacientes asignados
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredPacientes, setFilteredPacientes] = useState([]);
+  
   // Hook para operaciones de doctor (incluyendo soft delete, reactivar, hard delete)
   const { 
     deleteDoctor, 
@@ -522,6 +527,28 @@ const DetalleDoctor = ({ route, navigation }) => {
   };
 
   // =====================================================
+  // FUNCIONES DE BÚSQUEDA DE PACIENTES ASIGNADOS
+  // =====================================================
+
+  const handleOpenSearchModal = () => {
+    setSearchQuery('');
+    setFilteredPacientes(pacientesAsignados);
+    setShowSearchModal(true);
+  };
+
+  const handleSearchPatients = (query) => {
+    setSearchQuery(query);
+    if (query.trim() === '') {
+      setFilteredPacientes(pacientesAsignados);
+    } else {
+      const filtered = pacientesAsignados.filter(paciente => {
+        const nombreCompleto = `${paciente.nombre} ${paciente.apellido}`.toLowerCase();
+        return nombreCompleto.includes(query.toLowerCase());
+      });
+      setFilteredPacientes(filtered);
+    }
+  };
+
   // FUNCIONES DE ASIGNACIÓN DE PACIENTES
   // =====================================================
 
@@ -1117,25 +1144,38 @@ const DetalleDoctor = ({ route, navigation }) => {
           <Card.Content>
             <View style={styles.cardHeader}>
               <View style={styles.cardTitleContainer}>
-                <Title style={styles.cardTitle}>👥 Pacientes Asignados</Title>
+                <Title style={styles.cardHeaderTitle}>👥 Pacientes Asignados</Title>
                 <Text style={styles.patientCount}>({pacientesAsignados.length})</Text>
               </View>
-              <Button
-                mode="contained"
-                onPress={handleOpenAssignModal}
-                style={styles.assignButton}
-                buttonColor="#4CAF50"
-                textColor="#FFFFFF"
-                icon="plus"
-                loading={assignLoading}
-                disabled={assignLoading}
-                compact={true}
-              >
-                {assignLoading ? 'Cargando...' : 'Asignar'}
-              </Button>
+              <View style={styles.cardHeaderButtons}>
+                <Button
+                  mode="contained"
+                  onPress={handleOpenAssignModal}
+                  style={styles.assignButton}
+                  buttonColor="#4CAF50"
+                  textColor="#FFFFFF"
+                  loading={assignLoading}
+                  disabled={assignLoading}
+                  compact={true}
+                >
+                  {assignLoading ? 'Cargando...' : 'Asignar'}
+                </Button>
+                <TouchableOpacity 
+                  style={styles.searchButton}
+                  onPress={handleOpenSearchModal}
+                >
+                  <Text style={styles.searchButtonText}>🔍</Text>
+                </TouchableOpacity>
+              </View>
             </View>
             {pacientesAsignados.length > 0 ? (
-              pacientesAsignados.map(renderPatientCard)
+              <ScrollView 
+                style={styles.pacientesAsignadosList}
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={true}
+              >
+                {pacientesAsignados.map(renderPatientCard)}
+              </ScrollView>
             ) : (
               <Text style={styles.noDataText}>No hay pacientes asignados</Text>
             )}
@@ -1147,7 +1187,13 @@ const DetalleDoctor = ({ route, navigation }) => {
           <Card.Content>
             <Title style={styles.cardTitle}>Citas Recientes</Title>
             {citasRecientes.length > 0 ? (
-              citasRecientes.map(renderAppointmentCard)
+              <ScrollView 
+                style={styles.citasRecientesList}
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={true}
+              >
+                {citasRecientes.map(renderAppointmentCard)}
+              </ScrollView>
             ) : (
               <Text style={styles.noDataText}>No hay citas recientes</Text>
             )}
@@ -1226,6 +1272,65 @@ const DetalleDoctor = ({ route, navigation }) => {
               >
                 {passwordLoading ? 'Cambiando...' : 'Cambiar Contraseña'}
               </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal para buscar pacientes asignados */}
+      <Modal
+        visible={showSearchModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowSearchModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>🔍 Buscar Paciente</Text>
+              <TouchableOpacity onPress={() => setShowSearchModal(false)}>
+                <Text style={styles.closeButtonX}>X</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.modalBody}>
+              <TextInput
+                style={styles.searchInput}
+                value={searchQuery}
+                onChangeText={handleSearchPatients}
+                placeholder="Buscar por nombre..."
+                autoCapitalize="none"
+                autoFocus={true}
+              />
+              
+              <ScrollView style={styles.searchResultsList}>
+                {filteredPacientes.length > 0 ? (
+                  filteredPacientes.map((paciente) => (
+                    <TouchableOpacity
+                      key={paciente.id}
+                      style={styles.searchResultItem}
+                      onPress={() => {
+                        setShowSearchModal(false);
+                        handleViewPatient(paciente);
+                      }}
+                    >
+                      <View style={styles.searchResultInfo}>
+                        <Text style={styles.searchResultName}>
+                          {paciente.nombre} {paciente.apellido}
+                        </Text>
+                        <Text style={styles.searchResultDetails}>
+                          {paciente.edad} años • {paciente.telefono || 'Sin teléfono'}
+                        </Text>
+                      </View>
+                      <Text style={styles.searchResultArrow}>→</Text>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text style={styles.noResultsText}>
+                    {searchQuery ? 'No se encontraron pacientes' : 'Ingresa un nombre para buscar'}
+                  </Text>
+                )}
+              </ScrollView>
             </View>
           </View>
         </View>
@@ -1399,6 +1504,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 15,
+    flexShrink: 1,
   },
   infoGrid: {
     gap: 15,
@@ -1720,12 +1826,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
+    flexWrap: 'wrap',
+    gap: 8,
   },
   cardTitleContainer: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 10,
+    flexShrink: 1,
+  },
+  cardHeaderTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    flexShrink: 1,
   },
   patientCount: {
     fontSize: 16,
@@ -1733,10 +1846,78 @@ const styles = StyleSheet.create({
     color: '#1976D2',
     marginLeft: 5,
   },
+  cardHeaderButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  searchButton: {
+    backgroundColor: '#E3F2FD',
+    borderRadius: 8,
+    padding: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchButtonText: {
+    fontSize: 18,
+  },
   assignButton: {
     borderRadius: 8,
-    paddingHorizontal: 8,
-    minWidth: 80,
+    paddingHorizontal: 5,
+  },
+  pacientesAsignadosList: {
+    maxHeight: 400,
+  },
+  citasRecientesList: {
+    maxHeight: 350,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    marginBottom: 16,
+    backgroundColor: '#FAFAFA',
+  },
+  searchResultsList: {
+    maxHeight: 350,
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    backgroundColor: '#FFFFFF',
+  },
+  searchResultInfo: {
+    flex: 1,
+  },
+  searchResultName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  searchResultDetails: {
+    fontSize: 14,
+    color: '#666',
+  },
+  searchResultArrow: {
+    fontSize: 20,
+    color: '#1976D2',
+    marginLeft: 8,
+  },
+  noResultsText: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    paddingVertical: 20,
+    fontStyle: 'italic',
   },
   patientActions: {
     flexDirection: 'row',

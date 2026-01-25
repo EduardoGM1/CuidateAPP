@@ -28,6 +28,7 @@ import HealthStatusIndicator from '../../components/paciente/HealthStatusIndicat
 import ValueCard from '../../components/paciente/ValueCard';
 import useTTS from '../../hooks/useTTS';
 import SkeletonLoader, { SkeletonCard } from '../../components/common/SkeletonLoader';
+import { formatDate, formatDateShort, formatDateWithWeekday } from '../../utils/dateUtils';
 import hapticService from '../../services/hapticService';
 import audioFeedbackService from '../../services/audioFeedbackService';
 import Logger from '../../services/logger';
@@ -329,14 +330,10 @@ const HistorialMedico = () => {
     }
   };
 
-  // Formatear fecha corta para timeline
+  // Formatear fecha corta para timeline - usar formateo manual en español
   const formatFechaCorta = (fecha) => {
     try {
-      return new Date(fecha).toLocaleDateString('es-MX', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      });
+      return formatDateShort(new Date(fecha), true);
     } catch {
       return fecha;
     }
@@ -460,19 +457,13 @@ const HistorialMedico = () => {
     // Preparar datos para el gráfico
     const datosGrafico = signosOrdenados.map((signo, index) => {
       const fecha = new Date(signo.fecha_medicion || signo.fecha_creacion);
-      const fechaLabel = fecha.toLocaleDateString('es-MX', { 
-        month: 'short', 
-        day: 'numeric'
-      });
+      // Usar formateo manual en español
+      const fechaLabel = formatDateShort(fecha, false);
       
       return {
         x: index + 1,
         fecha: fechaLabel,
-        fechaCompleta: fecha.toLocaleDateString('es-MX', { 
-          month: 'long', 
-          day: 'numeric',
-          year: 'numeric'
-        }),
+        fechaCompleta: formatDate(fecha),
         peso: Number(signo.peso_kg) || null,
         presionSistolica: Number(signo.presion_sistolica) || null,
         presionDiastolica: Number(signo.presion_diastolica) || null,
@@ -1139,14 +1130,9 @@ const HistorialMedico = () => {
                   diagnostico => (diagnostico.id_cita === citaId || diagnostico.id_cita === cita.id_cita)
                 ) || [];
                 
-                // Formatear fecha y hora completa
+                // Formatear fecha y hora completa - usar formateo manual en español
                 const fechaCompleta = cita.fecha_cita 
-                  ? new Date(cita.fecha_cita).toLocaleDateString('es-MX', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })
+                  ? formatDateWithWeekday(new Date(cita.fecha_cita))
                   : formatFecha(cita.fecha_cita);
                 
                 const horaCompleta = cita.fecha_cita

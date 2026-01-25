@@ -5728,7 +5728,6 @@ const DetallePacienteContent = ({ route, navigation }) => {
         title="Opciones de Citas"
         options={[
           {
-            icon: 'calendar',
             label: '📅 Agendar Cita (Simple)',
             onPress: () => {
               modalManager.close('optionsCitas');
@@ -5737,7 +5736,6 @@ const DetallePacienteContent = ({ route, navigation }) => {
             color: '#2196F3'
           },
           {
-            icon: 'file-document',
             label: 'Registrar Consulta Completa',
             onPress: () => {
               modalManager.close('optionsCitas');
@@ -5748,7 +5746,6 @@ const DetallePacienteContent = ({ route, navigation }) => {
             textStyle: { fontWeight: '600' }
           },
           {
-            icon: 'magnify',
             label: 'Ver Historial Completo',
             onPress: () => {
               modalManager.close('optionsCitas');

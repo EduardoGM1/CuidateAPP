@@ -13,11 +13,12 @@ const mockUsuario = {
   create: jest.fn()
 };
 
-import { Usuario } from '../models/associations.js';
-
+// Mock debe ir antes del import
 jest.mock('../models/associations.js', () => ({
   Usuario: mockUsuario
 }));
+
+import { Usuario } from '../models/associations.js';
 
 describe('Auth Routes', () => {
   beforeEach(() => {

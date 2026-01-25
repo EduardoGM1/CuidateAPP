@@ -39,6 +39,7 @@ describe('🔍 Validación de Formatos y Tipos de Datos - Comorbilidades', () =>
         nombre: 'Test',
         apellido_paterno: 'Formatos',
         fecha_nacimiento: '1990-01-01',
+        estado: 'activo',
         activo: true
       });
       pacienteId = nuevoPaciente.id_paciente;
@@ -63,10 +64,16 @@ describe('🔍 Validación de Formatos y Tipos de Datos - Comorbilidades', () =>
 
   afterAll(async () => {
     // Limpiar datos de prueba
-    await PacienteComorbilidad.destroy({
-      where: { id_paciente: pacienteId }
-    });
-    await sequelize.close();
+    if (pacienteId) {
+      await PacienteComorbilidad.destroy({
+        where: { id_paciente: pacienteId }
+      });
+    }
+    try {
+      await sequelize.close();
+    } catch (error) {
+      // Ignorar errores al cerrar
+    }
   });
 
   describe('GET - Formato de respuesta', () => {

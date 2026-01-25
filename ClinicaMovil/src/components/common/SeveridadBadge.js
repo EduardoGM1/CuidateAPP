@@ -49,14 +49,15 @@ const SeveridadBadge = ({ severidad, style, textStyle }) => {
 
 const styles = StyleSheet.create({
   badge: {
-    height: 24,
-    maxWidth: '100%',
+    minHeight: 28,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   badgeText: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#FFFFFF',
     fontWeight: '600',
-    textAlign: 'center',
+    lineHeight: 14,
   },
 });
 

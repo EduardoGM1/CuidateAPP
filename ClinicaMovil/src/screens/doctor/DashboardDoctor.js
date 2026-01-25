@@ -18,7 +18,7 @@ import Logger from '../../services/logger';
 import { useDoctorDashboard } from '../../hooks/useDashboard';
 import { usePacientes } from '../../hooks/useGestion';
 import useNotificacionesDoctor from '../../hooks/useNotificacionesDoctor';
-import { formatDate, formatTime, formatDateTime } from '../../utils/dateUtils';
+import { formatDate, formatTime, formatDateTime, formatDateWithWeekday } from '../../utils/dateUtils';
 import useWebSocket from '../../hooks/useWebSocket';
 import useScreenFocus from '../../hooks/useScreenFocus';
 import gestionService from '../../api/gestionService';
@@ -706,12 +706,7 @@ const DashboardDoctor = ({ navigation }) => {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Dashboard Doctor</Text>
           <Text style={styles.headerSubtitle}>Bienvenido Dr. {userData?.email?.split('@')[0] || 'Usuario'}</Text>
-          <Text style={styles.headerDate}>{new Date().toLocaleDateString('es-ES', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          })}</Text>
+          <Text style={styles.headerDate}>{formatDateWithWeekday(new Date())}</Text>
         </View>
 
         {/* Métricas Principales */}
@@ -841,17 +836,6 @@ const DashboardDoctor = ({ navigation }) => {
             >
               <Text style={styles.quickAccessIcon}>➕</Text>
               <Text style={styles.quickAccessText}>Nuevo Paciente</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.quickAccessButton, styles.primaryButton]}
-              onPress={() => {
-                Logger.navigation('DashboardDoctor', 'ReportesDoctor');
-                navigation.navigate('ReportesDoctor');
-              }}
-            >
-              <Text style={styles.quickAccessIcon}>📊</Text>
-              <Text style={styles.quickAccessText}>Reportes</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 

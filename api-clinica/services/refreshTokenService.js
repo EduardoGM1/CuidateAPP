@@ -8,7 +8,7 @@ import logger from '../utils/logger.js';
  * 
  * Mejores prácticas implementadas:
  * - Refresh tokens almacenados en base de datos (revocables)
- * - Access tokens cortos (1 hora)
+ * - Access tokens (7 horas por defecto, configurable)
  * - Refresh tokens largos (7 días)
  * - Hash de refresh tokens antes de almacenar
  * - Rotación de refresh tokens
@@ -17,12 +17,47 @@ import logger from '../utils/logger.js';
  */
 class RefreshTokenService {
   /**
+   * Convierte formato de tiempo (ej: "7h", "7d") a milisegundos
+   * @param {string} expiresIn - Formato de tiempo (ej: "7h", "7d", "3600")
+   * @returns {number} - Milisegundos
+   */
+  static parseExpiresIn(expiresIn) {
+    if (!expiresIn) return 7 * 24 * 60 * 60 * 1000; // 7 días por defecto
+    
+    const str = expiresIn.toString().toLowerCase().trim();
+    
+    // Si es un número, asumir que son segundos
+    if (/^\d+$/.test(str)) {
+      return parseInt(str) * 1000;
+    }
+    
+    // Parsear formato con unidad (ej: "7h", "7d", "30m")
+    const match = str.match(/^(\d+)([smhd])$/);
+    if (match) {
+      const value = parseInt(match[1]);
+      const unit = match[2];
+      
+      switch (unit) {
+        case 's': return value * 1000; // segundos
+        case 'm': return value * 60 * 1000; // minutos
+        case 'h': return value * 60 * 60 * 1000; // horas
+        case 'd': return value * 24 * 60 * 60 * 1000; // días
+        default: return 7 * 24 * 60 * 60 * 1000; // 7 días por defecto
+      }
+    }
+    
+    // Si no se puede parsear, usar 7 días por defecto
+    return 7 * 24 * 60 * 60 * 1000;
+  }
+
+  /**
    * Crea un par de tokens (access + refresh)
    * @param {Object} payload - Payload para el token (id, email, rol)
    * @returns {Object} - { accessToken, refreshToken, expiresIn }
    */
   static async generateTokenPair(payload) {
-    const accessTokenExpiresIn = process.env.ACCESS_TOKEN_EXPIRES_IN || '1h';
+    // Access token dura 7 horas por defecto
+    const accessTokenExpiresIn = process.env.ACCESS_TOKEN_EXPIRES_IN || '7h';
     const refreshTokenExpiresIn = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
     
     // Access token (corto)
@@ -54,8 +89,9 @@ class RefreshTokenService {
     
     // Calcular fecha de expiración
     const expiresAt = new Date();
-    const days = parseInt(refreshTokenExpiresIn) || 7;
-    expiresAt.setDate(expiresAt.getDate() + days);
+    // Convertir formato de tiempo (ej: "7d", "14d") a milisegundos
+    const expiresInMs = this.parseExpiresIn(refreshTokenExpiresIn);
+    expiresAt.setTime(expiresAt.getTime() + expiresInMs);
     
     // Almacenar refresh token en base de datos
     await this.storeRefreshToken({
@@ -163,10 +199,24 @@ class RefreshTokenService {
         rol: decoded.rol
       };
       
-      return await this.generateTokenPair(newPayload);
+      logger.info('🔄 [REFRESH TOKEN] Generando nuevo par de tokens', {
+        userId: decoded.id,
+        email: decoded.email,
+        rol: decoded.rol
+      });
+      
+      const tokenPair = await this.generateTokenPair(newPayload);
+      
+      logger.info('✅ [REFRESH TOKEN] Nuevo par de tokens generado exitosamente', {
+        expiresIn: tokenPair.expiresIn,
+        refreshTokenExpiresIn: tokenPair.refreshTokenExpiresIn
+      });
+      
+      return tokenPair;
     } catch (error) {
-      logger.warn('Error renovando refresh token', {
-        error: error.message
+      logger.warn('❌ [REFRESH TOKEN] Error renovando refresh token', {
+        error: error.message,
+        stack: error.stack
       });
       throw new Error('Refresh token inválido o expirado');
     }

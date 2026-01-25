@@ -28,7 +28,7 @@ import HistorialNotificaciones from '../screens/doctor/HistorialNotificaciones';
 import GraficosEvolucion from '../screens/admin/GraficosEvolucion';
 // Pantallas del doctor
 import ListaPacientesDoctor from '../screens/doctor/ListaPacientesDoctor';
-import ReportesDoctor from '../screens/doctor/ReportesDoctor';
+import ReportesAdmin from '../screens/admin/ReportesAdmin';
 import HistorialMedicoDoctor from '../screens/doctor/HistorialMedicoDoctor';
 import GestionSolicitudesReprogramacion from '../screens/doctor/GestionSolicitudesReprogramacion';
 import ChatPaciente from '../screens/doctor/ChatPaciente';
@@ -213,7 +213,7 @@ const TabNavigator = () => {
         options={{
           tabBarLabel: 'Gestión',
           tabBarIcon: ({ focused }) => (
-            <TabIconWithBadge icon="" badgeCount={0} focused={focused} />
+            <TabIconWithBadge icon="📋" badgeCount={0} focused={focused} />
           ),
         }}
       >
@@ -390,8 +390,8 @@ const NavegacionProfesional = () => {
         }}
       />
       <Stack.Screen 
-        name="ReportesDoctor" 
-        component={ReportesDoctor}
+        name="ReportesAdmin" 
+        component={ReportesAdmin}
         options={{
           headerShown: false,
         }}

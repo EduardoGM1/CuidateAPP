@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Card, Title } from 'react-native-paper';
 import useMonitoreoContinuo from '../../hooks/useMonitoreoContinuo';
 import Logger from '../../services/logger';
@@ -224,6 +224,20 @@ const MonitoreoContinuoSection = ({
       return (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>❌ Error al cargar datos</Text>
+          <Text style={styles.errorSubtext}>
+            {error.message || 'Error desconocido'}
+          </Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={() => {
+              Logger.info('MonitoreoContinuoSection: Reintentando cargar datos');
+              if (refresh) {
+                refresh();
+              }
+            }}
+          >
+            <Text style={styles.retryButtonText}>🔄 Reintentar</Text>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -267,8 +281,21 @@ const MonitoreoContinuoSection = ({
           renderEmpty()
         ) : error ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>❌ Error al cargar datos: {error.message || 'Error desconocido'}</Text>
-            <Text style={styles.emptySubtext}>Intenta refrescar la pantalla</Text>
+            <Text style={styles.emptyText}>❌ Error al cargar datos</Text>
+            <Text style={styles.errorSubtext}>
+              {error.message || 'Error desconocido'}
+            </Text>
+            <TouchableOpacity 
+              style={styles.retryButton}
+              onPress={() => {
+                Logger.info('MonitoreoContinuoSection: Reintentando cargar datos');
+                if (refresh) {
+                  refresh();
+                }
+              }}
+            >
+              <Text style={styles.retryButtonText}>🔄 Reintentar</Text>
+            </TouchableOpacity>
           </View>
         ) : monitoreoContinuo && monitoreoContinuo.length > 0 ? (
           <View style={styles.signoContainer}>
@@ -427,6 +454,26 @@ const styles = StyleSheet.create({
     color: '#9E9E9E',
     textAlign: 'center',
     marginTop: 4
+  },
+  errorSubtext: {
+    fontSize: 12,
+    color: '#757575',
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 12
+  },
+  retryButton: {
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 8
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center'
   }
 });
 

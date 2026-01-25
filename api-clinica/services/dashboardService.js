@@ -434,7 +434,7 @@ export class DashboardService {
           id: c.id_cita,
           fecha_cita: c.fecha_cita,
           motivo: c.motivo,
-          asistencia: c.asistencia,
+          estado: c.estado,
           paciente: {
             nombre: c.Paciente.nombre,
             apellido: c.Paciente.apellido_paterno
@@ -444,7 +444,7 @@ export class DashboardService {
           id: c.id_cita,
           fecha_cita: c.fecha_cita,
           motivo: c.motivo,
-          asistencia: c.asistencia,
+          estado: c.estado,
           paciente: {
             nombre: c.Paciente.nombre,
             apellido: c.Paciente.apellido_paterno

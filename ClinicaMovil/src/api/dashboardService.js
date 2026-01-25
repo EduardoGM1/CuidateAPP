@@ -107,8 +107,8 @@ const getApiClient = async () => {
         message: error.message
       });
 
-      // Manejar token expirado (401 Unauthorized)
-      if (error.response?.status === 401 && !error.config._retry) {
+      // Manejar token expirado (401 Unauthorized o 403 Forbidden)
+      if ((error.response?.status === 401 || error.response?.status === 403) && !error.config._retry) {
         error.config._retry = true;
         
         try {
@@ -135,10 +135,19 @@ const getApiClient = async () => {
             
             return apiClient(error.config);
           } else {
-            // No se pudo renovar, la sesión ha expirado
-            Logger.warn('No se pudo renovar el token, sesión expirada', {
+            // No se pudo renovar, la sesión ha expirada
+            Logger.warn('⚠️ [INTERCEPTOR] No se pudo renovar el token, cerrando sesión y redirigiendo al login', {
               url: error.config.url
             });
+            
+            // Asegurar que se cierre la sesión y redirija al login
+            try {
+              const sessionService = (await import('../services/sessionService.js')).default;
+              await sessionService.handleSessionExpired();
+            } catch (handleError) {
+              Logger.error('❌ [INTERCEPTOR] Error manejando sesión expirada', handleError);
+            }
+            
             return Promise.reject(error);
           }
         } catch (refreshError) {

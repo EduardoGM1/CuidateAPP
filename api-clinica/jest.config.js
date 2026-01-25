@@ -7,5 +7,11 @@ export default {
     '**/__tests__/**/*.test.js'
   ],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  testTimeout: 30000
+  testTimeout: 30000,
+  transformIgnorePatterns: [
+    'node_modules/(?!(isomorphic-dompurify|@exodus)/)'
+  ],
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1'
+  }
 };

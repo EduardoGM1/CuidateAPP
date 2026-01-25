@@ -5,14 +5,7 @@
  * @date 2025-10-28
  */
 
-import request from 'supertest';
-import express from 'express';
-import jwt from 'jsonwebtoken';
-import citaRoutes from '../routes/cita.js';
-import pacienteMedicalDataRoutes from '../routes/pacienteMedicalData.js';
-import medicamentoRoutes from '../routes/medicamento.js';
-
-// Mock de models
+// Mock de models (debe ir antes de los imports en ES modules)
 const mockCita = {
   create: jest.fn(),
   findAll: jest.fn(),
@@ -53,6 +46,14 @@ jest.mock('../models/associations.js', () => ({
   RedApoyo: mockRedApoyo,
   EsquemaVacunacion: mockEsquemaVacunacion
 }));
+
+// Imports después de los mocks
+import request from 'supertest';
+import express from 'express';
+import jwt from 'jsonwebtoken';
+import citaRoutes from '../routes/cita.js';
+import pacienteMedicalDataRoutes from '../routes/pacienteMedicalData.js';
+import medicamentoRoutes from '../routes/medicamento.js';
 
 // Setup Express app
 const app = express();

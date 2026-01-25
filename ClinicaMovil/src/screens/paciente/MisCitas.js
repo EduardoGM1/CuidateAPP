@@ -34,6 +34,7 @@ import audioFeedbackService from '../../services/audioFeedbackService';
 import Logger from '../../services/logger';
 import { ESTADOS_SOLICITUD_REPROGRAMACION } from '../../utils/constantes';
 import useWebSocket from '../../hooks/useWebSocket';
+import { formatDateWithWeekday } from '../../utils/dateUtils';
 
 const MisCitas = () => {
   const navigation = useNavigation();
@@ -172,12 +173,8 @@ const MisCitas = () => {
                 const horaStrTTS = ttsService.formatTimeForTTS(fechaCita);
                 mensaje = `Tienes ${citasFuturas.length} ${citasFuturas.length === 1 ? 'cita' : 'citas'} programadas. Tu próxima cita es ${diasStr} a las ${horaStrTTS}`;
               } else {
-                // Más de una semana
-                const fechaStr = fechaCita.toLocaleDateString('es-MX', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                });
+                // Más de una semana - usar formateo manual en español
+                const fechaStr = formatDateWithWeekday(fechaCita);
                 const horaStrTTS = ttsService.formatTimeForTTS(fechaCita);
                 mensaje = `Tienes ${citasFuturas.length} ${citasFuturas.length === 1 ? 'cita' : 'citas'} programadas. Tu próxima cita es el ${fechaStr} a las ${horaStrTTS}`;
               }
@@ -474,13 +471,9 @@ const MisCitas = () => {
   const handleCardPress = async (cita) => {
     hapticService.medium();
     
-    // Formatear fecha para mostrar
+    // Formatear fecha para mostrar - usar formateo manual en español
     const fechaObj = new Date(cita.fecha_cita);
-    const fechaStr = fechaObj.toLocaleDateString('es-MX', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-    });
+    const fechaStr = formatDateWithWeekday(fechaObj);
     
     // Formatear hora para TTS (con "de la mañana/tarde/noche")
     const horaStrTTS = ttsService.formatTimeForTTS(cita.fecha_cita);

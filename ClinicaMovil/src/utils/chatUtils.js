@@ -84,11 +84,12 @@ export const agruparMensajesPorFecha = (mensajes) => {
     } else if (fechaMensaje.getTime() === ayer.getTime()) {
       fechaLabel = 'Ayer';
     } else {
-      fechaLabel = fecha.toLocaleDateString('es-MX', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      });
+      // Usar formateo manual en español
+      const mesesAbreviados = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      const dia = String(fecha.getDate()).padStart(2, '0');
+      const mes = mesesAbreviados[fecha.getMonth()];
+      const año = fecha.getFullYear();
+      fechaLabel = `${dia} ${mes} ${año}`;
     }
 
     if (!grupoActual || grupoActual.fecha !== fechaLabel) {
@@ -184,7 +185,10 @@ export const formatearFechaMensaje = (fecha) => {
   if (minutos < 1) return 'Ahora';
   if (minutos < 60) return `Hace ${minutos} min`;
   if (minutos < 1440) return `Hace ${Math.floor(minutos / 60)} h`;
-  return date.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' });
+  // Usar formateo manual en español
+  const dia = String(date.getDate()).padStart(2, '0');
+  const mes = String(date.getMonth() + 1).padStart(2, '0');
+  return `${dia}/${mes}`;
 };
 
 

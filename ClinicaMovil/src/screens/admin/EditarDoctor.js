@@ -23,6 +23,14 @@ import useGestion from '../../hooks/useGestion';
 // Servicios
 import Logger from '../../services/logger';
 
+// Opciones de grado de estudio (mismo que AgregarDoctor)
+const GRADOS_ESTUDIO = [
+  { value: 'Licenciatura', label: 'Licenciatura' },
+  { value: 'Especialidad', label: 'Especialidad' },
+  { value: 'Maestría', label: 'Maestría' },
+  { value: 'Doctorado', label: 'Doctorado' },
+];
+
 /**
  * Pantalla para editar un doctor existente
  * Formulario de dos partes: Usuario + Perfil de Doctor
@@ -53,6 +61,7 @@ const EditarDoctor = () => {
   // Estados locales
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1); // 1: Datos usuario, 2: Datos doctor
+  const [showGradoEstudioDropdown, setShowGradoEstudioDropdown] = useState(false);
   
   // Estados del formulario
   const [formData, setFormData] = useState({
@@ -477,13 +486,56 @@ const EditarDoctor = () => {
                 error={errors.institucionHospitalaria}
               />
 
-              <FormField
-                label="Grado de Estudio"
-                value={formData.gradoEstudio}
-                onChangeText={(text) => handleTextChangeWithCapitalization('gradoEstudio', text)}
-                placeholder="Especialidad médica"
-                error={errors.gradoEstudio}
-              />
+              {/* Selector de Grado de Estudio (dropdown) */}
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldLabel}>Grado de Estudio</Text>
+                <TouchableOpacity
+                  style={[
+                    styles.gradoEstudioSelector,
+                    errors.gradoEstudio && styles.inputError,
+                    !formData.gradoEstudio && styles.placeholderSelector
+                  ]}
+                  onPress={() => setShowGradoEstudioDropdown(!showGradoEstudioDropdown)}
+                >
+                  <Text style={[
+                    styles.gradoEstudioSelectorText,
+                    !formData.gradoEstudio && styles.placeholderText
+                  ]}>
+                    {formData.gradoEstudio || 'Selecciona un grado de estudio'}
+                  </Text>
+                  <Text style={styles.arrowText}>
+                    {showGradoEstudioDropdown ? '▲' : '▼'}
+                  </Text>
+                </TouchableOpacity>
+                
+                {showGradoEstudioDropdown && (
+                  <View style={styles.dropdownList}>
+                    <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
+                      {GRADOS_ESTUDIO.map((option) => (
+                        <TouchableOpacity
+                          key={option.value}
+                          style={[
+                            styles.dropdownItem,
+                            formData.gradoEstudio === option.value && styles.dropdownItemSelected
+                          ]}
+                          onPress={() => {
+                            setFormData({...formData, gradoEstudio: option.value});
+                            setShowGradoEstudioDropdown(false);
+                          }}
+                        >
+                          <Text style={[
+                            styles.dropdownItemText,
+                            formData.gradoEstudio === option.value && styles.dropdownItemTextSelected
+                          ]}>
+                            {option.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+                {errors.gradoEstudio && <Text style={styles.errorText}>{errors.gradoEstudio}</Text>}
+              </View>
 
               <FormField
                 label="Años de Servicio"
@@ -512,7 +564,7 @@ const EditarDoctor = () => {
                           styles.moduleOptionText,
                           formData.idModulo === modulo.id_modulo.toString() && styles.moduleOptionTextSelected
                         ]}>
-                          Módulo {modulo.id_modulo}
+                          {modulo.nombre_modulo || `Módulo ${modulo.id_modulo}`}
                         </Text>
                         <View style={[
                           styles.moduleRadio,
@@ -733,6 +785,65 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: '#1976D2', // Azul para doctores
+  },
+
+  // Estilos para selector de Grado de Estudio (dropdown)
+  gradoEstudioSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    minHeight: 48,
+  },
+  placeholderSelector: {
+    borderColor: '#E2E8F0',
+  },
+  gradoEstudioSelectorText: {
+    fontSize: 16,
+    color: '#2D3748',
+    flex: 1,
+  },
+  placeholderText: {
+    color: '#999',
+  },
+  arrowText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 8,
+  },
+  inputError: {
+    borderColor: '#E53E3E',
+    borderWidth: 2,
+  },
+  dropdownList: {
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  dropdownItemSelected: {
+    backgroundColor: '#E3F2FD',
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: '#2D3748',
+  },
+  dropdownItemTextSelected: {
+    color: '#1976D2',
+    fontWeight: '600',
   },
 
   // Botones

@@ -12,8 +12,7 @@ const mockDoctorPaciente = {};
 const mockComorbilidad = {};
 const mockPacienteComorbilidad = {};
 
-jest.unstable_mockModule('../models/associations.js', () => ({
-	default: {},
+jest.mock('../models/associations.js', () => ({
 	Cita: mockCita,
 	Paciente: mockPaciente,
 	Doctor: mockDoctor,
@@ -27,7 +26,8 @@ jest.unstable_mockModule('../models/associations.js', () => ({
 	PacienteComorbilidad: mockPacienteComorbilidad
 }));
 
-const { getCita } = await import('../controllers/cita.js');
+// Importar getCita después de los mocks
+import { getCita } from '../controllers/cita.js';
 
 describe('Cita -> incluye SignosVitales en getCita', () => {
 	beforeEach(() => {

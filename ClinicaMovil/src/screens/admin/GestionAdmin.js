@@ -23,6 +23,7 @@ import useRealtimeList from '../../hooks/useRealtimeList';
 import useWebSocket from '../../hooks/useWebSocket';
 import useDebounce from '../../hooks/useDebounce';
 import { COLORES } from '../../utils/constantes';
+import { formatDate } from '../../utils/dateUtils';
 
 const GestionAdmin = ({ navigation }) => {
   const { userData, userRole } = useAuth();
@@ -680,7 +681,7 @@ const GestionAdmin = ({ navigation }) => {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>📅 Registro:</Text>
               <Text style={[styles.detailValue, !paciente.activo && styles.inactiveText]}>
-                {new Date(paciente.fecha_registro).toLocaleDateString('es-ES')}
+                {formatDate(new Date(paciente.fecha_registro))}
               </Text>
             </View>
           </View>

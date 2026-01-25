@@ -385,7 +385,7 @@ export const createMensaje = async (req, res) => {
                   notificacionId: notificacionExistente.id_notificacion
                 });
               } else {
-                // Crear nueva notificación
+                // Crear nueva notificación (push se envía manualmente después con formato personalizado)
                 await crearNotificacionDoctor(
                   doctorId,
                   'nuevo_mensaje',
@@ -395,7 +395,8 @@ export const createMensaje = async (req, res) => {
                     id_mensaje: mensaje.id_mensaje,
                     paciente_nombre: nombreRemitente || 'Paciente',
                     preview_mensaje: previewMensaje
-                  }
+                  },
+                  { enviarPush: false } // Deshabilitar push automático, se envía manualmente con formato personalizado
                 );
 
                 logger.info('Notificación de nuevo mensaje creada en BD para doctor', {

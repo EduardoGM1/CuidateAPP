@@ -51,10 +51,20 @@ const useWebSocket = () => {
       });
 
       newSocket.on('connect_error', (error) => {
+        const errorMessage = error.message || String(error);
         Logger.error('WebSocket: Error de conexión', { 
-          error: error.message,
+          error: errorMessage,
           attempts: reconnectAttempts.current 
         });
+        
+        // Si el error es "Token inválido", intentar refrescar el token
+        if (errorMessage.includes('Token inválido') || errorMessage.includes('invalid token') || errorMessage.includes('Unauthorized')) {
+          Logger.info('WebSocket: Token inválido detectado, intentando refrescar...');
+          // El token se refrescará automáticamente en el siguiente intento de conexión
+          // No reconectar inmediatamente, esperar a que el token se refresque
+          reconnectAttempts.current = Math.max(0, reconnectAttempts.current - 1); // Reducir intentos para permitir reintento
+        }
+        
         setIsConnected(false);
       });
 
@@ -126,7 +136,12 @@ const useWebSocket = () => {
   // Conectar automáticamente cuando hay token
   useEffect(() => {
     if (token && userData && !socket) {
-      connect();
+      // Pequeño delay para asegurar que el token esté completamente disponible
+      const connectTimeout = setTimeout(() => {
+        connect();
+      }, 100);
+      
+      return () => clearTimeout(connectTimeout);
     }
   }, [token, userData, socket, connect]);
 

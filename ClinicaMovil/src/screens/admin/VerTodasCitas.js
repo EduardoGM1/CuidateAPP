@@ -17,7 +17,7 @@ import { useRoute } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import Logger from '../../services/logger';
 import useTodasCitas from '../../hooks/useTodasCitas';
-import { useDoctores, usePacientes } from '../../hooks/useGestion';
+import { useDoctores, usePacientes, useModulos } from '../../hooks/useGestion';
 import { formatDateTime } from '../../utils/dateUtils';
 import { gestionService } from '../../api/gestionService';
 import { ESTADOS_CITA } from '../../utils/constantes';
@@ -38,6 +38,9 @@ const VerTodasCitas = ({ navigation }) => {
   const [filterFechaDesde, setFilterFechaDesde] = useState(null);
   const [filterFechaHasta, setFilterFechaHasta] = useState(null);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
+  const [showDoctorDropdown, setShowDoctorDropdown] = useState(false);
+  const [filterModulo, setFilterModulo] = useState(null);
+  const [showModuloDropdown, setShowModuloDropdown] = useState(false);
   
   // Estados para gestión de citas
   const [showEstadoModal, setShowEstadoModal] = useState(false);
@@ -61,6 +64,14 @@ const VerTodasCitas = ({ navigation }) => {
 
   // Obtener doctores para filtro (solo para admin)
   const { doctores } = useDoctores('activos', 'recent');
+  
+  // Obtener módulos para filtro
+  const { modulos, fetchModulos } = useModulos();
+  
+  // Cargar módulos al montar el componente
+  useEffect(() => {
+    fetchModulos();
+  }, [fetchModulos]);
   
   // Obtener pacientes del doctor (solo para doctores, para filtrar búsqueda)
   const { pacientes: pacientesDoctor } = usePacientes('activos', 'recent', 'todas');
@@ -116,10 +127,19 @@ const VerTodasCitas = ({ navigation }) => {
 
     let filtered = citas;
 
+    // Filtrar por módulo (solo para admin)
+    if ((userRole === 'Admin' || userRole === 'admin') && filterModulo) {
+      filtered = filtered.filter(cita => {
+        // Buscar el doctor de esta cita
+        const doctor = doctores.find(d => d.id_doctor === cita.id_doctor);
+        return doctor?.id_modulo === filterModulo;
+      });
+    }
+
     // Búsqueda por nombre de paciente o doctor
     if (searchQuery && searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      filtered = citas.filter(cita => {
+      filtered = filtered.filter(cita => {
         const pacienteMatch = cita.paciente_nombre?.toLowerCase().includes(query);
         const doctorMatch = cita.doctor_nombre?.toLowerCase().includes(query);
         const motivoMatch = cita.motivo?.toLowerCase().includes(query);
@@ -138,7 +158,7 @@ const VerTodasCitas = ({ navigation }) => {
     }
 
     setFilteredCitas(filtered);
-  }, [citas, searchQuery, userRole, pacientesIdsDoctor, loading, hasLoadedOnce]);
+  }, [citas, searchQuery, userRole, pacientesIdsDoctor, loading, hasLoadedOnce, filterModulo, doctores]);
 
   // Efecto para resaltar y hacer scroll a la cita cuando viene desde dashboard o DetalleDoctor
   useEffect(() => {
@@ -302,9 +322,10 @@ const VerTodasCitas = ({ navigation }) => {
   };
 
   const limpiarFiltros = () => {
-    // Solo limpiar filtro de doctor si es admin
+    // Solo limpiar filtros de admin si es admin
     if (userRole === 'Admin' || userRole === 'admin') {
       setFilterDoctor(null);
+      setFilterModulo(null);
     }
     setFilterFechaDesde(null);
     setFilterFechaHasta(null);
@@ -445,7 +466,7 @@ const VerTodasCitas = ({ navigation }) => {
       </View>
 
       {/* Filtros Activos */}
-      {(filterDoctor || filterFechaDesde || filterFechaHasta) && (
+      {(filterDoctor || filterModulo || filterFechaDesde || filterFechaHasta) && (
         <View style={styles.activeFilters}>
           <Text style={styles.activeFiltersLabel}>Filtros activos:</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -455,7 +476,19 @@ const VerTodasCitas = ({ navigation }) => {
                   style={styles.filterChip}
                   onClose={() => setFilterDoctor(null)}
                 >
-                  <Text>Doctor: {doctores.find(d => d.id_doctor === filterDoctor)?.nombre || 'ID ' + filterDoctor}</Text>
+                  <Text>Doctor: {(() => {
+                    const doc = doctores.find(d => d.id_doctor === filterDoctor);
+                    if (!doc) return 'ID ' + filterDoctor;
+                    return `${doc.nombre} ${doc.apellido_paterno || ''}`.trim();
+                  })()}</Text>
+                </Chip>
+              )}
+              {filterModulo && (userRole === 'Admin' || userRole === 'admin') && (
+                <Chip 
+                  style={styles.filterChip}
+                  onClose={() => setFilterModulo(null)}
+                >
+                  <Text>Módulo: {modulos.find(m => m.id_modulo === filterModulo)?.nombre_modulo || 'ID ' + filterModulo}</Text>
                 </Chip>
               )}
               {filterFechaDesde && (
@@ -668,43 +701,141 @@ const VerTodasCitas = ({ navigation }) => {
               {(userRole === 'Admin' || userRole === 'admin') && (
                 <View style={styles.filterSection}>
                   <Text style={styles.filterLabel}>Doctor</Text>
-                  <ScrollView 
-                    horizontal 
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.doctoresList}
+                  <TouchableOpacity
+                    style={styles.doctorDropdownSelector}
+                    onPress={() => setShowDoctorDropdown(!showDoctorDropdown)}
                   >
-                    <TouchableOpacity
-                      style={[
-                        styles.doctorChip,
-                        filterDoctor === null && styles.doctorChipActive
-                      ]}
-                      onPress={() => setFilterDoctor(null)}
-                    >
-                      <Text style={[
-                        styles.doctorChipText,
-                        filterDoctor === null && styles.doctorChipTextActive
-                      ]}>
-                        Todos
-                      </Text>
-                    </TouchableOpacity>
-                    {doctores.map((doctor) => (
-                      <TouchableOpacity
-                        key={doctor.id_doctor}
-                        style={[
-                          styles.doctorChip,
-                          filterDoctor === doctor.id_doctor && styles.doctorChipActive
-                        ]}
-                        onPress={() => setFilterDoctor(doctor.id_doctor)}
-                      >
-                        <Text style={[
-                          styles.doctorChipText,
-                          filterDoctor === doctor.id_doctor && styles.doctorChipTextActive
-                        ]}>
-                          {doctor.nombre}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
+                    <Text style={[
+                      styles.doctorDropdownText,
+                      !filterDoctor && styles.doctorDropdownPlaceholder
+                    ]}>
+                      {filterDoctor 
+                        ? (() => {
+                            const doc = doctores.find(d => d.id_doctor === filterDoctor);
+                            if (!doc) return 'Doctor seleccionado';
+                            const nombreCompleto = `${doc.nombre} ${doc.apellido_paterno || ''} ${doc.apellido_materno || ''}`.trim();
+                            const modulo = doc.Modulo?.nombre_modulo || doc.modulo || '';
+                            return modulo ? `${nombreCompleto} - ${modulo}` : nombreCompleto;
+                          })()
+                        : 'Todos los doctores'}
+                    </Text>
+                    <Text style={styles.dropdownArrow}>
+                      {showDoctorDropdown ? '▲' : '▼'}
+                    </Text>
+                  </TouchableOpacity>
+                  {showDoctorDropdown && (
+                    <View style={styles.doctorDropdownList}>
+                      <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
+                        <TouchableOpacity
+                          style={[
+                            styles.doctorDropdownItem,
+                            filterDoctor === null && styles.doctorDropdownItemSelected
+                          ]}
+                          onPress={() => {
+                            setFilterDoctor(null);
+                            setShowDoctorDropdown(false);
+                          }}
+                        >
+                          <Text style={[
+                            styles.doctorDropdownItemText,
+                            filterDoctor === null && styles.doctorDropdownItemTextSelected
+                          ]}>
+                            Todos los doctores
+                          </Text>
+                        </TouchableOpacity>
+                        {doctores.map((doctor) => {
+                          const nombreCompleto = `${doctor.nombre} ${doctor.apellido_paterno || ''} ${doctor.apellido_materno || ''}`.trim();
+                          const modulo = doctor.Modulo?.nombre_modulo || doctor.modulo || '';
+                          return (
+                            <TouchableOpacity
+                              key={doctor.id_doctor}
+                              style={[
+                                styles.doctorDropdownItem,
+                                filterDoctor === doctor.id_doctor && styles.doctorDropdownItemSelected
+                              ]}
+                              onPress={() => {
+                                setFilterDoctor(doctor.id_doctor);
+                                setShowDoctorDropdown(false);
+                              }}
+                            >
+                              <Text style={[
+                                styles.doctorDropdownItemText,
+                                filterDoctor === doctor.id_doctor && styles.doctorDropdownItemTextSelected
+                              ]}>
+                                {modulo ? `${nombreCompleto} - ${modulo}` : nombreCompleto}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* Filtro por Módulo - Solo para Admin */}
+              {(userRole === 'Admin' || userRole === 'admin') && (
+                <View style={styles.filterSection}>
+                  <Text style={styles.filterLabel}>Módulo</Text>
+                  <TouchableOpacity
+                    style={styles.doctorDropdownSelector}
+                    onPress={() => setShowModuloDropdown(!showModuloDropdown)}
+                  >
+                    <Text style={[
+                      styles.doctorDropdownText,
+                      !filterModulo && styles.doctorDropdownPlaceholder
+                    ]}>
+                      {filterModulo 
+                        ? modulos.find(m => m.id_modulo === filterModulo)?.nombre_modulo || 'Módulo seleccionado'
+                        : 'Todos los módulos'}
+                    </Text>
+                    <Text style={styles.dropdownArrow}>
+                      {showModuloDropdown ? '▲' : '▼'}
+                    </Text>
+                  </TouchableOpacity>
+                  {showModuloDropdown && (
+                    <View style={styles.doctorDropdownList}>
+                      <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
+                        <TouchableOpacity
+                          style={[
+                            styles.doctorDropdownItem,
+                            filterModulo === null && styles.doctorDropdownItemSelected
+                          ]}
+                          onPress={() => {
+                            setFilterModulo(null);
+                            setShowModuloDropdown(false);
+                          }}
+                        >
+                          <Text style={[
+                            styles.doctorDropdownItemText,
+                            filterModulo === null && styles.doctorDropdownItemTextSelected
+                          ]}>
+                            Todos los módulos
+                          </Text>
+                        </TouchableOpacity>
+                        {modulos.map((mod) => (
+                          <TouchableOpacity
+                            key={mod.id_modulo}
+                            style={[
+                              styles.doctorDropdownItem,
+                              filterModulo === mod.id_modulo && styles.doctorDropdownItemSelected
+                            ]}
+                            onPress={() => {
+                              setFilterModulo(mod.id_modulo);
+                              setShowModuloDropdown(false);
+                            }}
+                          >
+                            <Text style={[
+                              styles.doctorDropdownItemText,
+                              filterModulo === mod.id_modulo && styles.doctorDropdownItemTextSelected
+                            ]}>
+                              {mod.nombre_modulo}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  )}
                 </View>
               )}
 
@@ -1221,6 +1352,58 @@ const styles = StyleSheet.create({
   },
   doctorChipTextActive: {
     color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  doctorDropdownSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#BDBDBD',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  doctorDropdownText: {
+    fontSize: 14,
+    color: '#333',
+    flex: 1,
+  },
+  doctorDropdownPlaceholder: {
+    color: '#999',
+  },
+  dropdownArrow: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 8,
+  },
+  doctorDropdownList: {
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: '#BDBDBD',
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  doctorDropdownItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  doctorDropdownItemSelected: {
+    backgroundColor: '#E3F2FD',
+  },
+  doctorDropdownItemText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  doctorDropdownItemTextSelected: {
+    color: '#2196F3',
     fontWeight: '600',
   },
   headerActions: {

@@ -215,49 +215,56 @@ export const mobileLogin = async (req, res) => {
 export const refreshToken = async (req, res) => {
   try {
     const { refresh_token } = req.body;
-    const deviceInfo = req.device;
 
     if (!refresh_token) {
       return res.status(400).json({
+        success: false,
         error: 'Refresh token requerido',
         code: 'MISSING_REFRESH_TOKEN'
       });
     }
 
-    const jwt = await import('jsonwebtoken');
-    const decoded = jwt.verify(refresh_token, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET);
+    logger.info('🔄 [MOBILE REFRESH] Renovando token desde endpoint móvil', {
+      hasRefreshToken: !!refresh_token,
+      refreshTokenLength: refresh_token?.length || 0
+    });
 
-    const usuario = await Usuario.findByPk(decoded.id);
-    if (!usuario || !usuario.activo) {
-      return res.status(401).json({
-        error: 'Refresh token inválido',
-        code: 'INVALID_REFRESH_TOKEN'
-      });
-    }
+    // ✅ Usar RefreshTokenService unificado en lugar del sistema antiguo
+    const RefreshTokenService = (await import('../services/refreshTokenService.js')).default;
+    const tokenPair = await RefreshTokenService.refreshAccessToken(refresh_token);
+    
+    logger.info('✅ [MOBILE REFRESH] Token renovado exitosamente desde endpoint móvil', {
+      expiresIn: tokenPair.expiresIn,
+      refreshTokenExpiresIn: tokenPair.refreshTokenExpiresIn
+    });
 
-    // Verificar que el device_id coincida
-    if (decoded.device_id !== deviceInfo.deviceId) {
-      return res.status(401).json({
-        error: 'Token de dispositivo no coincide',
-        code: 'DEVICE_MISMATCH'
-      });
-    }
-
-    // Generar nuevos tokens
-    const newToken = generateMobileToken(usuario, deviceInfo);
-    const newRefreshToken = generateRefreshToken(usuario, deviceInfo);
-
+    // Formato de respuesta consistente con el endpoint /api/auth/refresh-token
     res.json({
+      success: true,
       message: 'Token renovado exitosamente',
-      token: newToken,
-      refresh_token: newRefreshToken,
-      expires_in: 7200
+      token: tokenPair.accessToken,
+      refresh_token: tokenPair.refreshToken,
+      expires_in: tokenPair.expiresIn,
+      refresh_token_expires_in: tokenPair.refreshTokenExpiresIn
     });
   } catch (error) {
-    console.error('Error renovando token:', error.message);
+    logger.warn('Error renovando token desde endpoint móvil', {
+      error: error.message,
+      stack: error.stack
+    });
+    
+    // Determinar código de error apropiado
+    let errorCode = 'REFRESH_TOKEN_ERROR';
+    if (error.message?.includes('expirado') || error.message?.includes('expired')) {
+      errorCode = 'REFRESH_TOKEN_EXPIRED';
+    } else if (error.message?.includes('inválido') || error.message?.includes('invalid')) {
+      errorCode = 'INVALID_REFRESH_TOKEN';
+    }
+    
     res.status(401).json({
-      error: 'Error renovando token',
-      details: error.message
+      success: false,
+      error: error.message || 'Error renovando token',
+      code: errorCode
     });
   }
 };
