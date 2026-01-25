@@ -4,6 +4,7 @@ import {
   StyleSheet,
   Text,
   ScrollView,
+  FlatList,
   TouchableOpacity,
   RefreshControl,
   Alert,
@@ -84,8 +85,7 @@ const VerTodasCitas = ({ navigation }) => {
   // Para doctores, no enviar filterDoctor ya que el backend filtra automáticamente
   const citasFilters = useMemo(() => {
     const filters = {
-      limit: 50,
-      offset: 0,
+      pageSize: 20, // Tamaño de página para infinite scroll
       fechaDesde: filterFechaDesde,
       fechaHasta: filterFechaHasta,
       search: searchQuery
@@ -97,10 +97,19 @@ const VerTodasCitas = ({ navigation }) => {
     return filters;
   }, [filterDoctor, filterFechaDesde, filterFechaHasta, searchQuery, userRole]);
 
-  // Obtener todas las citas con filtros
-  const { citas, loading, error, total, hasMore, refresh } = useTodasCitas(citasFilters);
+  // Obtener todas las citas con filtros e infinite scroll
+  const { 
+    citas, 
+    loading, 
+    loadingMore,
+    error, 
+    total, 
+    hasMore, 
+    refresh,
+    loadMore 
+  } = useTodasCitas(citasFilters);
 
-  // Estado de carga
+  // Estado de carga inicial
   const isLoadingData = loading;
 
   // Filtrar citas por búsqueda local
@@ -190,16 +199,25 @@ const VerTodasCitas = ({ navigation }) => {
         // Hacer scroll automático después de un delay para asegurar que el layout esté listo
         setTimeout(() => {
           if (scrollViewRef.current) {
-            // Calcular la posición aproximada (cada card tiene aproximadamente 250px de altura)
-            const cardHeight = 250;
-            const offset = index * cardHeight;
-            
-            scrollViewRef.current.scrollTo({
-              y: Math.max(0, offset - 100), // Restar 100 para dejar espacio arriba
-              animated: true
-            });
-            
-            Logger.info('VerTodasCitas: Scroll realizado a cita', { index, offset });
+            try {
+              // Usar scrollToIndex para FlatList
+              scrollViewRef.current.scrollToIndex({
+                index: Math.max(0, index),
+                animated: true,
+                viewPosition: 0.1 // Mostrar el item cerca del top con algo de espacio
+              });
+              
+              Logger.info('VerTodasCitas: Scroll realizado a cita', { index });
+            } catch (error) {
+              // Fallback: scrollToOffset si scrollToIndex falla
+              const cardHeight = 250;
+              const offset = index * cardHeight;
+              scrollViewRef.current.scrollToOffset({
+                offset: Math.max(0, offset - 100),
+                animated: true
+              });
+              Logger.info('VerTodasCitas: Scroll fallback realizado', { index, offset });
+            }
           }
         }, 500);
         
@@ -515,167 +533,211 @@ const VerTodasCitas = ({ navigation }) => {
         </View>
       )}
 
-      {/* Lista de Citas */}
+      {/* Lista de Citas con Infinite Scroll */}
       {isLoadingData ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2196F3" />
           <Text style={styles.loadingText}>Cargando citas...</Text>
         </View>
       ) : (
-        <ScrollView
+        <FlatList
           ref={scrollViewRef}
           style={styles.scrollView}
+          data={filteredCitas}
+          keyExtractor={(item) => String(item.id_cita || item.id)}
+          renderItem={({ item: cita }) => {
+            // Comparación robusta de IDs (manejar string vs number)
+            const estaResaltada = citaResaltada && (() => {
+              const citaId = typeof (cita.id_cita || cita.id) === 'string' 
+                ? parseInt(cita.id_cita || cita.id) 
+                : (cita.id_cita || cita.id);
+              const resaltadaId = typeof citaResaltada === 'string' 
+                ? parseInt(citaResaltada) 
+                : citaResaltada;
+              return citaId === resaltadaId;
+            })();
+            
+            return (
+              <Card style={[
+                styles.citaCard,
+                estaResaltada && styles.citaCardResaltada
+              ]}>
+                <TouchableOpacity 
+                  onPress={() => handleVerDetalle(cita)}
+                  activeOpacity={0.7}
+                >
+                  <Card.Content>
+                    {/* Header de la cita */}
+                    <View style={styles.citaHeader}>
+                      <View style={styles.citaTitleContainer}>
+                        <Text style={styles.citaTitle}>
+                          👤 {cita.paciente_nombre}
+                        </Text>
+                        <Chip 
+                          style={[
+                            styles.estadoChip,
+                            { backgroundColor: getEstadoColor(cita.estado) }
+                          ]}
+                          textStyle={styles.estadoChipText}
+                        >
+                          <Text>{getEstadoTexto(cita.estado)}</Text>
+                        </Chip>
+                      </View>
+                      {cita.es_primera_consulta && (
+                        <Chip 
+                          style={styles.primeraConsultaChip}
+                          textStyle={styles.primeraConsultaText}
+                        >
+                          Primera Consulta
+                        </Chip>
+                      )}
+                    </View>
+
+                    {/* Información adicional */}
+                    <View style={styles.citaInfo}>
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoIcon}>👨‍⚕️</Text>
+                        <Text 
+                          style={styles.infoText}
+                          onPress={() => handleVerDetalleDoctor(cita)}
+                        >
+                          {cita.doctor_nombre}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoIcon}>📅</Text>
+                        <Text style={styles.infoText}>
+                          {formatDateTime(cita.fecha_cita)}
+                        </Text>
+                      </View>
+                      
+                      {cita.motivo && (
+                        <View style={styles.infoRow}>
+                          <Text style={styles.infoIcon}>🩺</Text>
+                          <Text style={styles.infoText}>{cita.motivo}</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Observaciones si existen */}
+                    {cita.observaciones && (
+                      <View style={styles.observacionesContainer}>
+                        <Text style={styles.observacionesLabel}>📝 Observaciones:</Text>
+                        <Text style={styles.observacionesText}>
+                          {cita.observaciones}
+                        </Text>
+                      </View>
+                    )}
+                  </Card.Content>
+                </TouchableOpacity>
+
+                {/* Botones de acción para doctores/admin */}
+                <View style={styles.accionesContainer}>
+                  {/* Fila 1: Botón Completar (si está pendiente) */}
+                  {cita.estado === 'pendiente' && (
+                    <View style={styles.accionesFila1}>
+                      <TouchableOpacity
+                        onPress={() => handleOpenWizard(cita)}
+                        activeOpacity={0.7}
+                        style={[styles.accionButtonFull, styles.accionButtonTouchable, { backgroundColor: '#4CAF50' }]}
+                      >
+                        <Text style={[styles.accionButtonText, { color: '#FFFFFF' }]}>
+                          Completar
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                  {/* Fila 2: Cambiar Estado y Reprogramar */}
+                  <View style={styles.accionesFila2}>
+                    <TouchableOpacity
+                      onPress={() => handleCambiarEstado(cita)}
+                      activeOpacity={0.7}
+                      style={[styles.accionButtonHalf, styles.accionButtonTouchable, styles.accionButtonOutlined]}
+                    >
+                      <Text style={styles.accionButtonText}>
+                        Cambiar Estado
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleReprogramar(cita)}
+                      activeOpacity={0.7}
+                      style={[styles.accionButtonHalf, styles.accionButtonTouchable, styles.accionButtonOutlined]}
+                    >
+                      <Text style={styles.accionButtonText}>
+                        Reprogramar
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Card>
+            );
+          }}
+          // Pull-to-refresh
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
           }
-        >
-          {filteredCitas.length === 0 && hasLoadedOnce ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyEmoji}>📅</Text>
-              <Text style={styles.emptyText}>No hay citas para mostrar</Text>
-              <Text style={styles.emptySubtext}>
-                {searchQuery ? 'Intenta con otros términos de búsqueda' : 'Aún no hay citas registradas en el sistema'}
-              </Text>
-            </View>
-          ) : filteredCitas.length > 0 ? (
-            filteredCitas.map((cita) => {
-              // Comparación robusta de IDs (manejar string vs number) - igual que en solicitudes
-              const estaResaltada = citaResaltada && (() => {
-                const citaId = typeof (cita.id_cita || cita.id) === 'string' 
-                  ? parseInt(cita.id_cita || cita.id) 
-                  : (cita.id_cita || cita.id);
-                const resaltadaId = typeof citaResaltada === 'string' 
-                  ? parseInt(citaResaltada) 
-                  : citaResaltada;
-                return citaId === resaltadaId;
-              })();
-              
-              return (
-                <View key={cita.id_cita}>
-                  <Card style={[
-                    styles.citaCard,
-                    estaResaltada && styles.citaCardResaltada
-                  ]}>
-                    <TouchableOpacity 
-                      onPress={() => handleVerDetalle(cita)}
-                      activeOpacity={0.7}
-                    >
-                      <Card.Content>
-                        {/* Header de la cita */}
-                        <View style={styles.citaHeader}>
-                          <View style={styles.citaTitleContainer}>
-                            <Text style={styles.citaTitle}>
-                              👤 {cita.paciente_nombre}
-                            </Text>
-                            <Chip 
-                              style={[
-                                styles.estadoChip,
-                                { backgroundColor: getEstadoColor(cita.estado) }
-                              ]}
-                              textStyle={styles.estadoChipText}
-                            >
-                              <Text>{getEstadoTexto(cita.estado)}</Text>
-                            </Chip>
-                          </View>
-                          {cita.es_primera_consulta && (
-                            <Chip 
-                              style={styles.primeraConsultaChip}
-                              textStyle={styles.primeraConsultaText}
-                            >
-                              Primera Consulta
-                            </Chip>
-                          )}
-                        </View>
-
-                        {/* Información adicional */}
-                        <View style={styles.citaInfo}>
-                          <View style={styles.infoRow}>
-                            <Text style={styles.infoIcon}>👨‍⚕️</Text>
-                            <Text 
-                              style={styles.infoText}
-                              onPress={() => handleVerDetalleDoctor(cita)}
-                            >
-                              {cita.doctor_nombre}
-                            </Text>
-                          </View>
-                          
-                          <View style={styles.infoRow}>
-                            <Text style={styles.infoIcon}>📅</Text>
-                            <Text style={styles.infoText}>
-                              {formatDateTime(cita.fecha_cita)}
-                            </Text>
-                          </View>
-                          
-                          {cita.motivo && (
-                            <View style={styles.infoRow}>
-                              <Text style={styles.infoIcon}>🩺</Text>
-                              <Text style={styles.infoText}>{cita.motivo}</Text>
-                            </View>
-                          )}
-                        </View>
-
-                        {/* Observaciones si existen */}
-                        {cita.observaciones && (
-                          <View style={styles.observacionesContainer}>
-                            <Text style={styles.observacionesLabel}>📝 Observaciones:</Text>
-                            <Text style={styles.observacionesText}>
-                              {cita.observaciones}
-                            </Text>
-                          </View>
-                        )}
-                      </Card.Content>
-                    </TouchableOpacity>
-
-                    {/* Botones de acción para doctores/admin - Fuera del TouchableOpacity */}
-                    <View style={styles.accionesContainer}>
-                      {/* Fila 1: Botón Completar (si está pendiente) - Ancho completo */}
-                      {cita.estado === 'pendiente' && (
-                        <View style={styles.accionesFila1}>
-                          <TouchableOpacity
-                            onPress={() => {
-                              handleOpenWizard(cita);
-                            }}
-                            activeOpacity={0.7}
-                            style={[styles.accionButtonFull, styles.accionButtonTouchable, { backgroundColor: '#4CAF50' }]}
-                          >
-                            <Text style={[styles.accionButtonText, { color: '#FFFFFF' }]}>
-                              Completar
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                      {/* Fila 2: Cambiar Estado y Reprogramar - Lado a lado */}
-                      <View style={styles.accionesFila2}>
-                        <TouchableOpacity
-                          onPress={() => {
-                            handleCambiarEstado(cita);
-                          }}
-                          activeOpacity={0.7}
-                          style={[styles.accionButtonHalf, styles.accionButtonTouchable, styles.accionButtonOutlined]}
-                        >
-                          <Text style={styles.accionButtonText}>
-                            Cambiar Estado
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => {
-                            handleReprogramar(cita);
-                          }}
-                          activeOpacity={0.7}
-                          style={[styles.accionButtonHalf, styles.accionButtonTouchable, styles.accionButtonOutlined]}
-                        >
-                          <Text style={styles.accionButtonText}>
-                            Reprogramar
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </Card>
-                </View>
-              );
-          })
-          ) : null}
-        </ScrollView>
+          // Infinite scroll
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.3}
+          // Footer con indicador de carga
+          ListFooterComponent={() => (
+            loadingMore ? (
+              <View style={styles.loadingMoreContainer}>
+                <ActivityIndicator size="small" color="#2196F3" />
+                <Text style={styles.loadingMoreText}>Cargando más citas...</Text>
+              </View>
+            ) : hasMore && filteredCitas.length > 0 ? (
+              <View style={styles.loadingMoreContainer}>
+                <Text style={styles.scrollHintText}>Desliza para cargar más</Text>
+              </View>
+            ) : filteredCitas.length > 0 ? (
+              <View style={styles.endOfListContainer}>
+                <Text style={styles.endOfListText}>
+                  Has llegado al final ({total} citas en total)
+                </Text>
+              </View>
+            ) : null
+          )}
+          // Lista vacía
+          ListEmptyComponent={() => (
+            hasLoadedOnce ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyEmoji}>📅</Text>
+                <Text style={styles.emptyText}>No hay citas para mostrar</Text>
+                <Text style={styles.emptySubtext}>
+                  {searchQuery ? 'Intenta con otros términos de búsqueda' : 'Aún no hay citas registradas en el sistema'}
+                </Text>
+              </View>
+            ) : null
+          )}
+          // Optimizaciones de rendimiento
+          removeClippedSubviews={true}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          updateCellsBatchingPeriod={50}
+          // Layout aproximado para scroll (mejora scrollToIndex)
+          getItemLayout={(data, index) => ({
+            length: 250, // altura aproximada de cada card
+            offset: 250 * index,
+            index
+          })}
+          // Manejar error de scrollToIndex
+          onScrollToIndexFailed={(info) => {
+            const wait = new Promise(resolve => setTimeout(resolve, 300));
+            wait.then(() => {
+              if (scrollViewRef.current && filteredCitas.length > 0) {
+                scrollViewRef.current.scrollToIndex({ 
+                  index: Math.min(info.index, filteredCitas.length - 1), 
+                  animated: true 
+                });
+              }
+            });
+          }}
+          // Contenido superior (padding)
+          contentContainerStyle={filteredCitas.length === 0 ? styles.emptyListContainer : undefined}
+        />
       )}
 
       {/* Modal de Filtros */}
@@ -1084,6 +1146,37 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#666',
+  },
+  loadingMoreContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 16,
+    gap: 8,
+  },
+  loadingMoreText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  scrollHintText: {
+    fontSize: 13,
+    color: '#999',
+    textAlign: 'center',
+  },
+  endOfListContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    marginTop: 8,
+  },
+  endOfListText: {
+    fontSize: 13,
+    color: '#888',
+    fontStyle: 'italic',
+  },
+  emptyListContainer: {
+    flexGrow: 1,
   },
   errorContainer: {
     flex: 1,

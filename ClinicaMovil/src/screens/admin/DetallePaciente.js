@@ -379,6 +379,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const [showAddCita, setShowAddCita] = useState(false);
   const [savingCita, setSavingCita] = useState(false);
   const [editingCita, setEditingCita] = useState(null);
+  const [showDoctorDropdownCita, setShowDoctorDropdownCita] = useState(false);
   const [formDataCita, setFormDataCita] = useState({
     id_doctor: '',
     fecha_cita: '',
@@ -3543,6 +3544,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
       es_primera_consulta: false
     });
     setEditingCita(null);
+    setShowDoctorDropdownCita(false); // Cerrar dropdown al resetear
   };
 
   // Función para actualizar campo del formulario de cita
@@ -5829,50 +5831,104 @@ const DetallePacienteContent = ({ route, navigation }) => {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={true}
             >
-              {/* Selección de Doctor */}
+              {/* Selección de Doctor - Dropdown (solo doctores del mismo módulo del paciente) */}
               <View style={styles.formSection}>
                 <Text style={styles.label}>Doctor (Opcional)</Text>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.doctoresList}
+                {/* Nota informativa del módulo */}
+                {paciente?.id_modulo && (
+                  <Text style={styles.hintText}>
+                    Mostrando doctores del módulo del paciente
+                  </Text>
+                )}
+                <TouchableOpacity
+                  style={styles.doctorDropdownSelector}
+                  onPress={() => setShowDoctorDropdownCita(!showDoctorDropdownCita)}
+                  disabled={savingCita}
                 >
-                  <TouchableOpacity
-                    style={[
-                      styles.doctorChip,
-                      formDataCita.id_doctor === '' && styles.doctorChipActive
-                    ]}
-                    onPress={() => updateFormFieldCita('id_doctor', '')}
-                  >
-                    <Text style={[
-                      styles.doctorChipText,
-                      formDataCita.id_doctor === '' && styles.doctorChipTextActive
-                    ]}>
-                      Sin asignar
-                    </Text>
-                  </TouchableOpacity>
-                  {doctoresList && doctoresList.map((doctor) => {
-                    const isSelected = formDataCita.id_doctor === doctor.id_doctor || 
-                                       Number(formDataCita.id_doctor) === doctor.id_doctor;
-                    return (
+                  <Text style={[
+                    styles.doctorDropdownText,
+                    !formDataCita.id_doctor && styles.doctorDropdownPlaceholder
+                  ]}>
+                    {formDataCita.id_doctor 
+                      ? (() => {
+                          const doc = doctoresList?.find(d => d.id_doctor === formDataCita.id_doctor || d.id_doctor === Number(formDataCita.id_doctor));
+                          if (!doc) return 'Doctor seleccionado';
+                          const nombreCompleto = `${doc.nombre} ${doc.apellido_paterno || ''} ${doc.apellido_materno || ''}`.trim();
+                          const modulo = doc.Modulo?.nombre_modulo || doc.modulo || '';
+                          return modulo ? `${nombreCompleto} - ${modulo}` : nombreCompleto;
+                        })()
+                      : 'Sin asignar (seleccionar doctor)'}
+                  </Text>
+                  <Text style={styles.dropdownArrow}>
+                    {showDoctorDropdownCita ? '▲' : '▼'}
+                  </Text>
+                </TouchableOpacity>
+                {showDoctorDropdownCita && (
+                  <View style={styles.doctorDropdownList}>
+                    <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
                       <TouchableOpacity
-                        key={doctor.id_doctor}
                         style={[
-                          styles.doctorChip,
-                          isSelected && styles.doctorChipActive
+                          styles.doctorDropdownItem,
+                          formDataCita.id_doctor === '' && styles.doctorDropdownItemSelected
                         ]}
-                        onPress={() => updateFormFieldCita('id_doctor', doctor.id_doctor)}
+                        onPress={() => {
+                          updateFormFieldCita('id_doctor', '');
+                          setShowDoctorDropdownCita(false);
+                        }}
                       >
                         <Text style={[
-                          styles.doctorChipText,
-                          isSelected && styles.doctorChipTextActive
+                          styles.doctorDropdownItemText,
+                          formDataCita.id_doctor === '' && styles.doctorDropdownItemTextSelected
                         ]}>
-                          {doctor.nombre} {doctor.apellido_paterno}
+                          Sin asignar
                         </Text>
                       </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
+                      {/* Filtrar doctores por el mismo módulo del paciente */}
+                      {doctoresList && doctoresList
+                        .filter(doctor => {
+                          // Si el paciente no tiene módulo asignado, mostrar todos los doctores
+                          if (!paciente?.id_modulo) return true;
+                          // Filtrar por el mismo módulo del paciente
+                          return doctor.id_modulo === paciente.id_modulo;
+                        })
+                        .map((doctor) => {
+                          const isSelected = formDataCita.id_doctor === doctor.id_doctor || 
+                                             Number(formDataCita.id_doctor) === doctor.id_doctor;
+                          const nombreCompleto = `${doctor.nombre} ${doctor.apellido_paterno || ''} ${doctor.apellido_materno || ''}`.trim();
+                          const modulo = doctor.Modulo?.nombre_modulo || doctor.modulo || '';
+                          return (
+                            <TouchableOpacity
+                              key={doctor.id_doctor}
+                              style={[
+                                styles.doctorDropdownItem,
+                                isSelected && styles.doctorDropdownItemSelected
+                              ]}
+                              onPress={() => {
+                                updateFormFieldCita('id_doctor', doctor.id_doctor);
+                                setShowDoctorDropdownCita(false);
+                              }}
+                            >
+                              <Text style={[
+                                styles.doctorDropdownItemText,
+                                isSelected && styles.doctorDropdownItemTextSelected
+                              ]}>
+                                {modulo ? `${nombreCompleto} - ${modulo}` : nombreCompleto}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      {/* Mensaje si no hay doctores en el módulo */}
+                      {paciente?.id_modulo && doctoresList && 
+                        doctoresList.filter(d => d.id_modulo === paciente.id_modulo).length === 0 && (
+                        <View style={styles.doctorDropdownItem}>
+                          <Text style={styles.noDataText}>
+                            No hay doctores asignados a este módulo
+                          </Text>
+                        </View>
+                      )}
+                    </ScrollView>
+                  </View>
+                )}
               </View>
 
               {/* Fecha de la Cita */}
@@ -9714,6 +9770,60 @@ const styles = StyleSheet.create({
   },
   doctorChipTextActive: {
     color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  // Estilos para dropdown de doctor en modal de citas
+  doctorDropdownSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#BDBDBD',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  doctorDropdownText: {
+    fontSize: 14,
+    color: '#333',
+    flex: 1,
+  },
+  doctorDropdownPlaceholder: {
+    color: '#999',
+  },
+  dropdownArrow: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 8,
+  },
+  doctorDropdownList: {
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: '#BDBDBD',
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    zIndex: 1000,
+  },
+  doctorDropdownItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  doctorDropdownItemSelected: {
+    backgroundColor: '#E3F2FD',
+  },
+  doctorDropdownItemText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  doctorDropdownItemTextSelected: {
+    color: '#2196F3',
     fontWeight: '600',
   },
   // Estilos para textArea

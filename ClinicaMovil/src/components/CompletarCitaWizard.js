@@ -239,6 +239,15 @@ const CompletarCitaWizard = ({
     }
   }, [visible]);
 
+  // Autoseleccionar "Marcar como atendida" cuando el paciente asistió
+  useEffect(() => {
+    if (asistencia === true) {
+      setMarcarComoAtendida(true);
+    } else if (asistencia === false) {
+      setMarcarComoAtendida(false);
+    }
+  }, [asistencia]);
+
   const guardarPaso = async (paso, datosPaso, omitir = false) => {
     if (omitir) {
       setPasosCompletados(prev => new Set([...prev, paso]));
