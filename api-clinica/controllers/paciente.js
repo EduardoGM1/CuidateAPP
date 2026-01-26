@@ -106,15 +106,49 @@ export const getPacientes = async (req, res) => {
     
     let pacientes;
     try {
-      pacientes = await Paciente.findAndCountAll({
+      // Determinar si se está filtrando por comorbilidad (requiere subQuery: false para que el INNER JOIN funcione correctamente con paginación)
+      const isFilteringByComorbilidad = comorbilidad && comorbilidad !== 'todas';
+      
+      // Separar la consulta de conteo y de datos para evitar problemas con MySQL only_full_group_by
+      // Primero, obtener el conteo total de pacientes únicos
+      let totalCount;
+      
+      if (isFilteringByComorbilidad) {
+        // Si hay filtro de comorbilidad, contar pacientes con esa comorbilidad
+        const countInclude = includeOptions.map(opt => ({
+          ...opt,
+          attributes: [] // No necesitamos atributos para el conteo
+        }));
+        
+        totalCount = await Paciente.count({
+          where: whereCondition,
+          include: countInclude,
+          distinct: true,
+          col: 'id_paciente'
+        });
+      } else {
+        // Sin filtro de comorbilidad, conteo simple
+        totalCount = await Paciente.count({
+          where: whereCondition
+        });
+      }
+      
+      // Luego, obtener los datos paginados
+      const rows = await Paciente.findAll({
         limit: Math.min(limit, 100),
         offset,
         attributes: { exclude: ['created_at', 'updated_at'] },
         where: whereCondition,
         include: includeOptions,
         order: order,
-        raw: false // Asegurar que retorne instancias de Sequelize para que los hooks funcionen
+        raw: false,
+        subQuery: !isFilteringByComorbilidad
       });
+      
+      pacientes = {
+        count: totalCount,
+        rows: rows
+      };
       
       logger.debug('Pacientes obtenidos de BD', {
         count: pacientes.count,
@@ -128,7 +162,7 @@ export const getPacientes = async (req, res) => {
         } : null
       });
     } catch (queryError) {
-      logger.error('Error en consulta findAndCountAll de pacientes', {
+      logger.error('Error en consulta de pacientes', {
         error: queryError.message,
         stack: queryError.stack,
         name: queryError.name,

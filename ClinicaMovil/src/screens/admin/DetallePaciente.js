@@ -6695,13 +6695,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
                     <View key={`med-agregado-${index}`} style={styles.medicamentoCard}>
                       <View style={styles.medicamentoHeader}>
                         <Text style={styles.medicamentoTitle}>{med.nombre}</Text>
-                        <IconButton
-                          icon="delete"
-                          size={20}
-                          iconColor="#ff5252"
-                          onPress={() => eliminarMedicamento(index)}
+                        <TouchableOpacity
+                          onPress={() => !savingMedicamentos && eliminarMedicamento(index)}
                           disabled={savingMedicamentos}
-                        />
+                          style={{ padding: 8, opacity: savingMedicamentos ? 0.5 : 1 }}
+                        >
+                          <Text style={{ fontSize: 18, color: '#ff5252' }}>🗑️</Text>
+                        </TouchableOpacity>
                       </View>
                       
                       <TextInput
@@ -6840,7 +6840,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 setShowAddRedApoyo(true);
               }}
             >
-              <IconButton icon="plus" size={18} iconColor="#2196F3" style={{ marginRight: 0 }} />
+              <Text style={{ fontSize: 18, marginRight: 8 }}>➕</Text>
               <Text style={styles.optionText}>Agregar Contacto</Text>
             </TouchableOpacity>
             
@@ -6851,7 +6851,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 setShowAllRedApoyo(true);
               }}
             >
-              <IconButton icon="magnify" size={18} iconColor="#666" style={{ marginRight: 0 }} />
+              <Text style={{ fontSize: 18, marginRight: 8 }}>📋</Text>
               <Text style={styles.optionText}>Ver Historial Completo</Text>
             </TouchableOpacity>
           </View>
@@ -6879,7 +6879,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 setShowAddEsquemaVacunacion(true);
               }}
             >
-              <IconButton icon="plus" size={18} iconColor="#2196F3" style={{ marginRight: 0 }} />
+              <Text style={{ fontSize: 18, marginRight: 8 }}>💉</Text>
               <Text style={styles.optionText}>Agregar Vacuna</Text>
             </TouchableOpacity>
             
@@ -6890,7 +6890,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 setShowAllEsquemaVacunacion(true);
               }}
             >
-              <IconButton icon="magnify" size={18} iconColor="#666" style={{ marginRight: 0 }} />
+              <Text style={{ fontSize: 18, marginRight: 8 }}>📋</Text>
               <Text style={styles.optionText}>Ver Historial Completo</Text>
             </TouchableOpacity>
           </View>
@@ -8184,7 +8184,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 <TouchableOpacity
                   style={styles.inputRedApoyo}
                   onPress={() => !savingComorbilidad && setShowComorbilidadSelector(true)}
-                  disabled={savingComorbilidad || editingComorbilidad}
+                  disabled={savingComorbilidad || !!editingComorbilidad}
                 >
                   <Text style={[
                     styles.inputText,
@@ -8417,15 +8417,15 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       setShowAllComorbilidades(false);
                       handleEditComorbilidad(comorbilidad);
                     }}
-                    style={{ padding: 8 }}
+                    style={{ padding: 8, justifyContent: 'center', alignItems: 'center' }}
                   >
-                    <IconButton icon="pencil" size={18} iconColor="#2196F3" style={{ margin: 0 }} />
+                    <Text style={{ fontSize: 18, color: '#2196F3' }}>✏️</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => handleDeleteComorbilidad(comorbilidad)}
-                    style={{ padding: 8 }}
+                    style={{ padding: 8, justifyContent: 'center', alignItems: 'center' }}
                   >
-                    <IconButton icon="delete" size={18} iconColor="#f44336" style={{ margin: 0 }} />
+                    <Text style={{ fontSize: 18, color: '#f44336' }}>🗑️</Text>
                   </TouchableOpacity>
                 </View>
               </View>

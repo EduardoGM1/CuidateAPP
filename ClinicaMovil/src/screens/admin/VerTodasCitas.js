@@ -60,6 +60,10 @@ const VerTodasCitas = ({ navigation }) => {
   // Estado para cita resaltada (cuando viene desde dashboard)
   const [citaResaltada, setCitaResaltada] = useState(null);
   
+  // Estado para cita destacada (mostrar al inicio cuando viene con highlightCitaId)
+  const [citaDestacada, setCitaDestacada] = useState(null);
+  const [loadingCitaDestacada, setLoadingCitaDestacada] = useState(false);
+  
   // Ref para ScrollView (para hacer scroll automático)
   const scrollViewRef = useRef(null);
 
@@ -73,6 +77,58 @@ const VerTodasCitas = ({ navigation }) => {
   useEffect(() => {
     fetchModulos();
   }, [fetchModulos]);
+  
+  // Cargar la cita destacada cuando viene con highlightCitaId
+  useEffect(() => {
+    const fetchCitaDestacada = async () => {
+      if (!citaIdToHighlight) {
+        setCitaDestacada(null);
+        return;
+      }
+      
+      setLoadingCitaDestacada(true);
+      try {
+        Logger.info('VerTodasCitas: Cargando cita destacada', { citaId: citaIdToHighlight });
+        const citaData = await gestionService.getCitaById(citaIdToHighlight);
+        
+        if (citaData) {
+          // Normalizar los datos de la cita para que coincidan con el formato de la lista
+          const citaNormalizada = {
+            id_cita: citaData.id_cita,
+            id: citaData.id_cita,
+            paciente_nombre: citaData.Paciente 
+              ? `${citaData.Paciente.nombre} ${citaData.Paciente.apellido_paterno || ''} ${citaData.Paciente.apellido_materno || ''}`.trim()
+              : citaData.paciente_nombre || 'Paciente no disponible',
+            doctor_nombre: citaData.Doctor
+              ? `${citaData.Doctor.nombre} ${citaData.Doctor.apellido_paterno || ''} ${citaData.Doctor.apellido_materno || ''}`.trim()
+              : citaData.doctor_nombre || 'Doctor no disponible',
+            fecha_cita: citaData.fecha_cita,
+            estado: citaData.estado,
+            motivo: citaData.motivo,
+            es_primera_consulta: citaData.es_primera_consulta,
+            observaciones: citaData.observaciones,
+            modulo_nombre: citaData.Doctor?.Modulo?.nombre_modulo || citaData.modulo_nombre || null,
+            // Datos originales para acciones
+            ...citaData
+          };
+          
+          setCitaDestacada(citaNormalizada);
+          setCitaResaltada(citaIdToHighlight);
+          Logger.success('VerTodasCitas: Cita destacada cargada', { citaId: citaIdToHighlight });
+        }
+      } catch (error) {
+        Logger.error('VerTodasCitas: Error cargando cita destacada', { 
+          citaId: citaIdToHighlight, 
+          error: error.message 
+        });
+        // No mostrar error al usuario, simplemente no mostrar la cita destacada
+      } finally {
+        setLoadingCitaDestacada(false);
+      }
+    };
+    
+    fetchCitaDestacada();
+  }, [citaIdToHighlight]);
   
   // Obtener pacientes del doctor (solo para doctores, para filtrar búsqueda)
   const { pacientes: pacientesDoctor } = usePacientes('activos', 'recent', 'todas');
@@ -169,8 +225,14 @@ const VerTodasCitas = ({ navigation }) => {
     setFilteredCitas(filtered);
   }, [citas, searchQuery, userRole, pacientesIdsDoctor, loading, hasLoadedOnce, filterModulo, doctores]);
 
-  // Efecto para resaltar y hacer scroll a la cita cuando viene desde dashboard o DetalleDoctor
+  // Efecto para resaltar la cita en la lista si está visible
+  // (La cita destacada al inicio se maneja por separado con citaDestacada)
   useEffect(() => {
+    // Si ya tenemos la cita destacada mostrada arriba, no necesitamos hacer scroll
+    if (citaDestacada) {
+      return;
+    }
+    
     if (citaIdToHighlight && filteredCitas.length > 0) {
       // Convertir id_cita a número para comparación robusta
       const idCitaNum = typeof citaIdToHighlight === 'string' ? parseInt(citaIdToHighlight) : citaIdToHighlight;
@@ -186,54 +248,23 @@ const VerTodasCitas = ({ navigation }) => {
       if (index >= 0) {
         const citaEncontrada = filteredCitas[index];
         
-        Logger.info('VerTodasCitas: Cita encontrada para resaltar', {
+        Logger.info('VerTodasCitas: Cita encontrada en lista para resaltar', {
           id_cita: idCitaNum,
           index,
           total: filteredCitas.length,
           paciente: citaEncontrada.paciente_nombre
         });
         
-        // Resaltar la cita
+        // Resaltar la cita en la lista
         setCitaResaltada(idCitaNum);
         
-        // Hacer scroll automático después de un delay para asegurar que el layout esté listo
-        setTimeout(() => {
-          if (scrollViewRef.current) {
-            try {
-              // Usar scrollToIndex para FlatList
-              scrollViewRef.current.scrollToIndex({
-                index: Math.max(0, index),
-                animated: true,
-                viewPosition: 0.1 // Mostrar el item cerca del top con algo de espacio
-              });
-              
-              Logger.info('VerTodasCitas: Scroll realizado a cita', { index });
-            } catch (error) {
-              // Fallback: scrollToOffset si scrollToIndex falla
-              const cardHeight = 250;
-              const offset = index * cardHeight;
-              scrollViewRef.current.scrollToOffset({
-                offset: Math.max(0, offset - 100),
-                animated: true
-              });
-              Logger.info('VerTodasCitas: Scroll fallback realizado', { index, offset });
-            }
-          }
-        }, 500);
-        
-        // Remover resaltado después de 3 segundos (igual que en solicitudes)
+        // Remover resaltado después de 5 segundos
         setTimeout(() => {
           setCitaResaltada(null);
-        }, 3000);
-      } else {
-        Logger.warn('VerTodasCitas: Cita no encontrada en la lista', {
-          id_cita: idCitaNum,
-          total_citas: filteredCitas.length,
-          ids_disponibles: filteredCitas.map(c => c.id_cita || c.id)
-        });
+        }, 5000);
       }
     }
-  }, [citaIdToHighlight, filteredCitas]);
+  }, [citaIdToHighlight, filteredCitas, citaDestacada]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -530,6 +561,83 @@ const VerTodasCitas = ({ navigation }) => {
           <TouchableOpacity onPress={limpiarFiltros} style={styles.clearFiltersButton}>
             <Text style={styles.clearFiltersText}>Limpiar todo</Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Cita Destacada - Se muestra cuando viene desde otra pantalla con highlightCitaId */}
+      {loadingCitaDestacada && (
+        <View style={styles.citaDestacadaLoading}>
+          <ActivityIndicator size="small" color="#2196F3" />
+          <Text style={styles.citaDestacadaLoadingText}>Cargando cita seleccionada...</Text>
+        </View>
+      )}
+      
+      {citaDestacada && !loadingCitaDestacada && (
+        <View style={styles.citaDestacadaContainer}>
+          <View style={styles.citaDestacadaHeader}>
+            <Text style={styles.citaDestacadaTitle}>📌 Cita Seleccionada</Text>
+            <TouchableOpacity 
+              onPress={() => {
+                setCitaDestacada(null);
+                setCitaResaltada(null);
+              }}
+              style={styles.citaDestacadaCloseButton}
+            >
+              <Text style={styles.citaDestacadaCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <Card style={styles.citaDestacadaCard}>
+            <TouchableOpacity 
+              onPress={() => handleVerDetalle(citaDestacada)}
+              activeOpacity={0.7}
+            >
+              <Card.Content>
+                <View style={styles.citaHeader}>
+                  <View style={styles.citaTitleContainer}>
+                    <Text style={styles.citaTitle}>
+                      👤 {citaDestacada.paciente_nombre}
+                    </Text>
+                    <Chip 
+                      style={[
+                        styles.estadoChip,
+                        { backgroundColor: getEstadoColor(citaDestacada.estado) }
+                      ]}
+                      textStyle={styles.estadoChipText}
+                    >
+                      <Text>{getEstadoTexto(citaDestacada.estado)}</Text>
+                    </Chip>
+                  </View>
+                </View>
+                <View style={styles.citaInfo}>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoIcon}>👨‍⚕️</Text>
+                    <Text style={styles.infoText}>{citaDestacada.doctor_nombre}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoIcon}>📅</Text>
+                    <Text style={styles.infoText}>{formatDateTime(citaDestacada.fecha_cita)}</Text>
+                  </View>
+                  {citaDestacada.motivo && (
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoIcon}>📝</Text>
+                      <Text style={styles.infoText} numberOfLines={2}>{citaDestacada.motivo}</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.citaActions}>
+                  <Button
+                    mode="contained"
+                    onPress={() => handleVerDetalle(citaDestacada)}
+                    style={styles.actionButton}
+                    buttonColor="#2196F3"
+                    compact
+                  >
+                    Ver Detalle
+                  </Button>
+                </View>
+              </Card.Content>
+            </TouchableOpacity>
+          </Card>
         </View>
       )}
 
@@ -1306,6 +1414,49 @@ const styles = StyleSheet.create({
     borderColor: '#1976D2',
     backgroundColor: '#E3F2FD',
     elevation: 4,
+  },
+  // Estilos para cita destacada
+  citaDestacadaContainer: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  citaDestacadaHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  citaDestacadaTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1976D2',
+  },
+  citaDestacadaCloseButton: {
+    padding: 4,
+  },
+  citaDestacadaCloseText: {
+    fontSize: 18,
+    color: '#666',
+    fontWeight: 'bold',
+  },
+  citaDestacadaCard: {
+    borderRadius: 12,
+    elevation: 4,
+    borderWidth: 2,
+    borderColor: '#1976D2',
+    backgroundColor: '#E3F2FD',
+  },
+  citaDestacadaLoading: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 12,
+    gap: 8,
+  },
+  citaDestacadaLoadingText: {
+    fontSize: 14,
+    color: '#666',
   },
   citaHeader: {
     marginBottom: 12,

@@ -482,10 +482,10 @@ const HistorialAuditoria = ({ navigation }) => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>📋 Historial de Auditoría</Text>
         <View style={styles.headerActions}>
-          <IconButton
-            icon="download"
-            size={24}
+          <TouchableOpacity
+            style={{ padding: 8, opacity: (exportando || auditoria.length === 0) ? 0.5 : 1 }}
             onPress={() => {
+              if (exportando || auditoria.length === 0) return;
               Alert.alert(
                 'Exportar Auditoría',
                 'Seleccione el formato de exportación',
@@ -497,7 +497,9 @@ const HistorialAuditoria = ({ navigation }) => {
               );
             }}
             disabled={exportando || auditoria.length === 0}
-          />
+          >
+            <Text style={{ fontSize: 20 }}>📥</Text>
+          </TouchableOpacity>
           <TouchableOpacity 
             style={styles.filterButton}
             onPress={() => setShowFiltersModal(true)}

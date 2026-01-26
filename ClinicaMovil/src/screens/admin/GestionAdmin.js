@@ -18,7 +18,7 @@ import { Card, Title, Paragraph, Searchbar, Button, IconButton } from 'react-nat
 import { useAuth } from '../../context/AuthContext';
 import Logger from '../../services/logger';
 import gestionService from '../../api/gestionService';
-import { useDoctores, usePacientes, clearDoctorCache } from '../../hooks/useGestion';
+import { useDoctoresInfinite, usePacientesInfinite, clearDoctorCache } from '../../hooks/useGestion';
 import useRealtimeList from '../../hooks/useRealtimeList';
 import useWebSocket from '../../hooks/useWebSocket';
 import useDebounce from '../../hooks/useDebounce';
@@ -54,9 +54,37 @@ const GestionAdmin = ({ navigation }) => {
     'SÍNDROME METABÓLICO'
   ];
 
-  // Hooks para datos dinámicos
-  const { doctores, loading: doctoresLoading, error: doctoresError, refresh: refreshDoctores } = useDoctores(doctorFilter, dateFilter);
-  const { pacientes, loading: pacientesLoading, error: pacientesError, refresh: refreshPacientes } = usePacientes(pacienteFilter, dateFilter, comorbilidadFilter);
+  // Hooks para datos dinámicos con Infinite Scroll
+  const { 
+    doctores, 
+    loading: doctoresLoading, 
+    loadingMore: doctoresLoadingMore,
+    error: doctoresError, 
+    total: doctoresTotal,
+    hasMore: doctoresHasMore,
+    refresh: refreshDoctores,
+    loadMore: loadMoreDoctores
+  } = useDoctoresInfinite({ 
+    estado: doctorFilter, 
+    sort: dateFilter,
+    pageSize: 20
+  });
+  
+  const { 
+    pacientes, 
+    loading: pacientesLoading, 
+    loadingMore: pacientesLoadingMore,
+    error: pacientesError, 
+    total: pacientesTotal,
+    hasMore: pacientesHasMore,
+    refresh: refreshPacientes,
+    loadMore: loadMorePacientes
+  } = usePacientesInfinite({ 
+    estado: pacienteFilter, 
+    sort: dateFilter,
+    comorbilidad: comorbilidadFilter,
+    pageSize: 20
+  });
 
   // Hooks para tiempo real
   const { isConnected } = useWebSocket();
@@ -189,22 +217,8 @@ const GestionAdmin = ({ navigation }) => {
     setFilteredPacientes(filtered);
   }, [debouncedSearchQuery, pacientes, realtimePacientes.items, dateFilter]);
 
-  // Forzar actualización cuando cambien los filtros
-  useEffect(() => {
-    Logger.info('Filtros cambiados, forzando actualización', { 
-      activeTab, 
-      doctorFilter, 
-      pacienteFilter,
-      comorbilidadFilter,
-      dateFilter 
-    });
-    
-    if (activeTab === 'doctores') {
-      refreshDoctores();
-    } else {
-      refreshPacientes();
-    }
-  }, [doctorFilter, pacienteFilter, comorbilidadFilter, dateFilter, activeTab]);
+  // Nota: Los hooks useDoctoresInfinite y usePacientesInfinite ya manejan
+  // automáticamente los cambios de filtros y recargan los datos cuando es necesario
 
   // Refrescar datos cuando el usuario regrese a la pantalla
   useFocusEffect(
@@ -748,7 +762,7 @@ const GestionAdmin = ({ navigation }) => {
             onPress={() => setActiveTab('doctores')}
           >
             <Text style={[styles.tabText, activeTab === 'doctores' && styles.activeTabText]}>
-              👨‍⚕️ Doctores ({doctores?.length || 0})
+              👨‍⚕️ Doctores ({doctoresTotal || doctores?.length || 0})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -756,7 +770,7 @@ const GestionAdmin = ({ navigation }) => {
             onPress={() => setActiveTab('pacientes')}
           >
             <Text style={[styles.tabText, activeTab === 'pacientes' && styles.activeTabText]}>
-              👥 Pacientes ({pacientes?.length || 0})
+              👥 Pacientes ({pacientesTotal || pacientes?.length || 0})
             </Text>
           </TouchableOpacity>
         </View>
@@ -779,7 +793,7 @@ const GestionAdmin = ({ navigation }) => {
           style={styles.filtersButton}
           onPress={() => setShowFiltersModal(true)}
         >
-          <Text style={styles.filtersButtonIcon}>🔧</Text>
+          <Text style={styles.filtersButtonIcon}>🔍</Text>
           <Text style={styles.filtersButtonText}>FILTROS</Text>
         </TouchableOpacity>
         
@@ -817,113 +831,133 @@ const GestionAdmin = ({ navigation }) => {
         {!doctoresLoading && !pacientesLoading && (
           <>
             {activeTab === 'doctores' ? (
-              filteredDoctores.length > 0 ? (
-                <FlatList
-                  data={filteredDoctores}
-                  renderItem={renderDoctorCard}
-                  keyExtractor={keyExtractorDoctor}
-                  style={styles.listContainer}
-                  contentContainerStyle={styles.listContentContainer}
-                  showsVerticalScrollIndicator={false}
-                  removeClippedSubviews={true}
-                  maxToRenderPerBatch={10}
-                  updateCellsBatchingPeriod={50}
-                  initialNumToRender={10}
-                  windowSize={10}
-                  getItemLayout={(data, index) => ({
-                    length: 120, // Altura aproximada de cada card
-                    offset: 120 * index,
-                    index,
-                  })}
-                  ListHeaderComponent={
-                    <View style={styles.sortingIndicator}>
-                      <Text style={styles.sortingText}>
-                        📋 Mostrando doctores ordenados por fecha de registro
-                        {dateFilter === 'recent' ? ' (más recientes primero)' : ' (más antiguos primero)'}
-                      </Text>
-                    </View>
-                  }
-                  ListEmptyComponent={
-                    <Card style={styles.noDataCard}>
-                      <Card.Content>
-                        <Text style={styles.noDataText}>
-                          {searchQuery ? 'No se encontraron doctores con ese criterio' : 'No hay doctores registrados'}
-                        </Text>
-                      </Card.Content>
-                    </Card>
-                  }
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={refreshing}
-                      onRefresh={handleRefresh}
-                      colors={['#1976D2']}
-                      tintColor="#1976D2"
-                    />
-                  }
-                />
-              ) : (
-                <Card style={styles.noDataCard}>
-                  <Card.Content>
-                    <Text style={styles.noDataText}>
-                      {searchQuery ? 'No se encontraron doctores con ese criterio' : 'No hay doctores registrados'}
+              <FlatList
+                data={filteredDoctores}
+                renderItem={renderDoctorCard}
+                keyExtractor={keyExtractorDoctor}
+                style={styles.listContainer}
+                contentContainerStyle={styles.listContentContainer}
+                showsVerticalScrollIndicator={false}
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={10}
+                updateCellsBatchingPeriod={50}
+                initialNumToRender={10}
+                windowSize={10}
+                onEndReached={loadMoreDoctores}
+                onEndReachedThreshold={0.3}
+                getItemLayout={(data, index) => ({
+                  length: 120,
+                  offset: 120 * index,
+                  index,
+                })}
+                ListHeaderComponent={
+                  <View style={styles.sortingIndicator}>
+                    <Text style={styles.sortingText}>
+                      📋 {filteredDoctores.length} de {doctoresTotal} doctores
+                      {dateFilter === 'recent' ? ' (más recientes primero)' : ' (más antiguos primero)'}
                     </Text>
-                  </Card.Content>
-                </Card>
-              )
+                  </View>
+                }
+                ListFooterComponent={
+                  <View style={styles.listFooter}>
+                    {doctoresLoadingMore && (
+                      <View style={styles.loadingMoreContainer}>
+                        <ActivityIndicator size="small" color="#1976D2" />
+                        <Text style={styles.loadingMoreText}>Cargando más doctores...</Text>
+                      </View>
+                    )}
+                    {!doctoresLoadingMore && doctoresHasMore && filteredDoctores.length > 0 && (
+                      <Text style={styles.scrollHintText}>↓ Desliza para cargar más</Text>
+                    )}
+                    {!doctoresHasMore && filteredDoctores.length > 0 && (
+                      <View style={styles.endOfListContainer}>
+                        <Text style={styles.endOfListText}>✓ Has visto todos los doctores</Text>
+                      </View>
+                    )}
+                  </View>
+                }
+                ListEmptyComponent={
+                  <Card style={styles.noDataCard}>
+                    <Card.Content>
+                      <Text style={styles.noDataText}>
+                        {searchQuery ? 'No se encontraron doctores con ese criterio' : 'No hay doctores registrados'}
+                      </Text>
+                    </Card.Content>
+                  </Card>
+                }
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={handleRefresh}
+                    colors={['#1976D2']}
+                    tintColor="#1976D2"
+                  />
+                }
+              />
             ) : (
-              filteredPacientes.length > 0 ? (
-                <FlatList
-                  data={filteredPacientes}
-                  renderItem={renderPatientCard}
-                  keyExtractor={keyExtractorPaciente}
-                  style={styles.listContainer}
-                  contentContainerStyle={styles.listContentContainer}
-                  showsVerticalScrollIndicator={false}
-                  removeClippedSubviews={true}
-                  maxToRenderPerBatch={10}
-                  updateCellsBatchingPeriod={50}
-                  initialNumToRender={10}
-                  windowSize={10}
-                  getItemLayout={(data, index) => ({
-                    length: 180, // Altura aproximada de cada card
-                    offset: 180 * index,
-                    index,
-                  })}
-                  ListHeaderComponent={
-                    <View style={styles.sortingIndicator}>
-                      <Text style={styles.sortingText}>
-                        📋 Mostrando pacientes ordenados por fecha de registro
-                        {dateFilter === 'recent' ? ' (más recientes primero)' : ' (más antiguos primero)'}
-                      </Text>
-                    </View>
-                  }
-                  ListEmptyComponent={
-                    <Card style={styles.noDataCard}>
-                      <Card.Content>
-                        <Text style={styles.noDataText}>
-                          {searchQuery ? 'No se encontraron pacientes con ese criterio' : 'No hay pacientes registrados'}
-                        </Text>
-                      </Card.Content>
-                    </Card>
-                  }
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={refreshing}
-                      onRefresh={handleRefresh}
-                      colors={['#1976D2']}
-                      tintColor="#1976D2"
-                    />
-                  }
-                />
-              ) : (
-                <Card style={styles.noDataCard}>
-                  <Card.Content>
-                    <Text style={styles.noDataText}>
-                      {searchQuery ? 'No se encontraron pacientes con ese criterio' : 'No hay pacientes registrados'}
+              <FlatList
+                data={filteredPacientes}
+                renderItem={renderPatientCard}
+                keyExtractor={keyExtractorPaciente}
+                style={styles.listContainer}
+                contentContainerStyle={styles.listContentContainer}
+                showsVerticalScrollIndicator={false}
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={10}
+                updateCellsBatchingPeriod={50}
+                initialNumToRender={10}
+                windowSize={10}
+                onEndReached={loadMorePacientes}
+                onEndReachedThreshold={0.3}
+                getItemLayout={(data, index) => ({
+                  length: 180,
+                  offset: 180 * index,
+                  index,
+                })}
+                ListHeaderComponent={
+                  <View style={styles.sortingIndicator}>
+                    <Text style={styles.sortingText}>
+                      📋 {filteredPacientes.length} de {pacientesTotal} pacientes
+                      {dateFilter === 'recent' ? ' (más recientes primero)' : ' (más antiguos primero)'}
                     </Text>
-                  </Card.Content>
-                </Card>
-              )
+                  </View>
+                }
+                ListFooterComponent={
+                  <View style={styles.listFooter}>
+                    {pacientesLoadingMore && (
+                      <View style={styles.loadingMoreContainer}>
+                        <ActivityIndicator size="small" color="#1976D2" />
+                        <Text style={styles.loadingMoreText}>Cargando más pacientes...</Text>
+                      </View>
+                    )}
+                    {!pacientesLoadingMore && pacientesHasMore && filteredPacientes.length > 0 && (
+                      <Text style={styles.scrollHintText}>↓ Desliza para cargar más</Text>
+                    )}
+                    {!pacientesHasMore && filteredPacientes.length > 0 && (
+                      <View style={styles.endOfListContainer}>
+                        <Text style={styles.endOfListText}>✓ Has visto todos los pacientes</Text>
+                      </View>
+                    )}
+                  </View>
+                }
+                ListEmptyComponent={
+                  <Card style={styles.noDataCard}>
+                    <Card.Content>
+                      <Text style={styles.noDataText}>
+                        {searchQuery ? 'No se encontraron pacientes con ese criterio' : 'No hay pacientes registrados'}
+                      </Text>
+                    </Card.Content>
+                  </Card>
+                }
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={handleRefresh}
+                    colors={['#1976D2']}
+                    tintColor="#1976D2"
+                  />
+                }
+              />
             )}
           </>
         )}
@@ -938,7 +972,7 @@ const GestionAdmin = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>🔧 Filtros Disponibles</Text>
+              <Text style={styles.modalTitle}>🔍 Filtros Disponibles</Text>
               <TouchableOpacity
                 onPress={() => setShowFiltersModal(false)}
               >
@@ -1632,6 +1666,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  // Estilos para Infinite Scroll
+  listFooter: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  loadingMoreContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 15,
+  },
+  loadingMoreText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: '#1976D2',
+    fontWeight: '500',
+  },
+  scrollHintText: {
+    textAlign: 'center',
+    fontSize: 13,
+    color: '#888',
+    paddingVertical: 10,
+  },
+  endOfListContainer: {
+    paddingVertical: 15,
+    alignItems: 'center',
+  },
+  endOfListText: {
+    fontSize: 14,
+    color: '#4CAF50',
+    fontWeight: '500',
   },
 });
 

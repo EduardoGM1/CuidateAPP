@@ -559,7 +559,7 @@ const DashboardAdmin = ({ navigation }) => {
             </TouchableOpacity>
             
             <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton]} onPress={handleViewAuditoria}>
-              <Text style={styles.quickAccessIcon}></Text>
+              <Text style={styles.quickAccessIcon}>📜</Text>
               <Text style={styles.secondaryButtonText}>Historial de Auditoría</Text>
             </TouchableOpacity>
             

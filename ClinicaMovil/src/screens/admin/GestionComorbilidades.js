@@ -322,7 +322,7 @@ const GestionComorbilidades = ({ navigation }) => {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <IconButton icon="arrow-left" size={24} iconColor={COLORES.BLANCO} />
+            <Text style={{ fontSize: 24, color: COLORES.BLANCO }}>←</Text>
           </TouchableOpacity>
           <View style={styles.headerText}>
             <Text style={styles.headerTitle}>Gestión de Comorbilidades</Text>

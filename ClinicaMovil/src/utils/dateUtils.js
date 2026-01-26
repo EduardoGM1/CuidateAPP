@@ -74,7 +74,7 @@ export const formatDateTime = (timestamp) => {
 };
 
 /**
- * Formatea una fecha con hora en formato HH:MM
+ * Formatea una fecha con hora en formato HH:MM (24 horas)
  * @param {string|Date} timestamp - Fecha a formatear
  * @returns {string} Hora formateada o mensaje de error
  */
@@ -92,6 +92,33 @@ export const formatTime = (timestamp) => {
     hour: '2-digit',
     minute: '2-digit'
   });
+};
+
+/**
+ * Formatea una fecha con hora en formato 12 horas con AM/PM (ej: 4:08 PM)
+ * @param {string|Date} timestamp - Fecha a formatear
+ * @returns {string} Hora formateada en 12 horas o mensaje de error
+ */
+export const formatTime12h = (timestamp) => {
+  if (!timestamp) return 'Hora no disponible';
+  
+  const date = new Date(timestamp);
+  
+  // Validar que la fecha sea válida
+  if (isNaN(date.getTime())) {
+    return 'Hora inválida';
+  }
+  
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  
+  hours = hours % 12;
+  hours = hours ? hours : 12; // La hora 0 debe ser 12
+  
+  const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+  
+  return `${hours}:${minutesStr} ${ampm}`;
 };
 
 /**
@@ -222,6 +249,30 @@ export const formatAppointmentDate = (timestamp) => {
 };
 
 /**
+ * Formatea una cita del día actual mostrando día de la semana + hora en formato 12h
+ * @param {string|Date} timestamp - Fecha a formatear
+ * @returns {string} Formato: "Domingo - 4:08 PM"
+ */
+export const formatTodayAppointment = (timestamp) => {
+  if (!timestamp) return 'Hora no disponible';
+  
+  const date = new Date(timestamp);
+  
+  if (isNaN(date.getTime())) {
+    return 'Fecha inválida';
+  }
+  
+  const diasSemana = [
+    'Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'
+  ];
+  
+  const diaSemana = diasSemana[date.getDay()];
+  const hora = formatTime12h(timestamp);
+  
+  return `${diaSemana} - ${hora}`;
+};
+
+/**
  * Formatea una fecha con día de la semana completo en español
  * @param {string|Date} timestamp - Fecha a formatear
  * @returns {string} Fecha formateada con día de la semana (ej: "lunes, 6 de noviembre del 2025")
@@ -300,10 +351,12 @@ export default {
   formatDate,
   formatDateTime,
   formatTime,
+  formatTime12h,
   formatRelativeTime,
   isValidDate,
   getDaysDifference,
   formatAppointmentDate,
+  formatTodayAppointment,
   formatDateWithWeekday,
   formatDateShort,
   formatDateNumeric

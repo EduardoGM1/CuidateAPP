@@ -518,6 +518,295 @@ export const useDoctorPatientDataById = (pacienteId) => {
 };
 
 // =====================================================
+// HOOKS CON INFINITE SCROLL
+// =====================================================
+
+const DEFAULT_PAGE_SIZE = 20;
+
+/**
+ * Hook para obtener doctores con Infinite Scroll
+ * @param {Object} filters - Filtros { estado, sort }
+ * @returns {Object} - { doctores, loading, loadingMore, error, total, hasMore, refresh, loadMore }
+ */
+export const useDoctoresInfinite = (filters = {}) => {
+  const [doctores, setDoctores] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(null);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  
+  const isLoadingRef = useRef(false);
+  const prevFiltersRef = useRef(null);
+
+  const {
+    pageSize = DEFAULT_PAGE_SIZE,
+    estado = 'activos',
+    sort = 'recent'
+  } = filters;
+
+  const filtersKey = JSON.stringify({ estado, sort });
+
+  const fetchDoctores = useCallback(async (page = 0, isInitial = true) => {
+    if (isLoadingRef.current) {
+      Logger.debug('useDoctoresInfinite: Ignorando llamada duplicada');
+      return;
+    }
+    
+    isLoadingRef.current = true;
+    
+    if (isInitial) {
+      setLoading(true);
+      setDoctores([]);
+    } else {
+      setLoadingMore(true);
+    }
+    setError(null);
+    
+    const offset = page * pageSize;
+    
+    try {
+      Logger.info('useDoctoresInfinite: Obteniendo doctores', { 
+        page, offset, pageSize, isInitial, estado, sort 
+      });
+      
+      const response = await gestionService.getAllDoctores(estado, sort, { limit: pageSize, offset });
+      
+      // El backend devuelve un array directamente o { data: [...] }
+      let doctoresData = [];
+      let totalCount = 0;
+      
+      if (Array.isArray(response)) {
+        doctoresData = response;
+        totalCount = response.length;
+      } else if (response.data) {
+        if (Array.isArray(response.data)) {
+          doctoresData = response.data;
+          totalCount = response.total || response.data.length;
+        } else if (response.data.doctores) {
+          doctoresData = response.data.doctores;
+          totalCount = response.data.total || doctoresData.length;
+        }
+      }
+      
+      if (isInitial) {
+        setDoctores(doctoresData);
+      } else {
+        setDoctores(prev => {
+          const existingIds = new Set(prev.map(d => d.id_doctor));
+          const uniqueNew = doctoresData.filter(d => !existingIds.has(d.id_doctor));
+          return [...prev, ...uniqueNew];
+        });
+      }
+      
+      setTotal(totalCount);
+      setCurrentPage(page);
+      
+      const loadedCount = (page + 1) * pageSize;
+      setHasMore(loadedCount < totalCount && doctoresData.length === pageSize);
+      
+      Logger.success(`useDoctoresInfinite: ${doctoresData.length} doctores (página ${page + 1})`);
+    } catch (err) {
+      Logger.error('useDoctoresInfinite: Error', err);
+      setError(err);
+      if (isInitial) setDoctores([]);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+      isLoadingRef.current = false;
+    }
+  }, [pageSize, estado, sort]);
+
+  useEffect(() => {
+    if (prevFiltersRef.current !== filtersKey) {
+      prevFiltersRef.current = filtersKey;
+      setCurrentPage(0);
+      setHasMore(true);
+      fetchDoctores(0, true);
+    }
+  }, [filtersKey, fetchDoctores]);
+
+  useEffect(() => {
+    if (prevFiltersRef.current === null) {
+      prevFiltersRef.current = filtersKey;
+      fetchDoctores(0, true);
+    }
+  }, []);
+
+  const loadMore = useCallback(() => {
+    if (!hasMore || loadingMore || loading || isLoadingRef.current) return;
+    const nextPage = currentPage + 1;
+    Logger.info('useDoctoresInfinite: Cargando más', { nextPage });
+    fetchDoctores(nextPage, false);
+  }, [hasMore, loadingMore, loading, currentPage, fetchDoctores]);
+
+  const refresh = useCallback(() => {
+    setCurrentPage(0);
+    setHasMore(true);
+    fetchDoctores(0, true);
+  }, [fetchDoctores]);
+
+  return {
+    doctores,
+    loading,
+    loadingMore,
+    error,
+    total,
+    hasMore,
+    currentPage,
+    refresh,
+    loadMore
+  };
+};
+
+/**
+ * Hook para obtener pacientes con Infinite Scroll
+ * @param {Object} filters - Filtros { estado, sort, comorbilidad }
+ * @returns {Object} - { pacientes, loading, loadingMore, error, total, hasMore, refresh, loadMore }
+ */
+export const usePacientesInfinite = (filters = {}) => {
+  const [pacientes, setPacientes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(null);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  
+  const isLoadingRef = useRef(false);
+  const prevFiltersRef = useRef(null);
+
+  const {
+    pageSize = DEFAULT_PAGE_SIZE,
+    estado = 'activos',
+    sort = 'recent',
+    comorbilidad = 'todas'
+  } = filters;
+
+  const filtersKey = JSON.stringify({ estado, sort, comorbilidad });
+
+  const fetchPacientes = useCallback(async (page = 0, isInitial = true) => {
+    if (isLoadingRef.current) {
+      Logger.debug('usePacientesInfinite: Ignorando llamada duplicada');
+      return;
+    }
+    
+    isLoadingRef.current = true;
+    
+    if (isInitial) {
+      setLoading(true);
+      setPacientes([]);
+    } else {
+      setLoadingMore(true);
+    }
+    setError(null);
+    
+    const offset = page * pageSize;
+    
+    try {
+      Logger.info('usePacientesInfinite: Obteniendo pacientes', { 
+        page, offset, pageSize, isInitial, estado, sort, comorbilidad 
+      });
+      
+      const response = await gestionService.getAllPacientes(estado, sort, comorbilidad, { limit: pageSize, offset });
+      
+      // Extraer datos - el backend devuelve { data: { pacientes: [], total } }
+      let pacientesData = [];
+      let totalCount = 0;
+      
+      if (response && response.data) {
+        if (response.data.pacientes && Array.isArray(response.data.pacientes)) {
+          pacientesData = response.data.pacientes;
+          totalCount = response.data.total || pacientesData.length;
+        } else if (Array.isArray(response.data)) {
+          pacientesData = response.data;
+          totalCount = response.total || pacientesData.length;
+        }
+      } else if (Array.isArray(response)) {
+        pacientesData = response;
+        totalCount = response.length;
+      }
+      
+      // Procesar datos del doctor
+      const pacientesConDoctor = pacientesData.map(paciente => ({
+        ...paciente,
+        nombreCompleto: paciente.nombre_completo || `${paciente.nombre} ${paciente.apellido_paterno} ${paciente.apellido_materno || ''}`.trim(),
+        doctorNombre: paciente.doctor_nombre || 'Sin doctor asignado',
+        edad: paciente.edad || (new Date().getFullYear() - new Date(paciente.fecha_nacimiento).getFullYear())
+      }));
+      
+      if (isInitial) {
+        setPacientes(pacientesConDoctor);
+      } else {
+        setPacientes(prev => {
+          const existingIds = new Set(prev.map(p => p.id_paciente));
+          const uniqueNew = pacientesConDoctor.filter(p => !existingIds.has(p.id_paciente));
+          return [...prev, ...uniqueNew];
+        });
+      }
+      
+      setTotal(totalCount);
+      setCurrentPage(page);
+      
+      const loadedCount = (page + 1) * pageSize;
+      setHasMore(loadedCount < totalCount && pacientesData.length === pageSize);
+      
+      Logger.success(`usePacientesInfinite: ${pacientesData.length} pacientes (página ${page + 1})`);
+    } catch (err) {
+      Logger.error('usePacientesInfinite: Error', err);
+      setError(err);
+      if (isInitial) setPacientes([]);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+      isLoadingRef.current = false;
+    }
+  }, [pageSize, estado, sort, comorbilidad]);
+
+  useEffect(() => {
+    if (prevFiltersRef.current !== filtersKey) {
+      prevFiltersRef.current = filtersKey;
+      setCurrentPage(0);
+      setHasMore(true);
+      fetchPacientes(0, true);
+    }
+  }, [filtersKey, fetchPacientes]);
+
+  useEffect(() => {
+    if (prevFiltersRef.current === null) {
+      prevFiltersRef.current = filtersKey;
+      fetchPacientes(0, true);
+    }
+  }, []);
+
+  const loadMore = useCallback(() => {
+    if (!hasMore || loadingMore || loading || isLoadingRef.current) return;
+    const nextPage = currentPage + 1;
+    Logger.info('usePacientesInfinite: Cargando más', { nextPage });
+    fetchPacientes(nextPage, false);
+  }, [hasMore, loadingMore, loading, currentPage, fetchPacientes]);
+
+  const refresh = useCallback(() => {
+    setCurrentPage(0);
+    setHasMore(true);
+    fetchPacientes(0, true);
+  }, [fetchPacientes]);
+
+  return {
+    pacientes,
+    loading,
+    loadingMore,
+    error,
+    total,
+    hasMore,
+    currentPage,
+    refresh,
+    loadMore
+  };
+};
+
+// =====================================================
 // UTILIDADES DE CACHE
 // =====================================================
 
@@ -606,7 +895,9 @@ const useGestion = {
   useModulos,
   useDoctorDetails,
   usePacienteDetails,
-  useDoctorPatientData
+  useDoctorPatientData,
+  useDoctoresInfinite,
+  usePacientesInfinite
 };
 
 export default useGestion;

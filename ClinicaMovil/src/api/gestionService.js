@@ -472,10 +472,14 @@ export const gestionService = {
 
   /**
    * Obtener lista completa de doctores
+   * @param {string} estado - 'activos', 'inactivos', 'todos'
+   * @param {string} sort - 'recent', 'oldest'
+   * @param {Object} pagination - Opciones de paginación { limit, offset }
    */
-  async getAllDoctores(estado = 'activos', sort = 'recent') {
+  async getAllDoctores(estado = 'activos', sort = 'recent', pagination = {}) {
     try {
-      Logger.info('Obteniendo lista de doctores', { estado, sort });
+      const { limit = null, offset = null } = pagination;
+      Logger.info('Obteniendo lista de doctores', { estado, sort, limit, offset });
       
       // Construir URL con parámetros
       let url = '/doctores';
@@ -488,6 +492,13 @@ export const gestionService = {
       if (sort) {
         params.append('sort', sort);
       }
+      // Parámetros de paginación
+      if (limit !== null) {
+        params.append('limit', limit);
+      }
+      if (offset !== null) {
+        params.append('offset', offset);
+      }
       
       if (params.toString()) {
         url += `?${params.toString()}`;
@@ -495,7 +506,7 @@ export const gestionService = {
       
       const apiClient = await ensureApiClient();
       const response = await apiClient.get(url);
-      Logger.success('Lista de doctores obtenida exitosamente', { estado, sort });
+      Logger.success('Lista de doctores obtenida exitosamente', { estado, sort, limit, offset });
       
       // 🔍 CONSOLE LOG PARA DEBUG - DATOS DE GESTIÓN
       console.log('=== DATOS DE GESTIÓN (getAllDoctores) ===');
@@ -640,10 +651,15 @@ export const gestionService = {
 
   /**
    * Obtener lista completa de pacientes
+   * @param {string} estado - 'activos', 'inactivos', 'todos'
+   * @param {string} sort - 'recent', 'oldest'
+   * @param {string} comorbilidad - Filtro por comorbilidad
+   * @param {Object} pagination - Opciones de paginación { limit, offset }
    */
-  async getAllPacientes(estado = 'activos', sort = 'recent', comorbilidad = 'todas') {
+  async getAllPacientes(estado = 'activos', sort = 'recent', comorbilidad = 'todas', pagination = {}) {
     try {
-      Logger.info('Obteniendo lista de pacientes', { estado, sort, comorbilidad });
+      const { limit = null, offset = null } = pagination;
+      Logger.info('Obteniendo lista de pacientes', { estado, sort, comorbilidad, limit, offset });
       
       // Construir URL con parámetros
       let url = '/pacientes';
@@ -659,6 +675,13 @@ export const gestionService = {
       if (comorbilidad && comorbilidad !== 'todas') {
         params.append('comorbilidad', comorbilidad);
       }
+      // Parámetros de paginación
+      if (limit !== null) {
+        params.append('limit', limit);
+      }
+      if (offset !== null) {
+        params.append('offset', offset);
+      }
       
       if (params.toString()) {
         url += `?${params.toString()}`;
@@ -666,7 +689,7 @@ export const gestionService = {
       
       const apiClient = await ensureApiClient();
       const response = await apiClient.get(url);
-      Logger.success('Lista de pacientes obtenida exitosamente', { estado, sort });
+      Logger.success('Lista de pacientes obtenida exitosamente', { estado, sort, limit, offset });
       
       // 🔍 CONSOLE LOG PARA DEBUG - DATOS DE GESTIÓN
       console.log('=== DATOS DE GESTIÓN (getAllPacientes) ===');

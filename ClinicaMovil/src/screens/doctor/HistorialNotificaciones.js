@@ -336,11 +336,12 @@ const HistorialNotificaciones = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <IconButton
-          icon="arrow-left"
-          size={24}
+        <TouchableOpacity
+          style={{ padding: 8 }}
           onPress={() => navigation.goBack()}
-        />
+        >
+          <Text style={{ fontSize: 24 }}>←</Text>
+        </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>🔔 Mis Notificaciones</Text>
           {contadorNoLeidas > 0 && (
@@ -349,11 +350,12 @@ const HistorialNotificaciones = ({ navigation }) => {
             </Chip>
           )}
         </View>
-        <IconButton
-          icon="filter"
-          size={24}
+        <TouchableOpacity
+          style={{ padding: 8 }}
           onPress={() => setShowFiltersModal(true)}
-        />
+        >
+          <Text style={{ fontSize: 20 }}>🔍</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Búsqueda */}

@@ -17,7 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 import Logger from '../../services/logger';
 import { useDoctorDetails, useDoctorPatientData } from '../../hooks/useGestion';
 import useDoctorForm from '../../hooks/useDoctorForm';
-import { formatDate, formatDateTime, formatAppointmentDate } from '../../utils/dateUtils';
+import { formatDate, formatDateTime, formatAppointmentDate, formatTodayAppointment } from '../../utils/dateUtils';
 import { useFocusEffect } from '@react-navigation/native';
 import { ESTADOS_CITA } from '../../utils/constantes';
 
@@ -849,7 +849,7 @@ const DetalleDoctor = ({ route, navigation }) => {
               styles.statusChip,
               { backgroundColor: getEstadoCitaColor(cita.estado || ESTADOS_CITA.PENDIENTE) }
             ]}
-            textStyle={{ color: '#FFFFFF', fontSize: 11, fontWeight: '600' }}
+            textStyle={{ color: '#FFFFFF', fontSize: 12, fontWeight: '600' }}
           >
             {getEstadoCitaTexto(cita.estado || ESTADOS_CITA.PENDIENTE)}
           </Chip>
@@ -870,18 +870,17 @@ const DetalleDoctor = ({ route, navigation }) => {
     <Card key={cita.id} style={styles.todayAppointmentCard}>
       <Card.Content>
         <View style={styles.todayAppointmentHeader}>
-          <Text style={styles.todayAppointmentTime}>
-            {formatAppointmentDate(cita.fecha_cita)}
+          <Text style={styles.todayAppointmentTime} numberOfLines={1}>
+            {formatTodayAppointment(cita.fecha_cita)}
           </Text>
-          <Chip 
-            style={[
-              styles.statusChip,
-              { backgroundColor: getEstadoCitaColor(cita.estado || ESTADOS_CITA.PENDIENTE) }
-            ]}
-            textStyle={{ color: '#FFFFFF', fontSize: 11, fontWeight: '600' }}
-          >
-            {getEstadoCitaTexto(cita.estado || ESTADOS_CITA.PENDIENTE)}
-          </Chip>
+          <View style={[
+            styles.statusBadge,
+            { backgroundColor: getEstadoCitaColor(cita.estado || ESTADOS_CITA.PENDIENTE) }
+          ]}>
+            <Text style={styles.statusBadgeText}>
+              {getEstadoCitaTexto(cita.estado || ESTADOS_CITA.PENDIENTE)}
+            </Text>
+          </View>
         </View>
         
         <Title style={styles.todayAppointmentTitle}>
@@ -1610,11 +1609,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
+    flexWrap: 'nowrap',
   },
   todayAppointmentTime: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1976D2',
+    flexShrink: 1,
+    marginRight: 8,
   },
   todayAppointmentTitle: {
     fontSize: 16,
@@ -1640,6 +1642,24 @@ const styles = StyleSheet.create({
   },
   pendingChip: {
     backgroundColor: '#FFF3E0',
+  },
+  statusChip: {
+    height: 29,
+    borderRadius: 15,
+    paddingHorizontal: 12,
+    flexShrink: 0,
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    maxWidth: 100,
+  },
+  statusBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   viewButton: {
     marginTop: 10,

@@ -23,10 +23,9 @@ import { Card, Title, Button } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
 import Logger from '../../services/logger';
 import { useAdminDashboard } from '../../hooks/useDashboard';
-import { usePacientes, useDoctores } from '../../hooks/useGestion';
+import { usePacientes, useDoctores, useModulos } from '../../hooks/useGestion';
 import gestionService from '../../api/gestionService';
 import ModalBase from '../../components/DetallePaciente/shared/ModalBase';
-import EstadoSelector from '../../components/forms/EstadoSelector';
 import RangoMesesSelector from '../../components/forms/RangoMesesSelector';
 import ComorbilidadesHeatmap from '../../components/charts/ComorbilidadesHeatmap';
 
@@ -36,8 +35,10 @@ const ReportesAdmin = ({ navigation }) => {
   const [estadisticas, setEstadisticas] = useState(null);
   const [loadingEstadisticas, setLoadingEstadisticas] = useState(true);
   const [showFiltroModal, setShowFiltroModal] = useState(false);
-  const [estadoFiltro, setEstadoFiltro] = useState(null);
-  const [estadoFiltroTemporal, setEstadoFiltroTemporal] = useState(null);
+  // Filtro por módulo (reemplaza filtro por estado)
+  const [moduloFiltro, setModuloFiltro] = useState(null);
+  const [moduloFiltroTemporal, setModuloFiltroTemporal] = useState(null);
+  const [showModuloDropdown, setShowModuloDropdown] = useState(false);
   const [periodoFiltro, setPeriodoFiltro] = useState(null);
   const [periodoFiltroTemporal, setPeriodoFiltroTemporal] = useState(null);
   const [rangoMesesFiltro, setRangoMesesFiltro] = useState(null);
@@ -91,6 +92,14 @@ const ReportesAdmin = ({ navigation }) => {
     loading: doctoresLoading,
     refresh: refreshDoctores
   } = useDoctores('activos', 'recent');
+
+  // Hook para módulos
+  const { modulos, fetchModulos } = useModulos();
+
+  // Cargar módulos al montar el componente
+  useEffect(() => {
+    fetchModulos();
+  }, [fetchModulos]);
 
   // Cargar citas para estadísticas
   const loadCitas = useCallback(async () => {
@@ -270,18 +279,28 @@ const ReportesAdmin = ({ navigation }) => {
     }
   }, [pacientes, doctores, citas]);
 
-  // Cargar comorbilidades más frecuentes
+  // Cargar comorbilidades más frecuentes (filtrado por módulo)
   const loadComorbilidades = useCallback(async () => {
     try {
-      Logger.info('ReportesAdmin: Cargando comorbilidades');
+      Logger.info('ReportesAdmin: Cargando comorbilidades', { moduloFiltro });
       const response = await gestionService.getComorbilidades();
       if (response && Array.isArray(response)) {
-        // Contar frecuencia de comorbilidades en pacientes
+        // Filtrar pacientes por módulo si hay filtro activo
+        let pacientesFiltrados = pacientes || [];
+        if (moduloFiltro) {
+          pacientesFiltrados = pacientesFiltrados.filter(paciente => {
+            // Verificar si el paciente pertenece al módulo seleccionado
+            return paciente.id_modulo === moduloFiltro || 
+                   paciente.modulo?.id_modulo === moduloFiltro;
+          });
+        }
+        
+        // Contar frecuencia de comorbilidades en pacientes filtrados
         const frecuencia = {};
-        pacientes?.forEach(paciente => {
+        pacientesFiltrados.forEach(paciente => {
           if (paciente.comorbilidades && Array.isArray(paciente.comorbilidades)) {
             paciente.comorbilidades.forEach(comorb => {
-              const nombre = comorb.nombre || comorb;
+              const nombre = comorb.nombre || comorb.nombre_comorbilidad || comorb;
               frecuencia[nombre] = (frecuencia[nombre] || 0) + 1;
             });
           }
@@ -293,13 +312,18 @@ const ReportesAdmin = ({ navigation }) => {
           .slice(0, 10);
         
         setComorbilidadesMasFrecuentes(comorbilidadesOrdenadas);
+        Logger.info('ReportesAdmin: Comorbilidades cargadas', { 
+          total: comorbilidadesOrdenadas.length,
+          moduloFiltro,
+          pacientesFiltrados: pacientesFiltrados.length
+        });
       }
     } catch (error) {
       Logger.error('ReportesAdmin: Error cargando comorbilidades', error);
       // Si falla, usar array vacío en lugar de dejar undefined
       setComorbilidadesMasFrecuentes([]);
     }
-  }, [pacientes]);
+  }, [pacientes, moduloFiltro]);
 
   // Cargar estadísticas adicionales
   const loadEstadisticas = useCallback(async () => {
@@ -352,6 +376,13 @@ const ReportesAdmin = ({ navigation }) => {
     
     loadDataSequentially();
   }, [loadEstadisticas, loadComorbilidades, loadCitas]);
+
+  // Recargar comorbilidades cuando cambia el filtro de módulo
+  useEffect(() => {
+    if (pacientes && pacientes.length > 0) {
+      loadComorbilidades();
+    }
+  }, [moduloFiltro, loadComorbilidades, pacientes]);
 
   useEffect(() => {
     // Calcular estadísticas cuando tengamos datos suficientes
@@ -449,9 +480,9 @@ const ReportesAdmin = ({ navigation }) => {
               </Title>
               {showFilterButton && (
                 <TouchableOpacity
-                  style={[styles.filterButton, (estadoFiltro || periodoFiltro || rangoMesesFiltro) && styles.filterButtonActive]}
+                  style={[styles.filterButton, (moduloFiltro || periodoFiltro || rangoMesesFiltro) && styles.filterButtonActive]}
                   onPress={() => {
-                    setEstadoFiltroTemporal(estadoFiltro);
+                    setModuloFiltroTemporal(moduloFiltro);
                     setPeriodoFiltroTemporal(periodoFiltro);
                     setRangoMesesFiltroTemporal(rangoMesesFiltro || {
                       mesInicio: null,
@@ -462,10 +493,10 @@ const ReportesAdmin = ({ navigation }) => {
                   }}
                 >
                   <Text style={styles.filterButtonText}>🔍</Text>
-                  {(estadoFiltro || periodoFiltro || rangoMesesFiltro) && (
+                  {(moduloFiltro || periodoFiltro || rangoMesesFiltro) && (
                     <View style={styles.filterBadge}>
                       <Text style={styles.filterBadgeText}>
-                        {(estadoFiltro ? 1 : 0) + (periodoFiltro ? 1 : 0) + (rangoMesesFiltro ? 1 : 0)}
+                        {(moduloFiltro ? 1 : 0) + (periodoFiltro ? 1 : 0) + (rangoMesesFiltro ? 1 : 0)}
                       </Text>
                     </View>
                   )}
@@ -480,7 +511,10 @@ const ReportesAdmin = ({ navigation }) => {
 
     // Construir título con filtros
     let tituloCompleto = title;
-    if (estadoFiltro) tituloCompleto += ` - ${estadoFiltro}`;
+    if (moduloFiltro) {
+      const moduloNombre = modulos.find(m => m.id_modulo === moduloFiltro)?.nombre_modulo || 'Módulo';
+      tituloCompleto += ` - ${moduloNombre}`;
+    }
     if (periodoFiltro) {
       const periodoLabels = {
         'semestre': 'Semestral',
@@ -502,9 +536,9 @@ const ReportesAdmin = ({ navigation }) => {
             </Title>
             {showFilterButton && (
               <TouchableOpacity
-                style={[styles.filterButton, (estadoFiltro || periodoFiltro || rangoMesesFiltro) && styles.filterButtonActive]}
+                style={[styles.filterButton, (moduloFiltro || periodoFiltro || rangoMesesFiltro) && styles.filterButtonActive]}
                 onPress={() => {
-                  setEstadoFiltroTemporal(estadoFiltro);
+                  setModuloFiltroTemporal(moduloFiltro);
                   setPeriodoFiltroTemporal(periodoFiltro);
                   setRangoMesesFiltroTemporal(rangoMesesFiltro || {
                     mesInicio: null,
@@ -515,10 +549,10 @@ const ReportesAdmin = ({ navigation }) => {
                 }}
               >
                 <Text style={styles.filterButtonText}>🔍</Text>
-                {(estadoFiltro || periodoFiltro || rangoMesesFiltro) && (
+                {(moduloFiltro || periodoFiltro || rangoMesesFiltro) && (
                   <View style={styles.filterBadge}>
                     <Text style={styles.filterBadgeText}>
-                      {(estadoFiltro ? 1 : 0) + (periodoFiltro ? 1 : 0) + (rangoMesesFiltro ? 1 : 0)}
+                      {(moduloFiltro ? 1 : 0) + (periodoFiltro ? 1 : 0) + (rangoMesesFiltro ? 1 : 0)}
                     </Text>
                   </View>
                 )}
@@ -551,9 +585,9 @@ const ReportesAdmin = ({ navigation }) => {
               </Title>
             {showFilterButton && (
               <TouchableOpacity
-                style={[styles.filterButton, (estadoFiltro || periodoFiltro || rangoMesesFiltro) && styles.filterButtonActive]}
+                style={[styles.filterButton, (moduloFiltro || periodoFiltro || rangoMesesFiltro) && styles.filterButtonActive]}
                 onPress={() => {
-                  setEstadoFiltroTemporal(estadoFiltro);
+                  setModuloFiltroTemporal(moduloFiltro);
                   setPeriodoFiltroTemporal(periodoFiltro);
                   setRangoMesesFiltroTemporal(rangoMesesFiltro || {
                     mesInicio: null,
@@ -564,10 +598,10 @@ const ReportesAdmin = ({ navigation }) => {
                 }}
               >
                 <Text style={styles.filterButtonText}>🔍</Text>
-                {(estadoFiltro || periodoFiltro) && (
+                {(moduloFiltro || periodoFiltro) && (
                   <View style={styles.filterBadge}>
                     <Text style={styles.filterBadgeText}>
-                      {(estadoFiltro ? 1 : 0) + (periodoFiltro ? 1 : 0) + (rangoMesesFiltro ? 1 : 0)}
+                      {(moduloFiltro ? 1 : 0) + (periodoFiltro ? 1 : 0) + (rangoMesesFiltro ? 1 : 0)}
                     </Text>
                   </View>
                 )}
@@ -590,13 +624,15 @@ const ReportesAdmin = ({ navigation }) => {
               style={[styles.chartTitle, styles.chartTitleInHeader]} 
               numberOfLines={2}
             >
-              {estadoFiltro ? `${title} - ${estadoFiltro}` : title}
+              {moduloFiltro 
+                ? `${title} - ${modulos.find(m => m.id_modulo === moduloFiltro)?.nombre_modulo || 'Módulo'}` 
+                : title}
             </Title>
             {showFilterButton && (
               <TouchableOpacity
-                style={[styles.filterButton, (estadoFiltro || periodoFiltro || rangoMesesFiltro) && styles.filterButtonActive]}
+                style={[styles.filterButton, (moduloFiltro || periodoFiltro || rangoMesesFiltro) && styles.filterButtonActive]}
                 onPress={() => {
-                  setEstadoFiltroTemporal(estadoFiltro);
+                  setModuloFiltroTemporal(moduloFiltro);
                   setPeriodoFiltroTemporal(periodoFiltro);
                   setRangoMesesFiltroTemporal(rangoMesesFiltro || {
                     mesInicio: null,
@@ -607,10 +643,10 @@ const ReportesAdmin = ({ navigation }) => {
                 }}
               >
                 <Text style={styles.filterButtonText}>🔍</Text>
-                {(estadoFiltro || periodoFiltro) && (
+                {(moduloFiltro || periodoFiltro) && (
                   <View style={styles.filterBadge}>
                     <Text style={styles.filterBadgeText}>
-                      {(estadoFiltro ? 1 : 0) + (periodoFiltro ? 1 : 0) + (rangoMesesFiltro ? 1 : 0)}
+                      {(moduloFiltro ? 1 : 0) + (periodoFiltro ? 1 : 0) + (rangoMesesFiltro ? 1 : 0)}
                     </Text>
                   </View>
                 )}
@@ -650,7 +686,7 @@ const ReportesAdmin = ({ navigation }) => {
 
   // Función para manejar aplicar filtros
   const handleAplicarFiltros = useCallback(() => {
-    setEstadoFiltro(estadoFiltroTemporal);
+    setModuloFiltro(moduloFiltroTemporal);
     setPeriodoFiltro(periodoFiltroTemporal);
     
     // Si el periodo es mensual, validar y establecer rango de meses
@@ -671,29 +707,28 @@ const ReportesAdmin = ({ navigation }) => {
     
     setRangoMesesFiltro(rangoMesesAplicar);
     setShowFiltroModal(false);
-    // Recargar comorbilidades con filtros
-    loadComorbilidades();
-  }, [estadoFiltroTemporal, periodoFiltroTemporal, rangoMesesFiltroTemporal, loadComorbilidades]);
+    setShowModuloDropdown(false);
+  }, [moduloFiltroTemporal, periodoFiltroTemporal, rangoMesesFiltroTemporal]);
 
   // Función para limpiar filtros
   const handleLimpiarFiltros = useCallback(() => {
-    setEstadoFiltroTemporal(null);
+    setModuloFiltroTemporal(null);
     setPeriodoFiltroTemporal(null);
     setRangoMesesFiltroTemporal({
       mesInicio: null,
       mesFin: null,
       año: new Date().getFullYear(),
     });
-    setEstadoFiltro(null);
+    setModuloFiltro(null);
     setPeriodoFiltro(null);
     setRangoMesesFiltro(null);
     setShowFiltroModal(false);
-    loadComorbilidades();
-  }, [loadComorbilidades]);
+    setShowModuloDropdown(false);
+  }, []);
 
   // Función para cerrar modal sin aplicar
   const handleCerrarModal = useCallback(() => {
-    setEstadoFiltroTemporal(estadoFiltro);
+    setModuloFiltroTemporal(moduloFiltro);
     setPeriodoFiltroTemporal(periodoFiltro);
     setRangoMesesFiltroTemporal(rangoMesesFiltro || {
       mesInicio: null,
@@ -701,7 +736,7 @@ const ReportesAdmin = ({ navigation }) => {
       año: new Date().getFullYear(),
     });
     setShowFiltroModal(false);
-  }, [estadoFiltro, periodoFiltro, rangoMesesFiltro]);
+  }, [moduloFiltro, periodoFiltro, rangoMesesFiltro]);
 
   // Renderizar card de estadística
   const renderStatCard = (title, value, subtitle, color = '#1976D2') => (
@@ -990,16 +1025,72 @@ const ReportesAdmin = ({ navigation }) => {
         >
           <View style={styles.modalFilterContent}>
             <Text style={styles.modalFilterInfo}>
-              Selecciona filtros para analizar las comorbilidades
+              Analiza las comorbilidades más frecuentes por módulo
             </Text>
-            <EstadoSelector
-              label="Filtrar por Estado"
-              value={estadoFiltroTemporal || ''}
-              onValueChange={(estado) => {
-                setEstadoFiltroTemporal(estado || null);
-              }}
-              required={false}
-            />
+            
+            {/* Selector de Módulo */}
+            <View style={styles.moduloSelectorContainer}>
+              <Text style={styles.moduloSelectorLabel}>Filtrar por Módulo:</Text>
+              <TouchableOpacity
+                style={styles.moduloDropdownButton}
+                onPress={() => setShowModuloDropdown(!showModuloDropdown)}
+              >
+                <Text style={[
+                  styles.moduloDropdownButtonText,
+                  !moduloFiltroTemporal && styles.moduloDropdownPlaceholder
+                ]}>
+                  {moduloFiltroTemporal 
+                    ? modulos.find(m => m.id_modulo === moduloFiltroTemporal)?.nombre_modulo || 'Módulo seleccionado'
+                    : 'Todos los módulos'}
+                </Text>
+                <Text style={styles.moduloDropdownArrow}>
+                  {showModuloDropdown ? '▲' : '▼'}
+                </Text>
+              </TouchableOpacity>
+              
+              {showModuloDropdown && (
+                <View style={styles.moduloDropdownList}>
+                  <TouchableOpacity
+                    style={[
+                      styles.moduloDropdownItem,
+                      !moduloFiltroTemporal && styles.moduloDropdownItemSelected
+                    ]}
+                    onPress={() => {
+                      setModuloFiltroTemporal(null);
+                      setShowModuloDropdown(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.moduloDropdownItemText,
+                      !moduloFiltroTemporal && styles.moduloDropdownItemTextSelected
+                    ]}>
+                      📊 Todos los módulos
+                    </Text>
+                  </TouchableOpacity>
+                  {modulos.map((mod) => (
+                    <TouchableOpacity
+                      key={mod.id_modulo}
+                      style={[
+                        styles.moduloDropdownItem,
+                        moduloFiltroTemporal === mod.id_modulo && styles.moduloDropdownItemSelected
+                      ]}
+                      onPress={() => {
+                        setModuloFiltroTemporal(mod.id_modulo);
+                        setShowModuloDropdown(false);
+                      }}
+                    >
+                      <Text style={[
+                        styles.moduloDropdownItemText,
+                        moduloFiltroTemporal === mod.id_modulo && styles.moduloDropdownItemTextSelected
+                      ]}>
+                        🏥 {mod.nombre_modulo}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+            
             <View style={styles.periodoSelectorContainer}>
               <Text style={styles.periodoSelectorLabel}>Agrupar por Periodo:</Text>
               <View style={styles.periodoSelectorButtons}>
@@ -1447,6 +1538,66 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   periodoSelectorButtonTextActive: {
+    color: '#2196F3',
+    fontWeight: '600',
+  },
+  // Estilos para selector de módulo
+  moduloSelectorContainer: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  moduloSelectorLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  moduloDropdownButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: '#fff',
+  },
+  moduloDropdownButtonText: {
+    fontSize: 14,
+    color: '#333',
+    flex: 1,
+  },
+  moduloDropdownPlaceholder: {
+    color: '#999',
+  },
+  moduloDropdownArrow: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 8,
+  },
+  moduloDropdownList: {
+    marginTop: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: '#fff',
+    maxHeight: 200,
+  },
+  moduloDropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  moduloDropdownItemSelected: {
+    backgroundColor: '#E3F2FD',
+  },
+  moduloDropdownItemText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  moduloDropdownItemTextSelected: {
     color: '#2196F3',
     fontWeight: '600',
   },
