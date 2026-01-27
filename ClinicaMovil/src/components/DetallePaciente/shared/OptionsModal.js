@@ -134,12 +134,19 @@ const OptionsModal = ({
                   activeOpacity={0.7}
                 >
                   {option.icon && (
-                    <IconButton
-                      icon={option.icon}
-                      size={18}
-                      iconColor={option.color || '#2196F3'}
-                      style={styles.optionIcon}
-                    />
+                    // Detectar si es un emoji (caracteres Unicode) o un icono de Material Design
+                    /[\u{1F300}-\u{1F9FF}]/u.test(option.icon) ? (
+                      <Text style={[styles.optionEmoji, { fontSize: 20 }]}>{option.icon}</Text>
+                    ) : (
+                      <View style={styles.iconContainer}>
+                        <IconButton
+                          icon={option.icon}
+                          size={22}
+                          iconColor={option.color || '#2196F3'}
+                          style={styles.optionIcon}
+                        />
+                      </View>
+                    )
                   )}
                   <Text style={[styles.optionText, option.textStyle]}>{option.label}</Text>
                 </TouchableOpacity>
@@ -215,9 +222,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     minHeight: 44,
   },
+  iconContainer: {
+    marginRight: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   optionIcon: {
     margin: 0,
+    padding: 0,
+    width: 24,
+    height: 24,
+  },
+  optionEmoji: {
     marginRight: 8,
+    textAlign: 'center',
+    minWidth: 24,
   },
   optionText: {
     fontSize: 14,

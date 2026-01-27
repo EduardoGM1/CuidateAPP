@@ -24,6 +24,7 @@ import { gestionService } from '../../api/gestionService';
 import { ESTADOS_CITA } from '../../utils/constantes';
 import DateTimePickerButton from '../../components/DateTimePickerButton';
 import CompletarCitaWizard from '../../components/CompletarCitaWizard';
+import DetalleCitaModal from '../../components/DetalleCitaModal/DetalleCitaModal';
 
 const VerTodasCitas = ({ navigation }) => {
   const { userData, userRole } = useAuth();
@@ -64,6 +65,11 @@ const VerTodasCitas = ({ navigation }) => {
   const [citaDestacada, setCitaDestacada] = useState(null);
   const [loadingCitaDestacada, setLoadingCitaDestacada] = useState(false);
   
+  // Estados para modal de detalle de cita (solo para citas atendidas)
+  const [showDetalleCitaModal, setShowDetalleCitaModal] = useState(false);
+  const [citaDetalle, setCitaDetalle] = useState(null);
+  const [loadingCitaDetalle, setLoadingCitaDetalle] = useState(false);
+  
   // Ref para ScrollView (para hacer scroll automático)
   const scrollViewRef = useRef(null);
 
@@ -96,6 +102,8 @@ const VerTodasCitas = ({ navigation }) => {
           const citaNormalizada = {
             id_cita: citaData.id_cita,
             id: citaData.id_cita,
+            id_paciente: citaData.id_paciente || citaData.Paciente?.id_paciente,
+            id_doctor: citaData.id_doctor || citaData.Doctor?.id_doctor,
             paciente_nombre: citaData.Paciente 
               ? `${citaData.Paciente.nombre} ${citaData.Paciente.apellido_paterno || ''} ${citaData.Paciente.apellido_materno || ''}`.trim()
               : citaData.paciente_nombre || 'Paciente no disponible',
@@ -277,11 +285,49 @@ const VerTodasCitas = ({ navigation }) => {
     }
   };
 
+  // Función para abrir modal de detalle de cita
+  const handleOpenCitaDetalle = async (cita) => {
+    if (!cita || !cita.id_cita) {
+      Alert.alert('Error', 'ID de cita no válido');
+      return;
+    }
+
+    setLoadingCitaDetalle(true);
+    setCitaDetalle(null);
+    setShowDetalleCitaModal(true);
+
+    try {
+      Logger.info('VerTodasCitas: Obteniendo detalle de cita', { citaId: cita.id_cita });
+      
+      const citaData = await gestionService.getCitaById(cita.id_cita);
+      
+      Logger.success('VerTodasCitas: Detalle de cita obtenido', { 
+        citaId: cita.id_cita,
+        hasSignosVitales: Array.isArray(citaData.SignosVitales) && citaData.SignosVitales.length > 0,
+        hasDiagnosticos: Array.isArray(citaData.Diagnosticos) && citaData.Diagnosticos.length > 0
+      });
+      
+      setCitaDetalle(citaData);
+    } catch (error) {
+      Logger.error('VerTodasCitas: Error obteniendo detalle de cita', error);
+      Alert.alert('Error', 'No se pudo cargar el detalle de la cita');
+      setShowDetalleCitaModal(false);
+    } finally {
+      setLoadingCitaDetalle(false);
+    }
+  };
+
   const handleVerDetalle = (cita) => {
-    Logger.navigation('VerTodasCitas', 'DetallePaciente');
-    navigation.navigate('DetallePaciente', { 
-      paciente: { id_paciente: cita.id_paciente, id: cita.id_paciente } 
-    });
+    // Si la cita está atendida, mostrar modal de detalle en lugar de navegar
+    if (cita.estado === ESTADOS_CITA.ATENDIDA) {
+      handleOpenCitaDetalle(cita);
+    } else {
+      // Para citas no atendidas, mantener el comportamiento original
+      Logger.navigation('VerTodasCitas', 'DetallePaciente');
+      navigation.navigate('DetallePaciente', { 
+        paciente: { id_paciente: cita.id_paciente, id: cita.id_paciente } 
+      });
+    }
   };
 
   const handleVerDetalleDoctor = (cita) => {
@@ -611,7 +657,12 @@ const VerTodasCitas = ({ navigation }) => {
                 <View style={styles.citaInfo}>
                   <View style={styles.infoRow}>
                     <Text style={styles.infoIcon}>👨‍⚕️</Text>
-                    <Text style={styles.infoText}>{citaDestacada.doctor_nombre}</Text>
+                    <Text 
+                      style={styles.infoText}
+                      onPress={() => handleVerDetalleDoctor(citaDestacada)}
+                    >
+                      {citaDestacada.doctor_nombre}
+                    </Text>
                   </View>
                   <View style={styles.infoRow}>
                     <Text style={styles.infoIcon}>📅</Text>
@@ -619,24 +670,64 @@ const VerTodasCitas = ({ navigation }) => {
                   </View>
                   {citaDestacada.motivo && (
                     <View style={styles.infoRow}>
-                      <Text style={styles.infoIcon}>📝</Text>
-                      <Text style={styles.infoText} numberOfLines={2}>{citaDestacada.motivo}</Text>
+                      <Text style={styles.infoIcon}>🩺</Text>
+                      <Text style={styles.infoText}>{citaDestacada.motivo}</Text>
                     </View>
                   )}
                 </View>
-                <View style={styles.citaActions}>
-                  <Button
-                    mode="contained"
-                    onPress={() => handleVerDetalle(citaDestacada)}
-                    style={styles.actionButton}
-                    buttonColor="#2196F3"
-                    compact
-                  >
-                    Ver Detalle
-                  </Button>
-                </View>
+                
+                {/* Observaciones si existen */}
+                {citaDestacada.observaciones && (
+                  <View style={styles.observacionesContainer}>
+                    <Text style={styles.observacionesLabel}>📝 Observaciones:</Text>
+                    <Text style={styles.observacionesText}>
+                      {citaDestacada.observaciones}
+                    </Text>
+                  </View>
+                )}
               </Card.Content>
             </TouchableOpacity>
+
+            {/* Botones de acción - mismos que las citas normales */}
+            <View style={styles.accionesContainer}>
+              {/* Fila 1: Botón Completar (si está pendiente) */}
+              {citaDestacada.estado === 'pendiente' && (
+                <View style={styles.accionesFila1}>
+                  <TouchableOpacity
+                    onPress={() => handleOpenWizard(citaDestacada)}
+                    activeOpacity={0.7}
+                    style={[styles.accionButtonFull, styles.accionButtonTouchable, { backgroundColor: '#4CAF50' }]}
+                  >
+                    <Text style={[styles.accionButtonText, { color: '#FFFFFF' }]}>
+                      Completar
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              {/* Fila 2: Cambiar Estado y Reprogramar (solo si NO está atendida) */}
+              {citaDestacada.estado !== ESTADOS_CITA.ATENDIDA && (
+                <View style={styles.accionesFila2}>
+                  <TouchableOpacity
+                    onPress={() => handleCambiarEstado(citaDestacada)}
+                    activeOpacity={0.7}
+                    style={[styles.accionButtonHalf, styles.accionButtonTouchable, styles.accionButtonOutlined]}
+                  >
+                    <Text style={styles.accionButtonText}>
+                      Cambiar Estado
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleReprogramar(citaDestacada)}
+                    activeOpacity={0.7}
+                    style={[styles.accionButtonHalf, styles.accionButtonTouchable, styles.accionButtonOutlined]}
+                  >
+                    <Text style={styles.accionButtonText}>
+                      Reprogramar
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
           </Card>
         </View>
       )}
@@ -756,27 +847,29 @@ const VerTodasCitas = ({ navigation }) => {
                       </TouchableOpacity>
                     </View>
                   )}
-                  {/* Fila 2: Cambiar Estado y Reprogramar */}
-                  <View style={styles.accionesFila2}>
-                    <TouchableOpacity
-                      onPress={() => handleCambiarEstado(cita)}
-                      activeOpacity={0.7}
-                      style={[styles.accionButtonHalf, styles.accionButtonTouchable, styles.accionButtonOutlined]}
-                    >
-                      <Text style={styles.accionButtonText}>
-                        Cambiar Estado
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleReprogramar(cita)}
-                      activeOpacity={0.7}
-                      style={[styles.accionButtonHalf, styles.accionButtonTouchable, styles.accionButtonOutlined]}
-                    >
-                      <Text style={styles.accionButtonText}>
-                        Reprogramar
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+                  {/* Fila 2: Cambiar Estado y Reprogramar (solo si NO está atendida) */}
+                  {cita.estado !== ESTADOS_CITA.ATENDIDA && (
+                    <View style={styles.accionesFila2}>
+                      <TouchableOpacity
+                        onPress={() => handleCambiarEstado(cita)}
+                        activeOpacity={0.7}
+                        style={[styles.accionButtonHalf, styles.accionButtonTouchable, styles.accionButtonOutlined]}
+                      >
+                        <Text style={styles.accionButtonText}>
+                          Cambiar Estado
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleReprogramar(cita)}
+                        activeOpacity={0.7}
+                        style={[styles.accionButtonHalf, styles.accionButtonTouchable, styles.accionButtonOutlined]}
+                      >
+                        <Text style={styles.accionButtonText}>
+                          Reprogramar
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
               </Card>
             );
@@ -1234,6 +1327,19 @@ const VerTodasCitas = ({ navigation }) => {
         }}
         cita={citaSeleccionadaWizard}
         onSuccess={handleWizardSuccess}
+      />
+
+      {/* ✅ Modal de Detalle de Cita (solo para citas atendidas) */}
+      <DetalleCitaModal
+        visible={showDetalleCitaModal}
+        onClose={() => {
+          setShowDetalleCitaModal(false);
+          setCitaDetalle(null);
+        }}
+        citaDetalle={citaDetalle}
+        loading={loadingCitaDetalle}
+        userRole={userRole}
+        formatearFecha={formatDateTime}
       />
     </SafeAreaView>
   );

@@ -7,7 +7,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { Card, Title } from 'react-native-paper';
+import { Title } from 'react-native-paper';
 import ConsultaCard from './ConsultaCard';
 import FiltrosConsultas from './FiltrosConsultas';
 import useConsultasAgrupadas from '../../hooks/useConsultasAgrupadas';
@@ -36,9 +36,8 @@ const ConsultasTimeline = ({
   getEstadoCitaTexto,
   onOpenOptions
 }) => {
-  // Estado de filtros
-  const [filtroTipo, setFiltroTipo] = useState('todas');
-  const [busquedaTexto, setBusquedaTexto] = useState('');
+  // Estado de filtro por mes
+  const [mesSeleccionado, setMesSeleccionado] = useState('todos');
 
   // Obtener consultas agrupadas
   const {
@@ -67,50 +66,29 @@ const ConsultasTimeline = ({
   }, [pacienteId, totalCitas, consultasAgrupadas?.length, loading, error]);
 
   /**
-   * Filtrar consultas según los filtros aplicados
+   * Filtrar consultas por mes seleccionado
    */
   const consultasFiltradas = useMemo(() => {
     if (!consultasAgrupadas || consultasAgrupadas.length === 0) {
       return [];
     }
 
-    let filtradas = [...consultasAgrupadas];
-
-    // Filtro por tipo
-    if (filtroTipo !== 'todas') {
-      filtradas = filtradas.filter(consulta => {
-        switch (filtroTipo) {
-          case 'con_signos':
-            return consulta.signosVitales && consulta.signosVitales.length > 0;
-          case 'con_diagnosticos':
-            return consulta.diagnosticos && consulta.diagnosticos.length > 0;
-          case 'completas':
-            return consulta.tieneDatosCompletos;
-          case 'parciales':
-            return consulta.tieneDatosParciales && !consulta.tieneDatosCompletos;
-          case 'sin_completar':
-            return consulta.soloCita;
-          default:
-            return true;
-        }
-      });
+    // Si no hay filtro de mes o es "todos", retornar todas las consultas
+    if (!mesSeleccionado || mesSeleccionado === 'todos') {
+      return consultasAgrupadas;
     }
 
-    // Búsqueda por texto (motivo, doctor, observaciones)
-    if (busquedaTexto.trim()) {
-      const textoBusqueda = busquedaTexto.toLowerCase().trim();
-      filtradas = filtradas.filter(consulta => {
-        const { cita } = consulta;
-        return (
-          (cita.motivo && cita.motivo.toLowerCase().includes(textoBusqueda)) ||
-          (cita.doctor_nombre && cita.doctor_nombre.toLowerCase().includes(textoBusqueda)) ||
-          (cita.observaciones && cita.observaciones.toLowerCase().includes(textoBusqueda))
-        );
-      });
-    }
+    // Filtrar por mes
+    return consultasAgrupadas.filter(consulta => {
+      if (!consulta.cita || !consulta.cita.fecha_cita) {
+        return false;
+      }
 
-    return filtradas;
-  }, [consultasAgrupadas, filtroTipo, busquedaTexto]);
+      const fecha = new Date(consulta.cita.fecha_cita);
+      const mesKey = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+      return mesKey === mesSeleccionado;
+    });
+  }, [consultasAgrupadas, mesSeleccionado]);
 
   /**
    * Manejar refresh
@@ -122,14 +100,14 @@ const ConsultasTimeline = ({
 
 
   /**
-   * Renderizar header con filtros
+   * Renderizar header con filtro por mes
    */
   const renderHeader = useCallback(() => {
     return (
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Title style={styles.title}>
-            Historial de Consultas ({totalCitas})
+            Historial de Consultas ({consultasFiltradas.length})
           </Title>
           {onOpenOptions && (
             <Text style={styles.optionsText} onPress={onOpenOptions}>
@@ -138,14 +116,13 @@ const ConsultasTimeline = ({
           )}
         </View>
         <FiltrosConsultas
-          filtroTipo={filtroTipo}
-          onFiltroChange={setFiltroTipo}
-          busquedaTexto={busquedaTexto}
-          onBusquedaChange={setBusquedaTexto}
+          mesSeleccionado={mesSeleccionado}
+          onMesChange={setMesSeleccionado}
+          consultas={consultasAgrupadas}
         />
       </View>
     );
-  }, [totalCitas, filtroTipo, busquedaTexto, onOpenOptions]);
+  }, [consultasFiltradas.length, mesSeleccionado, consultasAgrupadas, onOpenOptions]);
 
 
   /**
@@ -174,55 +151,54 @@ const ConsultasTimeline = ({
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyText}>No hay consultas registradas</Text>
         <Text style={styles.emptySubtext}>
-          {filtroTipo !== 'todas' || busquedaTexto.trim()
-            ? 'Intente cambiar los filtros de búsqueda'
+          {mesSeleccionado !== 'todos' && mesSeleccionado
+            ? 'No hay consultas en el mes seleccionado'
             : 'Las consultas aparecerán aquí cuando se registren'}
         </Text>
       </View>
     );
-  }, [loading, error, filtroTipo, busquedaTexto]);
+  }, [loading, error, mesSeleccionado]);
 
   return (
-    <Card style={styles.card}>
-      <Card.Content style={styles.cardContent}>
-        {renderHeader()}
-        {consultasFiltradas.length > 0 ? (
-          <View style={styles.listContainer}>
-            {consultasFiltradas.map((consulta, index) => (
-              <ConsultaCard
-                key={`consulta-${consulta.cita.id_cita}-${index}`}
-                consulta={consulta}
-                onPress={() => onPressConsulta && onPressConsulta(consulta.cita.id_cita)}
-                onEdit={() => onEditConsulta && onEditConsulta(consulta.cita)}
-                formatearFecha={formatearFecha}
-                calcularIMC={calcularIMC}
-                getEstadoCitaColor={getEstadoCitaColor}
-                getEstadoCitaTexto={getEstadoCitaTexto}
-              />
-            ))}
-          </View>
-        ) : (
-          renderEmpty()
-        )}
-      </Card.Content>
-    </Card>
+    <View style={styles.container}>
+      {renderHeader()}
+      {consultasFiltradas.length > 0 ? (
+        <View style={styles.listContainer}>
+          {consultasFiltradas.map((consulta, index) => (
+            <ConsultaCard
+              key={`consulta-${consulta.cita.id_cita}-${index}`}
+              consulta={consulta}
+              onPress={() => onPressConsulta && onPressConsulta(consulta.cita.id_cita)}
+              onEdit={() => onEditConsulta && onEditConsulta(consulta.cita)}
+              formatearFecha={formatearFecha}
+              calcularIMC={calcularIMC}
+              getEstadoCitaColor={getEstadoCitaColor}
+              getEstadoCitaTexto={getEstadoCitaTexto}
+            />
+          ))}
+        </View>
+      ) : (
+        renderEmpty()
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    marginBottom: 16,
-    elevation: 0, // Sin elevación dentro del modal
-    backgroundColor: 'transparent' // Transparente dentro del modal
-  },
-  cardContent: {
+  container: {
+    width: '100%',
+    flex: 1,
+    backgroundColor: 'transparent',
+    margin: 0,
     padding: 0
   },
   header: {
     padding: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0'
+    borderBottomColor: '#E0E0E0',
+    width: '100%',
+    margin: 0
   },
   headerTop: {
     flexDirection: 'row',
@@ -244,7 +220,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4
   },
   listContainer: {
-    paddingTop: 8
+    paddingTop: 8,
+    width: '100%',
+    paddingHorizontal: 16
   },
   emptyContainer: {
     padding: 40,

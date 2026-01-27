@@ -4908,7 +4908,12 @@ const DetallePacienteContent = ({ route, navigation }) => {
               </View>
             </View>
             
-            <ScrollView style={styles.modalFormScrollView} keyboardShouldPersistTaps="handled">
+            <ScrollView 
+              style={styles.modalFormScrollView} 
+              contentContainerStyle={styles.modalFormScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={true}
+            >
               {/* ✅ FASE 2: Selector de cita (opcional) */}
               <View style={styles.formSection}>
                 <Text style={styles.label}>📅 Asociar a Cita (Opcional)</Text>
@@ -4976,10 +4981,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
                   <View style={styles.formField}>
                     <Text style={styles.label}>Peso (kg)</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
                       value={formDataSignosVitales.peso_kg}
                       onChangeText={(value) => updateFormField('peso_kg', value)}
                       placeholder="Ej: 75.5"
+                      placeholderTextColor="#9E9E9E"
                       keyboardType="decimal-pad"
                       editable={!savingSignosVitales}
                     />
@@ -4987,10 +4993,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
                   <View style={styles.formField}>
                     <Text style={styles.label}>Talla (m)</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
                       value={formDataSignosVitales.talla_m}
                       onChangeText={(value) => updateFormField('talla_m', value)}
                       placeholder="Ej: 1.70"
+                      placeholderTextColor="#9E9E9E"
                       keyboardType="decimal-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5006,14 +5013,15 @@ const DetallePacienteContent = ({ route, navigation }) => {
                   </View>
                 )}
                 
-                <View style={styles.formRow}>
-                  <View style={styles.formField}>
+                <View style={[styles.formRow, { justifyContent: 'flex-start' }]}>
+                  <View style={[styles.formField, styles.formFieldSingle]}>
                     <Text style={styles.label}>Cintura (cm)</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
                       value={formDataSignosVitales.medida_cintura_cm}
                       onChangeText={(value) => updateFormField('medida_cintura_cm', value)}
                       placeholder="Ej: 85"
+                      placeholderTextColor="#9E9E9E"
                       keyboardType="decimal-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5029,10 +5037,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
                   <View style={styles.formField}>
                     <Text style={styles.label}>Sistólica (mmHg)</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
                       value={formDataSignosVitales.presion_sistolica}
                       onChangeText={(value) => updateFormField('presion_sistolica', value)}
                       placeholder="Ej: 120"
+                      placeholderTextColor="#9E9E9E"
                       keyboardType="number-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5040,10 +5049,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
                   <View style={styles.formField}>
                     <Text style={styles.label}>Diastólica (mmHg)</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
                       value={formDataSignosVitales.presion_diastolica}
                       onChangeText={(value) => updateFormField('presion_diastolica', value)}
                       placeholder="Ej: 80"
+                      placeholderTextColor="#9E9E9E"
                       keyboardType="number-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5058,11 +5068,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 <View style={styles.formRow}>
                   <View style={styles.formField}>
                     <Text style={styles.label}>Glucosa (mg/dL)</Text>
+                    <View style={styles.labelHintSpacer} />
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
                       value={formDataSignosVitales.glucosa_mg_dl}
                       onChangeText={(value) => updateFormField('glucosa_mg_dl', value)}
                       placeholder="Ej: 95"
+                      placeholderTextColor="#9E9E9E"
                       keyboardType="decimal-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5071,10 +5083,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
                     <Text style={styles.label}>Colesterol Total * (mg/dL)</Text>
                     <Text style={styles.labelHint}>Campo obligatorio para criterios de acreditación</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
                       value={formDataSignosVitales.colesterol_mg_dl}
                       onChangeText={(value) => updateFormField('colesterol_mg_dl', value)}
                       placeholder="Ej: 180"
+                      placeholderTextColor="#9E9E9E"
                       keyboardType="decimal-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5090,10 +5103,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       <View style={styles.formField}>
                         <Text style={styles.label}>Colesterol LDL (mg/dL)</Text>
                         <TextInput
-                          style={styles.input}
+                          style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
                           value={formDataSignosVitales.colesterol_ldl}
                           onChangeText={(value) => updateFormField('colesterol_ldl', value)}
                           placeholder="Ej: 100"
+                          placeholderTextColor="#9E9E9E"
                           keyboardType="decimal-pad"
                           editable={!savingSignosVitales}
                         />
@@ -5101,10 +5115,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       <View style={styles.formField}>
                         <Text style={styles.label}>Colesterol HDL (mg/dL)</Text>
                         <TextInput
-                          style={styles.input}
+                          style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
                           value={formDataSignosVitales.colesterol_hdl}
                           onChangeText={(value) => updateFormField('colesterol_hdl', value)}
                           placeholder="Ej: 40"
+                          placeholderTextColor="#9E9E9E"
                           keyboardType="decimal-pad"
                           editable={!savingSignosVitales}
                         />
@@ -5120,10 +5135,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       <Text style={styles.label}>Triglicéridos * (mg/dL)</Text>
                       <Text style={styles.labelHint}>(Solo para pacientes con diagnóstico de Hipertrigliceridemia)</Text>
                       <TextInput
-                        style={styles.input}
+                        style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
                         value={formDataSignosVitales.trigliceridos_mg_dl}
                         onChangeText={(value) => updateFormField('trigliceridos_mg_dl', value)}
                         placeholder="Ej: 120"
+                        placeholderTextColor="#9E9E9E"
                         keyboardType="decimal-pad"
                         editable={!savingSignosVitales}
                       />
@@ -5137,10 +5153,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
                     <Text style={styles.label}>HbA1c (%) *</Text>
                     <Text style={styles.labelHint}>Campo obligatorio para criterios de acreditación</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
                       value={formDataSignosVitales.hba1c_porcentaje}
                       onChangeText={(value) => updateFormField('hba1c_porcentaje', value)}
                       placeholder="Ej: 6.5"
+                      placeholderTextColor="#9E9E9E"
                       keyboardType="decimal-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5149,7 +5166,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                     <Text style={styles.label}>Edad en Medición (años)</Text>
                     <Text style={styles.labelHint}>Para validar rangos de HbA1c</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
                       value={formDataSignosVitales.edad_paciente_en_medicion}
                       onChangeText={(value) => {
                         // Calcular automáticamente si no se proporciona
@@ -5157,6 +5174,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         updateFormField('edad_paciente_en_medicion', edad);
                       }}
                       placeholder={paciente?.fecha_nacimiento ? `Ej: ${calcularEdad(paciente.fecha_nacimiento)}` : "Ej: 45"}
+                      placeholderTextColor="#9E9E9E"
                       keyboardType="number-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5189,10 +5207,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
               <View style={styles.formSection}>
                 <Text style={styles.label}>Observaciones (opcional)</Text>
                 <TextInput
-                  style={[styles.input, styles.textArea]}
+                  style={[styles.input, styles.textArea, !savingSignosVitales && styles.inputEnabled]}
                   value={formDataSignosVitales.observaciones}
                   onChangeText={(value) => updateFormField('observaciones', value)}
                   placeholder="Notas adicionales..."
+                  placeholderTextColor="#9E9E9E"
                   multiline
                   numberOfLines={4}
                   editable={!savingSignosVitales}
@@ -6025,8 +6044,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
         title="Opciones de Signos Vitales"
         options={[
           {
-            icon: 'plus',
-            label: 'Agregar Signos Vitales',
+            icon: '💓',
+            label: 'Registrar Signos Vitales',
             onPress: () => {
               modalManager.close('optionsSignosVitales');
               setShowAddSignosVitales(true);
@@ -6034,7 +6053,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
             color: '#2196F3'
           },
           {
-            icon: 'chart-line',
+            icon: '📈',
             label: 'Ver Gráficos de Evolución',
             onPress: () => {
               modalManager.close('optionsSignosVitales');
@@ -6045,7 +6064,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
             color: '#4CAF50'
           },
           {
-            icon: 'magnify',
+            icon: '📋',
             label: 'Ver Historial Completo',
             onPress: () => handleShowAllSignosVitales(),
             color: '#666'
@@ -9436,14 +9455,15 @@ const styles = StyleSheet.create({
   // Estilos para formulario de signos vitales
   modalFormScrollView: {
     flex: 1,
+    paddingHorizontal: 16,
   },
   modalFormScrollContent: {
-    padding: 16,
-    paddingBottom: 20,
+    paddingTop: 8,
+    paddingBottom: 120, // Espacio para los botones fijos
   },
   formSection: {
-    marginBottom: 20, // ✅ Reducido de 24 a 20
-    paddingBottom: 12, // ✅ Reducido de 16 a 12
+    marginBottom: 14,
+    paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
@@ -9478,39 +9498,77 @@ const styles = StyleSheet.create({
     // No necesita estilos adicionales
   },
   formSectionTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#2196F3',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   formRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 10,
+    gap: 10,
+    alignItems: 'flex-end', // Alinea los campos por la parte inferior para compensar labelHint
   },
   formField: {
     flex: 1,
-    marginRight: 8,
+    minWidth: 0, // Permite que flex funcione correctamente
+    justifyContent: 'flex-start',
+    alignItems: 'stretch',
+  },
+  formFieldSingle: {
+    width: '45%', // Limita el ancho cuando está solo en una fila
+    alignSelf: 'flex-start',
   },
   label: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    color: '#424242',
+    marginBottom: 6,
+    letterSpacing: 0.1,
   },
   labelHint: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#666',
     fontStyle: 'italic',
-    marginBottom: 4,
+    marginBottom: 6,
+    marginTop: -2,
+    lineHeight: 12,
+    minHeight: 14, // Altura mínima para mantener consistencia
+  },
+  labelHintSpacer: {
+    height: 14, // Espacio equivalente a labelHint para alineación
+    marginBottom: 6,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
+    borderWidth: 1.5,
+    borderColor: '#E0E0E0',
     borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    backgroundColor: '#FAFAFA',
+    height: 42,
+    color: '#212121',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+  },
+  inputEnabled: {
+    borderColor: '#BDBDBD',
+    backgroundColor: '#FFFFFF',
+  },
+  inputDisabled: {
+    backgroundColor: '#F5F5F5',
+    borderColor: '#E0E0E0',
+    opacity: 0.7,
   },
   inputContainer: {
     width: '90%',
@@ -9586,8 +9644,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   textArea: {
-    minHeight: 100,
+    minHeight: 80,
+    maxHeight: 120,
     textAlignVertical: 'top',
+    paddingTop: 10,
   },
   imcDisplay: {
     flexDirection: 'row',

@@ -49,16 +49,18 @@ const HistorialConsultasModal = ({
         showsVerticalScrollIndicator={true}
         nestedScrollEnabled={true}
       >
-        <ConsultasTimeline
-          pacienteId={pacienteId}
-          onPressConsulta={onPressConsulta}
-          onEditConsulta={onEditConsulta}
-          formatearFecha={formatearFecha}
-          calcularIMC={calcularIMC}
-          getEstadoCitaColor={getEstadoCitaColor}
-          getEstadoCitaTexto={getEstadoCitaTexto}
-          onOpenOptions={null} // No mostrar opciones dentro del modal
-        />
+        <View style={styles.timelineContainer}>
+          <ConsultasTimeline
+            pacienteId={pacienteId}
+            onPressConsulta={onPressConsulta}
+            onEditConsulta={onEditConsulta}
+            formatearFecha={formatearFecha}
+            calcularIMC={calcularIMC}
+            getEstadoCitaColor={getEstadoCitaColor}
+            getEstadoCitaTexto={getEstadoCitaTexto}
+            onOpenOptions={null} // No mostrar opciones dentro del modal
+          />
+        </View>
       </ScrollView>
     </ModalBase>
   );
@@ -66,11 +68,17 @@ const HistorialConsultasModal = ({
 
 const styles = StyleSheet.create({
   scrollView: {
-    flex: 1
+    flex: 1,
+    width: '100%'
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 20
+    paddingBottom: 20,
+    width: '100%'
+  },
+  timelineContainer: {
+    width: '100%',
+    flex: 1
   }
 });
 

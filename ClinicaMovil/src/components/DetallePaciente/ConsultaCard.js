@@ -15,6 +15,7 @@ import {
   colesterolFueraDeRango,
   trigliceridosFueraDeRango
 } from '../../utils/vitalSignsRanges';
+import { formatTime12h, formatDate } from '../../utils/dateUtils';
 
 /**
  * Componente para mostrar una consulta individual con sus datos asociados
@@ -42,6 +43,36 @@ const ConsultaCard = ({
   compactMode = false
 }) => {
   const { cita, signosVitales, diagnosticos, estado } = consulta;
+
+  // Función para formatear fecha con hora en formato 12h
+  const formatearFechaConHora12h = useMemo(() => {
+    return (fecha) => {
+      if (!fecha) return 'N/A';
+      try {
+        const fechaObj = new Date(fecha);
+        if (isNaN(fechaObj.getTime())) return 'Fecha inválida';
+        
+        // Formatear fecha sin hora
+        const fechaFormateada = formatDate(fecha);
+        
+        // Verificar si tiene hora
+        const tieneHora = fechaObj.getHours() !== 0 || 
+                         fechaObj.getMinutes() !== 0 || 
+                         fechaObj.getSeconds() !== 0 ||
+                         fecha.toString().includes('T') ||
+                         fecha.toString().includes(' ');
+        
+        if (tieneHora) {
+          const hora12h = formatTime12h(fecha);
+          return `${fechaFormateada}, hora: ${hora12h}`;
+        }
+        
+        return fechaFormateada;
+      } catch (error) {
+        return 'Fecha inválida';
+      }
+    };
+  }, []);
 
   // Determinar color de borde según estado
   const borderColor = useMemo(() => {
@@ -99,7 +130,7 @@ const ConsultaCard = ({
               <Text style={styles.estadoIcon}>{estadoIcon}</Text>
               <View style={styles.headerText}>
                 <Text style={styles.fecha}>
-                  {formatearFecha(cita.fecha_cita)}
+                  {formatearFechaConHora12h(cita.fecha_cita)}
                 </Text>
                 {cita.doctor_nombre && (
                   <Text style={styles.doctor}>
@@ -264,10 +295,14 @@ const ConsultaCard = ({
           {!compactMode && (!signosVitales || signosVitales.length === 0) && 
            (!diagnosticos || diagnosticos.length === 0) && (
             <View style={styles.noDataSection}>
-              <Text style={styles.noDataText}>
-                Sin signos vitales registrados{'\n'}
-                🩺 Sin diagnósticos registrados
-              </Text>
+              <View style={styles.noDataItem}>
+                <Text style={styles.noDataIcon}>🩷</Text>
+                <Text style={styles.noDataText}>Sin signos vitales registrados</Text>
+              </View>
+              <View style={styles.noDataItem}>
+                <Text style={styles.noDataIcon}>🩺</Text>
+                <Text style={styles.noDataText}>Sin diagnósticos registrados</Text>
+              </View>
             </View>
           )}
 
@@ -324,14 +359,19 @@ const ConsultaCard = ({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    marginBottom: 16,
+    marginBottom: 12,
     borderRadius: 12,
-    borderWidth: 2,
-    overflow: 'hidden'
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   card: {
     margin: 0,
-    elevation: 2,
+    elevation: 0,
     borderRadius: 12
   },
   cardContent: {
@@ -474,13 +514,21 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0'
+    borderTopColor: '#E0E0E0',
+    gap: 8
+  },
+  noDataItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  noDataIcon: {
+    fontSize: 16
   },
   noDataText: {
     fontSize: 13,
     color: '#9E9E9E',
-    fontStyle: 'italic',
-    textAlign: 'center'
+    fontStyle: 'italic'
   },
   observacionesCita: {
     marginTop: 12,
