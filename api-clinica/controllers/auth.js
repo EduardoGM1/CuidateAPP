@@ -49,7 +49,7 @@ export const register = async (req, res) => {
       id: usuario.id_usuario,
       email: usuario.email,
       rol: usuario.rol
-    });
+    }, usuario.rol); // Pasar rol como userType para usar tiempos correctos según rol
 
     res.status(201).json({
       message: 'Usuario registrado exitosamente',
@@ -505,13 +505,13 @@ export const login = async (req, res) => {
         }
       }
 
-      // Generar refresh token usando el nuevo servicio
+      // Generar refresh token usando el nuevo servicio con tiempos según rol
       const RefreshTokenService = (await import('../services/refreshTokenService.js')).default;
       const tokenPair = await RefreshTokenService.generateTokenPair({
         id: usuario.id_usuario,
         email: usuario.email,
         rol: usuario.rol
-      });
+      }, usuario.rol); // Pasar rol para diferenciar tiempos (Doctor: 48h, Admin: 48h)
 
       // Formatear respuesta con access token y refresh token
       res.json({

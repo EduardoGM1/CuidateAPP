@@ -53,12 +53,27 @@ class RefreshTokenService {
   /**
    * Crea un par de tokens (access + refresh)
    * @param {Object} payload - Payload para el token (id, email, rol)
+   * @param {string} userType - Tipo de usuario ('Paciente', 'Doctor', 'Admin') para determinar tiempos
    * @returns {Object} - { accessToken, refreshToken, expiresIn }
    */
-  static async generateTokenPair(payload) {
-    // Access token dura 7 horas por defecto
-    const accessTokenExpiresIn = process.env.ACCESS_TOKEN_EXPIRES_IN || '7h';
-    const refreshTokenExpiresIn = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
+  static async generateTokenPair(payload, userType = null) {
+    // Determinar tiempos según rol
+    // Pacientes: 7 días de sesión (refresh token)
+    // Doctores: 48 horas de sesión (refresh token)
+    let accessTokenExpiresIn = process.env.ACCESS_TOKEN_EXPIRES_IN || '7h';
+    let refreshTokenExpiresIn = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
+    
+    // Si se especifica userType, usar tiempos específicos por rol
+    // También verificar payload.rol como fallback si userType no está disponible
+    const effectiveUserType = userType || payload.rol;
+    
+    if (effectiveUserType === 'Paciente') {
+      accessTokenExpiresIn = process.env.PATIENT_ACCESS_TOKEN_EXPIRES_IN || '7h';
+      refreshTokenExpiresIn = process.env.PATIENT_REFRESH_TOKEN_EXPIRES_IN || '7d';
+    } else if (effectiveUserType === 'Doctor' || effectiveUserType === 'Admin') {
+      accessTokenExpiresIn = process.env.DOCTOR_ACCESS_TOKEN_EXPIRES_IN || '24h';
+      refreshTokenExpiresIn = process.env.DOCTOR_REFRESH_TOKEN_EXPIRES_IN || '48h';
+    }
     
     // Access token (corto)
     const accessToken = jwt.sign(
@@ -192,20 +207,24 @@ class RefreshTokenService {
       // Revocar el token usado (rotación)
       await this.revokeRefreshToken(tokenHash, decoded.jti);
       
-      // Generar nuevo par de tokens
+      // Determinar userType del token almacenado o del payload
+      const userType = tokenRecord?.user_type || decoded.user_type || decoded.rol || 'Usuario';
+      
+      // Generar nuevo par de tokens con userType para mantener tiempos correctos
       const newPayload = {
         id: decoded.id,
         email: decoded.email,
-        rol: decoded.rol
+        rol: decoded.rol || userType
       };
       
       logger.info('🔄 [REFRESH TOKEN] Generando nuevo par de tokens', {
         userId: decoded.id,
         email: decoded.email,
-        rol: decoded.rol
+        rol: decoded.rol,
+        userType
       });
       
-      const tokenPair = await this.generateTokenPair(newPayload);
+      const tokenPair = await this.generateTokenPair(newPayload, userType);
       
       logger.info('✅ [REFRESH TOKEN] Nuevo par de tokens generado exitosamente', {
         expiresIn: tokenPair.expiresIn,

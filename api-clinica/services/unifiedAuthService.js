@@ -217,8 +217,15 @@ class UnifiedAuthService {
     // Obtener datos del usuario
     const userData = await this.getUserData(userType, userId);
 
-    // Generar token JWT
-    const token = this.generateToken(userType, userId, userData);
+    // Generar tokens usando RefreshTokenService con tiempos según rol
+    const RefreshTokenService = (await import('../services/refreshTokenService.js')).default;
+    const tokenPair = await RefreshTokenService.generateTokenPair({
+      id: userData.id_usuario || userId,
+      email: userData.email || null,
+      rol: userType === 'Paciente' ? 'Paciente' : (userType === 'Doctor' ? 'Doctor' : 'Admin'),
+      ...(userData.id_paciente && { id_paciente: userData.id_paciente }),
+      ...(userData.id_doctor && { id_doctor: userData.id_doctor })
+    }, userType); // Pasar userType para diferenciar tiempos
 
     logger.info('Autenticación exitosa', {
       userType,
@@ -228,7 +235,10 @@ class UnifiedAuthService {
 
     return {
       success: true,
-      token,
+      token: tokenPair.accessToken,
+      refresh_token: tokenPair.refreshToken,
+      expires_in: tokenPair.expiresIn,
+      refresh_token_expires_in: tokenPair.refreshTokenExpiresIn,
       user: userData,
       credential: {
         method: authRecord.auth_method,
@@ -793,18 +803,14 @@ class UnifiedAuthService {
     // Obtener datos completos del usuario
     const userData = await this.getUserData('Paciente', matchedCredential.user_id);
 
-    // Generar token
-    const token = this.generateToken('Paciente', matchedCredential.user_id, {
+    // Generar tokens usando RefreshTokenService para pacientes (7 días)
+    const RefreshTokenService = (await import('../services/refreshTokenService.js')).default;
+    const tokenPair = await RefreshTokenService.generateTokenPair({
+      id: userData.id_usuario || matchedCredential.user_id,
+      email: userData.email || null,
       rol: 'Paciente',
-      ...userData
-    });
-
-    // Generar refresh token
-    const refreshToken = jwt.sign(
-      { id: matchedCredential.user_id, user_type: 'Paciente', type: 'refresh' },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+      id_paciente: userData.id_paciente || matchedCredential.user_id
+    }, 'Paciente'); // Pasar 'Paciente' como userType para usar tiempos correctos (7 días)
 
     logger.info('Login PIN exitoso (búsqueda global)', {
       userId: matchedCredential.user_id,
@@ -812,8 +818,10 @@ class UnifiedAuthService {
     });
 
     return {
-      token,
-      refresh_token: refreshToken,
+      token: tokenPair.accessToken,
+      refresh_token: tokenPair.refreshToken,
+      expires_in: tokenPair.expiresIn,
+      refresh_token_expires_in: tokenPair.refreshTokenExpiresIn,
       user: userData,
       credential: {
         id: matchedCredential.id_credential,
@@ -847,6 +855,7 @@ class UnifiedAuthService {
 
   /**
    * Genera token JWT
+   * @deprecated Usar RefreshTokenService.generateTokenPair() en su lugar
    */
   static generateToken(userType, userId, userData = {}) {
     const payload = {
@@ -855,8 +864,16 @@ class UnifiedAuthService {
       ...userData
     };
 
+    // Tiempos según rol: Pacientes 7 días, Doctores 48 horas
+    let expiresIn = '24h'; // Default
+    if (userType === 'Paciente') {
+      expiresIn = process.env.PATIENT_TOKEN_EXPIRES_IN || '7d';
+    } else if (userType === 'Doctor' || userType === 'Admin') {
+      expiresIn = process.env.DOCTOR_TOKEN_EXPIRES_IN || '48h';
+    }
+
     return jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: '24h'
+      expiresIn
     });
   }
 
