@@ -323,9 +323,9 @@ const HistorialNotificaciones = ({ navigation }) => {
   const getEstadoColor = (estado) => {
     switch (estado) {
       case 'enviada':
-        return '#F44336';
+        return COLORES.ERROR_LIGHT;
       case 'leida':
-        return '#4CAF50';
+        return COLORES.EXITO_LIGHT;
       case 'archivada':
         return '#9E9E9E';
       default:
@@ -380,7 +380,7 @@ const HistorialNotificaciones = ({ navigation }) => {
       {/* Contenido */}
       {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color={COLORES.NAV_PRIMARIO} />
           <Text style={styles.loadingText}>Cargando notificaciones...</Text>
         </View>
       ) : error ? (
@@ -515,7 +515,7 @@ const HistorialNotificaciones = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   header: {
     flexDirection: 'row',
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.BORDE_CLARO,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -548,11 +548,11 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   searchBar: {
     elevation: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   scrollView: {
     flex: 1,
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   notificacionContainer: {
     marginBottom: 12,
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     lineHeight: 20,
     marginBottom: 12,
     marginTop: 4,
@@ -626,7 +626,7 @@ const styles = StyleSheet.create({
   },
   metadataText: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     flex: 1,
   },
   badgeChip: {
@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
   },
   loadMoreText: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
 });
 

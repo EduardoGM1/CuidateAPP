@@ -32,6 +32,7 @@ import { usePacientes } from '../../hooks/useGestion';
 import useDebounce from '../../hooks/useDebounce';
 import { formatDate } from '../../utils/dateUtils';
 import { COLORES } from '../../utils/constantes';
+import { listActionButtonStyles } from '../../utils/sharedStyles';
 
 const ListaPacientesDoctor = ({ navigation }) => {
   const { userData, userRole } = useAuth();
@@ -277,20 +278,21 @@ const ListaPacientesDoctor = ({ navigation }) => {
             </Text>
           </View>
           <TouchableOpacity
-            style={styles.addButton}
+            style={listActionButtonStyles.filtersButton}
             onPress={() => {
               Logger.navigation('ListaPacientesDoctor', 'AgregarPaciente');
               navigation.navigate('AgregarPaciente');
             }}
+            activeOpacity={0.7}
           >
-            <Text style={styles.addButtonIcon}>➕</Text>
-            <Text style={styles.addButtonText}>Nuevo</Text>
+            <Text style={listActionButtonStyles.filtersButtonIcon}>➕</Text>
+            <Text style={listActionButtonStyles.filtersButtonText}>Nuevo</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Barra de búsqueda y botón de filtros */}
-      <View style={styles.searchContainer}>
+      <View style={listActionButtonStyles.buttonsContainer}>
         <Searchbar
           placeholder="Buscar por nombre, CURP o teléfono..."
           onChangeText={setSearchQuery}
@@ -298,18 +300,19 @@ const ListaPacientesDoctor = ({ navigation }) => {
           style={styles.searchbar}
         />
         <TouchableOpacity
-          style={styles.filtersButton}
+          style={listActionButtonStyles.filtersButton}
           onPress={() => setShowFiltersModal(true)}
+          activeOpacity={0.7}
         >
-          <Text style={styles.filtersButtonIcon}>🔧</Text>
-          <Text style={styles.filtersButtonText}>FILTROS</Text>
+          <Text style={listActionButtonStyles.filtersButtonIcon}>🔍</Text>
+          <Text style={listActionButtonStyles.filtersButtonText}>Filtros</Text>
         </TouchableOpacity>
       </View>
 
       {/* Lista de pacientes */}
       {pacientesLoading && !refreshing ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1976D2" />
+          <ActivityIndicator size="large" color={COLORES.NAV_PRIMARIO} />
           <Text style={styles.loadingText}>Cargando pacientes...</Text>
         </View>
       ) : pacientesError ? (
@@ -340,7 +343,8 @@ const ListaPacientesDoctor = ({ navigation }) => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              colors={['#1976D2']}
+              colors={[COLORES.NAV_PRIMARIO]}
+              tintColor={COLORES.NAV_PRIMARIO}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -500,11 +504,11 @@ const ListaPacientesDoctor = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   header: {
     padding: 20,
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.NAV_PRIMARIO,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
@@ -519,60 +523,17 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     marginBottom: 5,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#E8F5E9',
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    elevation: 2,
-    marginLeft: 12,
-  },
-  addButtonIcon: {
-    fontSize: 18,
-    marginRight: 6,
-  },
-  addButtonText: {
-    color: '#4CAF50',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  searchContainer: {
-    padding: 15,
-    backgroundColor: '#FFFFFF',
-    flexDirection: 'row',
-    alignItems: 'center',
+    color: COLORES.NAV_PRIMARIO_INACTIVO,
   },
   searchbar: {
     elevation: 2,
     flex: 1,
-    marginRight: 10,
-  },
-  filtersButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1976D2',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    elevation: 2,
-  },
-  filtersButtonIcon: {
-    fontSize: 16,
-    marginRight: 5,
-  },
-  filtersButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+    marginRight: 0,
   },
   modalOverlay: {
     flex: 1,
@@ -580,7 +541,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '80%',
@@ -632,15 +593,15 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 8,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     marginRight: 10,
     marginBottom: 10,
   },
   activeFilterOption: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
+    backgroundColor: COLORES.NAV_PRIMARIO,
+    borderColor: COLORES.NAV_PRIMARIO,
   },
   filterOptionText: {
     fontSize: 13,
@@ -648,23 +609,25 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   activeFilterOptionText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
   },
   modalFooter: {
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
   },
   applyButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.NAV_PRIMARIO,
+    minHeight: 48,
     paddingVertical: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   applyButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    color: COLORES.TEXTO_EN_PRIMARIO,
+    fontSize: 15,
     fontWeight: '600',
   },
   listContainer: {
@@ -722,7 +685,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inactiveText: {
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   statusBadge: {
     paddingVertical: 4,
@@ -731,13 +694,13 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   activeBadge: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.EXITO_LIGHT,
   },
   inactiveBadge: {
-    backgroundColor: '#9E9E9E',
+    backgroundColor: COLORES.SECUNDARIO_LIGHT,
   },
   statusText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -749,7 +712,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
   },
   loadingContainer: {
     flex: 1,
@@ -770,19 +733,22 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     marginBottom: 10,
     textAlign: 'center',
   },
   retryButton: {
-    backgroundColor: '#1976D2',
-    paddingVertical: 8,
+    backgroundColor: COLORES.NAV_PRIMARIO,
+    minHeight: 48,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 6,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   retryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
+    color: COLORES.TEXTO_EN_PRIMARIO,
+    fontSize: 15,
     fontWeight: '600',
   },
   emptyContainer: {
@@ -805,7 +771,7 @@ const styles = StyleSheet.create({
   accessDeniedTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     marginBottom: 10,
   },
   accessDeniedMessage: {

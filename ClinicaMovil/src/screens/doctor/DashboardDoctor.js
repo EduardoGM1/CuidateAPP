@@ -482,7 +482,7 @@ const DashboardDoctor = ({ navigation }) => {
   //   });
   // }, [citasHoy, citasHoyData, dashboardData, metrics]);
 
-  const renderMetricCard = (title, value, subtitle, color = '#1976D2') => (
+  const renderMetricCard = (title, value, subtitle, color = COLORES.NAV_PRIMARIO) => (
     <Card style={[styles.metricCard, { borderLeftColor: color }]}>
       <Card.Content style={styles.metricContent}>
         <Text style={styles.metricValue}>{value}</Text>
@@ -542,9 +542,9 @@ const DashboardDoctor = ({ navigation }) => {
   const renderAlertaSignosVitales = (alerta) => {
     const getPriorityColor = () => {
       if (alerta.glucosa > 200 || alerta.presion_sistolica > 160) {
-        return '#F44336'; // Rojo para crítico
+        return COLORES.ERROR_LIGHT;
       }
-      return '#FF9800'; // Naranja para alto
+      return COLORES.ADVERTENCIA_LIGHT;
     };
 
     return (
@@ -583,9 +583,9 @@ const DashboardDoctor = ({ navigation }) => {
     const horaFormateada = cita.hora || (cita.fecha ? formatTime(new Date(cita.fecha)) : 'N/A');
     const fechaFormateada = cita.fechaFormateada || (cita.fecha ? formatDate(new Date(cita.fecha)) : null);
     const estado = cita.estado || cita.asistencia || 'Pendiente';
-    const estadoColor = estado === 'atendida' || estado === 'Completada' ? '#4CAF50' : 
-                       estado === 'pendiente' || estado === 'Pendiente' ? '#FF9800' : 
-                       estado === 'cancelada' || estado === 'Cancelada' ? '#9E9E9E' : '#F44336';
+    const estadoColor = estado === 'atendida' || estado === 'Completada' ? COLORES.EXITO_LIGHT : 
+                       estado === 'pendiente' || estado === 'Pendiente' ? COLORES.ADVERTENCIA_LIGHT : 
+                       estado === 'cancelada' || estado === 'Cancelada' ? COLORES.SECUNDARIO_LIGHT : COLORES.ERROR_LIGHT;
     
     const handleCitaPress = () => {
       const citaId = cita.id || cita.id_cita;
@@ -654,7 +654,7 @@ const DashboardDoctor = ({ navigation }) => {
             </View>
             <View style={[
               styles.estadoBadge,
-              { backgroundColor: paciente.activo ? '#4CAF50' : '#F44336' }
+              { backgroundColor: paciente.activo ? COLORES.EXITO_LIGHT : COLORES.ERROR_LIGHT }
             ]}>
               <Text style={styles.estadoText}>
                 {paciente.activo ? 'Activo' : 'Inactivo'}
@@ -699,7 +699,8 @@ const DashboardDoctor = ({ navigation }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#1976D2']}
+            colors={[COLORES.NAV_PRIMARIO]}
+            tintColor={COLORES.NAV_PRIMARIO}
           />
         }
       >
@@ -718,13 +719,13 @@ const DashboardDoctor = ({ navigation }) => {
               'Citas Hoy',
               doctorMetrics.citasHoy || 0,
               `${citasHoyData.length} programadas`,
-              '#4CAF50'
+              COLORES.EXITO_LIGHT
             )}
             {renderMetricCard(
               'Mis Pacientes',
               doctorMetrics.pacientesAsignados || pacientes?.length || 0,
               'asignados',
-              '#2196F3'
+              COLORES.NAV_PRIMARIO
             )}
           </View>
         </View>
@@ -765,7 +766,7 @@ const DashboardDoctor = ({ navigation }) => {
           
           {loadingNotificaciones ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#1976D2" />
+              <ActivityIndicator size="small" color={COLORES.NAV_PRIMARIO} />
             </View>
           ) : notificaciones.length > 0 ? (
             notificaciones.slice(0, 3).map((notif) => (
@@ -875,7 +876,7 @@ const DashboardDoctor = ({ navigation }) => {
             <ScrollView style={styles.modalScrollView}>
               {loadingSignosVitales ? (
                 <View style={styles.modalLoadingContainer}>
-                  <ActivityIndicator size="large" color="#2196F3" />
+                  <ActivityIndicator size="large" color={COLORES.NAV_PRIMARIO} />
                   <Text style={styles.modalLoadingText}>Cargando información...</Text>
                 </View>
               ) : notificacionSignosVitales ? (
@@ -991,7 +992,7 @@ const renderSignoVitalItem = (label, valor, unidad, tipo) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   scrollView: {
     flex: 1,
@@ -1010,12 +1011,12 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 16,
-    color: '#E8F5E9',
+    color: COLORES.NAV_PRIMARIO_INACTIVO,
     marginBottom: 5,
   },
   headerDate: {
     fontSize: 14,
-    color: '#C8E6C9',
+    color: COLORES.NAV_PRIMARIO_INACTIVO,
     textTransform: 'capitalize',
   },
   sectionTitleContainer: {
@@ -1060,7 +1061,7 @@ const styles = StyleSheet.create({
   },
   metricSubtitle: {
     fontSize: 12,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   citasContainer: {
     padding: 20,
@@ -1085,7 +1086,7 @@ const styles = StyleSheet.create({
   citaHora: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
   },
   citaFecha: {
     fontSize: 12,
@@ -1132,7 +1133,7 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: COLORES.FONDO_CARD,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
   },
   quickAccessIcon: {
     fontSize: 24,
@@ -1165,7 +1166,7 @@ const styles = StyleSheet.create({
   refreshButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   refreshButtonText: {
     fontSize: 18,
@@ -1194,7 +1195,7 @@ const styles = StyleSheet.create({
   },
   pacienteEdad: {
     fontSize: 12,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 2,
   },
   citaMotivo: {
@@ -1250,12 +1251,12 @@ const styles = StyleSheet.create({
   barValue: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     marginBottom: 5,
   },
   noDataText: {
     fontSize: 14,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     paddingVertical: 20,
   },
@@ -1296,7 +1297,7 @@ const styles = StyleSheet.create({
   alertaTipo: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     marginBottom: 4,
   },
   alertaDetalle: {
@@ -1306,13 +1307,13 @@ const styles = StyleSheet.create({
   },
   alertaTiempo: {
     fontSize: 11,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '500',
     marginLeft: 8,
   },
   alertChip: {
     height: 24,
-    backgroundColor: '#F44336',
+    backgroundColor: COLORES.ERROR_LIGHT,
   },
   alertChipText: {
     fontSize: 11,
@@ -1328,7 +1329,7 @@ const styles = StyleSheet.create({
   accessDeniedTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     marginBottom: 10,
   },
   accessDeniedMessage: {
@@ -1338,10 +1339,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   goBackButton: {
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.NAV_PRIMARIO,
+    minHeight: 48,
     paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   goBackText: {
     color: COLORES.TEXTO_EN_PRIMARIO,
@@ -1361,13 +1363,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   editButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.NAV_PRIMARIO,
   },
   activateButton: {
     backgroundColor: COLORES.EXITO_LIGHT,
   },
   deactivateButton: {
-    backgroundColor: '#FF9800',
+    backgroundColor: COLORES.ADVERTENCIA_LIGHT,
   },
   actionButtonText: {
     color: COLORES.TEXTO_EN_PRIMARIO,
@@ -1389,15 +1391,16 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     marginBottom: 10,
     textAlign: 'center',
   },
   retryButton: {
-    backgroundColor: '#1976D2',
-    paddingVertical: 8,
+    backgroundColor: COLORES.NAV_PRIMARIO,
+    minHeight: 48,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 6,
+    borderRadius: 12,
   },
   retryButtonText: {
     color: COLORES.TEXTO_EN_PRIMARIO,
@@ -1428,7 +1431,7 @@ const styles = StyleSheet.create({
   },
   verTodasText: {
     fontSize: 14,
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: '600',
   },
   notificacionTouchable: {
@@ -1464,7 +1467,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#F44336',
+    backgroundColor: COLORES.ERROR_LIGHT,
     marginLeft: 8,
     marginTop: 4,
   },
@@ -1505,7 +1508,7 @@ const styles = StyleSheet.create({
   },
   alertaTiempo: {
     fontSize: 12,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '500',
   },
   // Estilos del Modal de Signos Vitales
@@ -1544,7 +1547,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 16,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   modalCloseButton: {
     fontSize: 18,
@@ -1582,7 +1585,7 @@ const styles = StyleSheet.create({
   },
   modalFecha: {
     fontSize: 12,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   modalSignosCard: {
     margin: 16,
@@ -1602,7 +1605,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   modalSignoLabel: {
     fontSize: 14,
@@ -1616,12 +1619,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   modalSignoValueOutOfRange: {
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     fontWeight: 'bold',
   },
   modalSignoRango: {
     fontSize: 12,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
   },
   modalNoDataText: {
@@ -1635,7 +1638,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
   },
   modalButton: {
     flex: 1,

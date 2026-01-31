@@ -125,7 +125,7 @@ const ListaChats = ({ navigation }) => {
     if (loading) {
       return (
         <View style={styles.emptyContainer}>
-          <ActivityIndicator size="large" color="#1976D2" />
+          <ActivityIndicator size="large" color={COLORES.NAV_PRIMARIO} />
           <Text style={styles.emptyText}>Cargando conversaciones...</Text>
         </View>
       );
@@ -189,8 +189,8 @@ const ListaChats = ({ navigation }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#1976D2']}
-            tintColor="#1976D2"
+            colors={[COLORES.NAV_PRIMARIO]}
+            tintColor={COLORES.NAV_PRIMARIO}
           />
         }
         contentContainerStyle={
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   headerTitle: {
     fontSize: 24,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#666666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   searchContainer: {
     padding: 12,
@@ -259,19 +259,20 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#666666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginBottom: 24,
   },
   retryButton: {
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.NAV_PRIMARIO,
+    minHeight: 48,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   retryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
+    color: COLORES.TEXTO_EN_PRIMARIO,
+    fontSize: 15,
     fontWeight: '600',
   },
 });

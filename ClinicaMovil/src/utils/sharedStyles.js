@@ -203,3 +203,59 @@ export const activeFiltersStyles = StyleSheet.create({
   },
 });
 
+/**
+ * Estilos unificados para botones de acción en pantallas de listado (Agregar, Filtros).
+ * Usar en: GestionAdmin, GestionUsuarios, GestionMedicamentos, GestionVacunas, GestionComorbilidades, GestionModulos.
+ * Especificación: minHeight 48, fontSize 15, fontWeight 600, color NAV_PRIMARIO.
+ */
+export const listActionButtonStyles = StyleSheet.create({
+  buttonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    gap: 12,
+  },
+  addButton: {
+    flex: 1,
+    borderRadius: 12,
+  },
+  addButtonContent: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButtonLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  filtersButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORES.FONDO_CARD,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: COLORES.NAV_PRIMARIO,
+    elevation: 2,
+    shadowColor: COLORES.NEGRO,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+  },
+  filtersButtonIcon: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  filtersButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORES.NAV_PRIMARIO,
+  },
+});
+

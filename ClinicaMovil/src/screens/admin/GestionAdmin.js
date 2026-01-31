@@ -23,6 +23,7 @@ import useRealtimeList from '../../hooks/useRealtimeList';
 import useWebSocket from '../../hooks/useWebSocket';
 import useDebounce from '../../hooks/useDebounce';
 import { COLORES } from '../../utils/constantes';
+import { listActionButtonStyles } from '../../utils/sharedStyles';
 import { formatDate } from '../../utils/dateUtils';
 
 const GestionAdmin = ({ navigation }) => {
@@ -775,7 +776,7 @@ const GestionAdmin = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-      {/* Search Bar */}
+      {/* Search Bar (sin icono a la izquierda) */}
       <View style={styles.searchContainer}>
         <Searchbar
           placeholder={`Buscar ${activeTab === 'doctores' ? 'doctores' : 'pacientes'}...`}
@@ -783,25 +784,30 @@ const GestionAdmin = ({ navigation }) => {
           value={searchQuery}
           style={styles.searchBar}
           showClearIcon={false}
+          icon={() => null}
         />
-        
       </View>
 
-      {/* Botones de Filtros y Agregar */}
-      <View style={styles.buttonsContainer}>
+      {/* Botones de Filtros y Agregar (misma altura y tamaño de texto) */}
+      <View style={listActionButtonStyles.buttonsContainer}>
         <TouchableOpacity
-          style={styles.filtersButton}
+          style={listActionButtonStyles.filtersButton}
           onPress={() => setShowFiltersModal(true)}
+          activeOpacity={0.7}
         >
-          <Text style={styles.filtersButtonIcon}>🔍</Text>
-          <Text style={styles.filtersButtonText}>FILTROS</Text>
+          <Text style={listActionButtonStyles.filtersButtonIcon}>🔍</Text>
+          <Text style={listActionButtonStyles.filtersButtonText}>Filtros</Text>
         </TouchableOpacity>
-        
+
         <Button
           mode="contained"
           onPress={activeTab === 'doctores' ? handleAddDoctor : handleAddPatient}
-          style={styles.addButton}
+          style={listActionButtonStyles.addButton}
+          contentStyle={listActionButtonStyles.addButtonContent}
+          labelStyle={listActionButtonStyles.addButtonLabel}
           icon="plus"
+          buttonColor={COLORES.NAV_PRIMARIO}
+          textColor={COLORES.TEXTO_EN_PRIMARIO}
         >
           Agregar {activeTab === 'doctores' ? 'Doctor' : 'Paciente'}
         </Button>
@@ -1273,42 +1279,6 @@ const styles = StyleSheet.create({
   searchBar: {
     elevation: 2,
     marginBottom: 15,
-  },
-  buttonsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    gap: 15,
-  },
-  filtersButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORES.BLANCO,
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: COLORES.PRIMARIO,
-    elevation: 3,
-    shadowColor: COLORES.NEGRO,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  filtersButtonIcon: {
-    fontSize: 18,
-    marginRight: 8,
-  },
-  filtersButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORES.PRIMARIO,
-  },
-  addButton: {
-    flex: 1,
-    borderRadius: 12,
   },
   content: {
     flex: 1,

@@ -321,13 +321,13 @@ const GestionSolicitudesReprogramacion = ({ navigation }) => {
     const getEstadoColor = () => {
       switch (solicitud.estado) {
         case 'pendiente':
-          return '#FF9800';
+          return COLORES.ADVERTENCIA_LIGHT;
         case 'aprobada':
-          return '#4CAF50';
+          return COLORES.EXITO_LIGHT;
         case 'rechazada':
-          return '#F44336';
+          return COLORES.ERROR_LIGHT;
         default:
-          return '#9E9E9E';
+          return COLORES.SECUNDARIO_LIGHT;
       }
     };
 
@@ -466,7 +466,7 @@ const GestionSolicitudesReprogramacion = ({ navigation }) => {
       {/* Lista de solicitudes */}
       {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1976D2" />
+          <ActivityIndicator size="large" color={COLORES.NAV_PRIMARIO} />
           <Text style={styles.loadingText}>Cargando solicitudes...</Text>
         </View>
       ) : solicitudes.length === 0 ? (
@@ -488,7 +488,8 @@ const GestionSolicitudesReprogramacion = ({ navigation }) => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              colors={['#1976D2']}
+              colors={[COLORES.NAV_PRIMARIO]}
+              tintColor={COLORES.NAV_PRIMARIO}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -627,23 +628,23 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.NAV_PRIMARIO,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     marginBottom: 5,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#E8F5E9',
+    color: COLORES.NAV_PRIMARIO_INACTIVO,
   },
   filtersContainer: {
     padding: 15,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
     borderBottomColor: COLORES.TEXTO_DISABLED,
   },
@@ -655,12 +656,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 6,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: COLORES.BORDE_CLARO,
     marginRight: 8,
     marginBottom: 8,
   },
   filterButtonActive: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.NAV_PRIMARIO,
   },
   filterButtonText: {
     fontSize: 12,
@@ -668,7 +669,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   filterButtonTextActive: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
   },
   listContainer: {
@@ -681,8 +682,8 @@ const styles = StyleSheet.create({
   },
   cardResaltada: {
     borderWidth: 3,
-    borderColor: '#1976D2',
-    backgroundColor: '#E3F2FD',
+    borderColor: COLORES.NAV_PRIMARIO,
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     elevation: 4,
   },
   cardHeader: {
@@ -709,7 +710,7 @@ const styles = StyleSheet.create({
     height: 28,
   },
   estadoText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -738,7 +739,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
     gap: 8,
   },
   actionButton: {
@@ -748,13 +749,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   aprobarButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.EXITO_LIGHT,
   },
   rechazarButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: COLORES.ERROR_LIGHT,
   },
   actionButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -789,7 +790,7 @@ const styles = StyleSheet.create({
   accessDeniedTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     marginBottom: 10,
   },
   accessDeniedMessage: {
@@ -804,7 +805,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     width: '90%',
     maxHeight: '85%',
@@ -857,7 +858,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     borderRadius: 8,
     padding: 12,
     fontSize: 14,
@@ -873,8 +874,8 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 15,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
+    borderTopColor: COLORES.BORDE_CLARO,
+    backgroundColor: COLORES.FONDO_CARD,
   },
   modalButton: {
     flex: 1,
@@ -883,7 +884,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: '600',
   },

@@ -159,7 +159,7 @@ const ReportesDoctor = ({ navigation }) => {
                         styles.bar,
                         {
                           height: barHeight,
-                          backgroundColor: '#4CAF50',
+                          backgroundColor: COLORES.EXITO_LIGHT,
                         },
                       ]}
                     />
@@ -374,7 +374,7 @@ const ReportesDoctor = ({ navigation }) => {
                         styles.horizontalBar,
                         {
                           width: `${barWidth}%`,
-                          backgroundColor: '#2196F3',
+                          backgroundColor: COLORES.NAV_PRIMARIO,
                         },
                       ]}
                     />
@@ -445,7 +445,7 @@ const ReportesDoctor = ({ navigation }) => {
   }, [estadoFiltro, periodoFiltro, rangoMesesFiltro]);
 
   // Renderizar card de estadística
-  const renderStatCard = (title, value, subtitle, color = '#1976D2') => (
+  const renderStatCard = (title, value, subtitle, color = COLORES.NAV_PRIMARIO) => (
     <Card style={[styles.statCard, { borderLeftColor: color }]}>
       <Card.Content style={styles.statContent}>
         <Text style={styles.statValue}>{value}</Text>
@@ -480,7 +480,8 @@ const ReportesDoctor = ({ navigation }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#1976D2']}
+            colors={[COLORES.NAV_PRIMARIO]}
+            tintColor={COLORES.NAV_PRIMARIO}
           />
         }
       >
@@ -498,19 +499,19 @@ const ReportesDoctor = ({ navigation }) => {
               'Pacientes Asignados',
               estadisticas?.pacientesAsignados || metrics?.pacientesAsignados || 0,
               `${estadisticas?.pacientesActivos || 0} activos`,
-              '#4CAF50'
+              COLORES.EXITO_LIGHT
             )}
             {renderStatCard(
               'Citas Hoy',
               metrics?.citasHoy || 0,
               'programadas',
-              '#FF9800'
+              COLORES.ADVERTENCIA_LIGHT
             )}
             {renderStatCard(
               'Tasa Activos',
               `${estadisticas?.tasaActivos || 0}%`,
               'de pacientes activos',
-              '#2196F3'
+              COLORES.NAV_PRIMARIO
             )}
           </View>
         </View>
@@ -653,7 +654,7 @@ const ReportesDoctor = ({ navigation }) => {
 
         {loading && !refreshing && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#1976D2" />
+            <ActivityIndicator size="large" color={COLORES.NAV_PRIMARIO} />
             <Text style={styles.loadingText}>Cargando estadísticas...</Text>
           </View>
         )}
@@ -665,14 +666,14 @@ const ReportesDoctor = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   scrollView: {
     flex: 1,
   },
   header: {
     padding: 20,
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.EXITO_LIGHT,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
@@ -719,7 +720,7 @@ const styles = StyleSheet.create({
   statTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 2,
   },
   statSubtitle: {
@@ -774,13 +775,13 @@ const styles = StyleSheet.create({
   },
   barLabel: {
     fontSize: 10,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 5,
   },
   barValue: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     marginBottom: 5,
   },
   noDataText: {
@@ -804,7 +805,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     lineHeight: 22,
   },
   loadingContainer: {
@@ -814,7 +815,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   accessDeniedContainer: {
     flex: 1,
@@ -825,12 +826,12 @@ const styles = StyleSheet.create({
   accessDeniedTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     marginBottom: 10,
   },
   accessDeniedMessage: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   // Estilos para gráfico de barras horizontales
@@ -856,7 +857,7 @@ const styles = StyleSheet.create({
   horizontalBarValue: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
     minWidth: 30,
     textAlign: 'right',
   },
@@ -891,7 +892,7 @@ const styles = StyleSheet.create({
   },
   filterButtonActive: {
     backgroundColor: '#E3F2FD',
-    borderColor: '#2196F3',
+    borderColor: COLORES.NAV_PRIMARIO,
   },
   filterButtonText: {
     fontSize: 18,
@@ -920,7 +921,7 @@ const styles = StyleSheet.create({
   },
   modalFilterInfo: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 12,
     fontStyle: 'italic',
   },
@@ -961,15 +962,15 @@ const styles = StyleSheet.create({
   },
   periodoSelectorButtonActive: {
     backgroundColor: '#E3F2FD',
-    borderColor: '#2196F3',
+    borderColor: COLORES.NAV_PRIMARIO,
   },
   periodoSelectorButtonText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '500',
   },
   periodoSelectorButtonTextActive: {
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: '600',
   },
 });

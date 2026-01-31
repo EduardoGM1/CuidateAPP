@@ -223,7 +223,7 @@ const ReportesAdmin = ({ navigation }) => {
         citas: citasPorDiaSemanaMap[diasSemana[dayIndex]] || 0
       }));
       
-      // 5. Distribución por edad
+      // 5. Distribución por edad (usar edad del API cuando venga; si no, calcular desde fecha_nacimiento si es válida)
       const rangosEdad = {
         '0-18': 0,
         '19-35': 0,
@@ -231,21 +231,34 @@ const ReportesAdmin = ({ navigation }) => {
         '51-65': 0,
         '65+': 0
       };
-      
-      pacientes?.forEach(paciente => {
+
+      const obtenerEdad = (paciente) => {
+        const edadApi = paciente.edad;
+        if (typeof edadApi === 'number' && !Number.isNaN(edadApi) && edadApi >= 0 && edadApi <= 120) {
+          return edadApi;
+        }
         if (paciente.fecha_nacimiento) {
           const fechaNac = new Date(paciente.fecha_nacimiento);
-          const hoy = new Date();
-          const edad = hoy.getFullYear() - fechaNac.getFullYear();
-          const mes = hoy.getMonth() - fechaNac.getMonth();
-          const edadReal = mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate()) ? edad - 1 : edad;
-          
-          if (edadReal <= 18) rangosEdad['0-18']++;
-          else if (edadReal <= 35) rangosEdad['19-35']++;
-          else if (edadReal <= 50) rangosEdad['36-50']++;
-          else if (edadReal <= 65) rangosEdad['51-65']++;
-          else rangosEdad['65+']++;
+          if (!Number.isNaN(fechaNac.getTime())) {
+            const hoy = new Date();
+            const anios = hoy.getFullYear() - fechaNac.getFullYear();
+            const mes = hoy.getMonth() - fechaNac.getMonth();
+            const dia = hoy.getDate() - fechaNac.getDate();
+            const edadReal = mes < 0 || (mes === 0 && dia < 0) ? anios - 1 : anios;
+            if (edadReal >= 0 && edadReal <= 120) return edadReal;
+          }
         }
+        return null;
+      };
+
+      pacientes?.forEach(paciente => {
+        const edadReal = obtenerEdad(paciente);
+        if (edadReal === null) return;
+        if (edadReal <= 18) rangosEdad['0-18']++;
+        else if (edadReal <= 35) rangosEdad['19-35']++;
+        else if (edadReal <= 50) rangosEdad['36-50']++;
+        else if (edadReal <= 65) rangosEdad['51-65']++;
+        else rangosEdad['65+']++;
       });
       
       const distribucionEdad = Object.entries(rangosEdad).map(([rango, cantidad]) => ({
@@ -1453,17 +1466,18 @@ const styles = StyleSheet.create({
   filterButton: {
     width: 40,
     height: 40,
+    minHeight: 40,
     borderRadius: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORES.FONDO,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORES.BORDE_CLARO,
     flexShrink: 0,
   },
   filterButtonActive: {
-    backgroundColor: '#E3F2FD',
-    borderColor: '#2196F3',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
+    borderColor: COLORES.NAV_PRIMARIO,
   },
   filterButtonText: {
     fontSize: 18,
@@ -1472,17 +1486,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -2,
     right: -2,
-    backgroundColor: '#f44336',
+    backgroundColor: COLORES.ERROR_LIGHT,
     borderRadius: 10,
     width: 18,
     height: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: COLORES.BLANCO,
   },
   filterBadgeText: {
-    color: '#fff',
+    color: COLORES.BLANCO,
     fontSize: 10,
     fontWeight: 'bold',
   },

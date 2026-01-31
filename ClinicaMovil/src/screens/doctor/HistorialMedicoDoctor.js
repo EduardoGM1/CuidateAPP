@@ -68,19 +68,19 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.NAV_PRIMARIO,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     marginBottom: 5,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#E8F5E9',
+    color: COLORES.NAV_PRIMARIO_INACTIVO,
   },
   content: {
     flex: 1,

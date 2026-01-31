@@ -22,6 +22,7 @@ import Logger from '../../services/logger';
 import gestionService from '../../api/gestionService';
 import useDebounce from '../../hooks/useDebounce';
 import { COLORES } from '../../utils/constantes';
+import { listActionButtonStyles } from '../../utils/sharedStyles';
 
 const GestionUsuarios = ({ navigation }) => {
   const { userRole } = useAuth();
@@ -360,11 +361,14 @@ const GestionUsuarios = ({ navigation }) => {
       </View>
 
       {/* Botón Agregar */}
-      <View style={styles.buttonsContainer}>
+      <View style={listActionButtonStyles.buttonsContainer}>
         <Button
           mode="contained"
           onPress={handleOpenCreate}
-          style={styles.addButton}
+          style={listActionButtonStyles.addButton}
+          contentStyle={listActionButtonStyles.addButtonContent}
+          labelStyle={listActionButtonStyles.addButtonLabel}
+          buttonColor={COLORES.NAV_PRIMARIO}
           icon="plus"
         >
           Agregar Usuario
@@ -646,13 +650,6 @@ const styles = StyleSheet.create({
   searchBar: {
     elevation: 2,
     marginBottom: 15,
-  },
-  buttonsContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  addButton: {
-    borderRadius: 12,
   },
   content: {
     flex: 1,

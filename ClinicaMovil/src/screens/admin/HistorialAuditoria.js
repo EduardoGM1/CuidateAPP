@@ -938,9 +938,16 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     padding: 8,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORES.NAV_PRIMARIO,
+    backgroundColor: COLORES.FONDO_CARD,
   },
   filterButtonText: {
-    fontSize: 22,
+    fontSize: 18,
   },
   headerTitle: {
     fontSize: 18,
