@@ -231,25 +231,25 @@ const DashboardAdmin = ({ navigation }) => {
     switch (tipo) {
       case 'cita_estado_actualizado':
       case 'cita_reprogramada':
-        return '#2196F3';
+        return COLORES.NAV_PRIMARIO;
       case 'paciente_creado':
       case 'doctor_creado':
-        return '#4CAF50';
+        return COLORES.EXITO_LIGHT;
       case 'paciente_modificado':
       case 'doctor_modificado':
-        return '#FF9800';
+        return COLORES.ADVERTENCIA_LIGHT;
       case 'asignacion_paciente':
-        return '#9C27B0';
+        return COLORES.SECUNDARIO_LIGHT;
       case 'configuracion_cambiada':
-        return '#607D8B';
+        return COLORES.TEXTO_SECUNDARIO;
       case 'acceso_sospechoso':
-        return '#F57C00';
+        return COLORES.ADVERTENCIA;
       case 'error_sistema':
-        return '#FF5722';
+        return COLORES.ERROR_LIGHT;
       case 'error_critico':
-        return '#D32F2F';
+        return COLORES.ERROR;
       default:
-        return '#9E9E9E';
+        return COLORES.TEXTO_SECUNDARIO;
     }
   };
 
@@ -324,7 +324,7 @@ const DashboardAdmin = ({ navigation }) => {
     }
   };
 
-  const renderMetricCard = (title, value, subtitle, color = '#1976D2') => (
+  const renderMetricCard = (title, value, subtitle, color = COLORES.NAV_PRIMARIO) => (
     <Card style={[styles.metricCard, { borderLeftColor: color }]}>
       <Card.Content style={styles.metricContent}>
         <Text style={styles.metricValue}>{value}</Text>
@@ -364,7 +364,7 @@ const DashboardAdmin = ({ navigation }) => {
                             styles.bar,
                             {
                               height: barHeight,
-                              backgroundColor: dataKey === 'pacientes' ? '#2196F3' : '#4CAF50',
+                              backgroundColor: dataKey === 'pacientes' ? COLORES.NAV_PRIMARIO : COLORES.EXITO_LIGHT,
                             },
                           ]}
                         />
@@ -383,10 +383,10 @@ const DashboardAdmin = ({ navigation }) => {
   const renderNotification = (notification) => {
     const getPriorityColor = (priority) => {
       switch (priority) {
-        case 'urgent': return '#F44336';
-        case 'high': return '#FF9800';
-        case 'medium': return '#2196F3';
-        default: return '#9E9E9E';
+        case 'urgent': return COLORES.ERROR_LIGHT;
+        case 'high': return COLORES.ADVERTENCIA_LIGHT;
+        case 'medium': return COLORES.NAV_PRIMARIO;
+        default: return COLORES.TEXTO_SECUNDARIO;
       }
     };
 
@@ -432,8 +432,8 @@ const DashboardAdmin = ({ navigation }) => {
               <RefreshControl
                 refreshing={loading}
                 onRefresh={refresh}
-                colors={['#1976D2']}
-                tintColor="#1976D2"
+                colors={[COLORES.NAV_PRIMARIO]}
+                tintColor={COLORES.NAV_PRIMARIO}
               />
             }
           >
@@ -471,25 +471,25 @@ const DashboardAdmin = ({ navigation }) => {
               'Pacientes Totales',
               metricsData.totalPacientes.toLocaleString(),
               '+12% este mes',
-              '#4CAF50'
+              COLORES.EXITO_LIGHT
             )}
             {renderMetricCard(
               'Doctores Activos',
               metricsData.totalDoctores,
               '',
-              '#2196F3'
+              COLORES.NAV_PRIMARIO
             )}
             {renderMetricCard(
               'Citas Hoy',
               `${metricsData.citasHoy.completadas}/${metricsData.citasHoy.total}`,
               `${metricsData.tasaAsistencia.tasa_asistencia}% asistencia`,
-              '#FF9800'
+              COLORES.ADVERTENCIA_LIGHT
             )}
             {renderMetricCard(
               'Alertas Pendientes',
               metricsData.alertasPendientes,
               'Revisar ahora',
-              '#F44336'
+              COLORES.ERROR_LIGHT
             )}
           </View>
         </View>
@@ -633,7 +633,7 @@ const DashboardAdmin = ({ navigation }) => {
                           <Text style={styles.detailLabel}>Tipo de Alerta:</Text>
                           <View style={styles.chipContainer}>
                             <Chip
-                              style={[styles.detailChip, { backgroundColor: '#F44336' }]}
+                              style={[styles.detailChip, { backgroundColor: COLORES.ERROR_LIGHT }]}
                               textStyle={styles.detailChipText}
                               mode="flat"
                             >
@@ -1039,13 +1039,13 @@ const styles = StyleSheet.create({
       },
       noDataText: {
         fontSize: 16,
-        color: '#666',
+        color: COLORES.TEXTO_SECUNDARIO,
         textAlign: 'center',
         fontStyle: 'italic',
       },
       noDataCard: {
         elevation: 1,
-        backgroundColor: '#F9F9F9',
+        backgroundColor: COLORES.FONDO_SECUNDARIO,
       },
       // Estilos del modal de detalles (idénticos a HistorialAuditoria)
       detailScrollView: {
@@ -1061,12 +1061,12 @@ const styles = StyleSheet.create({
         marginBottom: 24,
         paddingBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#E0E0E0',
+        borderBottomColor: COLORES.TEXTO_DISABLED,
       },
       detailSectionTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#2196F3',
+        color: COLORES.NAV_PRIMARIO,
         marginBottom: 12,
       },
       detailRow: {
@@ -1078,20 +1078,20 @@ const styles = StyleSheet.create({
       detailLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#666',
+        color: COLORES.TEXTO_SECUNDARIO,
         minWidth: 120,
         maxWidth: 120,
         marginRight: 12,
       },
       detailValue: {
         fontSize: 14,
-        color: '#333',
+        color: COLORES.TEXTO_PRIMARIO,
         flex: 1,
         flexWrap: 'wrap',
         flexShrink: 1,
       },
       criticalValue: {
-        color: '#F44336',
+        color: COLORES.ERROR_LIGHT,
         fontWeight: 'bold',
       },
       chipContainer: {
@@ -1103,7 +1103,7 @@ const styles = StyleSheet.create({
       },
       detailChipText: {
         fontSize: 11,
-        color: '#FFFFFF',
+        color: COLORES.TEXTO_EN_PRIMARIO,
         fontWeight: '600',
       },
       navigationButtonContainer: {

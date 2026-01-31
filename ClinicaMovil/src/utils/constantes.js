@@ -66,6 +66,23 @@ export const COLORES = {
   // Colores Accesibilidad (más brillantes para contraste)
   ACCESIBILIDAD_ALTO: '#0A3291',  // Alto contraste
   ACCESIBILIDAD_MEDIO: '#1565C0', // Medio contraste
+
+  // Navegación (unificar tabs y headers)
+  NAV_PRIMARIO: '#1565C0',       // Azul tabs/header flujo profesional (PRIMARIO_LIGHT)
+  NAV_PRIMARIO_INACTIVO: '#BBDEFB', // Azul claro tabs inactivos
+  NAV_PACIENTE: '#4CAF50',       // Verde header/tema flujo paciente (EXITO_LIGHT)
+  NAV_PACIENTE_FONDO: '#E8F5E9', // Verde muy claro fondo stack paciente
+  NAV_FILTROS_ACTIVOS: '#E3F2FD', // Azul muy claro fondo chips filtros activos
+
+  // UI (bordes y sombras)
+  BORDE_CLARO: '#E0E0E0',       // Borde gris claro
+  SWITCH_TRACK_OFF: '#CCCCCC',  // Track switch desactivado
+  ADVERTENCIA_TEXTO: '#E65100', // Texto naranja oscuro (avisos)
+  FONDO_ADVERTENCIA_CLARO: '#FFF3E0', // Fondo naranja muy claro (paneles aviso)
+  FONDO_VERDE_SUAVE: '#F1F8E9',       // Fondo verde muy claro (cards éxito)
+  BORDE_VERDE_SUAVE: '#C8E6C9',       // Borde verde claro
+  FONDO_ERROR_CLARO: '#FFF5F5',      // Fondo rojo muy claro (errores)
+  BORDE_ERROR_CLARO: '#FFCDD2',      // Borde rojo claro
 };
 
 export const TAMAÑOS = {

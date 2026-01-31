@@ -31,6 +31,7 @@ import gestionService from '../../api/gestionService';
 import { usePacientes } from '../../hooks/useGestion';
 import useDebounce from '../../hooks/useDebounce';
 import { formatDate } from '../../utils/dateUtils';
+import { COLORES } from '../../utils/constantes';
 
 const ListaPacientesDoctor = ({ navigation }) => {
   const { userData, userRole } = useAuth();
@@ -575,7 +576,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'flex-end',
   },
   modalContent: {
@@ -591,16 +592,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   closeButtonX: {
     fontSize: 24,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: 'bold',
   },
   modalBody: {
@@ -612,13 +613,13 @@ const styles = StyleSheet.create({
   filterSectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 15,
   },
   filterSubtitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 15,
     marginBottom: 10,
   },
@@ -643,7 +644,7 @@ const styles = StyleSheet.create({
   },
   filterOptionText: {
     fontSize: 13,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '500',
   },
   activeFilterOptionText: {
@@ -692,13 +693,13 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
     marginRight: 8,
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   cardDetails: {
     marginTop: 8,
@@ -711,13 +712,13 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginRight: 8,
     minWidth: 100,
   },
   detailValue: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   inactiveText: {
@@ -742,7 +743,7 @@ const styles = StyleSheet.create({
   },
   pressHint: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 12,
@@ -759,7 +760,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   errorContainer: {
     flex: 1,
@@ -792,7 +793,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   accessDeniedContainer: {
@@ -809,7 +810,7 @@ const styles = StyleSheet.create({
   },
   accessDeniedMessage: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
 });

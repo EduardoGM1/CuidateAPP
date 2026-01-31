@@ -29,6 +29,7 @@ import Logger from '../../services/logger';
 import gestionService from '../../api/gestionService';
 import { formatDateTime } from '../../utils/dateUtils';
 import DateTimePickerButton from '../../components/DateTimePickerButton';
+import { COLORES } from '../../utils/constantes';
 
 const GestionSolicitudesReprogramacion = ({ navigation }) => {
   const { userData, userRole } = useAuth();
@@ -622,7 +623,7 @@ const GestionSolicitudesReprogramacion = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   header: {
     padding: 20,
@@ -644,7 +645,7 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
   },
   filterRow: {
     flexDirection: 'row',
@@ -663,7 +664,7 @@ const styles = StyleSheet.create({
   },
   filterButtonText: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '500',
   },
   filterButtonTextActive: {
@@ -697,12 +698,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   estadoChip: {
     height: 28,
@@ -723,13 +724,13 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginRight: 8,
     minWidth: 120,
   },
   detailValue: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   cardActions: {
@@ -766,7 +767,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   emptyContainer: {
     flex: 1,
@@ -776,7 +777,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   accessDeniedContainer: {
@@ -793,12 +794,12 @@ const styles = StyleSheet.create({
   },
   accessDeniedMessage: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -819,19 +820,19 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   closeButton: {
     padding: 5,
   },
   closeButtonText: {
     fontSize: 24,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   modalBody: {
     flexGrow: 1,
@@ -845,13 +846,13 @@ const styles = StyleSheet.create({
   modalLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 12,
     marginBottom: 4,
   },
   modalValue: {
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   textInput: {

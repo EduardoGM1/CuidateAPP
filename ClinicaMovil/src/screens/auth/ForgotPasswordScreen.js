@@ -178,18 +178,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: COLORES.TEXTO,
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: COLORES.BORDE,
+    borderColor: COLORES.TEXTO_DISABLED,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    backgroundColor: '#fff',
-    color: COLORES.TEXTO,
+    backgroundColor: COLORES.BLANCO,
+    color: COLORES.TEXTO_PRIMARIO,
   },
   submitButton: {
     marginTop: 8,

@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import Logger from '../services/logger';
+import { COLORES } from '../utils/constantes';
 import useConversacionesDoctor from '../hooks/useConversacionesDoctor';
 import TabIconWithBadge from '../components/navigation/TabIconWithBadge';
 import DashboardAdmin from '../screens/admin/DashboardAdmin';
@@ -183,14 +184,14 @@ const TabNavigator = () => {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1976D2',
-          borderTopColor: '#1976D2',
+          backgroundColor: COLORES.NAV_PRIMARIO,
+          borderTopColor: COLORES.NAV_PRIMARIO,
           height: 60,
           paddingBottom: 8,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: '#fff',
-        tabBarInactiveTintColor: '#BBDEFB',
+        tabBarActiveTintColor: COLORES.TEXTO_EN_PRIMARIO,
+        tabBarInactiveTintColor: COLORES.NAV_PRIMARIO_INACTIVO,
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
@@ -265,9 +266,9 @@ const NavegacionProfesional = () => {
           headerShown: true,
           title: 'Detalle del Doctor',
           headerStyle: {
-            backgroundColor: '#1976D2',
+            backgroundColor: COLORES.NAV_PRIMARIO,
           },
-          headerTintColor: '#FFFFFF',
+          headerTintColor: COLORES.TEXTO_EN_PRIMARIO,
           headerTitleStyle: {
             fontWeight: 'bold',
           },
@@ -280,9 +281,9 @@ const NavegacionProfesional = () => {
           headerShown: true,
           title: 'Detalle del Paciente',
           headerStyle: {
-            backgroundColor: '#1976D2',
+            backgroundColor: COLORES.NAV_PRIMARIO,
           },
-          headerTintColor: '#FFFFFF',
+          headerTintColor: COLORES.TEXTO_EN_PRIMARIO,
           headerTitleStyle: {
             fontWeight: 'bold',
           },
@@ -373,9 +374,9 @@ const NavegacionProfesional = () => {
           headerShown: true,
           title: 'Gráficos de Evolución',
           headerStyle: {
-            backgroundColor: '#2196F3',
+            backgroundColor: COLORES.NAV_PRIMARIO,
           },
-          headerTintColor: '#FFFFFF',
+          headerTintColor: COLORES.TEXTO_EN_PRIMARIO,
           headerTitleStyle: {
             fontWeight: 'bold',
           },
@@ -424,9 +425,9 @@ const NavegacionProfesional = () => {
           headerShown: true,
           title: 'Cambiar Contraseña',
           headerStyle: {
-            backgroundColor: '#1976D2',
+            backgroundColor: COLORES.NAV_PRIMARIO,
           },
-          headerTintColor: '#FFFFFF',
+          headerTintColor: COLORES.TEXTO_EN_PRIMARIO,
           headerTitleStyle: {
             fontWeight: 'bold',
           },
@@ -440,7 +441,7 @@ const NavegacionProfesional = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   scrollView: {
     flex: 1,
@@ -456,45 +457,45 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     marginBottom: 10,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 18,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 20,
     textAlign: 'center',
   },
   userInfoCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   userInfoLabel: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 8,
     marginBottom: 4,
   },
   userInfoValue: {
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     fontWeight: '500',
   },
   section: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -502,15 +503,15 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     marginBottom: 16,
   },
   securityButton: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
   },
   securityButtonContent: {
     flexDirection: 'row',
@@ -526,21 +527,21 @@ const styles = StyleSheet.create({
   securityButtonLabel: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   securityButtonDescription: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   securityButtonArrow: {
     fontSize: 20,
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: 'bold',
   },
   message: {
     fontSize: 16,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: 20,
@@ -549,7 +550,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   logoutButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: COLORES.ERROR_LIGHT,
     borderRadius: 12,
     paddingVertical: 15,
     paddingHorizontal: 30,
@@ -557,7 +558,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   logoutText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 18,
     fontWeight: '600',
   },

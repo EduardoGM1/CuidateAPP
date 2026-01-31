@@ -140,12 +140,13 @@ app.use(cors({
       return callback(null, true);
     }
 
-    // En desarrollo, permitir localhost y 127.0.0.1 (pero loguear)
+    // En desarrollo, permitir localhost, emulador y red local (app móvil en dispositivo físico)
     if (NODE_ENV === 'development') {
       const isLocalhost = origin.includes('localhost') || 
                          origin.includes('127.0.0.1') || 
                          origin.includes('10.0.2.2');
-      if (isLocalhost) {
+      const isLocalNetwork = /^https?:\/\/(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?$/.test(origin);
+      if (isLocalhost || isLocalNetwork) {
         logger.debug(`CORS: Permitiendo origen de desarrollo: ${origin}`);
         return callback(null, true);
       }
@@ -304,6 +305,7 @@ sequelize
       server = app.listen(PORT, '0.0.0.0', () => {
         logger.info(`HTTP Server running on http://0.0.0.0:${PORT}`);
         logger.info(`🌐 Accessible from: http://localhost:${PORT}`);
+        logger.info(`📱 Para la app móvil: mismo WiFi y en ClinicaMovil/src/config/apiUrlOverride.js pon la IP de esta PC (ej: http://192.168.1.100:3000)`);
       });
     }
 

@@ -20,6 +20,7 @@ import FilterChips from '../../components/common/FilterChips';
 import ListCard from '../../components/common/ListCard';
 import { emptyStateStyles, modalStyles } from '../../utils/sharedStyles';
 import { formatDateTime } from '../../utils/dateUtils';
+import { COLORES } from '../../utils/constantes';
 import SeveridadBadge from '../../components/common/SeveridadBadge';
 import UsuarioSelector from '../../components/common/UsuarioSelector';
 import { Button } from 'react-native-paper';
@@ -323,27 +324,27 @@ const HistorialAuditoria = ({ navigation }) => {
     switch (tipo) {
       case 'cita_estado_actualizado':
       case 'cita_reprogramada':
-        return '#2196F3';
+        return COLORES.NAV_PRIMARIO;
       case 'paciente_creado':
       case 'doctor_creado':
-        return '#4CAF50';
+        return COLORES.EXITO_LIGHT;
       case 'paciente_modificado':
       case 'doctor_modificado':
-        return '#FF9800';
+        return COLORES.ADVERTENCIA_LIGHT;
       case 'sistema_automatico':
-        return '#9E9E9E';
+        return COLORES.TEXTO_SECUNDARIO;
       case 'login_exitoso':
-        return '#4CAF50';
+        return COLORES.EXITO_LIGHT;
       case 'login_fallido':
-        return '#FF9800';
+        return COLORES.ADVERTENCIA_LIGHT;
       case 'acceso_sospechoso':
-        return '#F57C00';
+        return COLORES.ADVERTENCIA;
       case 'error_sistema':
-        return '#F44336';
+        return COLORES.ERROR_LIGHT;
       case 'error_critico':
-        return '#D32F2F';
+        return COLORES.ERROR;
       default:
-        return '#757575';
+        return COLORES.TEXTO_SECUNDARIO;
     }
   };
 
@@ -530,7 +531,7 @@ const HistorialAuditoria = ({ navigation }) => {
       {/* Contenido */}
       {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color={COLORES.NAV_PRIMARIO} />
           <Text style={styles.loadingText}>Cargando historial...</Text>
         </View>
       ) : error ? (
@@ -592,7 +593,7 @@ const HistorialAuditoria = ({ navigation }) => {
                   )}
                   {registro.tipo_accion === 'acceso_sospechoso' && (
                     <Chip
-                      style={[styles.badgeChip, { backgroundColor: '#F57C00' }]}
+                      style={[styles.badgeChip, { backgroundColor: COLORES.ADVERTENCIA }]}
                       textStyle={styles.badgeText}
                       mode="flat"
                     >
@@ -914,7 +915,7 @@ const HistorialAuditoria = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   header: {
     flexDirection: 'row',
@@ -922,9 +923,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 8,
     paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
   },
   backButton: {
     padding: 8,
@@ -932,7 +933,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     fontWeight: 'bold',
   },
   filterButton: {
@@ -944,7 +945,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
     textAlign: 'center',
   },
@@ -970,7 +971,7 @@ const styles = StyleSheet.create({
   },
   stackTraceContainer: {
     maxHeight: 200,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderRadius: 8,
     padding: 12,
     marginTop: 8,
@@ -978,12 +979,12 @@ const styles = StyleSheet.create({
   stackTraceText: {
     fontSize: 11,
     fontFamily: 'monospace',
-    color: '#D32F2F',
+    color: COLORES.ERROR,
     lineHeight: 16,
   },
   searchContainer: {
     padding: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   searchBar: {
     elevation: 1,
@@ -1000,7 +1001,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   badgeChip: {
     minHeight: 28,
@@ -1011,7 +1012,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 11,
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
     lineHeight: 14,
   },
@@ -1021,7 +1022,7 @@ const styles = StyleSheet.create({
   },
   loadMoreText: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   detailScrollView: {
     maxHeight: 500,
@@ -1036,12 +1037,12 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
   },
   detailSectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
     marginBottom: 12,
   },
   detailRow: {
@@ -1053,14 +1054,14 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     minWidth: 120,
     maxWidth: 120,
     marginRight: 12,
   },
   detailValue: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
     flexWrap: 'wrap',
     flexShrink: 1,
@@ -1074,11 +1075,11 @@ const styles = StyleSheet.create({
   },
   detailChipText: {
     fontSize: 11,
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
   },
   dataContainer: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderRadius: 8,
     padding: 12,
     marginTop: 8,
@@ -1094,29 +1095,29 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
   },
   dataHeaderText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
   },
   dataLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginRight: 8,
     minWidth: 100,
   },
   dataValue: {
     fontSize: 13,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
     flexWrap: 'wrap',
   },
   infoText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     marginTop: 8,
   },

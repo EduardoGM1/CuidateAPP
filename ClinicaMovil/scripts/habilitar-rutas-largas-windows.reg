@@ -1,0 +1,7 @@
+Windows Registry Editor Version 5.00
+; Habilita rutas largas en Windows (>260 caracteres)
+; Doble clic para aplicar. Windows pedira confirmacion de administrador.
+; Reinicia el PC despues de aplicar.
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem]
+"LongPathsEnabled"=dword:00000001

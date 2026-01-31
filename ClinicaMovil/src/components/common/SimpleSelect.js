@@ -15,6 +15,7 @@ import {
   FlatList,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { COLORES } from '../../utils/constantes';
 
 const SimpleSelect = ({
   label,
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   selectButton: {
@@ -134,43 +135,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.TEXTO_DISABLED,
     borderRadius: 8,
     minHeight: 48,
   },
   selectButtonDisabled: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     opacity: 0.6,
   },
   selectButtonText: {
     fontSize: 15,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   selectButtonTextPlaceholder: {
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   selectButtonIcon: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginLeft: 8,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     width: '100%',
     maxWidth: 400,
     maxHeight: '80%',
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -185,19 +186,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   closeButton: {
     padding: 4,
   },
   closeButtonText: {
     fontSize: 20,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: 'bold',
   },
   optionsList: {
@@ -209,23 +210,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
+    borderBottomColor: COLORES.FONDO,
   },
   optionItemSelected: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
   },
   optionText: {
     fontSize: 15,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   optionTextSelected: {
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: '600',
   },
   optionCheck: {
     fontSize: 18,
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: 'bold',
     marginLeft: 8,
   },

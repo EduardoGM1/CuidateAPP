@@ -27,6 +27,7 @@ import useTTS from '../../hooks/useTTS';
 import hapticService from '../../services/hapticService';
 import audioFeedbackService from '../../services/audioFeedbackService';
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 import { useMedicationReminders } from '../../hooks/useReminders';
 import useOffline from '../../hooks/useOffline';
 
@@ -405,7 +406,7 @@ const MisMedicamentos = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4CAF50" />
+          <ActivityIndicator size="large" color={COLORES.NAV_PACIENTE} />
           <Text style={styles.loadingText}>Cargando tus medicamentos...</Text>
         </View>
       </SafeAreaView>
@@ -426,8 +427,8 @@ const MisMedicamentos = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#4CAF50']}
-            tintColor="#4CAF50"
+            colors={[COLORES.NAV_PACIENTE]}
+            tintColor={COLORES.NAV_PACIENTE}
           />
         }
       >
@@ -548,7 +549,7 @@ const MisMedicamentos = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.NAV_PACIENTE_FONDO,
   },
   scrollView: {
     flex: 1,
@@ -564,7 +565,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   header: {
     flexDirection: 'row',
@@ -575,28 +576,28 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
   },
   backButtonText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '600',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     flex: 1,
     textAlign: 'center',
   },
   listenButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     borderWidth: 1,
-    borderColor: '#2196F3',
+    borderColor: COLORES.NAV_PRIMARIO,
     width: 44,
     height: 44,
     justifyContent: 'center',
@@ -606,18 +607,18 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   counter: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#2196F3',
+    borderColor: COLORES.NAV_PRIMARIO,
   },
   counterText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
   },
   emptyContainer: {
     flex: 1,
@@ -632,24 +633,24 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 16,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     paddingHorizontal: 40,
   },
   alertContainer: {
-    backgroundColor: '#FFF3E0',
+    backgroundColor: COLORES.FONDO_ADVERTENCIA_CLARO,
     borderRadius: 12,
     padding: 16,
     marginTop: 20,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#FF9800',
+    borderColor: COLORES.ADVERTENCIA_LIGHT,
   },
   alertIcon: {
     fontSize: 32,
@@ -658,7 +659,7 @@ const styles = StyleSheet.create({
   alertText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#F57C00',
+    color: COLORES.ADVERTENCIA,
     flex: 1,
   },
 });

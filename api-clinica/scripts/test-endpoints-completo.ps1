@@ -1,4 +1,11 @@
 # Script completo para probar todos los endpoints
+
+# ============================================
+# CONFIGURACIÓN TLS/SSL (REQUERIDO)
+# Soluciona error: System.Net.ServicePointManager
+# ============================================
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+
 $baseUrl = "http://localhost:3000"
 $email = "Doctor@clinica.com"
 $password = "Doctor123!"

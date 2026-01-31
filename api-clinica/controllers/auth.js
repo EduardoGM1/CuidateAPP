@@ -475,20 +475,38 @@ export const login = async (req, res) => {
       });
     }
 
-    // Usar sistema unificado de autenticación
-    // Esto busca la credencial en auth_credentials en lugar de password_hash
+    // 1) Intentar sistema unificado (auth_credentials); 2) Fallback a usuarios.password_hash
     const UnifiedAuthService = (await import('../services/unifiedAuthService.js')).default;
-    
+    let passwordValid = false;
+
     try {
-      const result = await UnifiedAuthService.authenticate(
+      await UnifiedAuthService.authenticate(
         usuario.rol,
         usuario.id_usuario,
-        {
-          method: 'password',
-          credential: password
-        }
+        { method: 'password', credential: password }
       );
+      passwordValid = true;
+    } catch (authError) {
+      logger.debug('Auth unificado falló, intentando password_hash', { email, error: authError.message });
+      if (usuario.password_hash) {
+        try {
+          passwordValid = await bcrypt.compare(password, usuario.password_hash);
+        } catch (_) {
+          passwordValid = false;
+        }
+      } else {
+        passwordValid = false;
+      }
+    }
 
+    if (!passwordValid) {
+      return res.status(401).json({
+        success: false,
+        error: 'Credenciales inválidas'
+      });
+    }
+
+    try {
       // Actualizar último login
       await usuario.update({ ultimo_login: new Date() });
 
@@ -496,7 +514,7 @@ export const login = async (req, res) => {
       let id_doctor = null;
       if (usuario.rol === 'Doctor') {
         const { Doctor } = await import('../models/associations.js');
-        const doctor = await Doctor.findOne({ 
+        const doctor = await Doctor.findOne({
           where: { id_usuario: usuario.id_usuario },
           attributes: ['id_doctor']
         });
@@ -511,32 +529,26 @@ export const login = async (req, res) => {
         id: usuario.id_usuario,
         email: usuario.email,
         rol: usuario.rol
-      }, usuario.rol); // Pasar rol para diferenciar tiempos (Doctor: 48h, Admin: 48h)
+      }, usuario.rol);
 
-      // Formatear respuesta con access token y refresh token
       res.json({
         success: true,
         message: 'Login exitoso',
-        token: tokenPair.accessToken, // Access token (1 hora)
-        refresh_token: tokenPair.refreshToken, // Refresh token (7 días)
+        token: tokenPair.accessToken,
+        refresh_token: tokenPair.refreshToken,
         expires_in: tokenPair.expiresIn,
         refresh_token_expires_in: tokenPair.refreshTokenExpiresIn,
         usuario: {
           id: usuario.id_usuario,
+          id_usuario: usuario.id_usuario,
           email: usuario.email,
           rol: usuario.rol,
-          ...(id_doctor && { id_doctor }) // Incluir id_doctor si existe
+          ...(id_doctor && { id_doctor })
         }
       });
-    } catch (authError) {
-      logger.warn('Error en autenticación unificada', { 
-        email, 
-        error: authError.message 
-      });
-      return res.status(401).json({ 
-        success: false,
-        error: 'Credenciales inválidas' 
-      });
+    } catch (err) {
+      logger.error('Error generando token en login', { error: err.message });
+      return res.status(500).json({ success: false, error: 'Error en el servidor' });
     }
 
   } catch (error) {

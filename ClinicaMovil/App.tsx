@@ -33,9 +33,11 @@ if (__DEV__) {
   };
 }
 
-// Importar tests en desarrollo
+// Importar tests en desarrollo (no bloquear arranque si falla)
 if (__DEV__) {
-  require('./src/utils/testPacienteInterface');
+  try {
+    require('./src/utils/testPacienteInterface');
+  } catch (_) {}
 }
 import { NavigationContainer } from '@react-navigation/native';
 import { Provider } from 'react-redux';

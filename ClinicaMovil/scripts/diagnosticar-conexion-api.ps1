@@ -1,6 +1,12 @@
 # Script para diagnosticar problemas de conexión API en dispositivos físicos
 # Uso: .\scripts\diagnosticar-conexion-api.ps1
 
+# ============================================
+# CONFIGURACIÓN TLS/SSL (REQUERIDO)
+# Soluciona error: System.Net.ServicePointManager
+# ============================================
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "🔍 DIAGNÓSTICO DE CONEXIÓN API" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan

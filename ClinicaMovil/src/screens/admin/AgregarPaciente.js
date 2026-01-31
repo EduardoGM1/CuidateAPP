@@ -31,6 +31,7 @@ import useTestMode from '../../hooks/useTestMode';
 
 // Servicios
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 import { pacienteAuthService } from '../../api/authService';
 import gestionService from '../../api/gestionService';
 import { useAuth } from '../../context/AuthContext';
@@ -1462,7 +1463,7 @@ const AgregarPaciente = () => {
               {/* ✅ Diagnóstico Basal (según FORMA_2022_OFICIAL) */}
               <View style={styles.fieldContainer}>
                 <Text style={styles.fieldLabel}>Diagnóstico Basal *</Text>
-                <Text style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>
+                <Text style={{ fontSize: 12, color: COLORES.TEXTO_SECUNDARIO, marginBottom: 8 }}>
                   Marque si este es el diagnóstico inicial (basal) del paciente
                 </Text>
                 <TouchableOpacity
@@ -1678,7 +1679,7 @@ const AgregarPaciente = () => {
               {/* ✅ Tratamiento Explícito según FORMA_2022_OFICIAL - Instrucciones ② y ③ */}
               <View style={styles.fieldContainer}>
                 <Text style={styles.fieldLabel}>Recibe Tratamiento *</Text>
-                <Text style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>
+                <Text style={{ fontSize: 12, color: COLORES.TEXTO_SECUNDARIO, marginBottom: 8 }}>
                   Marque según corresponda
                 </Text>
                 
@@ -2148,7 +2149,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
     elevation: 2,
@@ -2218,7 +2219,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
   },
@@ -2236,7 +2237,7 @@ const styles = StyleSheet.create({
   progressStepText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   progressStepTextActive: {
     color: '#FFFFFF',
@@ -2268,7 +2269,7 @@ const styles = StyleSheet.create({
   stepContainer: {
     marginBottom: 24,
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     elevation: 1,
     shadowColor: '#000',
@@ -2284,7 +2285,7 @@ const styles = StyleSheet.create({
   },
   stepDescription: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     lineHeight: 20,
   },
   userCreatedIndicator: {
@@ -2319,7 +2320,7 @@ const styles = StyleSheet.create({
 
   // Módulos
   moduleSelector: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E9ECEF',
@@ -2393,10 +2394,10 @@ const styles = StyleSheet.create({
   redApoyoContainer: {
     marginBottom: 24,
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.TEXTO_DISABLED,
   },
   redApoyoHeader: {
     flexDirection: 'row',
@@ -2455,8 +2456,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
+    borderColor: COLORES.TEXTO_DISABLED,
+    backgroundColor: COLORES.FONDO_CARD,
   },
   checkboxItemSelected: {
     backgroundColor: '#E3F2FD',
@@ -2467,7 +2468,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.TEXTO_DISABLED,
     marginRight: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -2502,8 +2503,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
+    borderColor: COLORES.TEXTO_DISABLED,
+    backgroundColor: COLORES.FONDO_CARD,
   },
   radioOptionSelected: {
     backgroundColor: '#E8F5E8',
@@ -2514,7 +2515,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.TEXTO_DISABLED,
     marginRight: 8,
     alignItems: 'center',
     justifyContent: 'center',

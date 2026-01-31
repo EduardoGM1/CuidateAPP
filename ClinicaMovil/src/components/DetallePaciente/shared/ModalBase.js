@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Modal, View, TouchableOpacity, Text, StyleSheet, KeyboardAvoidingView, Platform, Animated } from 'react-native';
 import { Title } from 'react-native-paper';
+import { COLORES } from '../../../utils/constantes';
 
 /**
  * ModalBase - Componente base reutilizable para todos los modales
@@ -211,7 +212,7 @@ const ModalBase = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'flex-end',
     position: 'absolute',
     top: 0,
@@ -229,13 +230,13 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     width: '100%',
     maxHeight: '90%',
     flex: 1,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -249,14 +250,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
     minHeight: 56,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     flex: 1,
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
   },
   closeButton: {
     width: 32,
@@ -269,14 +270,14 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   modalBody: {
     width: '100%',

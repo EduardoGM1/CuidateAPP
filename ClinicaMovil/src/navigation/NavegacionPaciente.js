@@ -1,6 +1,7 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import Logger from '../services/logger';
+import { COLORES } from '../utils/constantes';
 
 // Importar pantallas de paciente (ultra-simplificadas)
 import InicioPaciente from '../screens/paciente/InicioPaciente';
@@ -23,7 +24,7 @@ const NavegacionPaciente = () => {
     <Stack.Navigator 
       screenOptions={{ 
         headerShown: false,
-        cardStyle: { backgroundColor: '#E8F5E8' }
+        cardStyle: { backgroundColor: COLORES.NAV_PACIENTE_FONDO }
       }}
     >
       <Stack.Screen name="InicioPaciente" component={InicioPaciente} />
@@ -40,8 +41,8 @@ const NavegacionPaciente = () => {
         options={{ 
           headerShown: true,
           title: 'Cambiar PIN',
-          headerStyle: { backgroundColor: '#4CAF50' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: COLORES.NAV_PACIENTE },
+          headerTintColor: COLORES.TEXTO_EN_PRIMARIO,
         }}
       />
     </Stack.Navigator>

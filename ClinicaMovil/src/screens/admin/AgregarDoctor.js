@@ -24,6 +24,7 @@ import useGestion from '../../hooks/useGestion';
 
 // Servicios
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 import { doctorAuthService } from '../../api/authService';
 import { generarDatosDoctor } from '../../services/testDataService';
 
@@ -630,7 +631,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
     elevation: 2,
@@ -664,7 +665,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
   },
@@ -682,7 +683,7 @@ const styles = StyleSheet.create({
   progressStepText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   progressStepTextActive: {
     color: '#FFFFFF',
@@ -714,7 +715,7 @@ const styles = StyleSheet.create({
   stepContainer: {
     marginBottom: 24,
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     elevation: 1,
     shadowColor: '#000',
@@ -730,7 +731,7 @@ const styles = StyleSheet.create({
   },
   stepDescription: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     lineHeight: 20,
   },
   userCreatedIndicator: {
@@ -762,7 +763,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#27AE60',
+    borderColor: COLORES.EXITO_LIGHT,
     marginLeft: 12,
   },
   fillDataButtonText: {
@@ -787,7 +788,7 @@ const styles = StyleSheet.create({
 
   // Módulos
   moduleSelector: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E9ECEF',
@@ -843,7 +844,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     paddingHorizontal: 12,
     paddingVertical: 14,
     minHeight: 48,
@@ -861,7 +862,7 @@ const styles = StyleSheet.create({
   },
   arrowText: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginLeft: 8,
   },
   inputError: {
@@ -873,7 +874,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -893,7 +894,7 @@ const styles = StyleSheet.create({
   },
   dropdownItemText: {
     fontSize: 15,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   dropdownItemTextSelected: {
     color: '#319795',
@@ -932,7 +933,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
 

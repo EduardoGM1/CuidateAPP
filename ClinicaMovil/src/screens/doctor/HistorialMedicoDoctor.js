@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 
 const HistorialMedicoDoctor = ({ navigation }) => {
   const { userData, userRole } = useAuth();
@@ -63,7 +64,7 @@ const HistorialMedicoDoctor = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   header: {
     padding: 20,
@@ -89,7 +90,7 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   accessDeniedContainer: {
@@ -101,12 +102,12 @@ const styles = StyleSheet.create({
   accessDeniedTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     marginBottom: 10,
   },
   accessDeniedMessage: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
 });

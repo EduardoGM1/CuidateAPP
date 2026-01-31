@@ -23,6 +23,7 @@ import ConsultasTimeline from './ConsultasTimeline';
  * @param {Function} props.calcularIMC - Función para calcular IMC
  * @param {Function} props.getEstadoCitaColor - Función para obtener color del estado
  * @param {Function} props.getEstadoCitaTexto - Función para obtener texto del estado
+ * @param {number} [props.refreshTrigger] - Cuando cambia, se recargan las citas en el timeline
  */
 const HistorialConsultasModal = ({
   visible,
@@ -33,7 +34,8 @@ const HistorialConsultasModal = ({
   formatearFecha,
   calcularIMC,
   getEstadoCitaColor,
-  getEstadoCitaTexto
+  getEstadoCitaTexto,
+  refreshTrigger
 }) => {
   return (
     <ModalBase
@@ -59,6 +61,7 @@ const HistorialConsultasModal = ({
             getEstadoCitaColor={getEstadoCitaColor}
             getEstadoCitaTexto={getEstadoCitaTexto}
             onOpenOptions={null} // No mostrar opciones dentro del modal
+            refreshTrigger={refreshTrigger}
           />
         </View>
       </ScrollView>

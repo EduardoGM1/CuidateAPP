@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { Usuario, Paciente } from '../models/associations.js';
+import { Usuario, Paciente, Doctor } from '../models/associations.js';
 import logger from '../utils/logger.js';
 
 export const authenticateToken = async (req, res, next) => {
@@ -60,6 +60,15 @@ export const authenticateToken = async (req, res, next) => {
         rol: usuario.rol,
         user_type: usuario.rol
       };
+
+      // Para doctores: añadir id_doctor (usado por rutas /api/doctores, dashboard, etc.)
+      if (usuario.rol === 'Doctor') {
+        const doctor = await Doctor.findOne({
+          where: { id_usuario: usuario.id_usuario },
+          attributes: ['id_doctor']
+        });
+        if (doctor) req.user.id_doctor = doctor.id_doctor;
+      }
     }
 
     logger.debug('Usuario autenticado', { 

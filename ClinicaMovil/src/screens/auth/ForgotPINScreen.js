@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   infoContainer: {
-    backgroundColor: '#e3f2fd',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     padding: 16,
     borderRadius: 8,
     marginBottom: 24,
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORES.TEXTO,
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   infoText: {
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   stepsTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORES.TEXTO,
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 16,
   },
   step: {
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     backgroundColor: COLORES.PRIMARIO,
-    color: '#fff',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   stepText: {
     flex: 1,
     fontSize: 14,
-    color: COLORES.TEXTO,
+    color: COLORES.TEXTO_PRIMARIO,
     lineHeight: 20,
   },
   contactButton: {

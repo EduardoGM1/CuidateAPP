@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Animated } from 'react-native';
-import { IconButton, Title } from 'react-native-paper';
+import { Title } from 'react-native-paper';
+import { COLORES } from '../../../utils/constantes';
 
 /**
  * OptionsModal - Modal reutilizable para mostrar opciones de acciones
@@ -85,6 +86,13 @@ const OptionsModal = ({
     outputRange: [0, 1],
   });
 
+  // Dos opciones exactas (Editar + Eliminar) → botones horizontales; más de 2 → vertical
+  const isEditarEliminar =
+    options.length === 2 &&
+    options[0]?.label === 'Editar' &&
+    options[1]?.label === 'Eliminar';
+  const showVertical = options.length > 2;
+
   return (
     <Modal
       visible={visible}
@@ -120,37 +128,49 @@ const OptionsModal = ({
               </TouchableOpacity>
             </View>
             
-            <View style={styles.optionsContainer}>
-              {options.map((option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[styles.optionButton, option.style]}
-                  onPress={() => {
-                    if (option.onPress) {
-                      option.onPress();
-                    }
-                    handleClose();
-                  }}
-                  activeOpacity={0.7}
-                >
-                  {option.icon && (
-                    // Detectar si es un emoji (caracteres Unicode) o un icono de Material Design
-                    /[\u{1F300}-\u{1F9FF}]/u.test(option.icon) ? (
-                      <Text style={[styles.optionEmoji, { fontSize: 20 }]}>{option.icon}</Text>
-                    ) : (
-                      <View style={styles.iconContainer}>
-                        <IconButton
-                          icon={option.icon}
-                          size={22}
-                          iconColor={option.color || '#2196F3'}
-                          style={styles.optionIcon}
-                        />
-                      </View>
-                    )
-                  )}
-                  <Text style={[styles.optionText, option.textStyle]}>{option.label}</Text>
-                </TouchableOpacity>
-              ))}
+            <View style={[styles.optionsContainer, showVertical && styles.optionsContainerVertical]}>
+              {isEditarEliminar ? (
+                <View style={styles.actionButtonsRow}>
+                  <TouchableOpacity
+                    style={styles.actionButtonEditar}
+                    onPress={() => {
+                      if (options[0].onPress) options[0].onPress();
+                      handleClose();
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.actionButtonIcon}>✏️</Text>
+                    <Text style={styles.actionButtonText}>{options[0].label}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionButtonEliminar}
+                    onPress={() => {
+                      if (options[1].onPress) options[1].onPress();
+                      handleClose();
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.actionButtonIcon}>🗑️</Text>
+                    <Text style={styles.actionButtonText}>{options[1].label}</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                options.map((option, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[styles.optionButton, option.style]}
+                    onPress={() => {
+                      if (option.onPress) {
+                        option.onPress();
+                      }
+                      handleClose();
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.optionText, option.textStyle, option.color && { color: option.color }]}>{option.label}</Text>
+                  </TouchableOpacity>
+                ))
+              )}
             </View>
           </Animated.View>
         </View>
@@ -162,7 +182,7 @@ const OptionsModal = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'flex-end',
     position: 'absolute',
     top: 0,
@@ -176,14 +196,14 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORES.FONDO_CARD,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 16,
     width: '100%',
     maxHeight: '70%',
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -195,22 +215,63 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
   },
   modalTitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   closeButtonX: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     paddingHorizontal: 8,
   },
   optionsContainer: {
     // Sin padding adicional, el padding ya está en modalContent
+  },
+  optionsContainerVertical: {
+    flexDirection: 'column',
+    gap: 10,
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginTop: 8,
+  },
+  actionButtonEditar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORES.NAV_PRIMARIO,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    gap: 8,
+  },
+  actionButtonEliminar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORES.ERROR_LIGHT,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    gap: 8,
+  },
+  actionButtonIcon: {
+    fontSize: 18,
+  },
+  actionButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORES.TEXTO_EN_PRIMARIO,
   },
   optionButton: {
     flexDirection: 'row',
@@ -219,28 +280,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 8,
     marginBottom: 8,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORES.FONDO,
     minHeight: 44,
-  },
-  iconContainer: {
-    marginRight: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  optionIcon: {
-    margin: 0,
-    padding: 0,
-    width: 24,
-    height: 24,
-  },
-  optionEmoji: {
-    marginRight: 8,
-    textAlign: 'center',
-    minWidth: 24,
   },
   optionText: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
 });

@@ -30,6 +30,7 @@ import chatService from '../../api/chatService';
 import hapticService from '../../services/hapticService';
 import audioFeedbackService from '../../services/audioFeedbackService';
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 import VoiceRecorder from '../../components/chat/VoiceRecorder';
 import ConnectionBanner from '../../components/chat/ConnectionBanner';
 import MessageBubble from '../../components/chat/MessageBubble';
@@ -330,7 +331,7 @@ const ChatDoctor = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4CAF50" />
+          <ActivityIndicator size="large" color={COLORES.NAV_PACIENTE} />
           <Text style={styles.loadingText}>Cargando mensajes...</Text>
         </View>
       </SafeAreaView>
@@ -407,8 +408,8 @@ const ChatDoctor = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              colors={['#4CAF50']}
-              tintColor="#4CAF50"
+              colors={[COLORES.NAV_PACIENTE]}
+              tintColor={COLORES.NAV_PACIENTE}
             />
           }
         >
@@ -459,7 +460,7 @@ const ChatDoctor = () => {
           <TextInput
             style={styles.textInput}
             placeholder="Escribe un mensaje..."
-            placeholderTextColor="#999"
+            placeholderTextColor={COLORES.TEXTO_SECUNDARIO}
             value={typeof mensajeTexto === 'string' ? mensajeTexto : String(mensajeTexto || '')}
             onChangeText={handleTextChange}
             multiline
@@ -481,7 +482,7 @@ const ChatDoctor = () => {
             disabled={!(typeof mensajeTexto === 'string' ? mensajeTexto.trim() : '') || enviando}
           >
             {enviando ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={COLORES.TEXTO_EN_PRIMARIO} />
             ) : (
               <Text style={styles.sendButtonText}>➤</Text>
             )}
@@ -688,7 +689,7 @@ const ChatDoctor = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.NAV_PACIENTE_FONDO,
   },
   keyboardView: {
     flex: 1,
@@ -701,7 +702,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 18,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   header: {
     flexDirection: 'row',
@@ -709,22 +710,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   backButton: {
     padding: 8,
   },
   backButtonText: {
     fontSize: 18,
-    color: '#4CAF50',
+    color: COLORES.NAV_PACIENTE,
     fontWeight: '600',
   },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     flex: 1,
     textAlign: 'center',
   },
@@ -754,20 +755,20 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   mensajePaciente: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.NAV_PACIENTE,
   },
   mensajeDoctor: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
   },
   headerRight: {
     flexDirection: 'row',
@@ -783,23 +784,23 @@ const styles = StyleSheet.create({
   typingIndicator: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   typingText: {
     fontSize: 13,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 16,
     padding: 24,
     width: '85%',
@@ -808,13 +809,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
     textAlign: 'center',
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -826,66 +827,66 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     marginBottom: 8,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   modalOptionSelected: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     borderWidth: 2,
-    borderColor: '#2196F3',
+    borderColor: COLORES.NAV_PRIMARIO,
   },
   modalOptionText: {
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     fontWeight: '500',
   },
   modalOptionTextSelected: {
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: 'bold',
   },
   modalCheckmark: {
     fontSize: 18,
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: 'bold',
   },
   modalCancelButton: {
     marginTop: 16,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     alignItems: 'center',
   },
   modalCancelText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '500',
   },
   recorderContainer: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
   },
   audioButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
   },
   audioButtonActive: {
-    backgroundColor: '#F44336',
+    backgroundColor: COLORES.ERROR_LIGHT,
   },
   audioButtonText: {
     fontSize: 24,
@@ -897,35 +898,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 22,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   sendButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.NAV_PACIENTE,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
   },
   sendButtonDisabled: {
-    backgroundColor: '#CCCCCC',
+    backgroundColor: COLORES.SWITCH_TRACK_OFF,
   },
   sendButtonText: {
     fontSize: 20,
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: 'bold',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 16,
     padding: 24,
     width: '85%',
@@ -936,20 +937,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   modalOption: {
     paddingVertical: 18,
     paddingHorizontal: 24,
     marginVertical: 8,
     borderRadius: 12,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     minHeight: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -959,21 +960,21 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   modalOptionDanger: {
-    backgroundColor: '#FFF5F5',
-    borderColor: '#FFCDD2',
+    backgroundColor: COLORES.FONDO_ERROR_CLARO,
+    borderColor: COLORES.BORDE_ERROR_CLARO,
   },
   modalOptionText: {
     fontSize: 18,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     textAlign: 'center',
     fontWeight: '600',
   },
   modalOptionTextDanger: {
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     fontWeight: '700',
   },
   editModalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 16,
     padding: 20,
     width: '90%',
@@ -985,11 +986,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
     textAlign: 'center',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   editTextInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -1010,18 +1011,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   editModalButtonCancel: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   editModalButtonSave: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.NAV_PACIENTE,
   },
   editModalButtonText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '600',
   },
   editModalButtonTextSave: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
   },
 });
 

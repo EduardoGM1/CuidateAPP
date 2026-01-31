@@ -1,18 +1,20 @@
 import { StyleSheet } from 'react-native';
+import { COLORES, TAMAÑOS } from './constantes';
 
 /**
  * Estilos compartidos para pantallas de listado con filtros
  * Reutilizados por: VerTodasCitas, HistorialAuditoria, HistorialNotificaciones
+ * Design System: colores desde COLORES (utils/constantes)
  */
 
 export const modalStyles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '80%',
@@ -22,37 +24,37 @@ export const modalStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: TAMAÑOS.ESPACIADO_MEDIO,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.SECUNDARIO_LIGHT,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: TAMAÑOS.TEXTO_TITULO,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   modalScrollView: {
     maxHeight: 400,
   },
   modalScrollContent: {
-    padding: 16,
-    paddingBottom: 8,
+    padding: TAMAÑOS.ESPACIADO_MEDIO,
+    paddingBottom: TAMAÑOS.ESPACIADO_PEQUEÑO,
   },
   modalFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 16,
+    padding: TAMAÑOS.ESPACIADO_MEDIO,
     paddingTop: 12,
-    paddingBottom: 16,
+    paddingBottom: TAMAÑOS.ESPACIADO_MEDIO,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
+    borderTopColor: COLORES.SECUNDARIO_LIGHT,
+    backgroundColor: COLORES.FONDO_CARD,
     gap: 12,
   },
   closeButtonX: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
 });
 
@@ -63,46 +65,46 @@ export const filterStyles = StyleSheet.create({
   filterLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    color: COLORES.TEXTO_PRIMARIO,
+    marginBottom: TAMAÑOS.ESPACIADO_PEQUEÑO,
   },
   dateInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
     borderRadius: 8,
     padding: 12,
     fontSize: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   doctoresList: {
     flexDirection: 'row',
   },
   doctorChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: TAMAÑOS.ESPACIADO_MEDIO,
+    paddingVertical: TAMAÑOS.ESPACIADO_PEQUEÑO,
     borderRadius: 20,
-    backgroundColor: '#E0E0E0',
-    marginRight: 8,
+    backgroundColor: COLORES.SECUNDARIO_LIGHT,
+    marginRight: TAMAÑOS.ESPACIADO_PEQUEÑO,
   },
   doctorChipActive: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO_LIGHT,
   },
   doctorChipText: {
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontSize: 14,
     fontWeight: '500',
   },
   doctorChipTextActive: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
   },
   modalButton: {
     flex: 1,
   },
   cancelButton: {
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
   },
   applyButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO_LIGHT,
   },
 });
 
@@ -119,16 +121,16 @@ export const listStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: TAMAÑOS.ESPACIADO_PEQUEÑO,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: TAMAÑOS.TEXTO_NORMAL,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   cardInfo: {
-    marginBottom: 8,
+    marginBottom: TAMAÑOS.ESPACIADO_PEQUEÑO,
   },
   infoRow: {
     flexDirection: 'row',
@@ -136,13 +138,13 @@ export const listStyles = StyleSheet.create({
     marginBottom: 6,
   },
   infoIcon: {
-    fontSize: 16,
-    marginRight: 8,
+    fontSize: TAMAÑOS.TEXTO_NORMAL,
+    marginRight: TAMAÑOS.ESPACIADO_PEQUEÑO,
     width: 24,
   },
   infoText: {
     fontSize: 14,
-    color: '#555',
+    color: COLORES.TEXTO_SECUNDARIO,
     flex: 1,
   },
 });
@@ -157,18 +159,18 @@ export const emptyStateStyles = StyleSheet.create({
   },
   emptyEmoji: {
     fontSize: 64,
-    marginBottom: 16,
+    marginBottom: TAMAÑOS.ESPACIADO_MEDIO,
   },
   emptyText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
+    color: COLORES.TEXTO_PRIMARIO,
+    marginBottom: TAMAÑOS.ESPACIADO_PEQUEÑO,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
 });
@@ -176,19 +178,19 @@ export const emptyStateStyles = StyleSheet.create({
 export const activeFiltersStyles = StyleSheet.create({
   activeFilters: {
     padding: 12,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     borderBottomWidth: 1,
-    borderBottomColor: '#BBDEFB',
+    borderBottomColor: COLORES.NAV_PRIMARIO_INACTIVO,
   },
   activeFiltersLabel: {
     fontSize: 12,
-    color: '#1976D2',
-    marginBottom: 8,
+    color: COLORES.NAV_PRIMARIO,
+    marginBottom: TAMAÑOS.ESPACIADO_PEQUEÑO,
     fontWeight: '600',
   },
   filterChipsContainer: {
     flexDirection: 'row',
-    marginBottom: 8,
+    marginBottom: TAMAÑOS.ESPACIADO_PEQUEÑO,
   },
   clearFiltersButton: {
     alignSelf: 'flex-end',
@@ -196,7 +198,7 @@ export const activeFiltersStyles = StyleSheet.create({
   },
   clearFiltersText: {
     fontSize: 12,
-    color: '#2196F3',
+    color: COLORES.PRIMARIO_LIGHT,
     textDecorationLine: 'underline',
   },
 });

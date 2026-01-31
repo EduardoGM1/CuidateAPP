@@ -25,6 +25,7 @@ import hapticService from '../../services/hapticService';
 import audioFeedbackService from '../../services/audioFeedbackService';
 import alertService from '../../services/alertService';
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 import useWebSocket from '../../hooks/useWebSocket';
 import useOffline from '../../hooks/useOffline';
 
@@ -627,7 +628,7 @@ const RegistrarSignosVitales = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   loadingContainer: {
     flex: 1,
@@ -636,7 +637,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 18,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
 });
 

@@ -15,8 +15,10 @@ import { Button, Card } from 'react-native-paper';
 import { doctorAuthService } from '../../api/authService';
 import Logger from '../../services/logger';
 import { COLORES } from '../../utils/constantes';
+import { useAuth } from '../../context/AuthContext';
 
 const ChangePasswordScreen = ({ navigation }) => {
+  const { logout } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -68,17 +70,15 @@ const ChangePasswordScreen = ({ navigation }) => {
       if (response.success) {
         Alert.alert(
           'Contraseña Cambiada',
-          'Tu contraseña ha sido cambiada exitosamente. Por favor, inicia sesión nuevamente.',
+          'Tu contraseña ha sido cambiada exitosamente. Se cerrará tu sesión para que inicies con tu nueva contraseña.',
           [
             {
               text: 'OK',
-              onPress: () => {
-                // Limpiar campos
+              onPress: async () => {
                 setCurrentPassword('');
                 setNewPassword('');
                 setConfirmPassword('');
-                // Navegar de vuelta
-                navigation.goBack();
+                await logout();
               },
             },
           ]

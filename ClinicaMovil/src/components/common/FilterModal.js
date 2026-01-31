@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Modal } from 'rea
 import { Button, Title } from 'react-native-paper';
 import DatePickerButton from '../DatePickerButton';
 import { modalStyles, filterStyles } from '../../utils/sharedStyles';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * Componente reutilizable para modales de filtros
@@ -184,7 +185,7 @@ const FilterModal = ({
               mode="contained"
               onPress={onApply}
               style={[filterStyles.modalButton, filterStyles.applyButton]}
-              buttonColor="#2196F3"
+              buttonColor={COLORES.NAV_PRIMARIO}
             >
               Aplicar
             </Button>
@@ -198,7 +199,7 @@ const FilterModal = ({
 const styles = StyleSheet.create({
   emptyText: {
     textAlign: 'center',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     padding: 20,
   },
 });

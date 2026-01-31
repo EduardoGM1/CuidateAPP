@@ -1,0 +1,24 @@
+========================================
+  COMO COMPILAR E INSTALAR LA APP (Windows)
+========================================
+
+Comando regular de Metro (solo inicia el bundler):
+  npm start
+    -> npx react-native start (comando estandar de Metro)
+
+Compilar, instalar y dejar Metro activo (recomendado):
+  npm run android
+    -> Compila e instala desde ruta corta, luego inicia Metro (queda activo hasta Ctrl+C).
+
+Solo compilar e instalar (sin iniciar Metro):
+  npm run android:install
+    -> Compila e instala desde C:\CuidateAPP\ClinicaMovil (ruta corta).
+
+Flujo alternativo (dos terminales):
+  Terminal 1:  npm start              (solo Metro)
+  Terminal 2:  npm run android:install (solo compilar/instalar cuando cambies nativo)
+
+NO uses desde esta carpeta (ruta larga) o fallara:
+  - npx react-native run-android
+  - gradlew.bat app:installDebug
+  - npm run android:directo

@@ -19,7 +19,12 @@ import { useDoctorDetails, useDoctorPatientData } from '../../hooks/useGestion';
 import useDoctorForm from '../../hooks/useDoctorForm';
 import { formatDate, formatDateTime, formatAppointmentDate, formatTodayAppointment } from '../../utils/dateUtils';
 import { useFocusEffect } from '@react-navigation/native';
-import { ESTADOS_CITA } from '../../utils/constantes';
+import { ESTADOS_CITA, COLORES } from '../../utils/constantes';
+import OptionsModal from '../../components/DetallePaciente/shared/OptionsModal';
+import DetalleCitaModal from '../../components/DetalleCitaModal/DetalleCitaModal';
+import CompletarCitaWizard from '../../components/CompletarCitaWizard';
+import DateTimePickerButton from '../../components/DateTimePickerButton';
+import gestionService from '../../api/gestionService';
 
 const DetalleDoctor = ({ route, navigation }) => {
   const { doctor: initialDoctor } = route.params || {};
@@ -41,6 +46,25 @@ const DetalleDoctor = ({ route, navigation }) => {
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredPacientes, setFilteredPacientes] = useState([]);
+  // Cita de hoy seleccionada (para modal de opciones al tocar ítem)
+  const [citaHoySeleccionada, setCitaHoySeleccionada] = useState(null);
+  // Cita reciente seleccionada (para modal de opciones en card Citas Recientes)
+  const [citaRecienteSeleccionada, setCitaRecienteSeleccionada] = useState(null);
+  // Modal Detalle de Cita (igual que en Detalle Paciente / Ver Todas Citas)
+  const [showDetalleCitaModal, setShowDetalleCitaModal] = useState(false);
+  const [citaDetalle, setCitaDetalle] = useState(null);
+  const [loadingCitaDetalle, setLoadingCitaDetalle] = useState(false);
+  // Modales para acciones de citas recientes (reutilizando lógica de VerTodasCitas)
+  const [showWizard, setShowWizard] = useState(false);
+  const [citaSeleccionadaWizard, setCitaSeleccionadaWizard] = useState(null);
+  const [showEstadoModal, setShowEstadoModal] = useState(false);
+  const [citaSeleccionadaEstado, setCitaSeleccionadaEstado] = useState(null);
+  const [nuevoEstado, setNuevoEstado] = useState('');
+  const [showReprogramarModal, setShowReprogramarModal] = useState(false);
+  const [citaSeleccionadaReprogramar, setCitaSeleccionadaReprogramar] = useState(null);
+  const [fechaReprogramada, setFechaReprogramada] = useState('');
+  const [motivoReprogramacion, setMotivoReprogramacion] = useState('');
+  const [actualizando, setActualizando] = useState(false);
   
   // Hook para operaciones de doctor (incluyendo soft delete, reactivar, hard delete)
   const { 
@@ -744,28 +768,119 @@ const DetalleDoctor = ({ route, navigation }) => {
     navigation.navigate('DetallePaciente', { paciente });
   };
 
-  const handleViewAppointment = (cita) => {
-    try {
-      // Validar que la cita tenga id_cita
-      const citaId = cita?.id_cita || cita?.id;
-      
-      if (!citaId) {
-        Logger.error('DetalleDoctor: Cita sin ID válido', { cita });
-        Alert.alert('Error', 'No se pudo obtener la información de la cita');
-        return;
-      }
-      
-      Logger.navigation('DetalleDoctor', 'VerTodasCitas', { citaId });
-      
-      // Navegar a VerTodasCitas con highlightCitaId para resaltar la cita específica
-      navigation.navigate('VerTodasCitas', { highlightCitaId: citaId });
-    } catch (error) {
-      Logger.error('DetalleDoctor: Error navegando a VerTodasCitas', { 
-        error: error.message,
-        cita: cita 
-      });
-      Alert.alert('Error', 'No se pudo abrir los detalles de la cita');
+  // Helper: nombre del paciente desde cita (formato lista doctor)
+  const getPacienteNombreFromCita = (cita) => {
+    if (!cita) return 'Paciente';
+    if (cita.paciente_nombre) return cita.paciente_nombre;
+    const p = cita.paciente || cita.Paciente;
+    if (p) return `${p.nombre || ''} ${p.apellido || p.apellido_paterno || ''} ${p.apellido_materno || ''}`.trim();
+    return 'Paciente';
+  };
+
+  // Abrir wizard Completar cita (reutiliza lógica de VerTodasCitas)
+  const handleOpenCompletarCita = async (cita) => {
+    const citaId = cita?.id_cita || cita?.id;
+    if (!citaId) {
+      Alert.alert('Error', 'ID de cita no válido');
+      return;
     }
+    setCitaRecienteSeleccionada(null);
+    try {
+      const citaData = await gestionService.getCitaById(citaId);
+      if (citaData && citaData.id_cita) {
+        setCitaSeleccionadaWizard(citaData);
+        setShowWizard(true);
+      } else {
+        Alert.alert('Error', 'No se pudieron cargar los datos de la cita');
+      }
+    } catch (error) {
+      Logger.error('DetalleDoctor: Error abriendo wizard', error);
+      Alert.alert('Error', 'No se pudo abrir el wizard: ' + (error.message || 'Error desconocido'));
+    }
+  };
+
+  // Abrir modal Cambiar estado
+  const handleOpenCambiarEstado = (cita) => {
+    setCitaSeleccionadaEstado(cita);
+    setNuevoEstado((cita.estado || ESTADOS_CITA.PENDIENTE).toLowerCase());
+    setCitaRecienteSeleccionada(null);
+    setShowEstadoModal(true);
+  };
+
+  // Actualizar estado de cita
+  const handleActualizarEstado = async () => {
+    const cita = citaSeleccionadaEstado;
+    if (!cita || !nuevoEstado) {
+      Alert.alert('Error', 'Por favor, selecciona un estado');
+      return;
+    }
+    try {
+      setActualizando(true);
+      const citaId = cita.id_cita || cita.id;
+      const response = await gestionService.updateEstadoCita(citaId, nuevoEstado);
+      if (response.success) {
+        Alert.alert('Éxito', 'Estado actualizado exitosamente');
+        setShowEstadoModal(false);
+        setCitaSeleccionadaEstado(null);
+        if (refetch) await refetch();
+      } else {
+        Alert.alert('Error', response.error || 'No se pudo actualizar el estado');
+      }
+    } catch (error) {
+      Logger.error('DetalleDoctor: Error actualizando estado', error);
+      Alert.alert('Error', 'No se pudo actualizar el estado. Intenta de nuevo.');
+    } finally {
+      setActualizando(false);
+    }
+  };
+
+  // Abrir modal Reprogramar
+  const handleOpenReprogramar = (cita) => {
+    setCitaSeleccionadaReprogramar(cita);
+    setFechaReprogramada('');
+    setMotivoReprogramacion('');
+    setCitaRecienteSeleccionada(null);
+    setShowReprogramarModal(true);
+  };
+
+  // Enviar reprogramación
+  const handleEnviarReprogramacion = async () => {
+    const cita = citaSeleccionadaReprogramar;
+    if (!cita || !fechaReprogramada) {
+      Alert.alert('Error', 'Por favor, selecciona una fecha para reprogramar');
+      return;
+    }
+    try {
+      setActualizando(true);
+      const citaId = cita.id_cita || cita.id;
+      const response = await gestionService.reprogramarCita(
+        citaId,
+        fechaReprogramada,
+        motivoReprogramacion.trim() || ''
+      );
+      if (response.success) {
+        Alert.alert('Éxito', 'Cita reprogramada exitosamente');
+        setShowReprogramarModal(false);
+        setCitaSeleccionadaReprogramar(null);
+        setFechaReprogramada('');
+        setMotivoReprogramacion('');
+        if (refetch) await refetch();
+      } else {
+        Alert.alert('Error', response.error || 'No se pudo reprogramar la cita');
+      }
+    } catch (error) {
+      Logger.error('DetalleDoctor: Error reprogramando cita', error);
+      Alert.alert('Error', 'No se pudo reprogramar la cita. Intenta de nuevo.');
+    } finally {
+      setActualizando(false);
+    }
+  };
+
+  // Éxito del wizard: refrescar y cerrar
+  const handleWizardSuccess = () => {
+    if (refetch) refetch();
+    setShowWizard(false);
+    setCitaSeleccionadaWizard(null);
   };
 
   const renderPatientCard = (paciente) => {
@@ -814,7 +929,7 @@ const DetalleDoctor = ({ route, navigation }) => {
               mode="outlined"
               onPress={() => handleUnassignPatient(paciente)}
               style={[styles.patientActionButton, styles.unassignButton]}
-              buttonColor="#F44336"
+              buttonColor={COLORES.ERROR_LIGHT}
               textColor="#FFFFFF"
               loading={unassignLoading[paciente.id]}
               disabled={unassignLoading[paciente.id]}
@@ -828,71 +943,161 @@ const DetalleDoctor = ({ route, navigation }) => {
   };
 
   const renderAppointmentCard = (cita) => (
-    <Card key={cita.id} style={styles.appointmentCard}>
-      <Card.Content>
-        <View style={styles.appointmentHeader}>
-          <Title style={styles.appointmentTitle}>
-            {cita.paciente.nombre} {cita.paciente.apellido}
-          </Title>
-          <Text style={styles.appointmentTime}>
-            {formatAppointmentDate(cita.fecha_cita)}
-          </Text>
-        </View>
-        
-        <Paragraph style={styles.appointmentMotivo}>
-          <Text style={styles.boldText}>Motivo:</Text> {cita.motivo}
-        </Paragraph>
-        
-        <View style={styles.appointmentStatus}>
-          <Chip 
-            style={[
-              styles.statusChip,
-              { backgroundColor: getEstadoCitaColor(cita.estado || ESTADOS_CITA.PENDIENTE) }
-            ]}
-            textStyle={{ color: '#FFFFFF', fontSize: 12, fontWeight: '600' }}
+    <TouchableOpacity
+      key={cita.id}
+      onPress={() => setCitaRecienteSeleccionada(cita)}
+      activeOpacity={0.7}
+    >
+      <Card style={styles.appointmentCard}>
+        <Card.Content>
+          <View style={styles.appointmentHeader}>
+            <Title style={styles.appointmentTitle}>
+              {cita.paciente.nombre} {cita.paciente.apellido}
+            </Title>
+            <Text style={styles.appointmentTime}>
+              {formatAppointmentDate(cita.fecha_cita)}
+            </Text>
+          </View>
+          
+          <Paragraph style={styles.appointmentMotivo}>
+            <Text style={styles.boldText}>Motivo:</Text> {cita.motivo}
+          </Paragraph>
+          
+          <View style={styles.appointmentStatus}>
+            <Chip 
+              style={[
+                styles.statusChip,
+                { backgroundColor: getEstadoCitaColor(cita.estado || ESTADOS_CITA.PENDIENTE) }
+              ]}
+              textStyle={{ color: '#FFFFFF', fontSize: 12, fontWeight: '600' }}
+            >
+              {getEstadoCitaTexto(cita.estado || ESTADOS_CITA.PENDIENTE)}
+            </Chip>
+          </View>
+          
+          <Button
+            mode="outlined"
+            onPress={() => setCitaRecienteSeleccionada(cita)}
+            style={styles.viewButton}
           >
-            {getEstadoCitaTexto(cita.estado || ESTADOS_CITA.PENDIENTE)}
-          </Chip>
-        </View>
-        
-        <Button
-          mode="outlined"
-          onPress={() => handleViewAppointment(cita)}
-          style={styles.viewButton}
-        >
-          Ver Detalles
-        </Button>
-      </Card.Content>
-    </Card>
+            Ver Detalles
+          </Button>
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
   );
 
   const renderTodayAppointmentCard = (cita) => (
-    <Card key={cita.id} style={styles.todayAppointmentCard}>
-      <Card.Content>
-        <View style={styles.todayAppointmentHeader}>
-          <Text style={styles.todayAppointmentTime} numberOfLines={1}>
-            {formatTodayAppointment(cita.fecha_cita)}
-          </Text>
-          <View style={[
-            styles.statusBadge,
-            { backgroundColor: getEstadoCitaColor(cita.estado || ESTADOS_CITA.PENDIENTE) }
-          ]}>
-            <Text style={styles.statusBadgeText}>
-              {getEstadoCitaTexto(cita.estado || ESTADOS_CITA.PENDIENTE)}
+    <TouchableOpacity
+      key={cita.id}
+      onPress={() => setCitaHoySeleccionada(cita)}
+      activeOpacity={0.7}
+    >
+      <Card style={styles.todayAppointmentCard}>
+        <Card.Content>
+          <View style={styles.todayAppointmentHeader}>
+            <Text style={styles.todayAppointmentTime} numberOfLines={1}>
+              {formatTodayAppointment(cita.fecha_cita)}
             </Text>
+            <View style={[
+              styles.statusBadge,
+              { backgroundColor: getEstadoCitaColor(cita.estado || ESTADOS_CITA.PENDIENTE) }
+            ]}>
+              <Text style={styles.statusBadgeText}>
+                {getEstadoCitaTexto(cita.estado || ESTADOS_CITA.PENDIENTE)}
+              </Text>
+            </View>
           </View>
-        </View>
-        
-        <Title style={styles.todayAppointmentTitle}>
-          {cita.paciente.nombre} {cita.paciente.apellido}
-        </Title>
-        
-        <Paragraph style={styles.todayAppointmentMotivo}>
-          {cita.motivo}
-        </Paragraph>
-      </Card.Content>
-    </Card>
+          
+          <Title style={styles.todayAppointmentTitle}>
+            {cita.paciente.nombre} {cita.paciente.apellido}
+          </Title>
+          
+          <Paragraph style={styles.todayAppointmentMotivo}>
+            {cita.motivo}
+          </Paragraph>
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
   );
+
+  // Abrir modal Detalle de Cita (reutilizado por Citas de Hoy y Citas Recientes)
+  const handleOpenCitaDetalle = async (cita) => {
+    const citaId = cita?.id_cita || cita?.id;
+    if (!citaId) {
+      Alert.alert('Error', 'ID de cita no válido');
+      return;
+    }
+    setLoadingCitaDetalle(true);
+    setCitaDetalle(null);
+    setCitaHoySeleccionada(null);
+    setCitaRecienteSeleccionada(null);
+    setShowDetalleCitaModal(true);
+    try {
+      Logger.info('DetalleDoctor: Obteniendo detalle de cita', { citaId });
+      const citaData = await gestionService.getCitaById(citaId);
+      Logger.success('DetalleDoctor: Detalle de cita obtenido', {
+        citaId,
+        hasSignosVitales: Array.isArray(citaData?.SignosVitales) && citaData.SignosVitales.length > 0,
+      });
+      setCitaDetalle(citaData);
+    } catch (error) {
+      Logger.error('DetalleDoctor: Error obteniendo detalle de cita', error);
+      Alert.alert('Error', 'No se pudo cargar el detalle de la cita');
+      setShowDetalleCitaModal(false);
+    } finally {
+      setLoadingCitaDetalle(false);
+    }
+  };
+
+  const opcionesCitaHoy = React.useMemo(() => {
+    if (!citaHoySeleccionada) return [];
+    return [
+      {
+        label: 'Ver detalle',
+        onPress: () => handleOpenCitaDetalle(citaHoySeleccionada),
+        color: '#2196F3',
+      },
+    ];
+  }, [citaHoySeleccionada]);
+
+  // Opciones del modal "Citas Recientes" según estado (abren modales directos, sin navegar)
+  const opcionesCitaReciente = React.useMemo(() => {
+    if (!citaRecienteSeleccionada) return [];
+    const cita = citaRecienteSeleccionada;
+    const estado = (cita.estado || ESTADOS_CITA.PENDIENTE).toLowerCase();
+    const options = [
+      {
+        label: 'Ver detalle completo',
+        onPress: () => handleOpenCitaDetalle(cita),
+        color: '#2196F3',
+      },
+    ];
+    if (estado === ESTADOS_CITA.PENDIENTE) {
+      options.push(
+        { label: 'Completar cita', onPress: () => handleOpenCompletarCita(cita), color: '#4CAF50' },
+        { label: 'Reprogramar', onPress: () => handleOpenReprogramar(cita), color: '#2196F3' },
+        { label: 'Cambiar estado', onPress: () => handleOpenCambiarEstado(cita), color: '#FF9800' }
+      );
+    } else if (estado === ESTADOS_CITA.REPROGRAMADA) {
+      options.push({
+        label: 'Reprogramar',
+        onPress: () => handleOpenReprogramar(cita),
+        color: '#2196F3',
+      });
+    }
+    return options;
+  }, [citaRecienteSeleccionada]);
+
+  // Título del modal de opciones para una cita reciente (reutiliza formateo)
+  const tituloModalCitaReciente = React.useMemo(() => {
+    if (!citaRecienteSeleccionada) return 'Opciones';
+    const c = citaRecienteSeleccionada;
+    const nombre = c.paciente ? `${c.paciente.nombre || ''} ${c.paciente.apellido || ''}`.trim() || 'Paciente' : 'Paciente';
+    const fecha = formatAppointmentDate(c.fecha_cita);
+    const estadoTexto = getEstadoCitaTexto(c.estado || ESTADOS_CITA.PENDIENTE);
+    return `Cita: ${nombre} - ${fecha} - ${estadoTexto}`;
+  }, [citaRecienteSeleccionada]);
 
   // Si no es administrador, no renderizar nada
   // Usar datos dinámicos o fallback a datos iniciales con validación
@@ -1027,7 +1232,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                   mode="contained"
                   onPress={handleEditDoctor}
                   style={[styles.topButton, styles.editButton]}
-                  buttonColor="#FFC107"
+                  buttonColor={COLORES.ADVERTENCIA_LIGHT}
                   textColor="#FFFFFF"
                   labelStyle={styles.buttonLabel}
                 >
@@ -1037,7 +1242,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                   mode="outlined"
                   onPress={handleDeleteDoctor}
                   style={[styles.topButton, styles.deleteButton]}
-                  buttonColor="#F44336"
+                  buttonColor={COLORES.ERROR_LIGHT}
                   textColor="#FFFFFF"
                   labelStyle={styles.buttonLabel}
                   disabled={deleteLoading}
@@ -1052,7 +1257,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                 mode="outlined"
                 onPress={() => setShowPasswordModal(true)}
                 style={[styles.fullWidthButton, styles.passwordButton]}
-                buttonColor="#9C27B0"
+                buttonColor={COLORES.SECUNDARIO_LIGHT}
                 textColor="#FFFFFF"
                 labelStyle={styles.buttonLabel}
                 icon="key"
@@ -1067,7 +1272,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                 mode="contained"
                 onPress={handleReactivateDoctor}
                 style={[styles.actionButton, styles.reactivateButton]}
-                buttonColor="#4CAF50"
+                buttonColor={COLORES.EXITO_LIGHT}
                 textColor="#FFFFFF"
                 labelStyle={styles.buttonLabel}
                 disabled={deleteLoading}
@@ -1079,7 +1284,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                 mode="outlined"
                 onPress={handleHardDeleteDoctor}
                 style={[styles.actionButton, styles.hardDeleteButton]}
-                buttonColor="#D32F2F"
+                buttonColor={COLORES.ERROR}
                 textColor="#FFFFFF"
                 labelStyle={styles.buttonLabel}
                 disabled={deleteLoading}
@@ -1151,7 +1356,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                   mode="contained"
                   onPress={handleOpenAssignModal}
                   style={styles.assignButton}
-                  buttonColor="#4CAF50"
+                  buttonColor={COLORES.EXITO_LIGHT}
                   textColor="#FFFFFF"
                   loading={assignLoading}
                   disabled={assignLoading}
@@ -1199,6 +1404,205 @@ const DetalleDoctor = ({ route, navigation }) => {
           </Card.Content>
         </Card>
       </ScrollView>
+
+      {/* Modal al tocar una cita de hoy (Citas de Hoy) */}
+      <OptionsModal
+        visible={!!citaHoySeleccionada}
+        onClose={() => setCitaHoySeleccionada(null)}
+        title={citaHoySeleccionada
+          ? `Cita: ${citaHoySeleccionada.paciente?.nombre || ''} ${citaHoySeleccionada.paciente?.apellido || ''} - ${formatTodayAppointment(citaHoySeleccionada.fecha_cita)}`
+          : 'Opciones'}
+        options={opcionesCitaHoy}
+      />
+
+      {/* Modal al tocar una cita reciente (Citas Recientes): info + opciones por estado */}
+      <OptionsModal
+        visible={!!citaRecienteSeleccionada}
+        onClose={() => setCitaRecienteSeleccionada(null)}
+        title={tituloModalCitaReciente}
+        options={opcionesCitaReciente}
+      />
+
+      {/* Modal Detalle de Cita (reutilizado por Citas de Hoy y Citas Recientes) */}
+      <DetalleCitaModal
+        visible={showDetalleCitaModal}
+        onClose={() => {
+          setShowDetalleCitaModal(false);
+          setCitaDetalle(null);
+        }}
+        citaDetalle={citaDetalle}
+        loading={loadingCitaDetalle}
+        userRole={userRole}
+        formatearFecha={formatDateTime}
+      />
+
+      {/* Wizard Completar cita (desde Citas Recientes) */}
+      <CompletarCitaWizard
+        visible={showWizard}
+        onClose={() => {
+          setShowWizard(false);
+          setCitaSeleccionadaWizard(null);
+        }}
+        cita={citaSeleccionadaWizard}
+        onSuccess={handleWizardSuccess}
+      />
+
+      {/* Modal Cambiar estado (desde Citas Recientes) */}
+      <Modal
+        visible={showEstadoModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowEstadoModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Title style={styles.modalTitle}>📋 Cambiar Estado</Title>
+              <TouchableOpacity onPress={() => setShowEstadoModal(false)}>
+                <Text style={styles.closeButtonX}>X</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              style={styles.modalScrollView}
+              contentContainerStyle={styles.modalScrollContent}
+            >
+              {citaSeleccionadaEstado && (
+                <View style={styles.modalCitaInfo}>
+                  <Text style={styles.modalCitaInfoText}>
+                    👤 {getPacienteNombreFromCita(citaSeleccionadaEstado)}
+                  </Text>
+                  <Text style={styles.modalCitaInfoText}>
+                    📅 {formatDateTime(citaSeleccionadaEstado.fecha_cita)}
+                  </Text>
+                  <Text style={styles.modalCitaInfoText}>
+                    Estado actual: {getEstadoCitaTexto(citaSeleccionadaEstado.estado)}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.filterSection}>
+                <Text style={styles.filterLabel}>Nuevo Estado *</Text>
+                <View style={styles.estadosContainer}>
+                  {Object.values(ESTADOS_CITA).map((estado) => (
+                    <TouchableOpacity
+                      key={estado}
+                      style={[
+                        styles.estadoOption,
+                        nuevoEstado === estado && styles.estadoOptionActive,
+                        { backgroundColor: nuevoEstado === estado ? getEstadoCitaColor(estado) : '#E0E0E0' }
+                      ]}
+                      onPress={() => setNuevoEstado(estado)}
+                    >
+                      <Text
+                        style={[
+                          styles.estadoOptionText,
+                          nuevoEstado === estado && styles.estadoOptionTextActive
+                        ]}
+                      >
+                        {getEstadoCitaTexto(estado)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </ScrollView>
+            <View style={styles.modalFooter}>
+              <Button
+                mode="outlined"
+                onPress={() => setShowEstadoModal(false)}
+                style={[styles.modalButton, styles.modalCancelButton]}
+                disabled={actualizando}
+              >
+                Cancelar
+              </Button>
+              <Button
+                mode="contained"
+                onPress={handleActualizarEstado}
+                style={[styles.modalButton, styles.modalApplyButton]}
+                buttonColor={COLORES.EXITO_LIGHT}
+                loading={actualizando}
+                disabled={actualizando || !nuevoEstado}
+              >
+                Actualizar
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal Reprogramar (desde Citas Recientes) */}
+      <Modal
+        visible={showReprogramarModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowReprogramarModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Title style={styles.modalTitle}>🔄 Reprogramar Cita</Title>
+              <TouchableOpacity onPress={() => setShowReprogramarModal(false)}>
+                <Text style={styles.closeButtonX}>X</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              style={styles.modalScrollView}
+              contentContainerStyle={styles.modalScrollContent}
+            >
+              {citaSeleccionadaReprogramar && (
+                <View style={styles.modalCitaInfo}>
+                  <Text style={styles.modalCitaInfoText}>
+                    👤 {getPacienteNombreFromCita(citaSeleccionadaReprogramar)}
+                  </Text>
+                  <Text style={styles.modalCitaInfoText}>
+                    📅 Fecha actual: {formatDateTime(citaSeleccionadaReprogramar.fecha_cita)}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.filterSection}>
+                <Text style={styles.filterLabel}>Nueva Fecha y Hora *</Text>
+                <DateTimePickerButton
+                  value={fechaReprogramada}
+                  onDateChange={setFechaReprogramada}
+                  label="Seleccionar fecha y hora"
+                  minimumDate={new Date()}
+                />
+              </View>
+              <View style={styles.filterSection}>
+                <Text style={styles.filterLabel}>Motivo (opcional)</Text>
+                <TextInput
+                  style={styles.modalTextInput}
+                  placeholder="Ej: Cambio de horario por disponibilidad..."
+                  value={motivoReprogramacion}
+                  onChangeText={setMotivoReprogramacion}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+              </View>
+            </ScrollView>
+            <View style={styles.modalFooter}>
+              <Button
+                mode="outlined"
+                onPress={() => setShowReprogramarModal(false)}
+                style={[styles.modalButton, styles.modalCancelButton]}
+                disabled={actualizando}
+              >
+                Cancelar
+              </Button>
+              <Button
+                mode="contained"
+                onPress={handleEnviarReprogramacion}
+                style={[styles.modalButton, styles.modalApplyButton]}
+                buttonColor={COLORES.NAV_PRIMARIO}
+                loading={actualizando}
+                disabled={actualizando || !fechaReprogramada}
+              >
+                Reprogramar
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Modal para cambiar contraseña */}
       <Modal
@@ -1265,7 +1669,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                 mode="contained"
                 onPress={handleChangePassword}
                 style={styles.modalButton}
-                buttonColor="#9C27B0"
+                buttonColor={COLORES.SECUNDARIO_LIGHT}
                 disabled={passwordLoading}
                 loading={passwordLoading}
               >
@@ -1379,7 +1783,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                         mode="contained"
                         onPress={() => handleAssignPatient(patient)}
                         style={styles.assignPatientButton}
-                        buttonColor="#4CAF50"
+                        buttonColor={COLORES.EXITO_LIGHT}
                         textColor="#FFFFFF"
                         icon="plus"
                         loading={assignLoading}
@@ -1839,6 +2243,70 @@ const styles = StyleSheet.create({
   modalButton: {
     flex: 1,
     borderRadius: 8,
+  },
+  modalCancelButton: {
+    borderColor: '#999',
+  },
+  modalApplyButton: {},
+  modalScrollView: {
+    maxHeight: 400,
+  },
+  modalScrollContent: {
+    padding: 16,
+    paddingBottom: 8,
+  },
+  modalCitaInfo: {
+    backgroundColor: '#F5F5F5',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  modalCitaInfoText: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 4,
+  },
+  filterSection: {
+    marginBottom: 16,
+  },
+  filterLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  estadosContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  estadoOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  estadoOptionActive: {
+    elevation: 2,
+  },
+  estadoOptionText: {
+    color: '#666',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  estadoOptionTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  modalTextInput: {
+    borderWidth: 1,
+    borderColor: '#BDBDBD',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    minHeight: 80,
+    backgroundColor: '#FFFFFF',
   },
   // Estilos para asignación de pacientes
   cardHeader: {

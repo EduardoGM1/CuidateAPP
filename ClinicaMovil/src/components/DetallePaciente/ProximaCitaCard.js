@@ -5,7 +5,7 @@
  * @date 2025-11-17
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Card, Title, Chip } from 'react-native-paper';
 import ConsultaCard from './ConsultaCard';
@@ -25,6 +25,7 @@ import Logger from '../../services/logger';
  * @param {Function} props.getEstadoCitaColor - Función para obtener color del estado
  * @param {Function} props.getEstadoCitaTexto - Función para obtener texto del estado
  * @param {Function} props.onOpenOptions - Función para abrir opciones de citas
+ * @param {number} [props.refreshTrigger] - Cuando cambia, se recargan las citas (p. ej. al cerrar el modal de detalle)
  */
 const ProximaCitaCard = ({
   pacienteId,
@@ -34,7 +35,8 @@ const ProximaCitaCard = ({
   calcularIMC,
   getEstadoCitaColor,
   getEstadoCitaTexto,
-  onOpenOptions
+  onOpenOptions,
+  refreshTrigger
 }) => {
   // Obtener consultas agrupadas
   const {
@@ -44,6 +46,13 @@ const ProximaCitaCard = ({
     totalCitas,
     refresh
   } = useConsultasAgrupadas(pacienteId);
+
+  // Refrescar lista cuando se cierra el modal de detalle de cita (para mostrar estado actualizado)
+  useEffect(() => {
+    if (refreshTrigger != null && refreshTrigger > 0 && typeof refresh === 'function') {
+      refresh();
+    }
+  }, [refreshTrigger]);
 
   // Obtener próxima o última cita
   const { cita: citaSeleccionada, tipo: tipoCita } = useMemo(() => {

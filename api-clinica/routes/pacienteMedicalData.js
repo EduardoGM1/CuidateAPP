@@ -18,6 +18,7 @@ import {
   deletePacienteDiagnostico,
   getPacienteMedicamentos,
   createPacientePlanMedicacion,
+  updatePacientePlanMedicacion,
   deletePacientePlanMedicacion,
   getPacienteResumenMedico,
   getPacienteRedApoyo,
@@ -292,6 +293,20 @@ router.post('/:id/planes-medicacion',
   writeRateLimit,
   autoEncryptRequest('planes_medicacion'),
   createPacientePlanMedicacion,
+  autoDecryptResponse('planes_medicacion')
+);
+
+/**
+ * Actualizar plan de medicación de un paciente
+ * PUT /api/pacientes/:id/planes-medicacion/:planId
+ * Body: id_cita?, fecha_inicio?, fecha_fin?, observaciones?, medicamentos: [{ id_medicamento, dosis?, frecuencia?, horario?, horarios?, via_administracion?, observaciones? }]
+ */
+router.put('/:id/planes-medicacion/:planId',
+  authorizeRoles(['Admin', 'Doctor']),
+  authorizePatientAccess,
+  writeRateLimit,
+  autoEncryptRequest('planes_medicacion'),
+  updatePacientePlanMedicacion,
   autoDecryptResponse('planes_medicacion')
 );
 

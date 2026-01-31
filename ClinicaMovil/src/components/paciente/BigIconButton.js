@@ -11,6 +11,7 @@ import useTTS from '../../hooks/useTTS';
 import hapticService from '../../services/hapticService';
 import audioFeedbackService from '../../services/audioFeedbackService';
 import Badge from './Badge';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * Botón grande accesible para pacientes
@@ -41,12 +42,12 @@ const BigIconButton = memo(({
   const { speak } = useTTS();
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
-  // Colores por tipo
+  // Colores por tipo (Design System: desde COLORES)
   const colorStyles = {
-    green: { border: '#4CAF50', bg: '#F1F8E9' },
-    red: { border: '#F44336', bg: '#FFEBEE' },
-    blue: { border: '#2196F3', bg: '#E3F2FD' },
-    orange: { border: '#FF9800', bg: '#FFF3E0' },
+    green: { border: COLORES.EXITO_LIGHT, bg: '#F1F8E9' },
+    red: { border: COLORES.ERROR_LIGHT, bg: '#FFEBEE' },
+    blue: { border: COLORES.PRIMARIO_LIGHT, bg: COLORES.NAV_FILTROS_ACTIVOS },
+    orange: { border: COLORES.ADVERTENCIA_LIGHT, bg: '#FFF3E0' },
     purple: { border: '#9C27B0', bg: '#F3E5F5' },
   };
 
@@ -103,7 +104,7 @@ const BigIconButton = memo(({
           styles.button,
           {
             borderColor: selectedColor.border,
-            backgroundColor: disabled ? '#E0E0E0' : selectedColor.bg,
+            backgroundColor: disabled ? COLORES.TEXTO_DISABLED : selectedColor.bg,
           },
           disabled && styles.disabled,
         ]}

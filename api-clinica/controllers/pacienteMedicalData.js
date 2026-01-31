@@ -2143,6 +2143,211 @@ export const createPacientePlanMedicacion = async (req, res) => {
 };
 
 /**
+ * Actualizar plan de medicación de un paciente
+ * PUT /api/pacientes/:id/planes-medicacion/:planId
+ */
+export const updatePacientePlanMedicacion = async (req, res) => {
+  try {
+    const { id, planId } = req.params;
+    const {
+      id_cita,
+      fecha_inicio,
+      fecha_fin,
+      observaciones,
+      medicamentos
+    } = req.body;
+
+    if (!id || isNaN(id) || !planId || isNaN(planId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'IDs inválidos'
+      });
+    }
+
+    const pacienteId = parseInt(id);
+    const idPlan = parseInt(planId);
+
+    // Verificar acceso al paciente
+    const acceso = await verificarAccesoPaciente(req, pacienteId);
+    if (acceso.error) {
+      return res.status(acceso.status).json({
+        success: false,
+        error: acceso.error
+      });
+    }
+
+    // Buscar plan
+    const plan = await PlanMedicacion.findOne({
+      where: {
+        id_plan: idPlan,
+        id_paciente: pacienteId
+      }
+    });
+
+    if (!plan) {
+      return res.status(404).json({
+        success: false,
+        error: 'Plan de medicación no encontrado'
+      });
+    }
+
+    // Validar medicamentos (misma lógica que create)
+    if (!medicamentos || !Array.isArray(medicamentos) || medicamentos.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Debe proporcionar al menos un medicamento'
+      });
+    }
+
+    for (const med of medicamentos) {
+      if (!med.id_medicamento || isNaN(med.id_medicamento)) {
+        return res.status(400).json({
+          success: false,
+          error: 'ID de medicamento inválido'
+        });
+      }
+      const medicamento = await Medicamento.findByPk(med.id_medicamento);
+      if (!medicamento) {
+        return res.status(404).json({
+          success: false,
+          error: `Medicamento con ID ${med.id_medicamento} no encontrado`
+        });
+      }
+    }
+
+    // Si se proporciona id_cita, verificar que existe y obtener doctorId
+    let doctorId = plan.id_doctor;
+    if (id_cita !== undefined) {
+      if (id_cita) {
+        const cita = await Cita.findOne({
+          where: { id_cita: id_cita, id_paciente: pacienteId },
+          include: [{ model: Doctor, attributes: ['id_doctor'] }]
+        });
+        if (!cita) {
+          return res.status(404).json({
+            success: false,
+            error: 'Cita no encontrada o no pertenece a este paciente'
+          });
+        }
+        doctorId = cita.id_doctor;
+      } else {
+        doctorId = null;
+      }
+    }
+
+    // Actualizar cabecera del plan
+    if (id_cita !== undefined) plan.id_cita = id_cita || null;
+    if (fecha_inicio !== undefined) plan.fecha_inicio = fecha_inicio || null;
+    if (fecha_fin !== undefined) plan.fecha_fin = fecha_fin || null;
+    if (observaciones !== undefined) plan.observaciones = observaciones?.trim() || null;
+    if (id_cita !== undefined) plan.id_doctor = doctorId;
+    await plan.save();
+
+    // Reemplazar detalles: eliminar existentes y crear nuevos
+    await PlanDetalle.destroy({
+      where: { id_plan: idPlan }
+    });
+
+    for (const med of medicamentos) {
+      let horariosArray = [];
+      if (med.horarios && Array.isArray(med.horarios)) {
+        horariosArray = med.horarios.filter(h => h && h.trim());
+      } else if (med.horario) {
+        horariosArray = [med.horario];
+      }
+      const primerHorario = horariosArray.length > 0 ? horariosArray[0] : null;
+
+      await PlanDetalle.create({
+        id_plan: idPlan,
+        id_medicamento: med.id_medicamento,
+        dosis: med.dosis || null,
+        frecuencia: med.frecuencia || null,
+        horario: primerHorario,
+        horarios: horariosArray.length > 0 ? horariosArray : null,
+        via_administracion: med.via_administracion || null,
+        observaciones: med.observaciones || null
+      });
+    }
+
+    logger.info('Plan de medicación actualizado', {
+      pacienteId,
+      planId: idPlan,
+      totalMedicamentos: medicamentos.length,
+      userRole: req.user.rol,
+      userId: req.user.id
+    });
+
+    // Sincronizar tratamiento farmacológico
+    try {
+      const { sincronizarTratamientoFarmacologico } = await import('../services/sincronizar-tratamiento-farmacologico.js');
+      await sincronizarTratamientoFarmacologico(pacienteId);
+      logger.info('Tratamiento farmacológico sincronizado después de actualizar plan', { pacienteId });
+    } catch (syncError) {
+      logger.warn('Error sincronizando tratamiento farmacológico (no crítico):', syncError);
+    }
+
+    // Obtener plan completo con detalles para la respuesta
+    const planCompleto = await PlanMedicacion.findByPk(idPlan, {
+      include: [
+        {
+          model: PlanDetalle,
+          include: [
+            {
+              model: Medicamento,
+              attributes: ['id_medicamento', 'nombre_medicamento', 'descripcion']
+            }
+          ]
+        }
+      ]
+    });
+
+    const planFormateado = {
+      id_plan: planCompleto.id_plan,
+      id_paciente: planCompleto.id_paciente,
+      id_doctor: planCompleto.id_doctor,
+      id_cita: planCompleto.id_cita,
+      fecha_inicio: planCompleto.fecha_inicio,
+      fecha_fin: planCompleto.fecha_fin,
+      observaciones: planCompleto.observaciones,
+      activo: planCompleto.activo,
+      fecha_creacion: planCompleto.fecha_creacion,
+      medicamentos: planCompleto.PlanDetalles?.map(det => ({
+        id_medicamento: det.Medicamento.id_medicamento,
+        nombre_medicamento: det.Medicamento.nombre_medicamento,
+        descripcion: det.Medicamento.descripcion,
+        dosis: det.dosis,
+        frecuencia: det.frecuencia,
+        horario: det.horario,
+        horarios: det.horarios && Array.isArray(det.horarios) ? det.horarios : (det.horario ? [det.horario] : []),
+        via_administracion: det.via_administracion,
+        observaciones: det.observaciones
+      })) || []
+    };
+
+    res.json({
+      success: true,
+      message: 'Plan de medicación actualizado exitosamente',
+      data: planFormateado
+    });
+
+  } catch (error) {
+    logger.error('Error actualizando plan de medicación:', {
+      error: error.message,
+      stack: error.stack,
+      pacienteId: req.params.id,
+      planId: req.params.planId,
+      userRole: req.user?.rol
+    });
+    res.status(500).json({
+      success: false,
+      error: 'Error interno del servidor',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      requestId: req.id || Date.now().toString()
+    });
+  }
+};
+
+/**
  * Eliminar plan de medicación de un paciente
  * DELETE /api/pacientes/:id/planes-medicacion/:planId
  */

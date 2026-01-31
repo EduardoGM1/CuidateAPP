@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { Usuario, DoctorPaciente } from '../models/index.js';
+import { Usuario, Doctor, Paciente, DoctorPaciente } from '../models/index.js';
 import logger from '../utils/logger.js';
 
 // Middleware para autenticar usuarios
@@ -35,10 +35,30 @@ export const authenticateToken = async (req, res, next) => {
       rol: usuario.rol
     };
 
+    // Para doctores: resolver id_doctor (rutas dashboard/doctor usan id_doctor en repositorio)
+    if (usuario.rol === 'Doctor') {
+      const doctor = await Doctor.findOne({
+        where: { id_usuario: usuario.id_usuario },
+        attributes: ['id_doctor']
+      });
+      if (doctor) req.user.id_doctor = doctor.id_doctor;
+    }
+
+    // Para pacientes: resolver id_paciente (por consistencia con móvil)
+    if (usuario.rol === 'Paciente') {
+      const paciente = await Paciente.findOne({
+        where: { id_usuario: usuario.id_usuario },
+        attributes: ['id_paciente']
+      });
+      if (paciente) req.user.id_paciente = paciente.id_paciente;
+    }
+
     logger.info('Usuario autenticado', {
       userId: usuario.id_usuario,
       email: usuario.email,
       rol: usuario.rol,
+      id_doctor: req.user.id_doctor,
+      id_paciente: req.user.id_paciente,
       ip: req.ip
     });
 
@@ -138,11 +158,12 @@ export const validatePatientAccess = async (req, res, next) => {
       return next();
     }
 
-    // Para doctores, verificar si tienen acceso al paciente
+    // Para doctores, verificar si tienen acceso al paciente (usar id_doctor, no id_usuario)
     if (userRole === 'Doctor') {
+      const doctorId = req.user.id_doctor ?? userId;
       const hasAccess = await DoctorPaciente.findOne({
         where: {
-          id_doctor: userId,
+          id_doctor: doctorId,
           id_paciente: pacienteId
         }
       });

@@ -3,6 +3,7 @@ import { View, StyleSheet, Text, TouchableOpacity, Image } from 'react-native';
 import { Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BotonAudio from '../../components/common/BotonAudio';
+import { COLORES } from '../../utils/constantes';
 
 const PantallaInicioSesion = ({ navigation }) => {
   const [isZoomed, setIsZoomed] = useState(false);
@@ -100,7 +101,7 @@ const PantallaInicioSesion = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   logoContainer: {
     alignItems: 'center',
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   headerButtons: {
     flexDirection: 'row',
@@ -129,9 +130,9 @@ const styles = StyleSheet.create({
   audioButton: {
     padding: 12,
     borderRadius: 25,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.NAV_PACIENTE_FONDO,
     borderWidth: 2,
-    borderColor: '#4CAF50',
+    borderColor: COLORES.EXITO_LIGHT,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -142,7 +143,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   titleZoomed: {
     fontSize: 32,
@@ -171,9 +172,9 @@ const styles = StyleSheet.create({
   zoomButton: {
     padding: 12,
     borderRadius: 25,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     borderWidth: 2,
-    borderColor: '#1976D2',
+    borderColor: COLORES.NAV_PRIMARIO,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -181,7 +182,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   diagnosticButton: {
-    borderColor: '#FF9800',
+    borderColor: COLORES.ADVERTENCIA_LIGHT,
     borderWidth: 2,
   },
   buttonContent: {

@@ -261,18 +261,18 @@ export const pacienteAuthService = {
 
 // Servicio de autenticación para doctores
 export const doctorAuthService = {
-  // Login estándar con email y contraseña
+  // Login estándar con email y contraseña (usa /api/mobile/login - compatible con credenciales creadas)
   async login(email, password) {
     try {
-      Logger.apiCall('POST', '/auth/login', { email });
+      Logger.apiCall('POST', '/mobile/login', { email });
       
       const apiClient = await createApiClient();
-      const response = await apiClient.post('/auth/login', {
-        email: email,
+      const response = await apiClient.post('/mobile/login', {
+        email: email.trim().toLowerCase(),
         password: password,
       });
       
-      Logger.apiResponse('/auth/login', response.status, 'Login doctor/administrador exitoso');
+      Logger.apiResponse('/mobile/login', response.status, 'Login doctor/administrador exitoso');
       Logger.auth('login', 'doctor/administrador');
       return response.data;
     } catch (error) {

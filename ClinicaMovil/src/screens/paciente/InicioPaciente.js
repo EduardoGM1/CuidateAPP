@@ -30,6 +30,7 @@ import hapticService from '../../services/hapticService';
 import audioFeedbackService from '../../services/audioFeedbackService';
 import localNotificationService from '../../services/localNotificationService';
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 import useWebSocket from '../../hooks/useWebSocket';
 import OfflineIndicator from '../../components/common/OfflineIndicator';
 
@@ -244,8 +245,8 @@ const InicioPaciente = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#4CAF50']}
-            tintColor="#4CAF50"
+            colors={[COLORES.NAV_PACIENTE]}
+            tintColor={COLORES.NAV_PACIENTE}
           />
         }
       >
@@ -344,7 +345,7 @@ const InicioPaciente = () => {
             <View style={styles.wsStatusContainer}>
               <View style={[
                 styles.wsStatusDot,
-                { backgroundColor: isConnected ? '#4CAF50' : '#F44336' }
+                { backgroundColor: isConnected ? COLORES.NAV_PACIENTE : COLORES.ERROR_LIGHT }
               ]} />
               <Text style={styles.wsStatusText}>
                 WebSocket: {isConnected ? '🟢 Conectado' : '🔴 Desconectado'}
@@ -682,7 +683,7 @@ const InicioPaciente = () => {
               
               {/* Estado del token */}
               <TouchableOpacity
-                style={[styles.testButton, { marginTop: 10, backgroundColor: '#6c757d' }]}
+                style={[styles.testButton, { marginTop: 10, backgroundColor: COLORES.SECUNDARIO_LIGHT }]}
                 onPress={async () => {
                   try {
                     const pushTokenService = (await import('../../services/pushTokenService.js')).default;
@@ -741,7 +742,7 @@ const InicioPaciente = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.NAV_PACIENTE_FONDO,
   },
   scrollView: {
     flex: 1,
@@ -758,21 +759,21 @@ const styles = StyleSheet.create({
   saludo: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     marginBottom: 12,
     textAlign: 'center',
   },
   listenButton: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     borderRadius: 12,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#2196F3',
+    borderColor: COLORES.INFO_LIGHT,
   },
   listenButtonText: {
     fontSize: 14,
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: '600',
   },
   optionsContainer: {
@@ -783,7 +784,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', // ✅ Centrar verticalmente si hay espacio
   },
   logoutButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: COLORES.ERROR_LIGHT,
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 30,
@@ -791,7 +792,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     minWidth: 200,
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -800,18 +801,18 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   logoutText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 18,
     fontWeight: '600',
   },
   healthStatusContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
     alignItems: 'center',
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -820,18 +821,18 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   testPanel: {
-    backgroundColor: '#FFF3E0',
+    backgroundColor: COLORES.FONDO_ADVERTENCIA_CLARO,
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
     borderWidth: 2,
-    borderColor: '#FF9800',
+    borderColor: COLORES.ADVERTENCIA_LIGHT,
     borderStyle: 'dashed',
   },
   testPanelTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#E65100',
+    color: COLORES.ADVERTENCIA_TEXTO,
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -845,55 +846,55 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
   testButtonPrimary: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.NAV_PACIENTE,
   },
   testButtonSecondary: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.NAV_PRIMARIO,
   },
   testButtonDanger: {
-    backgroundColor: '#F44336',
+    backgroundColor: COLORES.ERROR_LIGHT,
   },
   testButtonWarning: {
-    backgroundColor: '#FF9800',
+    backgroundColor: COLORES.ADVERTENCIA_LIGHT,
   },
   testButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 14,
     fontWeight: '600',
   },
   testInfoContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#FFB74D',
+    borderColor: COLORES.ADVERTENCIA_LIGHT,
   },
   testInfoTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#E65100',
+    color: COLORES.ADVERTENCIA_TEXTO,
     marginBottom: 8,
   },
   testInfoText: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 4,
   },
   wsStatusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#FFB74D',
+    borderColor: COLORES.ADVERTENCIA_LIGHT,
   },
   wsStatusDot: {
     width: 12,
@@ -904,7 +905,7 @@ const styles = StyleSheet.create({
   wsStatusText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
 });
 

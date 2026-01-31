@@ -28,6 +28,7 @@ import {
  * @param {Function} props.onEditSigno - Función para editar un signo vital
  * @param {Function} props.onDeleteSigno - Función para eliminar un signo vital
  * @param {Function} props.onOpenOptions - Función para abrir opciones
+ * @param {number} [props.refreshTrigger] - Cuando cambia, se recargan los signos (p. ej. al guardar signos vitales)
  */
 const MonitoreoContinuoSection = ({
   pacienteId,
@@ -36,7 +37,8 @@ const MonitoreoContinuoSection = ({
   onEditSigno,
   onDeleteSigno,
   onOpenOptions,
-  onShowDetalle // Callback para abrir modal con el último registro
+  onShowDetalle, // Callback para abrir modal con el último registro
+  refreshTrigger
 }) => {
   const {
     monitoreoContinuo,
@@ -49,6 +51,13 @@ const MonitoreoContinuoSection = ({
     autoFetch: true,
     sort: 'DESC'
   });
+
+  // Refrescar cuando se cierra el modal de signos vitales tras guardar
+  useEffect(() => {
+    if (refreshTrigger != null && refreshTrigger > 0 && typeof refresh === 'function') {
+      refresh();
+    }
+  }, [refreshTrigger]);
 
   // Log para debugging
   useEffect(() => {

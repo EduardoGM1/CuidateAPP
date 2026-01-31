@@ -19,6 +19,7 @@ import FilterChips from '../../components/common/FilterChips';
 import ListCard from '../../components/common/ListCard';
 import { emptyStateStyles } from '../../utils/sharedStyles';
 import { formatDateTime } from '../../utils/dateUtils';
+import { COLORES } from '../../utils/constantes';
 import useWebSocket from '../../hooks/useWebSocket';
 
 // Tipos de notificación para filtros
@@ -460,7 +461,7 @@ const HistorialNotificaciones = ({ navigation }) => {
                           handleMarcarLeida(notificacion.id_notificacion);
                         }}
                         style={[styles.actionButton, styles.actionButtonPrimary]}
-                        buttonColor="#4CAF50"
+                        buttonColor={COLORES.EXITO_LIGHT}
                         labelStyle={styles.actionButtonLabel}
                         compact
                       >

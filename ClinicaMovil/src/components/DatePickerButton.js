@@ -26,6 +26,7 @@ const DatePickerButton = ({
   error,
   minimumDate = new Date('1900-01-01'),
   maximumDate = new Date('2100-12-31'),
+  hideIcons = false,
   ...props 
 }) => {
   const [showPicker, setShowPicker] = useState(false);
@@ -103,20 +104,22 @@ const DatePickerButton = ({
         disabled={!editable}
       >
         <View style={styles.buttonContent}>
-          <IconButton
-            icon="calendar"
-            size={20}
-            iconColor={hasValue ? '#1976d2' : '#999'}
-            disabled={true}
-            style={styles.calendarIcon}
-          />
+          {!hideIcons && (
+            <IconButton
+              icon="calendar"
+              size={20}
+              iconColor={hasValue ? '#1976d2' : '#999'}
+              disabled={true}
+              style={styles.calendarIcon}
+            />
+          )}
           <Text style={[
             styles.dateText,
             !hasValue && styles.dateTextPlaceholder
           ]}>
             {displayValue}
           </Text>
-          {hasValue && editable && (
+          {!hideIcons && hasValue && editable && (
             <IconButton
               icon="calendar-edit"
               size={20}

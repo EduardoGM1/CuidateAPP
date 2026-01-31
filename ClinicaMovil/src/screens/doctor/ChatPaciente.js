@@ -31,6 +31,7 @@ import hapticService from '../../services/hapticService';
 import { obtenerIniciales, obtenerNombreCompleto, formatearUltimaActividad, agruparMensajesPorFecha } from '../../utils/chatUtils';
 import audioFeedbackService from '../../services/audioFeedbackService';
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 import VoiceRecorder from '../../components/chat/VoiceRecorder';
 import ConnectionBanner from '../../components/chat/ConnectionBanner';
 import MessageBubble from '../../components/chat/MessageBubble';
@@ -639,7 +640,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 18,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   errorContainer: {
     flex: 1,
@@ -660,7 +661,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
   },
   backButton: {
     padding: 8,
@@ -673,7 +674,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
     textAlign: 'center',
   },
@@ -696,7 +697,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 8,
   },
   emptySubtext: {
@@ -747,7 +748,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#F5F5F5',
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   sendButton: {
     width: 40,
@@ -768,7 +769,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -784,7 +785,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   modalOption: {
     paddingVertical: 18,
@@ -812,7 +813,7 @@ const styles = StyleSheet.create({
   },
   modalOptionText: {
     fontSize: 18,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     textAlign: 'center',
     fontWeight: '600',
   },
@@ -833,7 +834,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
     textAlign: 'center',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   editTextInput: {
     borderWidth: 1,
@@ -864,7 +865,7 @@ const styles = StyleSheet.create({
   },
   editModalButtonText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '600',
   },
   editModalButtonTextSave: {
@@ -897,7 +898,7 @@ const styles = StyleSheet.create({
   pacienteNombre: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   pacienteActividad: {
     fontSize: 12,

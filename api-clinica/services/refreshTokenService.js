@@ -58,21 +58,19 @@ class RefreshTokenService {
    */
   static async generateTokenPair(payload, userType = null) {
     // Determinar tiempos según rol
-    // Pacientes: 7 días de sesión (refresh token)
-    // Doctores: 48 horas de sesión (refresh token)
+    // Admin/Doctor: access token 10h
+    // Paciente: access token 3 días
     let accessTokenExpiresIn = process.env.ACCESS_TOKEN_EXPIRES_IN || '7h';
     let refreshTokenExpiresIn = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
     
-    // Si se especifica userType, usar tiempos específicos por rol
-    // También verificar payload.rol como fallback si userType no está disponible
     const effectiveUserType = userType || payload.rol;
     
     if (effectiveUserType === 'Paciente') {
-      accessTokenExpiresIn = process.env.PATIENT_ACCESS_TOKEN_EXPIRES_IN || '7h';
+      accessTokenExpiresIn = process.env.PATIENT_ACCESS_TOKEN_EXPIRES_IN || '3d';
       refreshTokenExpiresIn = process.env.PATIENT_REFRESH_TOKEN_EXPIRES_IN || '7d';
     } else if (effectiveUserType === 'Doctor' || effectiveUserType === 'Admin') {
-      accessTokenExpiresIn = process.env.DOCTOR_ACCESS_TOKEN_EXPIRES_IN || '24h';
-      refreshTokenExpiresIn = process.env.DOCTOR_REFRESH_TOKEN_EXPIRES_IN || '48h';
+      accessTokenExpiresIn = process.env.DOCTOR_ACCESS_TOKEN_EXPIRES_IN || '10h';
+      refreshTokenExpiresIn = process.env.DOCTOR_REFRESH_TOKEN_EXPIRES_IN || '7d';
     }
     
     // Access token (corto)

@@ -23,6 +23,7 @@ import { storageService } from '../../services/storageService';
 import hapticService from '../../services/hapticService';
 import audioFeedbackService from '../../services/audioFeedbackService';
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 import ttsService from '../../services/ttsService';
 import OfflineDebugButton from '../../components/common/OfflineDebugButton';
 
@@ -139,7 +140,7 @@ const Configuracion = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4CAF50" />
+          <ActivityIndicator size="large" color={COLORES.NAV_PACIENTE} />
           <Text style={styles.loadingText}>Cargando configuración...</Text>
         </View>
       </SafeAreaView>
@@ -196,8 +197,8 @@ const Configuracion = () => {
                 setTtsEnabled(value);
                 speak(value ? 'Texto a voz activado' : 'Texto a voz desactivado');
               }}
-              trackColor={{ false: '#CCCCCC', true: '#4CAF50' }}
-              thumbColor="#FFFFFF"
+              trackColor={{ false: COLORES.SWITCH_TRACK_OFF, true: COLORES.NAV_PACIENTE }}
+              thumbColor={COLORES.TEXTO_EN_PRIMARIO}
             />
           </View>
 
@@ -282,8 +283,8 @@ const Configuracion = () => {
                 setAltoContraste(value);
                 speak(value ? 'Modo alto contraste activado' : 'Modo alto contraste desactivado');
               }}
-              trackColor={{ false: '#CCCCCC', true: '#4CAF50' }}
-              thumbColor="#FFFFFF"
+              trackColor={{ false: COLORES.SWITCH_TRACK_OFF, true: COLORES.NAV_PACIENTE }}
+              thumbColor={COLORES.TEXTO_EN_PRIMARIO}
             />
           </View>
 
@@ -334,8 +335,8 @@ const Configuracion = () => {
                 setNotificaciones(value);
                 speak(value ? 'Notificaciones activadas' : 'Notificaciones desactivadas');
               }}
-              trackColor={{ false: '#CCCCCC', true: '#4CAF50' }}
-              thumbColor="#FFFFFF"
+              trackColor={{ false: COLORES.SWITCH_TRACK_OFF, true: COLORES.NAV_PACIENTE }}
+              thumbColor={COLORES.TEXTO_EN_PRIMARIO}
             />
           </View>
         </View>
@@ -380,10 +381,10 @@ const Configuracion = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.NAV_PACIENTE_FONDO,
   },
   containerAltoContraste: {
-    backgroundColor: '#000000',
+    backgroundColor: COLORES.NEGRO,
   },
   scrollView: {
     flex: 1,
@@ -400,7 +401,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 18,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   header: {
     flexDirection: 'row',
@@ -414,13 +415,13 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 18,
-    color: '#4CAF50',
+    color: COLORES.NAV_PACIENTE,
     fontWeight: '600',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     flex: 1,
     textAlign: 'center',
   },
@@ -436,7 +437,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 20,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -444,7 +445,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     marginBottom: 20,
   },
   settingItem: {
@@ -456,12 +457,12 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   settingDescription: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   rateButtons: {
     flexDirection: 'row',
@@ -473,22 +474,22 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     alignItems: 'center',
   },
   rateButtonActive: {
-    borderColor: '#4CAF50',
-    backgroundColor: '#F1F8E9',
+    borderColor: COLORES.NAV_PACIENTE,
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   rateButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   rateButtonTextActive: {
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     fontWeight: 'bold',
   },
   fontSizeButtons: {
@@ -501,43 +502,43 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     alignItems: 'center',
   },
   fontSizeButtonActive: {
-    borderColor: '#4CAF50',
-    backgroundColor: '#F1F8E9',
+    borderColor: COLORES.NAV_PACIENTE,
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   fontSizeButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   fontSizeButtonTextActive: {
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     fontWeight: 'bold',
   },
   infoSection: {
     marginTop: 20,
     padding: 16,
-    backgroundColor: '#FFF3E0',
+    backgroundColor: COLORES.FONDO_ADVERTENCIA_CLARO,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FF9800',
+    borderColor: COLORES.ADVERTENCIA_LIGHT,
   },
   infoText: {
     fontSize: 16,
-    color: '#E65100',
+    color: COLORES.ADVERTENCIA_TEXTO,
     textAlign: 'center',
   },
   securityButton: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
   },
   securityButtonContent: {
     flexDirection: 'row',
@@ -553,16 +554,16 @@ const styles = StyleSheet.create({
   securityButtonLabel: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   securityButtonDescription: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   securityButtonArrow: {
     fontSize: 20,
-    color: '#4CAF50',
+    color: COLORES.NAV_PACIENTE,
     fontWeight: 'bold',
   },
 });

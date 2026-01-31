@@ -7,6 +7,8 @@ buildscript {
         // NDK version - Dejar que Gradle use la versión por defecto o detecte automáticamente
         // Si necesitas especificar una versión, descomenta y usa: ndkVersion = "25.2.9519653"
         kotlinVersion = "2.1.20"
+        // RN 0.82+ requiere Nueva Arquitectura; false provoca "PlatformConstants could not be found"
+        newArchEnabled = true
     }
     repositories {
         google()

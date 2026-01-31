@@ -1,32 +1,54 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { COLORES, TAMAÑOS } from '../../utils/constantes';
+import theme from '../../config/theme';
 
-const Boton = ({ 
-  texto, 
-  alPresionar, 
-  colorFondo = COLORES.PRIMARIO, 
-  colorTexto = COLORES.BLANCO,
+/**
+ * Variantes: primary | secondary | success | warning | danger | outline
+ * Si se pasa variant, se usan colores del theme; si no, colorFondo/colorTexto (retrocompatibilidad).
+ */
+const getColorsFromVariant = (variant) => {
+  const v = theme.button[variant] || theme.button.primary;
+  return { backgroundColor: v.backgroundColor, color: v.color };
+};
+
+const Boton = ({
+  texto,
+  alPresionar,
+  variant,
+  colorFondo,
+  colorTexto,
   deshabilitado = false,
   cargando = false,
   estilo = {},
-  textoEstilo = {}
+  textoEstilo = {},
 }) => {
+  const colors = variant
+    ? getColorsFromVariant(variant)
+    : {
+        backgroundColor: colorFondo ?? COLORES.PRIMARIO,
+        color: colorTexto ?? COLORES.BLANCO,
+      };
+  const borderStyle = variant === 'outline' ? theme.button.outline : {};
   return (
     <TouchableOpacity
       style={[
         estilos.boton,
-        { backgroundColor: colorFondo },
+        { backgroundColor: colors.backgroundColor },
+        variant === 'outline' && {
+          borderWidth: theme.button.outline.borderWidth,
+          borderColor: theme.button.outline.borderColor,
+        },
         deshabilitado && estilos.botonDeshabilitado,
-        estilo
+        estilo,
       ]}
       onPress={alPresionar}
       disabled={deshabilitado || cargando}
     >
       {cargando ? (
-        <ActivityIndicator color={colorTexto} />
+        <ActivityIndicator color={colors.color} />
       ) : (
-        <Text style={[estilos.texto, { color: colorTexto }, textoEstilo]}>
+        <Text style={[estilos.texto, { color: colors.color }, textoEstilo]}>
           {texto}
         </Text>
       )}

@@ -25,6 +25,7 @@ import Logger from '../../services/logger';
  * @param {Function} props.getEstadoCitaColor - Función para obtener color del estado
  * @param {Function} props.getEstadoCitaTexto - Función para obtener texto del estado
  * @param {Function} props.onOpenOptions - Función para abrir opciones de citas
+ * @param {number} [props.refreshTrigger] - Cuando cambia, se recargan las citas (p. ej. al cerrar detalle o guardar consulta)
  */
 const ConsultasTimeline = ({
   pacienteId,
@@ -34,7 +35,8 @@ const ConsultasTimeline = ({
   calcularIMC,
   getEstadoCitaColor,
   getEstadoCitaTexto,
-  onOpenOptions
+  onOpenOptions,
+  refreshTrigger
 }) => {
   // Estado de filtro por mes
   const [mesSeleccionado, setMesSeleccionado] = useState('todos');
@@ -51,6 +53,13 @@ const ConsultasTimeline = ({
     autoFetch: true,
     sort: 'DESC'
   });
+
+  // Refrescar lista cuando se cierra el modal de detalle de cita o se guarda consulta/wizard
+  useEffect(() => {
+    if (refreshTrigger != null && refreshTrigger > 0 && typeof refresh === 'function') {
+      refresh();
+    }
+  }, [refreshTrigger]);
 
   // Logging para debug
   useEffect(() => {

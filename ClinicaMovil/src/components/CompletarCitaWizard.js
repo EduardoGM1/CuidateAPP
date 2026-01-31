@@ -17,6 +17,7 @@ import { gestionService } from '../api/gestionService';
 import Logger from '../services/logger';
 import { formatDateTime } from '../utils/dateUtils';
 import { usePacienteComorbilidades } from '../hooks/usePacienteMedicalData';
+import { COLORES } from '../utils/constantes';
 
 const PASOS = [
   { id: 'asistencia', titulo: 'Confirmar Asistencia', numero: 1, requerido: true },
@@ -1012,13 +1013,13 @@ const CompletarCitaWizard = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 16,
     width: '100%',
     maxWidth: 500,
@@ -1026,7 +1027,7 @@ const styles = StyleSheet.create({
     maxHeight: '90%',
     minHeight: 400,
     padding: 0,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: {
       width: 0,
       height: 2,

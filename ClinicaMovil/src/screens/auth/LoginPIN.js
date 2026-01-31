@@ -16,6 +16,7 @@ import Logger from '../../services/logger';
 import { validationService } from '../../services/validationService';
 import { useAuth } from '../../context/AuthContext';
 import { sanitizePatientId } from '../../utils/patientIdValidator';
+import { COLORES } from '../../utils/constantes';
 
 const { width, height } = Dimensions.get('window');
 
@@ -352,7 +353,7 @@ const LoginPIN = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.NAV_PACIENTE_FONDO,
   },
   content: {
     flex: 1,
@@ -363,13 +364,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     marginBottom: 10,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 18,
-    color: '#4CAF50',
+    color: COLORES.EXITO_LIGHT,
     marginBottom: 40,
     textAlign: 'center',
   },
@@ -383,11 +384,11 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#4CAF50',
-    backgroundColor: 'transparent',
+    borderColor: COLORES.EXITO_LIGHT,
+    backgroundColor: COLORES.TRANSPARENTE,
   },
   pinDotFilled: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.EXITO_LIGHT,
   },
   numberPad: {
     width: '100%',
@@ -402,11 +403,11 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.BLANCO,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -414,73 +415,73 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.TEXTO_DISABLED,
   },
   emptyButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: COLORES.TRANSPARENTE,
     elevation: 0,
     shadowOpacity: 0,
     borderWidth: 0,
   },
   deleteButton: {
-    backgroundColor: '#FFCDD2',
-    borderColor: '#F44336',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
+    borderColor: COLORES.ERROR_LIGHT,
   },
   numberText: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   deleteText: {
     fontSize: 24,
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
   },
   loadingContainer: {
     marginVertical: 30,
     padding: 20,
-    backgroundColor: '#FFF3E0',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: '#FFB74D',
+    borderColor: COLORES.ADVERTENCIA_LIGHT,
   },
   loadingText: {
     fontSize: 18,
-    color: '#F57C00',
+    color: COLORES.ADVERTENCIA,
     textAlign: 'center',
     fontWeight: '600',
   },
   helpButton: {
     marginTop: 30,
     padding: 15,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#2196F3',
+    borderColor: COLORES.INFO_LIGHT,
   },
   helpText: {
     fontSize: 16,
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     textAlign: 'center',
     fontWeight: '600',
   },
   forgotButton: {
     marginTop: 12,
     padding: 15,
-    backgroundColor: '#FFF3E0',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#FF9800',
+    borderColor: COLORES.ADVERTENCIA_LIGHT,
   },
   forgotText: {
     fontSize: 16,
-    color: '#F57C00',
+    color: COLORES.ADVERTENCIA,
     textAlign: 'center',
     fontWeight: '600',
   },
   attemptsText: {
     marginTop: 20,
     fontSize: 16,
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     textAlign: 'center',
     fontWeight: '600',
   },

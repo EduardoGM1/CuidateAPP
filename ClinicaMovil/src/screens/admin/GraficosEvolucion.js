@@ -21,6 +21,7 @@ import Logger from '../../services/logger';
 import MonthlyVitalSignsBarChart from '../../components/charts/MonthlyVitalSignsBarChart';
 import TimeRangeFilter, { FILTROS_DISPONIBLES } from '../../components/charts/TimeRangeFilter';
 import ComparativaEvolucion from '../../components/charts/ComparativaEvolucion';
+import { COLORES } from '../../utils/constantes';
 
 const GraficosEvolucion = () => {
   const navigation = useNavigation();
@@ -98,7 +99,7 @@ const GraficosEvolucion = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color={COLORES.NAV_PRIMARIO} />
           <Text style={styles.loadingText}>Cargando gráficos...</Text>
         </View>
       </SafeAreaView>
@@ -161,7 +162,7 @@ const GraficosEvolucion = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   scrollView: {
     flex: 1,
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 18,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   header: {
     alignItems: 'center',
@@ -186,18 +187,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     textAlign: 'center',
   },
   infoContainer: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
   },
   infoText: {
     fontSize: 14,
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -209,14 +210,14 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     textAlign: 'center',
     marginBottom: 8,
     fontWeight: '600',
   },
   errorSubtext: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
 });

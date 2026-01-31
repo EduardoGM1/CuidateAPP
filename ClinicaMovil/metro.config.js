@@ -10,10 +10,8 @@ const path = require('path');
  * - Emulador Android
  * - Múltiples dispositivos físicos
  * 
- * IMPORTANTE: Para usar múltiples dispositivos, iniciar Metro con:
- *   npm run start:multi
- *   o
- *   npx react-native start --host 0.0.0.0
+ * Por defecto, npm start / npx react-native start usa --host 0.0.0.0
+ * para permitir conexión desde dispositivo físico y emulador.
  * 
  * Esto hace que Metro escuche en todas las interfaces de red (0.0.0.0),
  * permitiendo conexiones desde:

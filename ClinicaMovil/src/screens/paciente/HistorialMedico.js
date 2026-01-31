@@ -32,6 +32,7 @@ import { formatDate, formatDateShort, formatDateWithWeekday } from '../../utils/
 import hapticService from '../../services/hapticService';
 import audioFeedbackService from '../../services/audioFeedbackService';
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 import gestionService from '../../api/gestionService';
 
 const HistorialMedico = () => {
@@ -363,49 +364,49 @@ const HistorialMedico = () => {
     // Para saturación: mayor es mejor
     let estado = 'igual';
     let mensaje = '';
-    let color = '#666';
+    let color = COLORES.TEXTO_SECUNDARIO;
 
     if (campo === 'presion_sistolica' || campo === 'presion_diastolica') {
       if (diferencia < -5) {
         estado = 'mejoro';
         mensaje = 'Mejoró';
-        color = '#4CAF50';
+        color = COLORES.NAV_PACIENTE;
       } else if (diferencia > 5) {
         estado = 'empeoro';
         mensaje = 'Aumentó';
-        color = '#F44336';
+        color = COLORES.ERROR_LIGHT;
       } else {
         estado = 'igual';
         mensaje = 'Estable';
-        color = '#FF9800';
+        color = COLORES.ADVERTENCIA_LIGHT;
       }
     } else if (campo === 'glucosa_mg_dl' || campo === 'peso_kg') {
       if (diferencia < -5) {
         estado = 'mejoro';
         mensaje = 'Mejoró';
-        color = '#4CAF50';
+        color = COLORES.NAV_PACIENTE;
       } else if (diferencia > 5) {
         estado = 'empeoro';
         mensaje = 'Aumentó';
-        color = '#F44336';
+        color = COLORES.ERROR_LIGHT;
       } else {
         estado = 'igual';
         mensaje = 'Estable';
-        color = '#FF9800';
+        color = COLORES.ADVERTENCIA_LIGHT;
       }
     } else if (campo === 'saturacion_oxigeno') {
       if (diferencia > 2) {
         estado = 'mejoro';
         mensaje = 'Mejoró';
-        color = '#4CAF50';
+        color = COLORES.NAV_PACIENTE;
       } else if (diferencia < -2) {
         estado = 'empeoro';
         mensaje = 'Disminuyó';
-        color = '#F44336';
+        color = COLORES.ERROR_LIGHT;
       } else {
         estado = 'igual';
         mensaje = 'Estable';
-        color = '#FF9800';
+        color = COLORES.ADVERTENCIA_LIGHT;
       }
     }
 
@@ -613,7 +614,7 @@ const HistorialMedico = () => {
                 {/* Línea del gráfico */}
                 <Path
                   d={puntos}
-                  stroke="#4CAF50"
+                  stroke={COLORES.NAV_PACIENTE}
                   strokeWidth="5"
                   fill="none"
                   strokeLinecap="round"
@@ -626,11 +627,11 @@ const HistorialMedico = () => {
                   const y = svgHeight - normalizarIndice(punto.indiceSalud);
                   
                   // Color según índice de salud
-                  let colorPunto = '#4CAF50'; // Verde (bueno)
+                  let colorPunto = COLORES.NAV_PACIENTE; // Verde (bueno)
                   if (punto.indiceSalud < 50) {
-                    colorPunto = '#F44336'; // Rojo (crítico)
+                    colorPunto = COLORES.ERROR_LIGHT; // Rojo (crítico)
                   } else if (punto.indiceSalud < 75) {
-                    colorPunto = '#FF9800'; // Naranja (atención)
+                    colorPunto = COLORES.ADVERTENCIA_LIGHT; // Naranja (atención)
                   }
                   
                   return (
@@ -640,7 +641,7 @@ const HistorialMedico = () => {
                       cy={y}
                       r="6"
                       fill={colorPunto}
-                      stroke="#FFFFFF"
+                      stroke={COLORES.BLANCO}
                       strokeWidth="3"
                     />
                   );
@@ -751,8 +752,8 @@ const HistorialMedico = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#4CAF50']}
-            tintColor="#4CAF50"
+            colors={[COLORES.NAV_PACIENTE]}
+            tintColor={COLORES.NAV_PACIENTE}
           />
         }
       >
@@ -1389,7 +1390,7 @@ const HistorialMedico = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.NAV_PACIENTE_FONDO,
   },
   scrollView: {
     flex: 1,
@@ -1405,7 +1406,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   header: {
     flexDirection: 'row',
@@ -1416,13 +1417,13 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
   },
   backButtonText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '600',
   },
   titleContainer: {
@@ -1436,15 +1437,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     textAlign: 'center',
   },
   listenButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     borderWidth: 1,
-    borderColor: '#2196F3',
+    borderColor: COLORES.NAV_PRIMARIO,
     width: 44,
     height: 44,
     justifyContent: 'center',
@@ -1455,12 +1456,12 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     padding: 4,
     marginBottom: 20,
     borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
   },
   tab: {
     flex: 1,
@@ -1475,10 +1476,10 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   tabTextActive: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
   },
   tabContent: {
     marginTop: 10,
@@ -1486,12 +1487,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 12,
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 16,
   },
   statsContainer: {
@@ -1503,23 +1504,23 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#4CAF50',
+    borderColor: COLORES.NAV_PACIENTE,
     marginBottom: 12,
   },
   statNumber: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   section: {
@@ -1537,17 +1538,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   historialItem: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
   },
   historialItemExpanded: {
     borderWidth: 2,
-    borderColor: '#4CAF50',
-    backgroundColor: '#F1F8E9',
+    borderColor: COLORES.NAV_PACIENTE,
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   citaHeader: {
     flexDirection: 'row',
@@ -1557,14 +1558,14 @@ const styles = StyleSheet.create({
   },
   expandIndicator: {
     fontSize: 16,
-    color: '#4CAF50',
+    color: COLORES.NAV_PACIENTE,
     fontWeight: 'bold',
   },
   expandedContent: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
   },
   infoRow: {
     marginBottom: 12,
@@ -1572,29 +1573,29 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   infoValue: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     lineHeight: 20,
   },
   estadoCompletada: {
-    color: '#4CAF50',
+    color: COLORES.NAV_PACIENTE,
     fontWeight: 'bold',
   },
   estadoCancelada: {
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     fontWeight: 'bold',
   },
   estadoProgramada: {
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: 'bold',
   },
   expandHint: {
     fontSize: 12,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     marginTop: 8,
     textAlign: 'center',
@@ -1603,12 +1604,12 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
   },
   sectionExpandidaTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     marginBottom: 12,
   },
   signosGrid: {
@@ -1619,64 +1620,64 @@ const styles = StyleSheet.create({
   signoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F8E9',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
     padding: 8,
     borderRadius: 8,
     minWidth: '45%',
     borderWidth: 1,
-    borderColor: '#C8E6C9',
+    borderColor: COLORES.BORDE_VERDE_SUAVE,
   },
   signoLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginRight: 6,
   },
   signoValue: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
   },
   diagnosticoItem: {
-    backgroundColor: '#F1F8E9',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#C8E6C9',
+    borderColor: COLORES.BORDE_VERDE_SUAVE,
   },
   diagnosticoText: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     fontWeight: '600',
     marginBottom: 4,
   },
   diagnosticoFecha: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
   },
   observacionesContainer: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
   },
   observacionesLabel: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     marginBottom: 6,
   },
   observacionesText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     lineHeight: 20,
   },
   historialFecha: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   historialValues: {
@@ -1686,16 +1687,16 @@ const styles = StyleSheet.create({
   },
   historialValue: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   historialDescription: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 4,
   },
   emptyText: {
     fontSize: 16,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginTop: 40,
     fontStyle: 'italic',
@@ -1703,13 +1704,13 @@ const styles = StyleSheet.create({
   // Estilos para Gráfico de Barras Apiladas Evolutivo
   graficoContainer: {
     marginTop: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1718,13 +1719,13 @@ const styles = StyleSheet.create({
   graficoTitulo: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     textAlign: 'center',
     marginBottom: 8,
   },
   graficoSubtitle: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginBottom: 16,
     fontStyle: 'italic',
@@ -1739,10 +1740,10 @@ const styles = StyleSheet.create({
   },
   graficoAreaUnico: {
     position: 'relative',
-    backgroundColor: '#FAFAFA',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     overflow: 'hidden',
   },
   ejeYUnico: {
@@ -1758,7 +1759,7 @@ const styles = StyleSheet.create({
   },
   labelYUnico: {
     fontSize: 11,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '600',
   },
   areaTrazadoUnico: {
@@ -1794,48 +1795,48 @@ const styles = StyleSheet.create({
   },
   labelXUnico: {
     fontSize: 10,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '600',
     textAlign: 'center',
   },
   referenciasContainer: {
-    backgroundColor: '#F1F8E9',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#C8E6C9',
+    borderColor: COLORES.BORDE_VERDE_SUAVE,
     marginTop: 8,
   },
   referenciasTitle: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     marginBottom: 4,
   },
   referenciasText: {
     fontSize: 11,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 4,
   },
   referenciasHint: {
     fontSize: 10,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     marginTop: 4,
   },
   exportContainer: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     padding: 16,
     marginHorizontal: 16,
     marginBottom: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
   },
   exportTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -1848,15 +1849,15 @@ const styles = StyleSheet.create({
   exportButton: {
     flex: 1,
     minWidth: '30%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1867,7 +1868,7 @@ const styles = StyleSheet.create({
   },
   exportButtonText: {
     fontSize: 12,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     fontWeight: '600',
     textAlign: 'center',
   },

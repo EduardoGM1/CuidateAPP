@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card, Title, Paragraph } from 'react-native-paper';
 import Logger from '../services/logger';
+import { COLORES } from '../utils/constantes';
 
 /**
  * ErrorBoundary - Componente para capturar errores en React
@@ -144,7 +145,7 @@ class ErrorBoundary extends React.Component {
                 mode="contained"
                 onPress={this.handleReset}
                 style={styles.resetButton}
-                buttonColor="#2196F3"
+                buttonColor={COLORES.NAV_PRIMARIO}
               >
                 Intentar de nuevo
               </Button>

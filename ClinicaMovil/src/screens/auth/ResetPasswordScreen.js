@@ -268,23 +268,23 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: COLORES.TEXTO,
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORES.BORDE,
+    borderColor: COLORES.TEXTO_DISABLED,
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: COLORES.BLANCO,
   },
   passwordInput: {
     flex: 1,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: COLORES.TEXTO,
+    color: COLORES.TEXTO_PRIMARIO,
   },
   eyeButton: {
     padding: 12,

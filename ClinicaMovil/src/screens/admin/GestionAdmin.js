@@ -889,7 +889,7 @@ const GestionAdmin = ({ navigation }) => {
                   <RefreshControl
                     refreshing={refreshing}
                     onRefresh={handleRefresh}
-                    colors={['#1976D2']}
+                    colors={[COLORES.NAV_PRIMARIO]}
                     tintColor="#1976D2"
                   />
                 }
@@ -953,7 +953,7 @@ const GestionAdmin = ({ navigation }) => {
                   <RefreshControl
                     refreshing={refreshing}
                     onRefresh={handleRefresh}
-                    colors={['#1976D2']}
+                    colors={[COLORES.NAV_PRIMARIO]}
                     tintColor="#1976D2"
                   />
                 }
@@ -1292,7 +1292,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORES.PRIMARIO,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1331,11 +1331,11 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#1976D2',
+    borderLeftColor: COLORES.NAV_PRIMARIO,
   },
   sortingText: {
     fontSize: 13,
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: '500',
     textAlign: 'center',
   },
@@ -1346,7 +1346,7 @@ const styles = StyleSheet.create({
   },
   inactiveCard: {
     opacity: 0.6,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   cardHeader: {
     marginBottom: 15,
@@ -1357,12 +1357,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 5,
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   cardActions: {
     flexDirection: 'row',
@@ -1378,12 +1378,12 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     width: 80,
   },
   detailValue: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   statusBadge: {
@@ -1393,26 +1393,26 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   activeBadge: {
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.NAV_PACIENTE_FONDO,
   },
   inactiveBadge: {
-    backgroundColor: '#FFEBEE',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
   },
   statusText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4CAF50',
+    color: COLORES.EXITO_LIGHT,
   },
   inactiveText: {
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   noDataCard: {
     elevation: 1,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
   },
   noDataText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     fontStyle: 'italic',
   },
@@ -1425,25 +1425,25 @@ const styles = StyleSheet.create({
   accessDeniedTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     marginBottom: 20,
     textAlign: 'center',
   },
   accessDeniedMessage: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginBottom: 30,
     lineHeight: 24,
   },
   goBackButton: {
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.NAV_PRIMARIO,
     borderRadius: 12,
     paddingVertical: 15,
     paddingHorizontal: 30,
   },
   goBackText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -1452,7 +1452,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     elevation: 3,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   simpleCardContent: {
     padding: 20,
@@ -1469,18 +1469,18 @@ const styles = StyleSheet.create({
   simpleCardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 5,
   },
   simpleCardSubtitle: {
     fontSize: 16,
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: '600',
     marginBottom: 5,
   },
   simpleCardModule: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     flex: 1,
   },
@@ -1492,7 +1492,7 @@ const styles = StyleSheet.create({
   },
   patientsCount: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '600',
   },
   simpleCardStatus: {
@@ -1504,15 +1504,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   activeIndicator: {
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.NAV_PACIENTE_FONDO,
   },
   inactiveIndicator: {
-    backgroundColor: '#FFEBEE',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
   },
   statusIndicatorText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4CAF50',
+    color: COLORES.EXITO_LIGHT,
   },
   simpleCardFooter: {
     flexDirection: 'row',
@@ -1520,16 +1520,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 15,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.TEXTO_DISABLED,
   },
   simpleCardFooterText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '500',
   },
   simpleCardArrow: {
     fontSize: 18,
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: 'bold',
   },
   cardActions: {
@@ -1546,12 +1546,12 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   errorCard: {
     margin: 20,
     elevation: 2,
-    backgroundColor: '#FFEBEE',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderLeftWidth: 4,
     borderLeftColor: '#F44336',
   },
@@ -1563,11 +1563,11 @@ const styles = StyleSheet.create({
   // Estilos del Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '80%',
@@ -1585,7 +1585,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
   },
   closeButtonX: {
     fontSize: 26,
@@ -1606,13 +1606,13 @@ const styles = StyleSheet.create({
   filterSectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 10,
   },
   filterSubtitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 8,
     marginTop: 10,
   },
@@ -1625,28 +1625,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderWidth: 1,
     borderColor: '#E0E0E0',
     minWidth: 120,
     alignItems: 'center',
   },
   activeFilterOption: {
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.NAV_PRIMARIO,
     borderColor: '#1976D2',
   },
   filterOptionText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   activeFilterOptionText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
   },
   filterInfo: {
     fontSize: 13,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 5,
     lineHeight: 18,
   },
@@ -1654,10 +1654,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.TEXTO_DISABLED,
   },
   modalApplyButton: {
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.NAV_PRIMARIO,
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: 'center',
@@ -1665,7 +1665,7 @@ const styles = StyleSheet.create({
   modalApplyButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
   },
   // Estilos para Infinite Scroll
   listFooter: {
@@ -1681,7 +1681,7 @@ const styles = StyleSheet.create({
   loadingMoreText: {
     marginLeft: 10,
     fontSize: 14,
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: '500',
   },
   scrollHintText: {
@@ -1696,7 +1696,7 @@ const styles = StyleSheet.create({
   },
   endOfListText: {
     fontSize: 14,
-    color: '#4CAF50',
+    color: COLORES.EXITO_LIGHT,
     fontWeight: '500',
   },
 });

@@ -24,6 +24,7 @@ import { useAuth } from '../../context/AuthContext';
 
 // Servicios
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * Pantalla para editar un paciente existente
@@ -320,7 +321,7 @@ const EditarPaciente = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: COLORES.FONDO,
   },
   
   // Header
@@ -330,7 +331,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
     elevation: 2,
@@ -342,11 +343,11 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: COLORES.FONDO,
   },
   backButtonText: {
     fontSize: 24,
-    color: '#2E86AB',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: 'bold',
   },
   headerTitle: {
@@ -376,7 +377,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
 
@@ -422,7 +423,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 16,
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     elevation: 1,
     shadowColor: '#000',
@@ -448,7 +449,7 @@ const styles = StyleSheet.create({
   },
   infoDescription: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     lineHeight: 20,
   },
 
@@ -464,7 +465,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 32,
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     elevation: 1,
     shadowColor: '#000',
@@ -480,7 +481,7 @@ const styles = StyleSheet.create({
   infoText: {
     marginLeft: 12,
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     flex: 1,
   },
 });

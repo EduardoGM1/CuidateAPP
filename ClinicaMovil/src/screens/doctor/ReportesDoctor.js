@@ -27,6 +27,7 @@ import { usePacientes } from '../../hooks/useGestion';
 import gestionService from '../../api/gestionService';
 import ModalBase from '../../components/DetallePaciente/shared/ModalBase';
 import EstadoSelector from '../../components/forms/EstadoSelector';
+import { COLORES } from '../../utils/constantes';
 import RangoMesesSelector from '../../components/forms/RangoMesesSelector';
 import ComorbilidadesHeatmap from '../../components/charts/ComorbilidadesHeatmap';
 
@@ -627,7 +628,7 @@ const ReportesDoctor = ({ navigation }) => {
               <Button
                 mode="contained"
                 onPress={handleAplicarFiltros}
-                buttonColor="#2196F3"
+                buttonColor={COLORES.NAV_PRIMARIO}
                 style={styles.modalFilterButton}
               >
                 Aplicar

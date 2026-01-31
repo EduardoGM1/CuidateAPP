@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { Title, Chip } from 'react-native-paper';
 import { formatDateTime } from '../../utils/dateUtils';
-import { ESTADOS_CITA } from '../../utils/constantes';
+import { ESTADOS_CITA, COLORES } from '../../utils/constantes';
 
 /**
  * Calcula el IMC a partir de peso y talla
@@ -112,7 +112,7 @@ const DetalleCitaModal = ({
 
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#6200ee" />
+              <ActivityIndicator size="large" color={COLORES.NAV_PRIMARIO} />
               <Text style={styles.loadingText}>Cargando detalle...</Text>
             </View>
           ) : citaDetalle ? (
@@ -326,11 +326,11 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: SCREEN_HEIGHT * 0.9,
@@ -343,18 +343,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
     flexShrink: 0,
     minHeight: 60,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   closeButtonX: {
     fontSize: 24,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: 'bold',
   },
   loadingContainer: {
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 10,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontSize: 14,
   },
   modalScrollView: {
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   modalListItem: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
@@ -391,17 +391,17 @@ const styles = StyleSheet.create({
   modalListItemTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   modalListItemSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 4,
   },
   modalListItemDescription: {
     fontSize: 14,
-    color: '#555',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 4,
     lineHeight: 20,
   },
@@ -411,21 +411,21 @@ const styles = StyleSheet.create({
   },
   firstConsultChip: {
     marginTop: 8,
-    backgroundColor: '#e3f2fd',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
   },
   firstConsultChipText: {
-    color: '#1976d2',
+    color: COLORES.NAV_PRIMARIO,
     fontSize: 12,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 12,
   },
   noDataText: {
     fontSize: 14,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     fontStyle: 'italic',
     padding: 16,

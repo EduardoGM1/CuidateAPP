@@ -32,7 +32,7 @@ import ttsService from '../../services/ttsService';
 import hapticService from '../../services/hapticService';
 import audioFeedbackService from '../../services/audioFeedbackService';
 import Logger from '../../services/logger';
-import { ESTADOS_SOLICITUD_REPROGRAMACION } from '../../utils/constantes';
+import { ESTADOS_SOLICITUD_REPROGRAMACION, COLORES } from '../../utils/constantes';
 import useWebSocket from '../../hooks/useWebSocket';
 import { formatDateWithWeekday } from '../../utils/dateUtils';
 
@@ -632,15 +632,15 @@ const MisCitas = () => {
   const getEstadoSolicitudColor = (estado) => {
     switch (estado) {
       case ESTADOS_SOLICITUD_REPROGRAMACION.PENDIENTE:
-        return '#FF9800';
+        return COLORES.ADVERTENCIA_LIGHT;
       case ESTADOS_SOLICITUD_REPROGRAMACION.APROBADA:
-        return '#4CAF50';
+        return COLORES.NAV_PACIENTE;
       case ESTADOS_SOLICITUD_REPROGRAMACION.RECHAZADA:
-        return '#F44336';
+        return COLORES.ERROR_LIGHT;
       case ESTADOS_SOLICITUD_REPROGRAMACION.CANCELADA:
-        return '#9E9E9E';
+        return COLORES.TEXTO_DISABLED;
       default:
-        return '#9E9E9E';
+        return COLORES.TEXTO_DISABLED;
     }
   };
 
@@ -667,7 +667,7 @@ const MisCitas = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4CAF50" />
+          <ActivityIndicator size="large" color={COLORES.NAV_PACIENTE} />
           <Text style={styles.loadingText}>Cargando tus citas...</Text>
         </View>
       </SafeAreaView>
@@ -683,8 +683,8 @@ const MisCitas = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#4CAF50']}
-            tintColor="#4CAF50"
+            colors={[COLORES.NAV_PACIENTE]}
+            tintColor={COLORES.NAV_PACIENTE}
           />
         }
       >
@@ -959,7 +959,7 @@ const MisCitas = () => {
             <ScrollView style={styles.modalScrollView}>
               {loadingSolicitudes ? (
                 <View style={styles.modalLoading}>
-                  <ActivityIndicator size="large" color="#4CAF50" />
+                  <ActivityIndicator size="large" color={COLORES.NAV_PACIENTE} />
                   <Text style={styles.modalLoadingText}>Cargando...</Text>
                 </View>
               ) : !solicitudes || solicitudes.length === 0 ? (
@@ -1028,7 +1028,7 @@ const MisCitas = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.NAV_PACIENTE_FONDO,
   },
   scrollView: {
     flex: 1,
@@ -1044,7 +1044,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   header: {
     flexDirection: 'row',
@@ -1055,13 +1055,13 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
   },
   backButtonText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '600',
   },
   titleContainer: {
@@ -1074,7 +1074,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     textAlign: 'center',
   },
   titleBadge: {
@@ -1083,9 +1083,9 @@ const styles = StyleSheet.create({
   listenButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     borderWidth: 1,
-    borderColor: '#2196F3',
+    borderColor: COLORES.NAV_PRIMARIO,
     width: 44,
     height: 44,
     justifyContent: 'center',
@@ -1095,18 +1095,18 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   counter: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#4CAF50',
+    borderColor: COLORES.NAV_PACIENTE,
   },
   counterText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
   },
   emptyContainer: {
     flex: 1,
@@ -1121,23 +1121,23 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 16,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   citaCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#4CAF50',
+    borderColor: COLORES.NAV_PACIENTE,
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -1146,12 +1146,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   citaCardToday: {
-    borderColor: '#F44336',
-    backgroundColor: '#FFEBEE',
+    borderColor: COLORES.ERROR_LIGHT,
+    backgroundColor: COLORES.FONDO_ERROR_CLARO,
   },
   citaCardTomorrow: {
-    borderColor: '#FF9800',
-    backgroundColor: '#FFF3E0',
+    borderColor: COLORES.ADVERTENCIA_LIGHT,
+    backgroundColor: COLORES.FONDO_ADVERTENCIA_CLARO,
   },
   citaHeader: {
     flexDirection: 'row',
@@ -1164,51 +1164,51 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   badgeToday: {
-    backgroundColor: '#F44336',
+    backgroundColor: COLORES.ERROR_LIGHT,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
     marginRight: 8,
   },
   badgeTomorrow: {
-    backgroundColor: '#FF9800',
+    backgroundColor: COLORES.ADVERTENCIA_LIGHT,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
     marginRight: 8,
   },
   badgeText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 12,
     fontWeight: 'bold',
   },
   citaDias: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginLeft: 'auto',
   },
   citaFecha: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 12,
   },
   citaMotivoContainer: {
     marginBottom: 12,
     padding: 12,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderRadius: 8,
   },
   citaMotivoLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 4,
   },
   citaMotivo: {
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   citaDoctorContainer: {
     flexDirection: 'row',
@@ -1221,23 +1221,23 @@ const styles = StyleSheet.create({
   },
   citaDoctor: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '500',
   },
   citaFooter: {
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
     paddingTop: 12,
     marginTop: 8,
   },
   citaHint: {
     fontSize: 12,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     textAlign: 'center',
   },
   reprogramarButton: {
-    backgroundColor: '#FF9800',
+    backgroundColor: COLORES.ADVERTENCIA_LIGHT,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -1246,42 +1246,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   reprogramarButtonDisabled: {
-    backgroundColor: '#E0E0E0',
-    borderColor: '#BDBDBD',
+    backgroundColor: COLORES.BORDE_CLARO,
+    borderColor: COLORES.TEXTO_DISABLED,
     opacity: 0.7,
   },
   reprogramarButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: '600',
   },
   reprogramarButtonTextDisabled: {
-    color: '#757575',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   solicitudesButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.NAV_PRIMARIO,
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 12,
     marginBottom: 20,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#1565C0',
+    borderColor: COLORES.PRIMARIO_LIGHT,
   },
   solicitudesButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 16,
     width: '100%',
     maxHeight: '80%',
@@ -1293,33 +1293,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
     paddingBottom: 12,
   },
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   modalCloseButton: {
     padding: 4,
   },
   modalCloseText: {
     fontSize: 24,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   modalScrollView: {
     maxHeight: 500,
   },
   modalCitaInfo: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     padding: 12,
     borderRadius: 8,
     marginBottom: 20,
   },
   modalCitaInfoText: {
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   modalField: {
@@ -1328,21 +1328,21 @@ const styles = StyleSheet.create({
   modalLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   modalTextInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
     minHeight: 100,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   modalHint: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     marginTop: 8,
     lineHeight: 16,
@@ -1358,7 +1358,7 @@ const styles = StyleSheet.create({
   },
   modalSubmitButton: {
     flex: 1,
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.NAV_PACIENTE,
   },
   modalLoading: {
     padding: 40,
@@ -1367,7 +1367,7 @@ const styles = StyleSheet.create({
   modalLoadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   modalEmpty: {
     padding: 40,
@@ -1375,16 +1375,16 @@ const styles = StyleSheet.create({
   },
   modalEmptyText: {
     fontSize: 16,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   solicitudCard: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
   },
   solicitudHeader: {
     flexDirection: 'row',
@@ -1394,7 +1394,7 @@ const styles = StyleSheet.create({
   },
   solicitudFecha: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '600',
   },
   solicitudEstadoBadge: {
@@ -1403,13 +1403,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   solicitudEstadoText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 12,
     fontWeight: '600',
   },
   solicitudMotivo: {
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   solicitudMotivoLabel: {
@@ -1417,27 +1417,27 @@ const styles = StyleSheet.create({
   },
   solicitudFechaSolicitada: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 8,
   },
   solicitudRespuesta: {
     marginTop: 12,
     padding: 12,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     borderRadius: 8,
   },
   solicitudRespuestaLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     marginBottom: 4,
   },
   solicitudRespuestaText: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   cancelarSolicitudButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: COLORES.ERROR_LIGHT,
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -1445,7 +1445,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelarSolicitudButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 14,
     fontWeight: '600',
   },

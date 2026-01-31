@@ -2,7 +2,7 @@
 import { Usuario, Paciente } from '../models/associations.js';
 import pushNotificationService from '../services/pushNotificationService.js';
 import realtimeService from '../services/realtimeService.js';
-import { generateMobileToken, generateRefreshToken, generateTestToken } from '../utils/mobileAuth.js';
+import { generateTestToken } from '../utils/mobileAuth.js';
 import logger from '../utils/logger.js';
 
 // Registrar dispositivo móvil
@@ -148,20 +148,30 @@ export const unregisterMobileDevice = async (req, res) => {
   }
 };
 
-// Login optimizado para móviles
+// Login optimizado para móviles (Doctor/Admin - usado por la app)
 export const mobileLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const deviceInfo = req.device;
+    const deviceInfo = req.device || { platform: 'unknown', clientType: 'app', deviceId: 'unknown' };
 
-    const usuario = await Usuario.findOne({ 
-      where: { email, activo: true } 
+    const usuario = await Usuario.findOne({
+      where: { email: (email || '').trim().toLowerCase(), activo: true }
     });
 
     if (!usuario) {
-      return res.status(401).json({ 
+      return res.status(401).json({
+        success: false,
         error: 'Credenciales inválidas',
         code: 'INVALID_CREDENTIALS'
+      });
+    }
+
+    // Solo Doctor y Admin pueden usar este endpoint
+    if (!['Doctor', 'Admin'].includes(usuario.rol)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Este login es solo para personal médico',
+        code: 'FORBIDDEN_ROLE'
       });
     }
 
@@ -169,31 +179,50 @@ export const mobileLogin = async (req, res) => {
     const isValidPassword = await bcrypt.compare(password, usuario.password_hash);
 
     if (!isValidPassword) {
-      return res.status(401).json({ 
+      return res.status(401).json({
+        success: false,
         error: 'Credenciales inválidas',
         code: 'INVALID_CREDENTIALS'
       });
     }
 
-    // Actualizar último login móvil
-    await usuario.update({ 
+    await usuario.update({
       last_mobile_login: new Date(),
       ultimo_login: new Date()
     });
 
-    // Generar tokens optimizados para móvil
-    const token = generateMobileToken(usuario, deviceInfo);
-    const refreshToken = generateRefreshToken(usuario, deviceInfo);
+    let id_doctor = null;
+    if (usuario.rol === 'Doctor') {
+      const { Doctor } = await import('../models/associations.js');
+      const doctor = await Doctor.findOne({
+        where: { id_usuario: usuario.id_usuario },
+        attributes: ['id_doctor']
+      });
+      if (doctor) id_doctor = doctor.id_doctor;
+    }
+
+    // Usar RefreshTokenService para tokens con expiración según rol (Admin/Doctor: 10h)
+    const RefreshTokenService = (await import('../services/refreshTokenService.js')).default;
+    const tokenPair = await RefreshTokenService.generateTokenPair({
+      id: usuario.id_usuario,
+      email: usuario.email,
+      rol: usuario.rol
+    }, usuario.rol);
 
     res.json({
+      success: true,
       message: 'Login exitoso',
-      token,
-      refresh_token: refreshToken,
-      expires_in: 7200, // 2 horas en segundos
+      token: tokenPair.accessToken,
+      refresh_token: tokenPair.refreshToken,
+      refreshToken: tokenPair.refreshToken,
+      expires_in: tokenPair.expiresIn,
+      refresh_token_expires_in: tokenPair.refreshTokenExpiresIn,
       usuario: {
         id: usuario.id_usuario,
+        id_usuario: usuario.id_usuario,
         email: usuario.email,
         rol: usuario.rol,
+        ...(id_doctor != null && { id_doctor }),
         last_mobile_login: usuario.last_mobile_login
       },
       device_info: {
@@ -205,6 +234,7 @@ export const mobileLogin = async (req, res) => {
   } catch (error) {
     console.error('Error en mobile login:', error.message);
     res.status(500).json({
+      success: false,
       error: 'Error en el login',
       details: error.message
     });

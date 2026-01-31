@@ -21,7 +21,7 @@ import useTodasCitas from '../../hooks/useTodasCitas';
 import { useDoctores, usePacientes, useModulos } from '../../hooks/useGestion';
 import { formatDateTime } from '../../utils/dateUtils';
 import { gestionService } from '../../api/gestionService';
-import { ESTADOS_CITA } from '../../utils/constantes';
+import { ESTADOS_CITA, COLORES } from '../../utils/constantes';
 import DateTimePickerButton from '../../components/DateTimePickerButton';
 import CompletarCitaWizard from '../../components/CompletarCitaWizard';
 import DetalleCitaModal from '../../components/DetalleCitaModal/DetalleCitaModal';
@@ -380,17 +380,17 @@ const VerTodasCitas = ({ navigation }) => {
   const getEstadoColor = (estado) => {
     switch (estado) {
       case ESTADOS_CITA.ATENDIDA:
-        return '#4CAF50';
+        return COLORES.EXITO_LIGHT;
       case ESTADOS_CITA.PENDIENTE:
-        return '#FF9800';
+        return COLORES.ADVERTENCIA_LIGHT;
       case ESTADOS_CITA.NO_ASISTIDA:
-        return '#F44336';
+        return COLORES.ERROR_LIGHT;
       case ESTADOS_CITA.REPROGRAMADA:
-        return '#2196F3';
+        return COLORES.NAV_PRIMARIO;
       case ESTADOS_CITA.CANCELADA:
-        return '#9E9E9E';
+        return COLORES.TEXTO_SECUNDARIO;
       default:
-        return '#9E9E9E';
+        return COLORES.TEXTO_SECUNDARIO;
     }
   };
 
@@ -613,7 +613,7 @@ const VerTodasCitas = ({ navigation }) => {
       {/* Cita Destacada - Se muestra cuando viene desde otra pantalla con highlightCitaId */}
       {loadingCitaDestacada && (
         <View style={styles.citaDestacadaLoading}>
-          <ActivityIndicator size="small" color="#2196F3" />
+          <ActivityIndicator size="small" color={COLORES.NAV_PRIMARIO} />
           <Text style={styles.citaDestacadaLoadingText}>Cargando cita seleccionada...</Text>
         </View>
       )}
@@ -696,9 +696,9 @@ const VerTodasCitas = ({ navigation }) => {
                   <TouchableOpacity
                     onPress={() => handleOpenWizard(citaDestacada)}
                     activeOpacity={0.7}
-                    style={[styles.accionButtonFull, styles.accionButtonTouchable, { backgroundColor: '#4CAF50' }]}
+                    style={[styles.accionButtonFull, styles.accionButtonTouchable, { backgroundColor: COLORES.EXITO_LIGHT }]}
                   >
-                    <Text style={[styles.accionButtonText, { color: '#FFFFFF' }]}>
+                    <Text style={[styles.accionButtonText, { color: COLORES.TEXTO_EN_PRIMARIO }]}>
                       Completar
                     </Text>
                   </TouchableOpacity>
@@ -735,7 +735,7 @@ const VerTodasCitas = ({ navigation }) => {
       {/* Lista de Citas con Infinite Scroll */}
       {isLoadingData ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color={COLORES.NAV_PRIMARIO} />
           <Text style={styles.loadingText}>Cargando citas...</Text>
         </View>
       ) : (
@@ -839,9 +839,9 @@ const VerTodasCitas = ({ navigation }) => {
                       <TouchableOpacity
                         onPress={() => handleOpenWizard(cita)}
                         activeOpacity={0.7}
-                        style={[styles.accionButtonFull, styles.accionButtonTouchable, { backgroundColor: '#4CAF50' }]}
+                        style={[styles.accionButtonFull, styles.accionButtonTouchable, { backgroundColor: COLORES.EXITO_LIGHT }]}
                       >
-                        <Text style={[styles.accionButtonText, { color: '#FFFFFF' }]}>
+                        <Text style={[styles.accionButtonText, { color: COLORES.TEXTO_EN_PRIMARIO }]}>
                           Completar
                         </Text>
                       </TouchableOpacity>
@@ -885,7 +885,7 @@ const VerTodasCitas = ({ navigation }) => {
           ListFooterComponent={() => (
             loadingMore ? (
               <View style={styles.loadingMoreContainer}>
-                <ActivityIndicator size="small" color="#2196F3" />
+                <ActivityIndicator size="small" color={COLORES.NAV_PRIMARIO} />
                 <Text style={styles.loadingMoreText}>Cargando más citas...</Text>
               </View>
             ) : hasMore && filteredCitas.length > 0 ? (
@@ -1136,7 +1136,7 @@ const VerTodasCitas = ({ navigation }) => {
                   mode="contained"
                   onPress={aplicarFiltros}
                   style={[styles.modalButton, styles.applyButton]}
-                  buttonColor="#2196F3"
+                  buttonColor={COLORES.NAV_PRIMARIO}
                 >
                   Aplicar
                 </Button>
@@ -1193,7 +1193,7 @@ const VerTodasCitas = ({ navigation }) => {
                         style={[
                           styles.estadoOption,
                           nuevoEstado === estado && styles.estadoOptionActive,
-                          { backgroundColor: nuevoEstado === estado ? getEstadoColor(estado) : '#E0E0E0' }
+                          { backgroundColor: nuevoEstado === estado ? getEstadoColor(estado) : COLORES.TEXTO_DISABLED }
                         ]}
                         onPress={() => setNuevoEstado(estado)}
                       >
@@ -1225,7 +1225,7 @@ const VerTodasCitas = ({ navigation }) => {
                 mode="contained"
                 onPress={handleActualizarEstado}
                 style={[styles.modalButton, styles.applyButton]}
-                buttonColor="#4CAF50"
+                buttonColor={COLORES.EXITO_LIGHT}
                 loading={actualizando}
                 disabled={actualizando || !nuevoEstado}
               >
@@ -1307,7 +1307,7 @@ const VerTodasCitas = ({ navigation }) => {
                 mode="contained"
                 onPress={handleEnviarReprogramacion}
                 style={[styles.modalButton, styles.applyButton]}
-                buttonColor="#2196F3"
+                buttonColor={COLORES.NAV_PRIMARIO}
                 loading={actualizando}
                 disabled={actualizando || !fechaReprogramada}
               >
@@ -1348,7 +1348,7 @@ const VerTodasCitas = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   loadingContainer: {
     flex: 1,
@@ -1359,7 +1359,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   loadingMoreContainer: {
     flexDirection: 'row',
@@ -1370,23 +1370,23 @@ const styles = StyleSheet.create({
   },
   loadingMoreText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   scrollHintText: {
     fontSize: 13,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   endOfListContainer: {
     paddingVertical: 20,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.TEXTO_DISABLED,
     marginTop: 8,
   },
   endOfListText: {
     fontSize: 13,
-    color: '#888',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
   },
   emptyListContainer: {
@@ -1401,13 +1401,13 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     textAlign: 'center',
     marginBottom: 10,
   },
   errorDetails: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -1415,7 +1415,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   header: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.NAV_PRIMARIO,
     padding: 16,
   },
   headerContent: {
@@ -1431,7 +1431,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 24,
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: 'bold',
   },
   headerText: {
@@ -1441,11 +1441,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#E3F2FD',
+    color: COLORES.NAV_PRIMARIO_INACTIVO,
     marginTop: 4,
   },
   searchContainer: {
@@ -1457,13 +1457,13 @@ const styles = StyleSheet.create({
   },
   activeFilters: {
     padding: 12,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     borderBottomWidth: 1,
-    borderBottomColor: '#BBDEFB',
+    borderBottomColor: COLORES.NAV_PRIMARIO_INACTIVO,
   },
   activeFiltersLabel: {
     fontSize: 12,
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     marginBottom: 8,
     fontWeight: '600',
   },
@@ -1473,7 +1473,7 @@ const styles = StyleSheet.create({
   },
   filterChip: {
     marginRight: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.BLANCO,
   },
   clearFiltersButton: {
     alignSelf: 'flex-end',
@@ -1481,7 +1481,7 @@ const styles = StyleSheet.create({
   },
   clearFiltersText: {
     fontSize: 12,
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
     textDecorationLine: 'underline',
   },
   scrollView: {
@@ -1501,13 +1501,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   citaCard: {
@@ -1517,8 +1517,8 @@ const styles = StyleSheet.create({
   },
   citaCardResaltada: {
     borderWidth: 3,
-    borderColor: '#1976D2',
-    backgroundColor: '#E3F2FD',
+    borderColor: COLORES.NAV_PRIMARIO,
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     elevation: 4,
   },
   // Estilos para cita destacada
@@ -1536,22 +1536,22 @@ const styles = StyleSheet.create({
   citaDestacadaTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
   },
   citaDestacadaCloseButton: {
     padding: 4,
   },
   citaDestacadaCloseText: {
     fontSize: 18,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: 'bold',
   },
   citaDestacadaCard: {
     borderRadius: 12,
     elevation: 4,
     borderWidth: 2,
-    borderColor: '#1976D2',
-    backgroundColor: '#E3F2FD',
+    borderColor: COLORES.NAV_PRIMARIO,
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
   },
   citaDestacadaLoading: {
     flexDirection: 'row',
@@ -1562,7 +1562,7 @@ const styles = StyleSheet.create({
   },
   citaDestacadaLoadingText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   citaHeader: {
     marginBottom: 12,
@@ -1576,24 +1576,24 @@ const styles = StyleSheet.create({
   citaTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   estadoChip: {
     paddingHorizontal: 8,
   },
   estadoChipText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 11,
     fontWeight: '600',
   },
   primeraConsultaChip: {
-    backgroundColor: '#E1F5FE',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     marginTop: 8,
     alignSelf: 'flex-start',
   },
   primeraConsultaText: {
-    color: '#0277BD',
+    color: COLORES.NAV_PRIMARIO,
     fontSize: 11,
   },
   citaInfo: {
@@ -1617,27 +1617,27 @@ const styles = StyleSheet.create({
   observacionesContainer: {
     marginTop: 8,
     padding: 8,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderRadius: 4,
   },
   observacionesLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 4,
   },
   observacionesText: {
     fontSize: 13,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     fontStyle: 'italic',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '80%',
@@ -1649,12 +1649,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   modalScrollView: {
     maxHeight: 400,
@@ -1670,8 +1670,8 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    backgroundColor: '#FFFFFF',
+    borderTopColor: COLORES.TEXTO_DISABLED,
+    backgroundColor: COLORES.FONDO_CARD,
     gap: 12,
   },
   filterSection: {
@@ -1680,7 +1680,7 @@ const styles = StyleSheet.create({
   filterLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   doctoresList: {
@@ -1690,18 +1690,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: COLORES.TEXTO_DISABLED,
     marginRight: 8,
   },
   doctorChipActive: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.NAV_PRIMARIO,
   },
   doctorChipText: {
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontSize: 14,
   },
   doctorChipTextActive: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
   },
   doctorDropdownSelector: {
@@ -1709,32 +1709,32 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#BDBDBD',
+    borderColor: COLORES.TEXTO_DISABLED,
     borderRadius: 8,
     padding: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   doctorDropdownText: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   doctorDropdownPlaceholder: {
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   dropdownArrow: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginLeft: 8,
   },
   doctorDropdownList: {
     marginTop: 4,
     borderWidth: 1,
-    borderColor: '#BDBDBD',
+    borderColor: COLORES.TEXTO_DISABLED,
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1743,17 +1743,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: COLORES.FONDO,
   },
   doctorDropdownItemSelected: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
   },
   doctorDropdownItemText: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   doctorDropdownItemTextSelected: {
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: '600',
   },
   headerActions: {
@@ -1768,17 +1768,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   filtrosTextButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 14,
     fontWeight: '600',
   },
   dateInput: {
     borderWidth: 1,
-    borderColor: '#BDBDBD',
+    borderColor: COLORES.TEXTO_DISABLED,
     borderRadius: 8,
     padding: 12,
     fontSize: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -1791,15 +1791,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   cancelButton: {
-    borderColor: '#999',
+    borderColor: COLORES.TEXTO_SECUNDARIO,
   },
   applyButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.NAV_PRIMARIO,
   },
   closeButtonX: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: '#f44336',
+    color: COLORES.ERROR_LIGHT,
     paddingHorizontal: 8,
     paddingVertical: 4,
     minWidth: 40,
@@ -1833,13 +1833,13 @@ const styles = StyleSheet.create({
   },
   accionButtonOutlined: {
     borderWidth: 1,
-    borderColor: '#2196F3',
-    backgroundColor: 'transparent',
+    borderColor: COLORES.NAV_PRIMARIO,
+    backgroundColor: COLORES.TRANSPARENTE,
   },
   accionButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
   },
   accionButtonLabel: {
     fontSize: 13,
@@ -1847,14 +1847,14 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   modalCitaInfo: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     padding: 12,
     borderRadius: 8,
     marginBottom: 20,
   },
   modalCitaInfoText: {
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   estadosContainer: {
@@ -1873,22 +1873,22 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   estadoOptionText: {
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontSize: 14,
     fontWeight: '500',
   },
   estadoOptionTextActive: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
   },
   modalTextInput: {
     borderWidth: 1,
-    borderColor: '#BDBDBD',
+    borderColor: COLORES.TEXTO_DISABLED,
     borderRadius: 8,
     padding: 12,
     fontSize: 14,
     minHeight: 80,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
 });
 

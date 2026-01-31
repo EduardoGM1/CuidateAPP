@@ -16,6 +16,7 @@ import { storageService } from '../../services/storageService';
 import Logger from '../../services/logger';
 import { useAuth } from '../../context/AuthContext';
 import { sanitizePatientId } from '../../utils/patientIdValidator';
+import { COLORES } from '../../utils/constantes';
 
 const { width, height } = Dimensions.get('window');
 
@@ -259,7 +260,7 @@ const LoginPaciente = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E8', // Verde claro para pacientes
+    backgroundColor: COLORES.NAV_PACIENTE_FONDO,
   },
   content: {
     flex: 1,
@@ -278,13 +279,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.EXITO,
     marginBottom: 10,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 20,
-    color: '#4CAF50',
+    color: COLORES.EXITO_LIGHT,
     marginBottom: 40,
     textAlign: 'center',
     fontWeight: '600',
@@ -295,13 +296,13 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   button: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.BLANCO,
     borderRadius: 20,
     paddingVertical: 25,
     paddingHorizontal: 20,
     alignItems: 'center',
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -309,15 +310,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.TEXTO_DISABLED,
   },
   pinButton: {
-    borderColor: '#4CAF50',
-    backgroundColor: '#F1F8E9',
+    borderColor: COLORES.EXITO_LIGHT,
+    backgroundColor: COLORES.NAV_PACIENTE_FONDO,
   },
   biometricButton: {
-    borderColor: '#2196F3',
-    backgroundColor: '#E3F2FD',
+    borderColor: COLORES.INFO_LIGHT,
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
   },
   buttonIcon: {
     fontSize: 48,
@@ -326,26 +327,26 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 5,
     textAlign: 'center',
   },
   buttonSubtext: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   loadingContainer: {
     marginTop: 30,
     padding: 15,
-    backgroundColor: '#FFF3E0',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#FFB74D',
+    borderColor: COLORES.ADVERTENCIA_LIGHT,
   },
   loadingText: {
     fontSize: 18,
-    color: '#F57C00',
+    color: COLORES.ADVERTENCIA,
     textAlign: 'center',
     fontWeight: '600',
   },

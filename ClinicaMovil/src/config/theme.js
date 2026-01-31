@@ -68,6 +68,17 @@ export const theme = {
     borderRadius: 8,
     marginBottom: 16,
   },
+
+  // Navegación (tabs, stack headers)
+  navigation: {
+    tabBarBackground: COLORES.NAV_PRIMARIO,
+    tabBarActiveTint: COLORES.BLANCO,
+    tabBarInactiveTint: COLORES.NAV_PRIMARIO_INACTIVO,
+    headerBackground: COLORES.NAV_PRIMARIO,
+    headerTintColor: COLORES.TEXTO_EN_PRIMARIO,
+    headerPaciente: COLORES.NAV_PACIENTE,
+    cardPaciente: COLORES.NAV_PACIENTE_FONDO,
+  },
   
   // Estados Médicos
   estados: {

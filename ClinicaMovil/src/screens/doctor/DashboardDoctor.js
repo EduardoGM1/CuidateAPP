@@ -23,6 +23,7 @@ import useWebSocket from '../../hooks/useWebSocket';
 import useScreenFocus from '../../hooks/useScreenFocus';
 import gestionService from '../../api/gestionService';
 import { estaFueraDeRango, RANGOS_NORMALES } from '../../utils/vitalSignsRanges';
+import { COLORES } from '../../utils/constantes';
 
 const { width } = Dimensions.get('window');
 
@@ -522,7 +523,7 @@ const DashboardDoctor = ({ navigation }) => {
                         styles.bar,
                         {
                           height: barHeight,
-                          backgroundColor: '#4CAF50',
+                          backgroundColor: COLORES.EXITO_LIGHT,
                         },
                       ]}
                     />
@@ -997,14 +998,14 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.EXITO_LIGHT,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     marginBottom: 5,
   },
   headerSubtitle: {
@@ -1025,7 +1026,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 15,
     marginLeft: 5,
   },
@@ -1048,13 +1049,13 @@ const styles = StyleSheet.create({
   metricValue: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 5,
   },
   metricTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 2,
   },
   metricSubtitle: {
@@ -1088,7 +1089,7 @@ const styles = StyleSheet.create({
   },
   citaFecha: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 2,
   },
   estadoBadge: {
@@ -1098,12 +1099,12 @@ const styles = StyleSheet.create({
   },
   estadoText: {
     fontSize: 12,
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
   },
   pacienteNombre: {
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     fontWeight: '500',
   },
   quickAccessContainer: {
@@ -1126,10 +1127,10 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   primaryButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.EXITO_LIGHT,
   },
   secondaryButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
@@ -1141,7 +1142,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
   },
   quickAccessSubtext: {
     fontSize: 10,
@@ -1188,7 +1189,7 @@ const styles = StyleSheet.create({
   },
   pacienteTelefono: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 4,
   },
   pacienteEdad: {
@@ -1198,7 +1199,7 @@ const styles = StyleSheet.create({
   },
   citaMotivo: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 4,
     fontStyle: 'italic',
   },
@@ -1216,7 +1217,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 15,
     textAlign: 'center',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   chartContainer: {
     flexDirection: 'row',
@@ -1243,7 +1244,7 @@ const styles = StyleSheet.create({
   },
   barLabel: {
     fontSize: 10,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 5,
   },
   barValue: {
@@ -1289,7 +1290,7 @@ const styles = StyleSheet.create({
   alertaPaciente: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   alertaTipo: {
@@ -1300,7 +1301,7 @@ const styles = StyleSheet.create({
   },
   alertaDetalle: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 2,
   },
   alertaTiempo: {
@@ -1315,7 +1316,7 @@ const styles = StyleSheet.create({
   },
   alertChipText: {
     fontSize: 11,
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
   },
   accessDeniedContainer: {
@@ -1332,7 +1333,7 @@ const styles = StyleSheet.create({
   },
   accessDeniedMessage: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -1343,7 +1344,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   goBackText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -1363,13 +1364,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#2196F3',
   },
   activateButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.EXITO_LIGHT,
   },
   deactivateButton: {
     backgroundColor: '#FF9800',
   },
   actionButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -1380,7 +1381,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   errorContainer: {
     padding: 20,
@@ -1399,7 +1400,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -1409,7 +1410,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   notificacionesContainer: {
@@ -1422,7 +1423,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 10,
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
   },
   verTodasText: {
@@ -1451,12 +1452,12 @@ const styles = StyleSheet.create({
   notificacionTitulo: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   notificacionMensaje: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     lineHeight: 18,
   },
   unreadDot: {
@@ -1495,12 +1496,12 @@ const styles = StyleSheet.create({
   alertaPaciente: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 2,
   },
   alertaSintoma: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   alertaTiempo: {
     fontSize: 12,
@@ -1515,7 +1516,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     width: '90%',
     maxHeight: '80%',
@@ -1528,12 +1529,12 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingRight: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
     marginRight: 8,
   },
@@ -1547,7 +1548,7 @@ const styles = StyleSheet.create({
   },
   modalCloseButton: {
     fontSize: 18,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: 'bold',
     lineHeight: 18,
   },
@@ -1561,7 +1562,7 @@ const styles = StyleSheet.create({
   modalLoadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   modalPacienteCard: {
     margin: 16,
@@ -1571,12 +1572,12 @@ const styles = StyleSheet.create({
   modalPacienteNombre: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   modalMensaje: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 8,
   },
   modalFecha: {
@@ -1591,7 +1592,7 @@ const styles = StyleSheet.create({
   modalSignosTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 12,
   },
   modalSignosList: {
@@ -1606,12 +1607,12 @@ const styles = StyleSheet.create({
   modalSignoLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   modalSignoValue: {
     fontSize: 16,
-    color: '#2196F3',
+    color: COLORES.NAV_PRIMARIO,
     marginBottom: 4,
   },
   modalSignoValueOutOfRange: {
@@ -1625,7 +1626,7 @@ const styles = StyleSheet.create({
   },
   modalNoDataText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     padding: 20,
   },

@@ -9,6 +9,7 @@ import {
   Modal,
   ScrollView,
 } from 'react-native';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * Componente reutilizable para campos de formulario con soporte para fecha
@@ -454,18 +455,18 @@ const styles = StyleSheet.create({
   // Estilos para el modal de fecha
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     padding: 20,
     width: '90%',
     maxHeight: '80%',
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -473,7 +474,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2D3748',
+    color: COLORES.TEXTO_PRIMARIO,
     textAlign: 'center',
     marginBottom: 20,
   },

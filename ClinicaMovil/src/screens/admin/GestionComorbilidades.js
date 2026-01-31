@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   listContainer: {
     flex: 1,
@@ -652,12 +652,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 5,
   },
   cardDescription: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 5,
   },
   cardActions: {
@@ -694,32 +694,32 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
     borderRadius: 8,
     marginBottom: 8,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
   },
   optionItemDelete: {
     borderBottomWidth: 0,
-    backgroundColor: '#FFEBEE',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
   },
   optionText: {
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     fontWeight: '600',
     textAlign: 'center',
   },
   optionTextDelete: {
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
   },
   noDataCard: {
     elevation: 1,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     marginTop: 20,
   },
   noDataText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     fontStyle: 'italic',
     padding: 20,
@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
   },
   counterText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
   },
   accessDeniedContainer: {
@@ -742,13 +742,13 @@ const styles = StyleSheet.create({
   accessDeniedTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     marginBottom: 20,
     textAlign: 'center',
   },
   accessDeniedMessage: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginBottom: 30,
     lineHeight: 24,
@@ -767,7 +767,7 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'flex-end',
   },
   modalContent: {
@@ -784,7 +784,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.TEXTO_DISABLED,
   },
   modalTitle: {
     fontSize: 20,
@@ -801,20 +801,20 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#DDD',
+    borderColor: COLORES.TEXTO_DISABLED,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
     backgroundColor: COLORES.BLANCO,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   inputError: {
-    borderColor: '#F44336',
+    borderColor: COLORES.ERROR_LIGHT,
   },
   textArea: {
     height: 100,
@@ -822,7 +822,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: '#F44336',
+    color: COLORES.ERROR_LIGHT,
     marginTop: 5,
   },
   modalFooter: {
@@ -831,7 +831,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.TEXTO_DISABLED,
   },
   cancelButton: {
     flex: 1,

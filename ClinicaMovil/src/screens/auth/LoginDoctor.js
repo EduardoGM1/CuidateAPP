@@ -411,11 +411,11 @@ const styles = StyleSheet.create({
   },
   registerText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   registerLink: {
     fontSize: 16,
-    color: '#1976D2',
+    color: COLORES.NAV_PRIMARIO,
     fontWeight: '600',
   },
 });

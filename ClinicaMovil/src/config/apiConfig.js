@@ -4,6 +4,7 @@
  */
 
 import { Platform } from 'react-native';
+import { API_BASE_URL_OVERRIDE } from './apiUrlOverride';
 
 // Función para obtener la IP local automáticamente
 // IMPORTANTE: Esta función debería detectar la IP real, pero por ahora usa valores comunes
@@ -33,9 +34,9 @@ const API_CONFIG = {
     description: 'Desarrollo local con adb reverse'
   },
   localNetwork: {
-    baseURL: `http://${getLocalIP()}:3000`,
+    baseURL: API_BASE_URL_OVERRIDE || `http://${getLocalIP()}:3000`,
     timeout: 30000, // Aumentado de 15000 a 30000 para peticiones grandes
-    description: 'Red local sin adb reverse'
+    description: API_BASE_URL_OVERRIDE ? 'URL de API configurada manualmente' : 'Red local sin adb reverse'
   },
   emulator: {
     baseURL: 'http://10.0.2.2:3000',
@@ -298,13 +299,27 @@ export const getApiConfigWithFallback = async () => {
           return API_CONFIG.development;
         }
       } else {
-        // Para dispositivos físicos: Probar localhost primero (con adb reverse)
-        // PERO con timeout más corto para fallback rápido
+        // Para dispositivos físicos: Probar override primero (si está configurado), luego localhost, luego red local
         if (__DEV__) {
-          console.log('🔍 Dispositivo físico detectado - probando localhost primero');
+          console.log('🔍 Dispositivo físico detectado');
         }
         
-        // PRIMERO: Probar localhost (adb reverse) con timeout corto
+        // PRIMERO: Si el usuario configuró API_BASE_URL_OVERRIDE, probarla
+        if (API_BASE_URL_OVERRIDE) {
+          if (__DEV__) {
+            console.log(`🔄 Probando URL configurada: ${API_BASE_URL_OVERRIDE}`);
+          }
+          const overrideTest = await testApiConnectivity(API_BASE_URL_OVERRIDE);
+          if (overrideTest.success) {
+            cachedEnvironment = 'localNetwork';
+            if (__DEV__) {
+              console.log('✅ Usando URL de API configurada');
+            }
+            return API_CONFIG.localNetwork;
+          }
+        }
+        
+        // SEGUNDO: Probar localhost (adb reverse) con timeout corto
         const localhostConfig = API_CONFIG.development;
         if (__DEV__) {
           console.log(`🔄 Probando localhost (adb reverse): ${localhostConfig.baseURL}`);

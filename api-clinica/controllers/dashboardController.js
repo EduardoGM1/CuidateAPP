@@ -115,7 +115,13 @@ export class DashboardController {
 
   async getDoctorSummary(req, res) {
     try {
-      const userId = req.user?.id_usuario;
+      const doctorId = req.user?.id_doctor;
+      if (!doctorId) {
+        return res.status(404).json({
+          success: false,
+          error: 'Doctor no encontrado para este usuario'
+        });
+      }
       const { estado, periodo, mesInicio, mesFin, año } = req.query; // Obtener parámetros opcionales
       
       // Construir objeto rangoMeses si el periodo es mensual
@@ -134,27 +140,7 @@ export class DashboardController {
         }
       }
       
-      // Log crítico: Verificar que se recibe la petición
-      logger.info(`[DASHBOARD] Petición recibida - UserId: ${userId}, Estado: ${estado || 'todos'}, Periodo: ${periodo || 'ninguno'}, RangoMeses: ${rangoMeses ? JSON.stringify(rangoMeses) : 'N/A'}`);
-      
-      // Obtener el id_doctor real del usuario
-      const { Doctor } = await import('../models/associations.js');
-      const doctor = await Doctor.findOne({ 
-        where: { id_usuario: userId },
-        attributes: ['id_doctor']
-      });
-      
-      if (!doctor) {
-        logger.warn('Doctor no encontrado para usuario', { userId });
-        return res.status(404).json({
-          success: false,
-          error: 'Doctor no encontrado'
-        });
-      }
-      
-      const doctorId = doctor.id_doctor;
-      
-      logger.info(`[DASHBOARD] DoctorId encontrado: ${doctorId} para UserId: ${userId}, Estado filtro: ${estado || 'N/A'}, Periodo: ${periodo || 'N/A'}, RangoMeses: ${rangoMeses ? JSON.stringify(rangoMeses) : 'N/A'}`);
+      logger.info(`[DASHBOARD] Petición recibida - DoctorId: ${doctorId}, Estado: ${estado || 'todos'}, Periodo: ${periodo || 'ninguno'}`);
 
       const summary = await this.dashboardService.getDoctorSummary(doctorId, estado, periodo, rangoMeses);
 
@@ -171,11 +157,15 @@ export class DashboardController {
 
   async getDoctorPatients(req, res) {
     try {
-      const doctorId = req.user?.id_usuario;
+      const doctorId = req.user?.id_doctor;
+      if (!doctorId) {
+        return res.status(404).json({
+          success: false,
+          error: 'Doctor no encontrado para este usuario'
+        });
+      }
       
-      logger.info('Solicitud de pacientes del doctor', { 
-        doctorId 
-      });
+      logger.info('Solicitud de pacientes del doctor', { doctorId });
 
       const patients = await this.dashboardService.getDoctorPatients(doctorId);
 
@@ -192,13 +182,16 @@ export class DashboardController {
 
   async getDoctorAppointments(req, res) {
     try {
-      const doctorId = req.user?.id_usuario;
+      const doctorId = req.user?.id_doctor;
+      if (!doctorId) {
+        return res.status(404).json({
+          success: false,
+          error: 'Doctor no encontrado para este usuario'
+        });
+      }
       const { fecha } = req.query;
       
-      logger.info('Solicitud de citas del doctor', { 
-        doctorId,
-        fecha 
-      });
+      logger.info('Solicitud de citas del doctor', { doctorId, fecha });
 
       const appointments = await this.dashboardService.getDoctorAppointments(doctorId, fecha);
 
@@ -215,13 +208,16 @@ export class DashboardController {
 
   async getPatientVitalSigns(req, res) {
     try {
-      const doctorId = req.user?.id_usuario;
+      const doctorId = req.user?.id_doctor;
+      if (!doctorId) {
+        return res.status(404).json({
+          success: false,
+          error: 'Doctor no encontrado para este usuario'
+        });
+      }
       const { pacienteId } = req.params;
       
-      logger.info('Solicitud de signos vitales del paciente', { 
-        doctorId,
-        pacienteId 
-      });
+      logger.info('Solicitud de signos vitales del paciente', { doctorId, pacienteId });
 
       // Validar que el doctor tiene acceso al paciente
       this.dashboardService.validarAccesoDoctor(doctorId, pacienteId);
@@ -241,11 +237,15 @@ export class DashboardController {
 
   async getDoctorMessages(req, res) {
     try {
-      const doctorId = req.user?.id_usuario;
+      const doctorId = req.user?.id_doctor;
+      if (!doctorId) {
+        return res.status(404).json({
+          success: false,
+          error: 'Doctor no encontrado para este usuario'
+        });
+      }
       
-      logger.info('Solicitud de mensajes del doctor', { 
-        doctorId 
-      });
+      logger.info('Solicitud de mensajes del doctor', { doctorId });
 
       const messages = await this.dashboardService.getDoctorMessages(doctorId);
 

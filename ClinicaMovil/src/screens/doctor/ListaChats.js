@@ -23,6 +23,7 @@ import Logger from '../../services/logger';
 import useConversacionesDoctor from '../../hooks/useConversacionesDoctor';
 import ListChatItem from '../../components/chat/ListChatItem';
 import { emptyStateStyles } from '../../utils/sharedStyles';
+import { COLORES } from '../../utils/constantes';
 
 const ListaChats = ({ navigation }) => {
   const { userData, userRole } = useAuth();
@@ -204,18 +205,18 @@ const ListaChats = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   header: {
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#333333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   headerSubtitle: {
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     padding: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   searchbar: {
     elevation: 2,
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333333',
+    color: COLORES.TEXTO_PRIMARIO,
     textAlign: 'center',
     marginBottom: 8,
   },
