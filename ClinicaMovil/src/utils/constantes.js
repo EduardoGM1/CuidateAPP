@@ -123,3 +123,18 @@ export const ESTADOS_SOLICITUD_REPROGRAMACION = {
   RECHAZADA: 'rechazada',
   CANCELADA: 'cancelada',
 };
+
+/**
+ * Delays para escalonar peticiones al montar pantallas (evitar ERR_NETWORK en Android).
+ * Android limita ~5 conexiones simultáneas por host; varias pantallas disparan 4+ requests a la vez.
+ */
+export const NETWORK_STAGGER = {
+  /** Retraso para fetchModulos cuando hay otros hooks (doctores, pacientes, citas) en la misma pantalla. */
+  MODULOS_MS: 600,
+  /** Retraso para carga secundaria (comorbilidades, citas, etc.) después de la primera ola de hooks. */
+  SECONDARY_LOAD_MS: 1200,
+  /** Retraso para fetchModulos en formularios (solo 1–2 hooks; retraso menor). */
+  MODULOS_FORM_MS: 400,
+  /** Retraso para carga de cita destacada u otros datos opcionales. */
+  OPTIONAL_DATA_MS: 1000,
+};

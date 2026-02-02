@@ -31,7 +31,7 @@ import useTestMode from '../../hooks/useTestMode';
 
 // Servicios
 import Logger from '../../services/logger';
-import { COLORES } from '../../utils/constantes';
+import { COLORES, NETWORK_STAGGER } from '../../utils/constantes';
 import { pacienteAuthService } from '../../api/authService';
 import gestionService from '../../api/gestionService';
 import { useAuth } from '../../context/AuthContext';
@@ -203,12 +203,13 @@ const AgregarPaciente = () => {
     'Omeprazol', 'Paracetamol', 'Ibuprofeno', 'Aspirina', 'Otros'
   ];
 
-  /**
-   * Cargar módulos al montar el componente
-   */
+  /** Cargar módulos con retraso para no saturar conexiones (Android limita ~5 por host). */
   useEffect(() => {
-    Logger.info('AgregarPaciente: Cargando módulos');
-    fetchModulos();
+    const t = setTimeout(() => {
+      Logger.info('AgregarPaciente: Cargando módulos');
+      fetchModulos();
+    }, NETWORK_STAGGER.MODULOS_FORM_MS);
+    return () => clearTimeout(t);
   }, [fetchModulos]);
 
   /**

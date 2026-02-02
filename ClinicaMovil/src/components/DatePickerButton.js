@@ -121,7 +121,7 @@ const DatePickerButton = ({
           </Text>
           {!hideIcons && hasValue && editable && (
             <IconButton
-              icon="calendar-edit"
+              icon="pencil"
               size={20}
               iconColor="#1976d2"
               disabled={true}

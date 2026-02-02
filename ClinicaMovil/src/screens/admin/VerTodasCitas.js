@@ -21,7 +21,7 @@ import useTodasCitas from '../../hooks/useTodasCitas';
 import { useDoctores, usePacientes, useModulos } from '../../hooks/useGestion';
 import { formatDateTime } from '../../utils/dateUtils';
 import { gestionService } from '../../api/gestionService';
-import { ESTADOS_CITA, COLORES } from '../../utils/constantes';
+import { ESTADOS_CITA, COLORES, NETWORK_STAGGER } from '../../utils/constantes';
 import DateTimePickerButton from '../../components/DateTimePickerButton';
 import CompletarCitaWizard from '../../components/CompletarCitaWizard';
 import DetalleCitaModal from '../../components/DetalleCitaModal/DetalleCitaModal';
@@ -79,12 +79,13 @@ const VerTodasCitas = ({ navigation }) => {
   // Obtener módulos para filtro
   const { modulos, fetchModulos } = useModulos();
   
-  // Cargar módulos al montar el componente
+  // Cargar módulos con retraso para no saturar conexiones (Android limita ~5 por host)
   useEffect(() => {
-    fetchModulos();
+    const t = setTimeout(() => fetchModulos(), NETWORK_STAGGER.MODULOS_MS);
+    return () => clearTimeout(t);
   }, [fetchModulos]);
-  
-  // Cargar la cita destacada cuando viene con highlightCitaId
+
+  // Cargar la cita destacada cuando viene con highlightCitaId (retraso para no saturar)
   useEffect(() => {
     const fetchCitaDestacada = async () => {
       if (!citaIdToHighlight) {
@@ -134,10 +135,15 @@ const VerTodasCitas = ({ navigation }) => {
         setLoadingCitaDestacada(false);
       }
     };
-    
-    fetchCitaDestacada();
+
+    if (!citaIdToHighlight) {
+      setCitaDestacada(null);
+      return;
+    }
+    const t = setTimeout(() => fetchCitaDestacada(), NETWORK_STAGGER.OPTIONAL_DATA_MS);
+    return () => clearTimeout(t);
   }, [citaIdToHighlight]);
-  
+
   // Obtener pacientes del doctor (solo para doctores, para filtrar búsqueda)
   const { pacientes: pacientesDoctor } = usePacientes('activos', 'recent', 'todas');
   const pacientesIdsDoctor = useMemo(() => {
@@ -710,18 +716,18 @@ const VerTodasCitas = ({ navigation }) => {
                   <TouchableOpacity
                     onPress={() => handleCambiarEstado(citaDestacada)}
                     activeOpacity={0.7}
-                    style={[styles.accionButtonHalf, styles.accionButtonTouchable, styles.accionButtonOutlined]}
+                    style={[styles.accionButtonHalf, styles.accionButtonTouchable, { backgroundColor: COLORES.ADVERTENCIA_LIGHT }]}
                   >
-                    <Text style={styles.accionButtonText}>
+                    <Text style={[styles.accionButtonText, { color: COLORES.TEXTO_EN_PRIMARIO }]}>
                       Cambiar Estado
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => handleReprogramar(citaDestacada)}
                     activeOpacity={0.7}
-                    style={[styles.accionButtonHalf, styles.accionButtonTouchable, styles.accionButtonOutlined]}
+                    style={[styles.accionButtonHalf, styles.accionButtonTouchable, { backgroundColor: COLORES.NAV_PRIMARIO }]}
                   >
-                    <Text style={styles.accionButtonText}>
+                    <Text style={[styles.accionButtonText, { color: COLORES.TEXTO_EN_PRIMARIO }]}>
                       Reprogramar
                     </Text>
                   </TouchableOpacity>
@@ -853,18 +859,18 @@ const VerTodasCitas = ({ navigation }) => {
                       <TouchableOpacity
                         onPress={() => handleCambiarEstado(cita)}
                         activeOpacity={0.7}
-                        style={[styles.accionButtonHalf, styles.accionButtonTouchable, styles.accionButtonOutlined]}
+                        style={[styles.accionButtonHalf, styles.accionButtonTouchable, { backgroundColor: COLORES.ADVERTENCIA_LIGHT }]}
                       >
-                        <Text style={styles.accionButtonText}>
+                        <Text style={[styles.accionButtonText, { color: COLORES.TEXTO_EN_PRIMARIO }]}>
                           Cambiar Estado
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => handleReprogramar(cita)}
                         activeOpacity={0.7}
-                        style={[styles.accionButtonHalf, styles.accionButtonTouchable, styles.accionButtonOutlined]}
+                        style={[styles.accionButtonHalf, styles.accionButtonTouchable, { backgroundColor: COLORES.NAV_PRIMARIO }]}
                       >
-                        <Text style={styles.accionButtonText}>
+                        <Text style={[styles.accionButtonText, { color: COLORES.TEXTO_EN_PRIMARIO }]}>
                           Reprogramar
                         </Text>
                       </TouchableOpacity>

@@ -22,7 +22,7 @@ import useGestion from '../../hooks/useGestion';
 
 // Servicios
 import Logger from '../../services/logger';
-import { COLORES } from '../../utils/constantes';
+import { COLORES, NETWORK_STAGGER } from '../../utils/constantes';
 
 // Opciones de grado de estudio (mismo que AgregarDoctor)
 const GRADOS_ESTUDIO = [
@@ -85,12 +85,13 @@ const EditarDoctor = () => {
   
   const [errors, setErrors] = useState({});
 
-  /**
-   * Cargar módulos al montar el componente
-   */
+  /** Cargar módulos con retraso para no saturar conexiones (Android limita ~5 por host). */
   useEffect(() => {
-    Logger.info('EditarDoctor: Cargando módulos');
-    fetchModulos();
+    const t = setTimeout(() => {
+      Logger.info('EditarDoctor: Cargando módulos');
+      fetchModulos();
+    }, NETWORK_STAGGER.MODULOS_FORM_MS);
+    return () => clearTimeout(t);
   }, [fetchModulos]);
 
   /**

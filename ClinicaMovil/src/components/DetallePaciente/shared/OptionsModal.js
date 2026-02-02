@@ -155,21 +155,36 @@ const OptionsModal = ({
                   </TouchableOpacity>
                 </View>
               ) : (
-                options.map((option, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[styles.optionButton, option.style]}
-                    onPress={() => {
-                      if (option.onPress) {
-                        option.onPress();
-                      }
-                      handleClose();
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.optionText, option.textStyle, option.color && { color: option.color }]}>{option.label}</Text>
-                  </TouchableOpacity>
-                ))
+                options.map((option, index) => {
+                  const hasActionColor = !!option.color;
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.optionButton,
+                        hasActionColor && styles.optionButtonWithColor,
+                        hasActionColor && { backgroundColor: option.color },
+                        option.style
+                      ]}
+                      onPress={() => {
+                        if (option.onPress) {
+                          option.onPress();
+                        }
+                        handleClose();
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[
+                        styles.optionText,
+                        hasActionColor && styles.optionTextOnColor,
+                        !hasActionColor && option.color && { color: option.color },
+                        option.textStyle
+                      ]}>
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })
               )}
             </View>
           </Animated.View>
@@ -276,17 +291,26 @@ const styles = StyleSheet.create({
   optionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    marginBottom: 8,
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 10,
     backgroundColor: COLORES.FONDO,
-    minHeight: 44,
+    minHeight: 48,
+  },
+  optionButtonWithColor: {
+    // Mismo tamaño que Editar/Eliminar; el color lo define la opción
   },
   optionText: {
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '600',
     color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
+    textAlign: 'center',
+  },
+  optionTextOnColor: {
+    color: COLORES.TEXTO_EN_PRIMARIO,
   },
 });
 

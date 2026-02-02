@@ -543,10 +543,11 @@ export const useDoctoresInfinite = (filters = {}) => {
   const {
     pageSize = DEFAULT_PAGE_SIZE,
     estado = 'activos',
-    sort = 'recent'
+    sort = 'recent',
+    modulo = null
   } = filters;
 
-  const filtersKey = JSON.stringify({ estado, sort });
+  const filtersKey = JSON.stringify({ estado, sort, modulo });
 
   const fetchDoctores = useCallback(async (page = 0, isInitial = true) => {
     if (isLoadingRef.current) {
@@ -568,10 +569,10 @@ export const useDoctoresInfinite = (filters = {}) => {
     
     try {
       Logger.info('useDoctoresInfinite: Obteniendo doctores', { 
-        page, offset, pageSize, isInitial, estado, sort 
+        page, offset, pageSize, isInitial, estado, sort, modulo 
       });
       
-      const response = await gestionService.getAllDoctores(estado, sort, { limit: pageSize, offset });
+      const response = await gestionService.getAllDoctores(estado, sort, { limit: pageSize, offset }, modulo);
       
       // El backend devuelve un array directamente o { data: [...] }
       let doctoresData = [];
@@ -616,7 +617,7 @@ export const useDoctoresInfinite = (filters = {}) => {
       setLoadingMore(false);
       isLoadingRef.current = false;
     }
-  }, [pageSize, estado, sort]);
+  }, [pageSize, estado, sort, modulo]);
 
   useEffect(() => {
     if (prevFiltersRef.current !== filtersKey) {
@@ -681,10 +682,11 @@ export const usePacientesInfinite = (filters = {}) => {
     pageSize = DEFAULT_PAGE_SIZE,
     estado = 'activos',
     sort = 'recent',
-    comorbilidad = 'todas'
+    comorbilidad = 'todas',
+    modulo = null
   } = filters;
 
-  const filtersKey = JSON.stringify({ estado, sort, comorbilidad });
+  const filtersKey = JSON.stringify({ estado, sort, comorbilidad, modulo });
 
   const fetchPacientes = useCallback(async (page = 0, isInitial = true) => {
     if (isLoadingRef.current) {
@@ -762,7 +764,7 @@ export const usePacientesInfinite = (filters = {}) => {
       setLoadingMore(false);
       isLoadingRef.current = false;
     }
-  }, [pageSize, estado, sort, comorbilidad]);
+  }, [pageSize, estado, sort, comorbilidad, modulo]);
 
   useEffect(() => {
     if (prevFiltersRef.current !== filtersKey) {

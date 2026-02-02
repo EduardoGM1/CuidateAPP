@@ -9,22 +9,49 @@ import { PAGINATION } from '../config/constants.js';
 import { normalizePaciente } from '../utils/pacienteMapper.js';
 import { sendSuccess, sendServerError } from '../utils/responseHelpers.js';
 
+/**
+ * Parsea el parámetro de filtro comorbilidad: acepta id (numérico) o 'todas'/vacío.
+ * @param {string|null|undefined} comorbilidad - Query param: id numérico o 'todas'
+ * @returns {number|null} - id_comorbilidad o null si no hay filtro
+ */
+function parseComorbilidadFilter(comorbilidad) {
+  if (comorbilidad == null || comorbilidad === '' || String(comorbilidad).toLowerCase() === 'todas') {
+    return null;
+  }
+  const id = parseInt(comorbilidad, 10);
+  if (Number.isNaN(id) || id <= 0) return null;
+  return id;
+}
+
+/** Parsea filtro módulo: null/vacío = todos; número = id_modulo */
+function parseModuloFilter(modulo) {
+  if (modulo == null || modulo === '') return null;
+  const id = parseInt(modulo, 10);
+  if (Number.isNaN(id) || id <= 0) return null;
+  return id;
+}
+
 export const getPacientes = async (req, res) => {
   try {
-    const { comorbilidad = null } = req.query;
-    
+    const { comorbilidad = null, modulo: moduloQuery = null } = req.query;
+
+    const idModuloFilter = parseModuloFilter(moduloQuery);
+
     // Usar utility functions para construir opciones de paginación
     const { order, where: estadoWhere, limit, offset } = buildPaginationOptions(
-      req.query, 
+      req.query,
       {
         defaultField: 'fecha_registro',
         maxLimit: PAGINATION.MAX_LIMIT,
         defaultLimit: PAGINATION.PACIENTES_LIMIT
       }
     );
-    
+
     // Combinar condiciones
     const whereCondition = { ...estadoWhere };
+    if (idModuloFilter != null) {
+      whereCondition.id_modulo = idModuloFilter;
+    }
     
     // Log específico para debug del filtro "todos" - Solo en desarrollo
     if (process.env.NODE_ENV === 'development' && req.query.estado === 'todos') {
@@ -75,24 +102,17 @@ export const getPacientes = async (req, res) => {
       });
     }
     
-    // Configurar inclusión de comorbilidades
-    if (comorbilidad && comorbilidad !== 'todas') {
-      // Buscar la comorbilidad por nombre
-      const comorbilidadEncontrada = await Comorbilidad.findOne({
-        where: { nombre_comorbilidad: comorbilidad }
+    // Configurar inclusión de comorbilidades (filtro por id_comorbilidad)
+    const idComorbilidadFilter = parseComorbilidadFilter(comorbilidad);
+    if (idComorbilidadFilter != null) {
+      includeOptions.push({
+        model: Comorbilidad,
+        as: 'Comorbilidades',
+        through: { model: PacienteComorbilidad },
+        where: { id_comorbilidad: idComorbilidadFilter },
+        required: true,
+        attributes: ['id_comorbilidad', 'nombre_comorbilidad']
       });
-      
-      if (comorbilidadEncontrada) {
-        // Filtrar pacientes que tengan esta comorbilidad específica
-        includeOptions.push({
-          model: Comorbilidad,
-          as: 'Comorbilidades', // ✅ Usar alias explícito
-          through: { model: PacienteComorbilidad },
-          where: { id_comorbilidad: comorbilidadEncontrada.id_comorbilidad },
-          required: true, // INNER JOIN para solo pacientes con esta comorbilidad
-          attributes: ['id_comorbilidad', 'nombre_comorbilidad']
-        });
-      }
     } else {
       // Incluir todas las comorbilidades para todos los usuarios
         includeOptions.push({
@@ -107,7 +127,7 @@ export const getPacientes = async (req, res) => {
     let pacientes;
     try {
       // Determinar si se está filtrando por comorbilidad (requiere subQuery: false para que el INNER JOIN funcione correctamente con paginación)
-      const isFilteringByComorbilidad = comorbilidad && comorbilidad !== 'todas';
+      const isFilteringByComorbilidad = idComorbilidadFilter != null;
       
       // Separar la consulta de conteo y de datos para evitar problemas con MySQL only_full_group_by
       // Primero, obtener el conteo total de pacientes únicos

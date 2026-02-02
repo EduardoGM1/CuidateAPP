@@ -20,6 +20,7 @@ import {
   PacienteComorbilidad
 } from '../models/associations.js';
 import logger from '../utils/logger.js';
+import DashboardService from './dashboardService.js';
 
 class ReportService {
   /**
@@ -651,6 +652,114 @@ class ReportService {
       logger.error('Error generando expediente completo PDF:', error);
       throw error;
     }
+  }
+
+  /**
+   * Generar HTML del reporte de estadísticas (Admin o Doctor)
+   * Para convertir a PDF en el cliente con react-native-html-to-pdf
+   * @param {string} rol - 'admin' | 'doctor'
+   * @param {Object} options - { idDoctor?: number } (requerido si rol === 'doctor')
+   * @returns {Promise<string>} HTML completo
+   */
+  async generateReporteEstadisticasHTML(rol, options = {}) {
+    const escapeHtml = (text) => {
+      if (text === null || text === undefined) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
+
+    const dashboardService = new DashboardService();
+    const fechaGen = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    if (rol === 'doctor') {
+      const doctorId = options.idDoctor;
+      if (!doctorId) throw new Error('idDoctor es requerido para reporte de doctor');
+      const summary = await dashboardService.getDoctorSummary(doctorId);
+      const metrics = summary?.metrics || {};
+      const chartData = summary?.chartData || {};
+      const comorbilidades = chartData.comorbilidadesMasFrecuentes || chartData.comorbilidadesPorPeriodo?.datos || [];
+
+      const citas7Rows = (chartData.citasUltimos7Dias || []).map(d => `
+        <tr><td>${escapeHtml(d.dia || d.fecha)}</td><td>${d.citas ?? 0}</td></tr>`).join('');
+      const comorbRows = (Array.isArray(comorbilidades) ? comorbilidades : []).slice(0, 10).map(c => `
+        <tr><td>${escapeHtml(c.nombre || c.nombre_comorbilidad || '-')}</td><td>${c.frecuencia ?? c.pacientes_afectados ?? 0}</td></tr>`).join('');
+
+      const html = `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"/><title>Reporte Estadísticas - Doctor</title>
+<style>body{font-family:Arial,sans-serif;font-size:12px;padding:20px;color:#333;} h1{color:#1976D2;} h2{color:#1976D2;font-size:16px;margin-top:24px;} table{width:100%;border-collapse:collapse;margin-top:8px;} th,td{border:1px solid #ddd;padding:8px;} th{background:#1976D2;color:#fff;} .metric{display:inline-block;margin:8px 16px 8px 0;} .metric strong{font-size:18px;}</style>
+</head>
+<body>
+<h1>Reporte de Estadísticas - Doctor</h1>
+<p>Fecha de generación: ${fechaGen}</p>
+<h2>Resumen</h2>
+<p><span class="metric">Pacientes asignados: <strong>${metrics.pacientesAsignados ?? 0}</strong></span>
+<span class="metric">Citas hoy: <strong>${metrics.citasHoy ?? 0}</strong></span>
+<span class="metric">Próximas citas: <strong>${metrics.proximasCitas ?? 0}</strong></span></p>
+<h2>Citas últimos 7 días</h2>
+<table><thead><tr><th>Día</th><th>Citas</th></tr></thead><tbody>${citas7Rows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
+<h2>Comorbilidades más frecuentes</h2>
+<table><thead><tr><th>Comorbilidad</th><th>Frecuencia</th></tr></thead><tbody>${comorbRows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
+<footer style="margin-top:32px;font-size:10px;color:#666;">Generado por CuidateAPP - Reporte Doctor</footer>
+</body>
+</html>`;
+      return html;
+    }
+
+    // Admin
+    const [summary, analytics] = await Promise.all([
+      dashboardService.getAdminSummary(),
+      dashboardService.getAdminAnalytics()
+    ]);
+    const metrics = summary?.metrics || {};
+    const chartData = summary?.chartData || {};
+    const charts = summary?.charts || {};
+    const citasPorEstado = charts.citasPorEstado || {};
+    const doctoresActivos = charts.doctoresActivos || [];
+    const comorbilidades = analytics?.comorbilidades || [];
+
+    const citas7Rows = (chartData.citasUltimos7Dias || []).map(d => `
+        <tr><td>${escapeHtml(d.dia || d.fecha)}</td><td>${d.citas ?? 0}</td></tr>`).join('');
+    const pacientes7Rows = (chartData.pacientesNuevos || []).map(d => `
+        <tr><td>${escapeHtml(d.dia || d.fecha)}</td><td>${d.pacientes ?? 0}</td></tr>`).join('');
+    const estadoRows = Object.entries(citasPorEstado).map(([estado, count]) => `
+        <tr><td>${escapeHtml(estado)}</td><td>${count}</td></tr>`).join('');
+    const doctoresRows = doctoresActivos.map(d => `
+        <tr><td>${escapeHtml(d.nombre)}</td><td>${d.total_citas ?? 0}</td></tr>`).join('');
+    const comorbRows = (Array.isArray(comorbilidades) ? comorbilidades : []).slice(0, 10).map(c => `
+        <tr><td>${escapeHtml(c.nombre_comorbilidad || c.nombre || '-')}</td><td>${c.pacientes_afectados ?? c.frecuencia ?? 0}</td><td>${c.porcentaje ?? ''}%</td></tr>`).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"/><title>Reporte Estadísticas - Administrador</title>
+<style>body{font-family:Arial,sans-serif;font-size:12px;padding:20px;color:#333;} h1{color:#1976D2;} h2{color:#1976D2;font-size:16px;margin-top:24px;} table{width:100%;border-collapse:collapse;margin-top:8px;} th,td{border:1px solid #ddd;padding:8px;} th{background:#1976D2;color:#fff;} .metric{display:inline-block;margin:8px 16px 8px 0;} .metric strong{font-size:18px;}</style>
+</head>
+<body>
+<h1>Reporte de Estadísticas - Administrador</h1>
+<p>Fecha de generación: ${fechaGen}</p>
+<h2>Resumen general</h2>
+<p><span class="metric">Pacientes totales: <strong>${metrics.totalPacientes ?? 0}</strong></span>
+<span class="metric">Doctores activos: <strong>${metrics.totalDoctores ?? 0}</strong></span>
+<span class="metric">Citas hoy: <strong>${metrics.citasHoy?.total ?? 0}</strong></span>
+<span class="metric">Tasa asistencia: <strong>${metrics.tasaAsistencia?.tasa_asistencia ?? 0}%</strong></span></p>
+<h2>Citas últimos 7 días</h2>
+<table><thead><tr><th>Día</th><th>Citas</th></tr></thead><tbody>${citas7Rows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
+<h2>Pacientes nuevos últimos 7 días</h2>
+<table><thead><tr><th>Día</th><th>Pacientes</th></tr></thead><tbody>${pacientes7Rows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
+<h2>Citas por estado</h2>
+<table><thead><tr><th>Estado</th><th>Cantidad</th></tr></thead><tbody>${estadoRows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
+<h2>Top doctores más activos</h2>
+<table><thead><tr><th>Doctor</th><th>Citas</th></tr></thead><tbody>${doctoresRows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
+<h2>Comorbilidades más frecuentes</h2>
+<table><thead><tr><th>Comorbilidad</th><th>Pacientes</th><th>%</th></tr></thead><tbody>${comorbRows || '<tr><td colspan="3">Sin datos</td></tr>'}</tbody></table>
+<footer style="margin-top:32px;font-size:10px;color:#666;">Generado por CuidateAPP - Reporte Administrador</footer>
+</body>
+</html>`;
+    return html;
   }
 
 }

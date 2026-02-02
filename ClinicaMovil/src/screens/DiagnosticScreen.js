@@ -10,29 +10,34 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Title, Paragraph } from 'react-native-paper';
 import axios from 'axios';
-import { getApiConfigSync, getApiBaseUrl } from '../config/apiConfig';
+import { getApiConfigSync, getApiConfigWithFallback } from '../config/apiConfig';
+
+const MAX_DETAILS_LENGTH = 2000; // Evitar mostrar 200KB+ en pantalla (truncar JSON)
 
 const DiagnosticScreen = ({ navigation }) => {
   const [diagnosticResults, setDiagnosticResults] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  // Usar configuración de API dinámica (detecta automáticamente emulador vs dispositivo físico)
-  const API_CONFIG = getApiConfigSync();
-  const API_BASE_URL = API_CONFIG.baseURL;
+  const [API_CONFIG, setAPI_CONFIG] = useState(() => getApiConfigSync());
 
   const runDiagnostic = async () => {
     setLoading(true);
     const results = [];
 
     try {
+      // Usar la misma URL que el resto de la app (getApiConfigWithFallback) para que el diagnóstico coincida con las peticiones reales
+      const config = await getApiConfigWithFallback();
+      setAPI_CONFIG(config);
+      const API_BASE_URL = config.baseURL;
+      const timeoutMs = Math.min(config.timeout || 60000, 15000); // 15s máx por test individual
+
       // Test 1: Conectividad básica
       results.push({ test: 'Conectividad Básica', status: 'running' });
       setDiagnosticResults([...results]);
 
-      const healthResponse = await axios.get(`${API_BASE_URL}/health`, { timeout: 5000 });
-      results[0] = { 
-        test: 'Conectividad Básica', 
-        status: 'success', 
+      const healthResponse = await axios.get(`${API_BASE_URL}/health`, { timeout: timeoutMs });
+      results[0] = {
+        test: 'Conectividad Básica',
+        status: 'success',
         message: `✅ Servidor accesible: ${healthResponse.status}`,
         details: healthResponse.data
       };
@@ -46,13 +51,13 @@ const DiagnosticScreen = ({ navigation }) => {
         email: 'admin@clinica.com',
         password: 'admin123'
       }, {
-        timeout: 5000,
+        timeout: timeoutMs,
         headers: { 'Content-Type': 'application/json' }
       });
 
-      results[1] = { 
-        test: 'Autenticación', 
-        status: 'success', 
+      results[1] = {
+        test: 'Autenticación',
+        status: 'success',
         message: `✅ Login exitoso: ${loginResponse.status}`,
         details: {
           usuario: loginResponse.data.usuario?.email,
@@ -62,14 +67,16 @@ const DiagnosticScreen = ({ navigation }) => {
       };
       setDiagnosticResults([...results]);
 
+      const token = loginResponse.data.token;
+
       // Test 3: Dashboard con token
       results.push({ test: 'Dashboard API', status: 'running' });
       setDiagnosticResults([...results]);
 
       const dashboardResponse = await axios.get(`${API_BASE_URL}/api/dashboard/health`, {
-        timeout: 5000,
+        timeout: timeoutMs,
         headers: {
-          'Authorization': `Bearer ${loginResponse.data.token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'X-Device-ID': 'mobile-device-123',
           'X-Platform': 'android',
@@ -78,24 +85,48 @@ const DiagnosticScreen = ({ navigation }) => {
         }
       });
 
-      results[2] = { 
-        test: 'Dashboard API', 
-        status: 'success', 
+      results[2] = {
+        test: 'Dashboard API',
+        status: 'success',
         message: `✅ Dashboard accesible: ${dashboardResponse.status}`,
         details: dashboardResponse.data
       };
       setDiagnosticResults([...results]);
 
-      // Test 4: Información de red
-      results.push({ 
-        test: 'Configuración de Red', 
-        status: 'info', 
-        message: '📡 Configuración actual',
+      // Test 4: Endpoint de datos (doctores) - el que suele fallar si hay diferencia login vs datos
+      results.push({ test: 'Datos (doctores)', status: 'running' });
+      setDiagnosticResults([...results]);
+
+      const doctoresResponse = await axios.get(`${API_BASE_URL}/api/doctores`, {
+        timeout: timeoutMs,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'X-Device-ID': 'mobile-device-123',
+          'X-Platform': 'android',
+          'X-Client-Type': 'mobile'
+        }
+      });
+
+      const doctoresData = doctoresResponse.data?.data ?? doctoresResponse.data;
+      const count = Array.isArray(doctoresData) ? doctoresData.length : (doctoresData?.length ?? 0);
+      results[3] = {
+        test: 'Datos (doctores)',
+        status: 'success',
+        message: `✅ Datos cargados: ${count} doctores`,
+        details: { count, status: doctoresResponse.status }
+      };
+      setDiagnosticResults([...results]);
+
+      // Test 5: Información de red
+      results.push({
+        test: 'Configuración de Red',
+        status: 'info',
+        message: '📡 Configuración actual (misma que usa la app)',
         details: {
           'URL Base': API_BASE_URL,
-          'Protocolo': 'HTTP',
-          'Timeout': '5000ms',
-          'Dispositivo': 'Android Físico'
+          'Timeout': `${config.timeout}ms`,
+          'Dispositivo': 'Android'
         }
       });
       setDiagnosticResults([...results]);
@@ -152,10 +183,11 @@ const DiagnosticScreen = ({ navigation }) => {
         <Card style={styles.card}>
           <Card.Content>
             <Title>Configuración Actual</Title>
-            <Paragraph>URL Base: {API_BASE_URL}</Paragraph>
+            <Paragraph>URL Base: {API_CONFIG.baseURL}</Paragraph>
             <Paragraph>Descripción: {API_CONFIG.description}</Paragraph>
             <Paragraph>Timeout: {API_CONFIG.timeout}ms</Paragraph>
-            <Paragraph>Entorno: {API_BASE_URL.includes('10.0.2.2') ? 'Emulador Android' : API_BASE_URL.includes('localhost') ? 'Dispositivo Físico (adb reverse)' : 'Red Local'}</Paragraph>
+            <Paragraph>Entorno: {API_CONFIG.baseURL.includes('10.0.2.2') ? 'Emulador Android' : API_CONFIG.baseURL.includes('localhost') ? 'Dispositivo (adb reverse)' : 'Red Local'}</Paragraph>
+            <Paragraph style={{ marginTop: 8, fontStyle: 'italic' }}>Ejecuta el diagnóstico para usar la misma URL que la app (getApiConfigWithFallback).</Paragraph>
           </Card.Content>
         </Card>
 
@@ -187,7 +219,13 @@ const DiagnosticScreen = ({ navigation }) => {
                     <View style={styles.resultDetails}>
                       <Text style={styles.detailsTitle}>Detalles:</Text>
                       <Text style={styles.detailsText}>
-                        {JSON.stringify(result.details, null, 2)}
+                        {(() => {
+                          const raw = JSON.stringify(result.details, null, 2);
+                          if (raw.length > MAX_DETAILS_LENGTH) {
+                            return raw.slice(0, MAX_DETAILS_LENGTH) + `\n... (truncado, ${raw.length} chars total)`;
+                          }
+                          return raw;
+                        })()}
                       </Text>
                     </View>
                   )}

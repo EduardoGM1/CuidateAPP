@@ -6,46 +6,41 @@
 import { Platform } from 'react-native';
 import { API_BASE_URL_OVERRIDE } from './apiUrlOverride';
 
-// Función para obtener la IP local automáticamente
-// IMPORTANTE: Esta función debería detectar la IP real, pero por ahora usa valores comunes
+// Función para obtener la IP local (actualizar con ipconfig cuando cambie la red)
+// ipconfig (Windows): buscar "Dirección IPv4" en el adaptador Wi‑Fi/Ethernet activo
 const getLocalIP = () => {
-  // IPs comunes para desarrollo local
-  // NOTA: Estas IPs deben coincidir con la IP real de tu PC en la red local
   const commonIPs = [
-    '192.168.1.79',    // IP actual detectada (2026-01-18)
-    '192.168.1.74',    // IP anterior
-    '192.168.1.65',    // IP anterior
-    '192.168.1.100',   // IP alternativa común
-    '192.168.0.100',    // IP para redes 192.168.0.x
-    '192.168.1.1',     // Router común
-    '10.0.2.2',        // IP para emulador Android (no usar para dispositivos físicos)
+    '192.168.1.68',    // IP actual (ipconfig 2026-01-28 - Wi-Fi 3)
+    '192.168.1.79',    // IP anterior
+    '192.168.1.74',
+    '192.168.1.65',
+    '192.168.1.100',
+    '192.168.0.100',
+    '10.0.2.2',        // Solo emulador Android
   ];
-  
-  // Usar la IP actual detectada
-  // Para encontrar tu IP: ipconfig (Windows) o ifconfig (Linux/Mac)
-  return commonIPs[0]; // 192.168.1.79
+  return commonIPs[0]; // 192.168.1.68
 };
 
 // Configuración de API por entorno
 const API_CONFIG = {
   development: {
     baseURL: 'http://localhost:3000',
-    timeout: 30000, // Aumentado de 10000 a 30000 para peticiones grandes
+    timeout: 60000, // 60s para respuestas grandes (ej. listados, reportes)
     description: 'Desarrollo local con adb reverse'
   },
   localNetwork: {
     baseURL: API_BASE_URL_OVERRIDE || `http://${getLocalIP()}:3000`,
-    timeout: 30000, // Aumentado de 15000 a 30000 para peticiones grandes
+    timeout: 60000, // 60s para respuestas grandes
     description: API_BASE_URL_OVERRIDE ? 'URL de API configurada manualmente' : 'Red local sin adb reverse'
   },
   emulator: {
     baseURL: 'http://10.0.2.2:3000',
-    timeout: 10000,
+    timeout: 30000,
     description: 'Emulador Android'
   },
   production: {
     baseURL: 'https://api.tuclinica.com', // HTTPS obligatorio en producción
-    timeout: 30000,
+    timeout: 60000,
     description: 'Servidor de producción',
     // Forzar HTTPS en producción
     forceHttps: true
@@ -128,20 +123,28 @@ const detectEnvironment = () => {
 // Función principal para obtener configuración (síncrona)
 // Con fallback automático si adb reverse no está disponible
 export const getApiConfigSync = () => {
+  // Si hay override (ej. API_BASE_URL_OVERRIDE en apiUrlOverride.js), usarlo para WebSocket y cualquier llamada síncrona
+  if (API_BASE_URL_OVERRIDE) {
+    const config = { ...API_CONFIG.localNetwork, baseURL: API_BASE_URL_OVERRIDE };
+    if (__DEV__) {
+      console.log(`🌐 API Config (override): ${config.baseURL}`);
+    }
+    return config;
+  }
   const environment = detectEnvironment();
   const config = API_CONFIG[environment];
-  
+
   if (__DEV__) {
     console.log(`🌐 API Config: ${environment} - ${config.baseURL}`);
     console.log(`📝 Descripción: ${config.description}`);
-    
+
     // Si es Android y estamos usando development (localhost), sugerir adb reverse
     if (Platform.OS === 'android' && environment === 'development') {
       console.log(`💡 Sugerencia: Si la conexión falla, ejecuta: adb reverse tcp:3000 tcp:3000`);
       console.log(`   O usa la IP de red local: ${API_CONFIG.localNetwork.baseURL}`);
     }
   }
-  
+
   return config;
 };
 

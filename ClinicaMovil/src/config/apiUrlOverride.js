@@ -4,8 +4,8 @@
  *
  * Cómo saber la IP de tu PC:
  * - Windows: abre CMD y ejecuta "ipconfig", busca "Dirección IPv4" en tu adaptador WiFi/Ethernet.
- * - Ejemplo: si tu IP es 192.168.1.100, pon: 'http://192.168.1.100:3000'
+ * - Ejemplo: si tu IP es 192.168.1.68, pon: 'http://192.168.1.68:3000'
  *
- * Deja null para usar la detección automática (localhost, 10.0.2.2, o IPs por defecto).
+ * Deja null para usar la detección automática (getLocalIP en apiConfig.js).
  */
-export const API_BASE_URL_OVERRIDE = null; // Ej: 'http://192.168.1.100:3000'
+export const API_BASE_URL_OVERRIDE = 'http://192.168.1.68:3000'; // IP actual (ipconfig 2026-01-28). Pon null para auto.

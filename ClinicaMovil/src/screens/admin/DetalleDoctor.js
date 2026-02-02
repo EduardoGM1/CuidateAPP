@@ -1056,7 +1056,7 @@ const DetalleDoctor = ({ route, navigation }) => {
       {
         label: 'Ver detalle',
         onPress: () => handleOpenCitaDetalle(citaHoySeleccionada),
-        color: '#2196F3',
+        color: COLORES.NAV_PRIMARIO,
       },
     ];
   }, [citaHoySeleccionada]);
@@ -1070,20 +1070,20 @@ const DetalleDoctor = ({ route, navigation }) => {
       {
         label: 'Ver detalle completo',
         onPress: () => handleOpenCitaDetalle(cita),
-        color: '#2196F3',
+        color: COLORES.NAV_PRIMARIO,
       },
     ];
     if (estado === ESTADOS_CITA.PENDIENTE) {
       options.push(
-        { label: 'Completar cita', onPress: () => handleOpenCompletarCita(cita), color: '#4CAF50' },
-        { label: 'Reprogramar', onPress: () => handleOpenReprogramar(cita), color: '#2196F3' },
-        { label: 'Cambiar estado', onPress: () => handleOpenCambiarEstado(cita), color: '#FF9800' }
+        { label: 'Completar cita', onPress: () => handleOpenCompletarCita(cita), color: COLORES.EXITO_LIGHT },
+        { label: 'Reprogramar', onPress: () => handleOpenReprogramar(cita), color: COLORES.NAV_PRIMARIO },
+        { label: 'Cambiar estado', onPress: () => handleOpenCambiarEstado(cita), color: COLORES.ADVERTENCIA_LIGHT }
       );
     } else if (estado === ESTADOS_CITA.REPROGRAMADA) {
       options.push({
         label: 'Reprogramar',
         onPress: () => handleOpenReprogramar(cita),
-        color: '#2196F3',
+        color: COLORES.NAV_PRIMARIO,
       });
     }
     return options;

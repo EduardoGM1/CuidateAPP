@@ -17,6 +17,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Title, Button } from 'react-native-paper';
@@ -25,9 +26,11 @@ import Logger from '../../services/logger';
 import { useAdminDashboard } from '../../hooks/useDashboard';
 import { usePacientes, useDoctores, useModulos } from '../../hooks/useGestion';
 import gestionService from '../../api/gestionService';
+import { generatePdfFromHtml } from '../../utils/fileDownloader';
+import FileViewer from 'react-native-file-viewer';
 import ModalBase from '../../components/DetallePaciente/shared/ModalBase';
 import RangoMesesSelector from '../../components/forms/RangoMesesSelector';
-import { COLORES } from '../../utils/constantes';
+import { COLORES, NETWORK_STAGGER } from '../../utils/constantes';
 import ComorbilidadesHeatmap from '../../components/charts/ComorbilidadesHeatmap';
 
 const ReportesAdmin = ({ navigation }) => {
@@ -62,6 +65,7 @@ const ReportesAdmin = ({ navigation }) => {
   });
   const [citas, setCitas] = useState([]);
   const [loadingCitas, setLoadingCitas] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   // Validar que solo administradores puedan acceder
   useEffect(() => {
@@ -97,9 +101,10 @@ const ReportesAdmin = ({ navigation }) => {
   // Hook para módulos
   const { modulos, fetchModulos } = useModulos();
 
-  // Cargar módulos al montar el componente
+  // Cargar módulos con retraso para no saturar conexiones (Android limita ~5 por host)
   useEffect(() => {
-    fetchModulos();
+    const t = setTimeout(() => fetchModulos(), NETWORK_STAGGER.MODULOS_MS);
+    return () => clearTimeout(t);
   }, [fetchModulos]);
 
   // Cargar citas para estadísticas
@@ -365,30 +370,22 @@ const ReportesAdmin = ({ navigation }) => {
     }
   }, [pacientes, metrics]);
 
+  // Cargar comorbilidades y citas con retraso para no saturar conexiones al entrar a la pantalla
+  // (dashboard, pacientes, doctores ya disparan 3 peticiones al montar; Android limita ~5 por host)
   useEffect(() => {
-    // Cargar datos de forma secuencial para evitar sobrecarga de red
-    const loadDataSequentially = async () => {
+    const delayMs = NETWORK_STAGGER.SECONDARY_LOAD_MS;
+    const t = setTimeout(async () => {
       try {
-        // Primero cargar estadísticas (usa datos del dashboard que ya están cargados)
         await loadEstadisticas();
-        
-        // Esperar un poco antes de la siguiente petición
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Luego cargar comorbilidades
+        await new Promise(resolve => setTimeout(resolve, 400));
         await loadComorbilidades();
-        
-        // Esperar un poco antes de la siguiente petición
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Finalmente cargar citas (la más pesada)
+        await new Promise(resolve => setTimeout(resolve, 400));
         await loadCitas();
       } catch (error) {
         Logger.error('ReportesAdmin: Error cargando datos secuencialmente', error);
       }
-    };
-    
-    loadDataSequentially();
+    }, delayMs);
+    return () => clearTimeout(t);
   }, [loadEstadisticas, loadComorbilidades, loadCitas]);
 
   // Recargar comorbilidades cuando cambia el filtro de módulo
@@ -432,6 +429,43 @@ const ReportesAdmin = ({ navigation }) => {
       setRefreshing(false);
     }
   }, [refreshDashboard, refreshPacientes, refreshDoctores, loadEstadisticas, loadComorbilidades, loadCitas]);
+
+  // Exportar reporte de estadísticas a PDF y abrirlo automáticamente
+  const handleExportarPdf = useCallback(async () => {
+    setExportingPdf(true);
+    try {
+      const html = await gestionService.getReporteEstadisticasHTML();
+      const filename = `reporte-estadisticas-${new Date().toISOString().split('T')[0]}.pdf`;
+      const result = await generatePdfFromHtml({ html, filename });
+      if (result.success) {
+        try {
+          await FileViewer.open(result.filePath, {
+            showOpenWithDialog: true,
+            showAppsSuggestions: true,
+          });
+        } catch (openError) {
+          Logger.warn('ReportesAdmin: No se pudo abrir el PDF automáticamente', openError);
+          Alert.alert(
+            'Reporte generado',
+            'El PDF se guardó correctamente. Si no se abrió, búscalo en Descargas/Documents.'
+          );
+          return;
+        }
+        Alert.alert('Listo', 'El reporte se generó y se abrió correctamente.');
+      } else {
+        Alert.alert('Error', result.error || 'No se pudo generar el PDF.');
+      }
+    } catch (error) {
+      Logger.error('ReportesAdmin: Error exportando PDF', error);
+      const isNetwork = error?.code === 'ERR_NETWORK' || error?.type === 'connection_error' || error?.message?.includes('Network Error');
+      const msg = isNetwork
+        ? 'No se pudo conectar con el servidor. Comprueba que la API esté en marcha (puerto 3000) y que el dispositivo esté en la misma red.'
+        : (error?.message || 'No se pudo generar el reporte en PDF.');
+      Alert.alert('Error al exportar', msg);
+    } finally {
+      setExportingPdf(false);
+    }
+  }, []);
 
   // Renderizar gráfico simple de barras
   const renderChartCard = (title, data, dataKey = 'citas') => {
@@ -892,6 +926,17 @@ const ReportesAdmin = ({ navigation }) => {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>📊 Reportes y Estadísticas</Text>
           <Text style={styles.headerSubtitle}>Administrador</Text>
+          <TouchableOpacity
+            style={[styles.exportPdfButton, exportingPdf && styles.exportPdfButtonDisabled]}
+            onPress={handleExportarPdf}
+            disabled={exportingPdf}
+          >
+            {exportingPdf ? (
+              <ActivityIndicator size="small" color="#FFF" />
+            ) : (
+              <Text style={styles.exportPdfButtonText}>Exportar PDF</Text>
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Estadísticas Principales */}
@@ -1213,6 +1258,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
+    paddingBottom: 16,
     backgroundColor: '#1976D2',
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
@@ -1226,6 +1272,26 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     color: '#E3F2FD',
+    marginBottom: 12,
+  },
+  exportPdfButton: {
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
+    minWidth: 140,
+    alignItems: 'center',
+  },
+  exportPdfButtonDisabled: {
+    opacity: 0.7,
+  },
+  exportPdfButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   sectionTitle: {
     fontSize: 18,

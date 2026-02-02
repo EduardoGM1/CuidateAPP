@@ -476,10 +476,10 @@ export const gestionService = {
    * @param {string} sort - 'recent', 'oldest'
    * @param {Object} pagination - Opciones de paginación { limit, offset }
    */
-  async getAllDoctores(estado = 'activos', sort = 'recent', pagination = {}) {
+  async getAllDoctores(estado = 'activos', sort = 'recent', pagination = {}, modulo = null) {
     try {
       const { limit = null, offset = null } = pagination;
-      Logger.info('Obteniendo lista de doctores', { estado, sort, limit, offset });
+      Logger.info('Obteniendo lista de doctores', { estado, sort, modulo, limit, offset });
       
       // Construir URL con parámetros
       let url = '/doctores';
@@ -491,6 +491,9 @@ export const gestionService = {
       }
       if (sort) {
         params.append('sort', sort);
+      }
+      if (modulo != null && modulo !== '' && String(modulo).toLowerCase() !== 'todos') {
+        params.append('modulo', modulo);
       }
       // Parámetros de paginación
       if (limit !== null) {
@@ -656,10 +659,10 @@ export const gestionService = {
    * @param {string} comorbilidad - Filtro por comorbilidad
    * @param {Object} pagination - Opciones de paginación { limit, offset }
    */
-  async getAllPacientes(estado = 'activos', sort = 'recent', comorbilidad = 'todas', pagination = {}) {
+  async getAllPacientes(estado = 'activos', sort = 'recent', comorbilidad = 'todas', pagination = {}, modulo = null) {
     try {
       const { limit = null, offset = null } = pagination;
-      Logger.info('Obteniendo lista de pacientes', { estado, sort, comorbilidad, limit, offset });
+      Logger.info('Obteniendo lista de pacientes', { estado, sort, comorbilidad, modulo, limit, offset });
       
       // Construir URL con parámetros
       let url = '/pacientes';
@@ -674,6 +677,9 @@ export const gestionService = {
       }
       if (comorbilidad && comorbilidad !== 'todas') {
         params.append('comorbilidad', comorbilidad);
+      }
+      if (modulo != null && modulo !== '' && String(modulo).toLowerCase() !== 'todos') {
+        params.append('modulo', modulo);
       }
       // Parámetros de paginación
       if (limit !== null) {
@@ -3520,6 +3526,28 @@ export const gestionService = {
     }
   },
 
+  /**
+   * Obtener HTML del reporte de estadísticas (Admin/Doctor)
+   * GET /api/reportes/estadisticas/html
+   * @returns {Promise<string>} HTML del reporte
+   */
+  async getReporteEstadisticasHTML() {
+    try {
+      Logger.info('Obteniendo reporte de estadísticas HTML');
+      const apiClient = await ensureApiClient();
+      const response = await apiClient.get('/reportes/estadisticas/html', {
+        responseType: 'text',
+        timeout: 60000, // 60s: generación del reporte en servidor puede tardar
+      });
+      const html = typeof response.data === 'string' ? response.data : String(response.data);
+      Logger.success('Reporte de estadísticas HTML obtenido', { length: html.length });
+      return html;
+    } catch (error) {
+      Logger.error('Error obteniendo reporte de estadísticas HTML', error);
+      throw this.handleError(error);
+    }
+  },
+
   // =====================================================
   // SERVICIOS PARA NOTIFICACIONES DE DOCTORES
   // =====================================================
@@ -3624,6 +3652,27 @@ gestionService.getModulos = async () => {
   const modulos = await modulosCrud.getAll();
   return Array.isArray(modulos) ? modulos : (modulos?.modulos || []);
 };
+
+/**
+ * Obtener catálogo de módulos para uso en filtros/selectores (dropdown).
+ * @returns {Promise<Array<{ id_modulo: number, nombre_modulo: string }>>}
+ */
+gestionService.getModulosCatalogForFilter = async () => {
+  try {
+    const apiClient = await ensureApiClient();
+    const response = await apiClient.get('/modulos');
+    const raw = response?.data?.data?.modulos ?? response?.data?.modulos ?? [];
+    const list = Array.isArray(raw) ? raw : [];
+    return list.map((m) => ({
+      id_modulo: m.id_modulo ?? m.id,
+      nombre_modulo: m.nombre_modulo ?? m.nombre ?? ''
+    })).filter((m) => m.id_modulo != null && m.nombre_modulo !== '');
+  } catch (error) {
+    Logger.error('Error obteniendo catálogo de módulos para filtro', error);
+    throw gestionService.handleError(error);
+  }
+};
+
 gestionService.getModuloById = modulosCrud.getById;
 gestionService.createModulo = modulosCrud.create;
 gestionService.updateModulo = modulosCrud.update;
@@ -3641,6 +3690,29 @@ gestionService.getComorbilidadById = comorbilidadesCrud.getById;
 gestionService.createComorbilidad = comorbilidadesCrud.create;
 gestionService.updateComorbilidad = comorbilidadesCrud.update;
 gestionService.deleteComorbilidad = comorbilidadesCrud.delete;
+
+/**
+ * Obtener catálogo de comorbilidades para uso en filtros/selectores (dropdown).
+ * Devuelve lista desde la BD con formato normalizado { id_comorbilidad, nombre_comorbilidad }.
+ * @returns {Promise<Array<{ id_comorbilidad: number, nombre_comorbilidad: string }>>}
+ */
+gestionService.getComorbilidadesCatalogForFilter = async () => {
+  try {
+    const apiClient = await ensureApiClient();
+    const response = await apiClient.get('/comorbilidades', {
+      params: { limit: 200, offset: 0 }
+    });
+    const raw = response?.data?.data?.comorbilidades ?? response?.data?.comorbilidades ?? [];
+    const list = Array.isArray(raw) ? raw : [];
+    return list.map((c) => ({
+      id_comorbilidad: c.id_comorbilidad ?? c.id,
+      nombre_comorbilidad: c.nombre_comorbilidad ?? c.nombre ?? ''
+    })).filter((c) => c.id_comorbilidad != null && c.nombre_comorbilidad !== '');
+  } catch (error) {
+    Logger.error('Error obteniendo catálogo de comorbilidades para filtro', error);
+    throw gestionService.handleError(error);
+  }
+};
 
 // Métodos CRUD para vacunas (catálogo)
 const vacunasCrud = createCrudMethods({

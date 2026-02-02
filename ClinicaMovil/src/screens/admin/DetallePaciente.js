@@ -4375,6 +4375,25 @@ const DetallePacienteContent = ({ route, navigation }) => {
           </Card.Content>
         </Card>
 
+        {/* Ver Gráficos de Evolución - Debajo de Exportar Datos para mayor visibilidad */}
+        <Card style={styles.exportCard}>
+          <Card.Content>
+            <TouchableOpacity
+              style={[styles.exportButton, styles.graficosEvolucionButton]}
+              onPress={() => paciente && navigation.navigate('GraficosEvolucion', { paciente })}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.exportButtonIcon, { color: COLORES.TEXTO_EN_PRIMARIO }]}>📈</Text>
+              <Text style={[styles.exportButtonText, styles.graficosEvolucionText]}>
+                Ver Gráficos de Evolución
+              </Text>
+              <Text style={styles.graficosEvolucionSubtext}>
+                Evolución de signos vitales del paciente
+              </Text>
+            </TouchableOpacity>
+          </Card.Content>
+        </Card>
+
         {/* Información General - Reemplazado con componente refactorizado */}
         <PatientGeneralInfo 
           paciente={paciente}
@@ -5072,7 +5091,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 onPress={() => !savingSignosVitales && (setShowAddSignosVitales(false), resetFormSignosVitales())}
                 disabled={savingSignosVitales}
               >
-                <Text style={styles.closeButtonX}>X</Text>
+                <Text style={styles.closeButtonX}>×</Text>
               </TouchableOpacity>
               </View>
             </View>
@@ -5658,7 +5677,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
             <View style={styles.modalHeader}>
               <Title style={styles.modalTitle}>Detalle de Cita</Title>
               <TouchableOpacity onPress={handleCloseDetalleCita}>
-                <Text style={styles.closeButtonX}>X</Text>
+                <Text style={styles.closeButtonX}>×</Text>
               </TouchableOpacity>
             </View>
 
@@ -5923,7 +5942,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
               modalManager.close('optionsCitas');
               setShowAddCita(true);
             },
-            color: '#2196F3'
+            color: COLORES.NAV_PRIMARIO
           },
           {
             label: 'Registrar Consulta Completa',
@@ -5931,8 +5950,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
               modalManager.close('optionsCitas');
               handleOpenConsultaCompletaNueva();
             },
-            color: '#1976d2',
-            style: { backgroundColor: '#e3f2fd' },
+            color: COLORES.NAV_PRIMARIO,
             textStyle: { fontWeight: '600' }
           },
           {
@@ -6009,7 +6027,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                   onPress={() => !savingCita && (setShowAddCita(false), resetFormCita())}
                   disabled={savingCita}
                 >
-                  <Text style={styles.closeButtonX}>X</Text>
+                  <Text style={styles.closeButtonX}>×</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -6207,7 +6225,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
         </TouchableOpacity>
       </Modal>
 
-      {/* Modal de Opciones - Signos Vitales */}
+      {/* Modal de Opciones - Signos Vitales (Ver Gráficos de Evolución está en card debajo de Exportar Datos) */}
       <OptionsModal
         visible={modalManager.isOpen('optionsSignosVitales')}
         onClose={() => modalManager.close('optionsSignosVitales')}
@@ -6220,24 +6238,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
               modalManager.close('optionsSignosVitales');
               setShowAddSignosVitales(true);
             },
-            color: '#2196F3'
-          },
-          {
-            icon: '📈',
-            label: 'Ver Gráficos de Evolución',
-            onPress: () => {
-              modalManager.close('optionsSignosVitales');
-              if (paciente) {
-                navigation.navigate('GraficosEvolucion', { paciente });
-              }
-            },
-            color: '#4CAF50'
+            color: COLORES.NAV_PRIMARIO
           },
           {
             icon: '📋',
             label: 'Ver Historial Completo',
             onPress: () => handleShowAllSignosVitales(),
-            color: '#666'
+            color: COLORES.SECUNDARIO_LIGHT
           }
         ]}
       />
@@ -6328,7 +6335,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 onPress={() => !savingDiagnostico && (setShowAddDiagnostico(false), resetFormDiagnostico())}
                 disabled={savingDiagnostico}
               >
-                <Text style={styles.closeButtonX}>X</Text>
+                <Text style={styles.closeButtonX}>×</Text>
               </TouchableOpacity>
               </View>
             </View>
@@ -6431,7 +6438,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 onPress={() => !savingConsultaCompleta && (setShowConsultaCompleta(false), modalManager.close('consultaCompleta'), resetFormConsultaCompleta())}
                 disabled={savingConsultaCompleta}
               >
-                <Text style={styles.closeButtonX}>X</Text>
+                <Text style={styles.closeButtonX}>×</Text>
               </TouchableOpacity>
             </View>
 
@@ -6800,7 +6807,6 @@ const DetallePacienteContent = ({ route, navigation }) => {
         <TouchableOpacity 
           style={styles.modalOverlay}
           activeOpacity={1}
-          // onPress={() => !savingMedicamentos && setShowAddMedicamentos(false)} // Deshabilitado
         >
           <KeyboardAvoidingView 
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -6811,15 +6817,23 @@ const DetallePacienteContent = ({ route, navigation }) => {
               <TouchableOpacity
                 onPress={() => !savingMedicamentos && (setShowAddMedicamentos(false), resetFormMedicamentos())}
                 disabled={savingMedicamentos}
+                style={styles.modalCloseButton}
+                accessibilityLabel="Cerrar"
+                accessibilityRole="button"
               >
-                <Text style={styles.closeButtonX}>X</Text>
+                <Text style={[styles.closeButtonX, { opacity: savingMedicamentos ? 0.5 : 1 }]}>×</Text>
               </TouchableOpacity>
             </View>
             
-            <ScrollView style={styles.modalFormScrollView} keyboardShouldPersistTaps="handled">
+            <ScrollView 
+              style={styles.modalFormScrollView} 
+              contentContainerStyle={[styles.modalFormScrollContent, { paddingBottom: 24 }]}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={true}
+            >
               {/* Información general del plan */}
               <View style={styles.formSection}>
-                <Text style={styles.label}>Información del Plan</Text>
+                <Text style={styles.sectionSubtitle}>Información del Plan</Text>
                 
                 <View style={[styles.formRow, { alignItems: 'flex-start' }]}>
                   <View style={[styles.formField, { minHeight: 88 }]}>
@@ -6844,23 +6858,26 @@ const DetallePacienteContent = ({ route, navigation }) => {
 
                 <Text style={styles.label}>Observaciones del Plan (opcional)</Text>
                 <TextInput
-                  style={[styles.input, styles.textArea]}
+                  style={[styles.input, styles.textArea, { minHeight: 100 }]}
                   value={formDataMedicamentos.observaciones}
                   onChangeText={(value) => updateMedicamentoField('observaciones', value)}
                   placeholder="Notas adicionales sobre el plan de medicación..."
+                  placeholderTextColor="#9E9E9E"
                   multiline
-                  numberOfLines={3}
+                  numberOfLines={5}
+                  textAlignVertical="top"
                   editable={!savingMedicamentos}
                 />
               </View>
 
               {/* Agregar medicamentos */}
               <View style={styles.formSection}>
-                <Text style={styles.label}>💊 Medicamentos</Text>
+                <Text style={styles.sectionSubtitle}>Medicamentos del plan</Text>
+                <Text style={styles.helperText}>Toca un medicamento para agregarlo. Debes incluir al menos uno.</Text>
                 {loadingMedicamentos ? (
-                  <ActivityIndicator size="small" color="#2196F3" />
+                  <ActivityIndicator size="small" color={COLORES.PRIMARIO} />
                 ) : (
-                  <ScrollView style={{ maxHeight: 150 }}>
+                  <ScrollView style={{ maxHeight: 160 }} showsVerticalScrollIndicator={true}>
                     {medicamentosDisponibles.map((med, index) => (
                       <TouchableOpacity
                         key={`med-disponible-${med.id_medicamento}-${index}`}
@@ -6983,8 +7000,16 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 </View>
               )}
 
-              {/* Botones de acción */}
-              <View style={styles.modalFormActions}>
+            </ScrollView>
+
+            {/* Botones fijos al pie del modal */}
+            <View style={[styles.modalFormActions, styles.modalFormActionsFixed]}>
+              {formDataMedicamentos.medicamentos.length === 0 && !savingMedicamentos && (
+                <Text style={[styles.helperText, { marginBottom: 8, textAlign: 'center' }]}>
+                  Agrega al menos un medicamento para guardar el plan
+                </Text>
+              )}
+              <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
                 <Button
                   mode="outlined"
                   onPress={() => {
@@ -6992,7 +7017,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
                     resetFormMedicamentos();
                   }}
                   disabled={savingMedicamentos}
-                  style={styles.modalCancelButton}
+                  style={[styles.modalCancelButton, { borderColor: COLORES.SECUNDARIO }]}
+                  labelStyle={{ color: COLORES.SECUNDARIO }}
                 >
                   Cancelar
                 </Button>
@@ -7000,13 +7026,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
                   mode="contained"
                   onPress={handleSaveMedicamentos}
                   loading={savingMedicamentos}
-                  disabled={savingMedicamentos}
-                  style={styles.modalSaveButton}
+                  disabled={savingMedicamentos || formDataMedicamentos.medicamentos.length === 0}
+                  style={[styles.modalSaveButton, { backgroundColor: formDataMedicamentos.medicamentos.length === 0 ? COLORES.TEXTO_DISABLED : COLORES.PRIMARIO }]}
                 >
                   Guardar Plan
                 </Button>
               </View>
-            </ScrollView>
+            </View>
           </KeyboardAvoidingView>
         </TouchableOpacity>
       </Modal>
@@ -7112,7 +7138,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 onPress={() => !savingRedApoyo && (setShowAddRedApoyo(false), resetFormRedApoyo())}
                 disabled={savingRedApoyo}
               >
-                <Text style={styles.closeButtonX}>X</Text>
+                <Text style={styles.closeButtonX}>×</Text>
               </TouchableOpacity>
             </View>
             
@@ -7266,7 +7292,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 onPress={() => !savingEsquemaVacunacion && (setShowAddEsquemaVacunacion(false), resetFormEsquemaVacunacion())}
                 disabled={savingEsquemaVacunacion}
               >
-                <Text style={styles.closeButtonX}>X</Text>
+                <Text style={styles.closeButtonX}>×</Text>
               </TouchableOpacity>
             </View>
             
@@ -7358,7 +7384,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
             <View style={styles.modalHeader}>
               <Title style={styles.modalTitle}>💉 Seleccionar Vacuna</Title>
               <TouchableOpacity onPress={() => setShowVacunaSelector(false)}>
-                <Text style={styles.closeButtonX}>X</Text>
+                <Text style={styles.closeButtonX}>×</Text>
               </TouchableOpacity>
             </View>
             
@@ -7569,7 +7595,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
             onPress: () => {
               setShowOptionsSaludBucal(false);
               openSaludBucalModal(null);
-            }
+            },
+            color: COLORES.NAV_PRIMARIO
           },
           {
             icon: 'magnify',
@@ -7577,7 +7604,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
             onPress: () => {
               setShowOptionsSaludBucal(false);
               setShowAllSaludBucal(true);
-            }
+            },
+            color: COLORES.SECUNDARIO_LIGHT
           }
         ]}
       />
@@ -7594,7 +7622,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
             onPress: () => {
               setShowOptionsDeteccionesTuberculosis(false);
               openDeteccionTuberculosisModal(null);
-            }
+            },
+            color: COLORES.NAV_PRIMARIO
           },
           {
             icon: 'magnify',
@@ -7602,7 +7631,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
             onPress: () => {
               setShowOptionsDeteccionesTuberculosis(false);
               setShowAllDeteccionesTuberculosis(true);
-            }
+            },
+            color: COLORES.SECUNDARIO_LIGHT
           }
         ]}
       />
@@ -8604,7 +8634,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
             <View style={styles.modalHeader}>
               <Title style={styles.modalTitle}>Seleccionar Comorbilidad</Title>
               <TouchableOpacity onPress={() => setShowComorbilidadSelector(false)}>
-                <Text style={styles.closeButtonX}>X</Text>
+                <Text style={styles.closeButtonX}>×</Text>
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalFormScrollView}>
@@ -8946,7 +8976,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
             <View style={styles.modalHeader}>
               <Title style={styles.modalTitle}>Asignar Doctor</Title>
               <TouchableOpacity onPress={() => { setShowAddDoctor(false); resetFormDoctor(); }}>
-                <Text style={styles.closeButtonX}>X</Text>
+                <Text style={styles.closeButtonX}>×</Text>
               </TouchableOpacity>
             </View>
             <ScrollView 
@@ -9037,7 +9067,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
             <View style={styles.modalHeader}>
               <Title style={styles.modalTitle}>🔄 Reemplazar Doctor</Title>
               <TouchableOpacity onPress={() => { setShowReplaceDoctor(false); resetFormDoctor(); }}>
-                <Text style={styles.closeButtonX}>X</Text>
+                <Text style={styles.closeButtonX}>×</Text>
               </TouchableOpacity>
             </View>
             <ScrollView 
@@ -9344,6 +9374,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  graficosEvolucionButton: {
+    width: '100%',
+    minWidth: '100%',
+    backgroundColor: COLORES.EXITO_LIGHT,
+    borderColor: COLORES.EXITO,
+    paddingVertical: 18,
+  },
+  graficosEvolucionText: {
+    color: COLORES.TEXTO_EN_PRIMARIO,
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  graficosEvolucionSubtext: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.9)',
+    marginTop: 4,
+    textAlign: 'center',
+  },
   exportButtonIcon: {
     fontSize: 32,
     marginBottom: 8,
@@ -9647,6 +9695,10 @@ const styles = StyleSheet.create({
     minWidth: 40,
     textAlign: 'center',
   },
+  modalCloseButton: {
+    padding: 8,
+    margin: -8,
+  },
   comorbilidadesContainer: {
     flexDirection: 'column',
     marginTop: 12,
@@ -9733,6 +9785,12 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+  },
+  sectionSubtitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 6,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -9939,6 +9997,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 24,
     marginBottom: 16,
+  },
+  modalFormActionsFixed: {
+    flexDirection: 'column',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingBottom: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    backgroundColor: '#fff',
   },
   modalCancelButton: {
     flex: 1,

@@ -81,7 +81,7 @@ const createApiInstance = () => {
   
   return axios.create({
     baseURL: baseURL,
-    timeout: config.timeout || 15000,
+    timeout: config.timeout || 60000,
     headers: {
       'Content-Type': 'application/json',
       'X-Client-Type': 'app',

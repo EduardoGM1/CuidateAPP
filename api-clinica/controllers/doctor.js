@@ -11,8 +11,18 @@ import { PAGINATION } from '../config/constants.js';
 // Crear instancia del servicio
 const dashboardService = new DashboardService();
 
+function parseModuloFilter(modulo) {
+  if (modulo == null || modulo === '') return null;
+  const id = parseInt(modulo, 10);
+  if (Number.isNaN(id) || id <= 0) return null;
+  return id;
+}
+
 export const getDoctores = async (req, res) => {
   try {
+    const { modulo: moduloQuery } = req.query;
+    const idModuloFilter = parseModuloFilter(moduloQuery);
+
     // Usar utility functions para construir opciones de paginación
     const { order, where: estadoWhere, limit, offset } = buildPaginationOptions(
       req.query, 
@@ -25,6 +35,9 @@ export const getDoctores = async (req, res) => {
     
     // Combinar condiciones
     const whereCondition = { ...estadoWhere };
+    if (idModuloFilter != null) {
+      whereCondition.id_modulo = idModuloFilter;
+    }
     
     // Log específico para debug del filtro "todos" - Solo en desarrollo
     if (process.env.NODE_ENV === 'development' && req.query.estado === 'todos') {

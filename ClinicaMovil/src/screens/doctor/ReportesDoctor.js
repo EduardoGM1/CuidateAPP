@@ -27,7 +27,7 @@ import { usePacientes } from '../../hooks/useGestion';
 import gestionService from '../../api/gestionService';
 import ModalBase from '../../components/DetallePaciente/shared/ModalBase';
 import EstadoSelector from '../../components/forms/EstadoSelector';
-import { COLORES } from '../../utils/constantes';
+import { COLORES, NETWORK_STAGGER } from '../../utils/constantes';
 import RangoMesesSelector from '../../components/forms/RangoMesesSelector';
 import ComorbilidadesHeatmap from '../../components/charts/ComorbilidadesHeatmap';
 
@@ -107,8 +107,10 @@ const ReportesDoctor = ({ navigation }) => {
     }
   }, [pacientes, metrics]);
 
+  // Retrasar carga de estadísticas para no saturar conexiones (useDoctorDashboard + usePacientes ya disparan 2 peticiones)
   useEffect(() => {
-    loadEstadisticas();
+    const t = setTimeout(() => loadEstadisticas(), NETWORK_STAGGER.MODULOS_MS);
+    return () => clearTimeout(t);
   }, [loadEstadisticas]);
 
   // Función para refrescar datos

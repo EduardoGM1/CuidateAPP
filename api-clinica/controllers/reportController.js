@@ -163,4 +163,50 @@ export const getExpedienteCompletoPDF = async (req, res) => {
   return getExpedienteCompletoHTML(req, res);
 };
 
+/**
+ * Generar reporte de estadísticas en HTML (Admin o Doctor)
+ * GET /api/reportes/estadisticas/html
+ * Para convertir a PDF en el cliente con react-native-html-to-pdf
+ */
+export const getReporteEstadisticasHTML = async (req, res) => {
+  try {
+    const rol = (req.user?.rol || req.user?.user_type || '').toLowerCase();
+    const isAdmin = rol === 'admin' || rol === 'administrador';
+    const isDoctor = rol === 'doctor';
+
+    if (!isAdmin && !isDoctor) {
+      return res.status(403).json({ success: false, error: 'Solo Admin o Doctor pueden generar el reporte de estadísticas' });
+    }
+
+    const reportRol = isAdmin ? 'admin' : 'doctor';
+    const options = {};
+    if (isDoctor) {
+      const idDoctor = req.user?.id_doctor || req.user?.id_doctor_usuario;
+      if (!idDoctor) {
+        return res.status(400).json({ success: false, error: 'Doctor no encontrado para este usuario' });
+      }
+      options.idDoctor = idDoctor;
+    }
+
+    logger.info('Solicitud de reporte estadísticas HTML', {
+      rol: reportRol,
+      userId: req.user?.id_usuario,
+      idDoctor: options.idDoctor
+    });
+
+    const html = await reportService.generateReporteEstadisticasHTML(reportRol, options);
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `inline; filename=reporte-estadisticas-${reportRol}-${new Date().toISOString().split('T')[0]}.html`);
+    res.send(html);
+
+    logger.info('Reporte estadísticas HTML enviado', { rol: reportRol, htmlLength: html.length });
+  } catch (error) {
+    logger.error('Error generando reporte estadísticas HTML:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+};
+
 

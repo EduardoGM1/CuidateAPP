@@ -460,3 +460,53 @@ export const downloadPDF = async (endpoint, filename) => {
   return downloadFile(endpoint, filename, 'application/pdf');
 };
 
+/**
+ * Generar PDF desde HTML (reutilizable para expediente y reporte de estadísticas)
+ * @param {Object} params - { html: string, filename: string }
+ * @returns {Promise<{success: boolean, filePath?: string, error?: string}>}
+ */
+export const generatePdfFromHtml = async ({ html, filename }) => {
+  try {
+    if (!html || typeof html !== 'string') {
+      throw new Error('HTML es requerido');
+    }
+    const baseName = (filename || 'reporte').replace(/\.pdf$/i, '');
+    const downloadDir = Platform.OS === 'ios'
+      ? RNFS.DocumentDirectoryPath
+      : RNFS.DownloadDirectoryPath || RNFS.ExternalDirectoryPath || RNFS.DocumentDirectoryPath;
+    const dirExists = await RNFS.exists(downloadDir);
+    if (!dirExists) await RNFS.mkdir(downloadDir);
+
+    let generatePDF;
+    try {
+      const htmlToPdfModule = require('react-native-html-to-pdf');
+      generatePDF = htmlToPdfModule.generatePDF || htmlToPdfModule.default?.generatePDF;
+      if (!generatePDF || typeof generatePDF !== 'function') {
+        throw new Error('generatePDF no disponible');
+      }
+    } catch (e) {
+      Logger.error('Error cargando react-native-html-to-pdf', e);
+      throw new Error('No se pudo cargar el módulo de conversión PDF. Reconstruye la app.');
+    }
+
+    const options = {
+      html,
+      fileName: baseName,
+      directory: Platform.OS === 'ios' ? 'Documents' : 'Downloads',
+      base64: false,
+      width: 595,
+      height: 842,
+    };
+    const result = await generatePDF(options);
+    if (!result || !result.filePath) {
+      throw new Error('No se pudo generar el PDF');
+    }
+    Logger.success('PDF generado desde HTML', { filePath: result.filePath });
+    return { success: true, filePath: result.filePath };
+  } catch (error) {
+    const msg = error?.message || String(error);
+    Logger.error('Error generando PDF desde HTML', { error: msg });
+    return { success: false, error: msg };
+  }
+};
+

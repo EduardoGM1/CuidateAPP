@@ -89,8 +89,9 @@ export const filterStyles = StyleSheet.create({
   doctorChipActive: {
     backgroundColor: COLORES.PRIMARIO_LIGHT,
   },
+  // Texto en chips no seleccionados: claro sobre fondo gris para buen contraste
   doctorChipText: {
-    color: COLORES.TEXTO_SECUNDARIO,
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 14,
     fontWeight: '500',
   },

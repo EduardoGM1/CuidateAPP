@@ -16,6 +16,9 @@ router.get('/signos-vitales/:idPaciente/csv', searchRateLimit, reportController.
 router.get('/citas/:idPaciente/csv', searchRateLimit, reportController.getCitasCSV);
 router.get('/diagnosticos/:idPaciente/csv', searchRateLimit, reportController.getDiagnosticosCSV);
 
+// Reporte de estadísticas en HTML (Admin/Doctor - para convertir a PDF en app)
+router.get('/estadisticas/html', searchRateLimit, reportController.getReporteEstadisticasHTML);
+
 // Expediente médico completo en HTML (NUEVO - para react-native-html-to-pdf)
 router.get('/expediente/:idPaciente/html', searchRateLimit, reportController.getExpedienteCompletoHTML);
 

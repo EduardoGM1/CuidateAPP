@@ -67,12 +67,13 @@ const EditarPaciente = () => {
     return [];
   }, [modulos, userRole, authUserData?.id_modulo]);
 
-  /**
-   * Cargar módulos al montar el componente
-   */
+  /** Cargar módulos con retraso para no saturar conexiones (Android limita ~5 por host). */
   useEffect(() => {
-    Logger.info('EditarPaciente: Cargando módulos');
-    fetchModulos();
+    const t = setTimeout(() => {
+      Logger.info('EditarPaciente: Cargando módulos');
+      fetchModulos();
+    }, NETWORK_STAGGER.MODULOS_FORM_MS);
+    return () => clearTimeout(t);
   }, [fetchModulos]);
 
   /**

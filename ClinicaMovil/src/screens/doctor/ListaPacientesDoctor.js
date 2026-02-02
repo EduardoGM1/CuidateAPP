@@ -40,25 +40,13 @@ const ListaPacientesDoctor = ({ navigation }) => {
   const [filteredPacientes, setFilteredPacientes] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [pacienteFilter, setPacienteFilter] = useState('activos'); // 'activos', 'inactivos', 'todos'
-  const [comorbilidadFilter, setComorbilidadFilter] = useState('todas'); // 'todas', 'Diabetes', 'Hipertensión', etc.
+  /** Filtro por comorbilidad: null = todas, number = id_comorbilidad (desde BD) */
+  const [comorbilidadFilterId, setComorbilidadFilterId] = useState(null);
   const [dateFilter, setDateFilter] = useState('recent'); // 'recent', 'oldest'
   const [showFiltersModal, setShowFiltersModal] = useState(false);
-
-  // Lista de comorbilidades disponibles
-  const comorbilidadesDisponibles = [
-    'todas',
-    'Diabetes',
-    'Hipertensión', 
-    'Obesidad',
-    'Dislipidemia',
-    'Enfermedad renal crónica',
-    'EPOC',
-    'Enfermedad cardiovascular',
-    'Tuberculosis',
-    'Asma',
-    'Tabaquismo',
-    'SÍNDROME METABÓLICO'
-  ];
+  const [showComorbilidadDropdown, setShowComorbilidadDropdown] = useState(false);
+  const [comorbilidadesCatalog, setComorbilidadesCatalog] = useState([]);
+  const [loadingComorbilidadesCatalog, setLoadingComorbilidadesCatalog] = useState(false);
 
   // Validar que solo doctores puedan acceder
   useEffect(() => {
@@ -68,13 +56,34 @@ const ListaPacientesDoctor = ({ navigation }) => {
     }
   }, [userRole, navigation]);
 
+  // Cargar catálogo de comorbilidades desde BD (para dropdown de filtros)
+  useEffect(() => {
+    if (!showFiltersModal) return;
+    let cancelled = false;
+    setLoadingComorbilidadesCatalog(true);
+    gestionService.getComorbilidadesCatalogForFilter()
+      .then((list) => {
+        if (!cancelled) setComorbilidadesCatalog(Array.isArray(list) ? list : []);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          Logger.error('ListaPacientesDoctor: Error cargando catálogo de comorbilidades', err);
+          setComorbilidadesCatalog([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingComorbilidadesCatalog(false);
+      });
+    return () => { cancelled = true; };
+  }, [showFiltersModal]);
+
   // Hook para pacientes (ya filtra por doctor automáticamente en el backend)
   const { 
     pacientes, 
     loading: pacientesLoading, 
     error: pacientesError,
     refresh: refreshPacientes 
-  } = usePacientes(pacienteFilter, dateFilter, comorbilidadFilter);
+  } = usePacientes(pacienteFilter, dateFilter, comorbilidadFilterId == null ? 'todas' : String(comorbilidadFilterId));
 
   // Debounce para búsqueda (300ms de delay)
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -119,11 +128,11 @@ const ListaPacientesDoctor = ({ navigation }) => {
   useEffect(() => {
     Logger.info('Filtros cambiados, forzando actualización', { 
       pacienteFilter,
-      comorbilidadFilter,
+      comorbilidadFilterId,
       dateFilter 
     });
     refreshPacientes();
-  }, [pacienteFilter, comorbilidadFilter, dateFilter, refreshPacientes]);
+  }, [pacienteFilter, comorbilidadFilterId, dateFilter, refreshPacientes]);
 
   // Función para refrescar datos
   const handleRefresh = useCallback(async () => {
@@ -356,14 +365,20 @@ const ListaPacientesDoctor = ({ navigation }) => {
         visible={showFiltersModal}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setShowFiltersModal(false)}
+        onRequestClose={() => {
+          setShowFiltersModal(false);
+          setShowComorbilidadDropdown(false);
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>🔧 Filtros Disponibles</Text>
               <TouchableOpacity
-                onPress={() => setShowFiltersModal(false)}
+                onPress={() => {
+                  setShowFiltersModal(false);
+                  setShowComorbilidadDropdown(false);
+                }}
               >
                 <Text style={styles.closeButtonX}>X</Text>
               </TouchableOpacity>
@@ -420,36 +435,91 @@ const ListaPacientesDoctor = ({ navigation }) => {
                 </View>
                 
                 <Text style={styles.filterSubtitle}>Filtrar por comorbilidad:</Text>
-                <View style={styles.filterOptions}>
-                  {comorbilidadesDisponibles.map((comorbilidad) => (
-                    <TouchableOpacity
-                      key={comorbilidad}
-                      style={[
-                        styles.filterOption,
-                        comorbilidadFilter === comorbilidad && styles.activeFilterOption
-                      ]}
-                      onPress={() => setComorbilidadFilter(comorbilidad)}
-                    >
-                      <Text style={[
-                        styles.filterOptionText,
-                        comorbilidadFilter === comorbilidad && styles.activeFilterOptionText
-                      ]}>
-                        {comorbilidad === 'todas' ? '🏥 Todas' : 
-                         comorbilidad === 'Diabetes' ? '🩸 Diabetes' :
-                         comorbilidad === 'Hipertensión' ? '❤️ Hipertensión' :
-                         comorbilidad === 'Obesidad' ? '⚖️ Obesidad' :
-                         comorbilidad === 'Dislipidemia' ? '🩸 Dislipidemia' :
-                         comorbilidad === 'Enfermedad renal crónica' ? '🫘 Enfermedad renal crónica' :
-                         comorbilidad === 'EPOC' ? '🫁 EPOC' :
-                         comorbilidad === 'Enfermedad cardiovascular' ? '❤️ Enfermedad cardiovascular' :
-                         comorbilidad === 'Tuberculosis' ? '🦠 Tuberculosis' :
-                         comorbilidad === 'Asma' ? '🫁 Asma' :
-                         comorbilidad === 'Tabaquismo' ? '🚭 Tabaquismo' :
-                         comorbilidad === 'SÍNDROME METABÓLICO' ? '⚕️ Síndrome Metabólico' :
-                         comorbilidad}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                <View style={styles.comorbilidadDropdownContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.comorbilidadDropdownSelector,
+                      showComorbilidadDropdown && styles.comorbilidadDropdownSelectorOpen
+                    ]}
+                    onPress={() => setShowComorbilidadDropdown((v) => !v)}
+                    activeOpacity={0.7}
+                  >
+                    {loadingComorbilidadesCatalog ? (
+                      <Text style={styles.comorbilidadDropdownText}>Cargando...</Text>
+                    ) : (
+                      <>
+                        <Text
+                          style={[
+                            styles.comorbilidadDropdownText,
+                            comorbilidadFilterId == null && styles.comorbilidadDropdownPlaceholder
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {comorbilidadFilterId == null
+                            ? '🏥 Todas las comorbilidades'
+                            : (comorbilidadesCatalog.find((c) => c.id_comorbilidad === comorbilidadFilterId)?.nombre_comorbilidad ?? 'Comorbilidad')}
+                        </Text>
+                        <Text style={styles.comorbilidadDropdownArrow}>
+                          {showComorbilidadDropdown ? '▲' : '▼'}
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                  {showComorbilidadDropdown && (
+                    <View style={styles.comorbilidadDropdownList}>
+                      <ScrollView
+                        nestedScrollEnabled
+                        style={styles.comorbilidadDropdownScroll}
+                        keyboardShouldPersistTaps="handled"
+                      >
+                        <TouchableOpacity
+                          style={[
+                            styles.comorbilidadDropdownItem,
+                            comorbilidadFilterId == null && styles.comorbilidadDropdownItemSelected
+                          ]}
+                          onPress={() => {
+                            setComorbilidadFilterId(null);
+                            setShowComorbilidadDropdown(false);
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.comorbilidadDropdownItemText,
+                              comorbilidadFilterId == null && styles.comorbilidadDropdownItemTextSelected
+                            ]}
+                          >
+                            🏥 Todas las comorbilidades
+                          </Text>
+                        </TouchableOpacity>
+                        {comorbilidadesCatalog.map((c) => {
+                          const isSelected = comorbilidadFilterId === c.id_comorbilidad;
+                          return (
+                            <TouchableOpacity
+                              key={c.id_comorbilidad}
+                              style={[
+                                styles.comorbilidadDropdownItem,
+                                isSelected && styles.comorbilidadDropdownItemSelected
+                              ]}
+                              onPress={() => {
+                                setComorbilidadFilterId(c.id_comorbilidad);
+                                setShowComorbilidadDropdown(false);
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.comorbilidadDropdownItemText,
+                                  isSelected && styles.comorbilidadDropdownItemTextSelected
+                                ]}
+                                numberOfLines={1}
+                              >
+                                {c.nombre_comorbilidad}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
+                    </View>
+                  )}
                 </View>
                 
                 <Text style={styles.filterSubtitle}>Ordenar por fecha:</Text>
@@ -489,7 +559,10 @@ const ListaPacientesDoctor = ({ navigation }) => {
             <View style={styles.modalFooter}>
               <TouchableOpacity
                 style={styles.applyButton}
-                onPress={() => setShowFiltersModal(false)}
+                onPress={() => {
+                  setShowFiltersModal(false);
+                  setShowComorbilidadDropdown(false);
+                }}
               >
                 <Text style={styles.applyButtonText}>Aplicar Filtros</Text>
               </TouchableOpacity>
@@ -611,6 +684,69 @@ const styles = StyleSheet.create({
   activeFilterOptionText: {
     color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
+  },
+  // Dropdown comorbilidad (catálogo desde BD)
+  comorbilidadDropdownContainer: {
+    marginBottom: 8,
+  },
+  comorbilidadDropdownSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: COLORES.FONDO,
+    borderWidth: 1,
+    borderColor: COLORES.BORDE_CLARO,
+  },
+  comorbilidadDropdownSelectorOpen: {
+    borderColor: COLORES.NAV_PRIMARIO,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+  comorbilidadDropdownText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: COLORES.TEXTO_PRIMARIO,
+    flex: 1,
+  },
+  comorbilidadDropdownPlaceholder: {
+    color: COLORES.TEXTO_SECUNDARIO,
+  },
+  comorbilidadDropdownArrow: {
+    fontSize: 12,
+    color: COLORES.TEXTO_SECUNDARIO,
+    marginLeft: 8,
+  },
+  comorbilidadDropdownList: {
+    backgroundColor: COLORES.FONDO,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: COLORES.BORDE_CLARO,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    overflow: 'hidden',
+  },
+  comorbilidadDropdownScroll: {
+    maxHeight: 220,
+  },
+  comorbilidadDropdownItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: COLORES.BORDE_CLARO,
+  },
+  comorbilidadDropdownItemSelected: {
+    backgroundColor: COLORES.NAV_PRIMARIO + '15',
+  },
+  comorbilidadDropdownItemText: {
+    fontSize: 15,
+    color: COLORES.TEXTO_PRIMARIO,
+  },
+  comorbilidadDropdownItemTextSelected: {
+    fontWeight: '600',
+    color: COLORES.NAV_PRIMARIO,
   },
   modalFooter: {
     padding: 20,

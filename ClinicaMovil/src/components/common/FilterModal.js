@@ -27,17 +27,19 @@ const FilterModal = ({
   onFilterChange
 }) => {
   const renderFilter = (config) => {
-    const { type, key, label, options, placeholder } = config;
+    const { type, key, label, options, placeholder, badge, ...rest } = config;
     const value = filterValues[key];
 
     switch (type) {
       case 'date':
+        // Solo label + selector; sin iconos en el selector para evitar fallback "NEW" de IconButton
         return (
           <View key={key} style={filterStyles.filterSection}>
             <DatePickerButton
               label={label}
               value={value || ''}
               onChangeText={(newValue) => onFilterChange(key, newValue)}
+              hideIcons={true}
             />
           </View>
         );

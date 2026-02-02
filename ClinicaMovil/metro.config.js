@@ -54,9 +54,7 @@ const config = {
   },
   // Configuración de resolver
   resolver: {
-    // Asegurar que resuelve correctamente los módulos
     sourceExts: ['jsx', 'js', 'ts', 'tsx', 'json'],
-    // Asegurar que resuelve desde el directorio correcto
     roots: [path.resolve(__dirname)],
   },
   // Configuración de watcher (opcional, mejora rendimiento con múltiples dispositivos)

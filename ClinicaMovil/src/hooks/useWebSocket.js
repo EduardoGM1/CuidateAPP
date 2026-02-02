@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import io from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import Logger from '../services/logger';
-import { getApiBaseUrl } from '../config/apiConfig';
+import { getApiBaseUrl, getApiConfigWithFallback } from '../config/apiConfig';
 
 const useWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -12,23 +12,29 @@ const useWebSocket = () => {
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
 
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
     if (!token || !userData) {
       Logger.warn('WebSocket: No hay token o datos de usuario');
       return;
     }
 
     try {
-      // Usar configuración de API dinámica (detecta automáticamente emulador vs dispositivo físico)
-      const apiBaseUrl = getApiBaseUrl();
+      // Usar la misma URL que la API (getApiConfigWithFallback) para evitar timeout en localhost
+      let apiBaseUrl = getApiBaseUrl();
+      try {
+        const config = await getApiConfigWithFallback();
+        apiBaseUrl = config.baseURL;
+      } catch (_) {
+        // Mantener getApiBaseUrl() si fallback falla
+      }
       Logger.info('WebSocket: Conectando a', { url: apiBaseUrl });
-      
+
       const newSocket = io(apiBaseUrl, {
         auth: {
           token: token
         },
         transports: ['websocket', 'polling'],
-        timeout: 10000,
+        timeout: 15000,
         reconnection: true,
         reconnectionAttempts: maxReconnectAttempts,
         reconnectionDelay: 1000,
@@ -37,9 +43,9 @@ const useWebSocket = () => {
 
       // Eventos de conexión
       newSocket.on('connect', () => {
-        Logger.info('WebSocket: Conectado exitosamente', { 
+        Logger.info('WebSocket: Conectado exitosamente', {
           socketId: newSocket.id,
-          userId: userData.id_usuario 
+          userId: userData.id_usuario
         });
         setIsConnected(true);
         reconnectAttempts.current = 0;
@@ -52,19 +58,26 @@ const useWebSocket = () => {
 
       newSocket.on('connect_error', (error) => {
         const errorMessage = error.message || String(error);
-        Logger.error('WebSocket: Error de conexión', { 
-          error: errorMessage,
-          attempts: reconnectAttempts.current 
-        });
-        
+        const isTimeout = errorMessage === 'timeout' || errorMessage.includes('timeout');
+        // Timeout es habitual si el servidor no tiene WebSocket; no loguear como error
+        if (isTimeout) {
+          Logger.warn('WebSocket: Timeout de conexión (el servidor puede no tener WebSocket habilitado)', {
+            url: apiBaseUrl,
+            attempts: reconnectAttempts.current
+          });
+        } else {
+          Logger.error('WebSocket: Error de conexión', {
+            error: errorMessage,
+            attempts: reconnectAttempts.current
+          });
+        }
+
         // Si el error es "Token inválido", intentar refrescar el token
         if (errorMessage.includes('Token inválido') || errorMessage.includes('invalid token') || errorMessage.includes('Unauthorized')) {
           Logger.info('WebSocket: Token inválido detectado, intentando refrescar...');
-          // El token se refrescará automáticamente en el siguiente intento de conexión
-          // No reconectar inmediatamente, esperar a que el token se refresque
-          reconnectAttempts.current = Math.max(0, reconnectAttempts.current - 1); // Reducir intentos para permitir reintento
+          reconnectAttempts.current = Math.max(0, reconnectAttempts.current - 1);
         }
-        
+
         setIsConnected(false);
       });
 

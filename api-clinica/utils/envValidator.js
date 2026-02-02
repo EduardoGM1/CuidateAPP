@@ -12,14 +12,17 @@ const requiredEnvVars = {
   production: [
     'DB_NAME',
     'DB_USER',
-    'DB_PASSWORD', 
+    'DB_PASSWORD',
     'DB_HOST',
     'JWT_SECRET',
     'ENCRYPTION_KEY',
     'SMTP_HOST',
     'SMTP_USER',
     'SMTP_PASS',
-    'ALERT_EMAIL'
+    'ALERT_EMAIL',
+    'RESEND_API_KEY',
+    'FIREBASE_SERVICE_ACCOUNT_KEY',
+    'FIREBASE_PROJECT_ID'
   ]
 };
 

@@ -35,24 +35,31 @@ const GestionAdmin = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [doctorFilter, setDoctorFilter] = useState('activos'); // 'activos', 'inactivos', 'todos'
   const [pacienteFilter, setPacienteFilter] = useState('activos'); // 'activos', 'inactivos', 'todos'
-  const [comorbilidadFilter, setComorbilidadFilter] = useState('todas'); // 'todas', 'Diabetes', 'Hipertensión', etc.
+  /** Filtro por comorbilidad: null = todas, number = id_comorbilidad (desde BD) */
+  const [comorbilidadFilterId, setComorbilidadFilterId] = useState(null);
   const [dateFilter, setDateFilter] = useState('recent'); // 'recent', 'oldest'
   const [showFiltersModal, setShowFiltersModal] = useState(false);
+  const [showEstadoDropdown, setShowEstadoDropdown] = useState(false);
+  const [showDateSortDropdown, setShowDateSortDropdown] = useState(false);
+  const [showComorbilidadDropdown, setShowComorbilidadDropdown] = useState(false);
+  const [comorbilidadesCatalog, setComorbilidadesCatalog] = useState([]);
+  const [loadingComorbilidadesCatalog, setLoadingComorbilidadesCatalog] = useState(false);
+  /** Filtro por módulo: null = todos. Doctores y pacientes tienen su propio valor. */
+  const [doctorModuloFilterId, setDoctorModuloFilterId] = useState(null);
+  const [pacienteModuloFilterId, setPacienteModuloFilterId] = useState(null);
+  const [showDoctorModuloDropdown, setShowDoctorModuloDropdown] = useState(false);
+  const [showPacienteModuloDropdown, setShowPacienteModuloDropdown] = useState(false);
+  const [modulosCatalog, setModulosCatalog] = useState([]);
+  const [loadingModulosCatalog, setLoadingModulosCatalog] = useState(false);
 
-  // Lista de comorbilidades disponibles
-  const comorbilidadesDisponibles = [
-    'todas',
-    'Diabetes',
-    'Hipertensión', 
-    'Obesidad',
-    'Dislipidemia',
-    'Enfermedad renal crónica',
-    'EPOC',
-    'Enfermedad cardiovascular',
-    'Tuberculosis',
-    'Asma',
-    'Tabaquismo',
-    'SÍNDROME METABÓLICO'
+  const ESTADO_OPCIONES = [
+    { value: 'activos', label: '✅ Activos' },
+    { value: 'inactivos', label: '❌ Inactivos' },
+    { value: 'todos', label: '📋 Todos' }
+  ];
+  const ORDEN_FECHA_OPCIONES = [
+    { value: 'recent', label: '⬇️ Más recientes primero' },
+    { value: 'oldest', label: '⬆️ Más antiguos primero' }
   ];
 
   // Hooks para datos dinámicos con Infinite Scroll
@@ -68,6 +75,7 @@ const GestionAdmin = ({ navigation }) => {
   } = useDoctoresInfinite({ 
     estado: doctorFilter, 
     sort: dateFilter,
+    modulo: doctorModuloFilterId == null ? null : String(doctorModuloFilterId),
     pageSize: 20
   });
   
@@ -83,7 +91,8 @@ const GestionAdmin = ({ navigation }) => {
   } = usePacientesInfinite({ 
     estado: pacienteFilter, 
     sort: dateFilter,
-    comorbilidad: comorbilidadFilter,
+    comorbilidad: comorbilidadFilterId == null ? 'todas' : String(comorbilidadFilterId),
+    modulo: pacienteModuloFilterId == null ? null : String(pacienteModuloFilterId),
     pageSize: 20
   });
 
@@ -220,6 +229,48 @@ const GestionAdmin = ({ navigation }) => {
 
   // Nota: Los hooks useDoctoresInfinite y usePacientesInfinite ya manejan
   // automáticamente los cambios de filtros y recargan los datos cuando es necesario
+
+  // Cargar catálogo de módulos desde BD (para dropdown de filtros en Doctores y Pacientes)
+  useEffect(() => {
+    if (!showFiltersModal) return;
+    let cancelled = false;
+    setLoadingModulosCatalog(true);
+    gestionService.getModulosCatalogForFilter()
+      .then((list) => {
+        if (!cancelled) setModulosCatalog(Array.isArray(list) ? list : []);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          Logger.error('Error cargando catálogo de módulos', err);
+          setModulosCatalog([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingModulosCatalog(false);
+      });
+    return () => { cancelled = true; };
+  }, [showFiltersModal]);
+
+  // Cargar catálogo de comorbilidades desde BD (para dropdown de filtros)
+  useEffect(() => {
+    if (activeTab !== 'pacientes' || !showFiltersModal) return;
+    let cancelled = false;
+    setLoadingComorbilidadesCatalog(true);
+    gestionService.getComorbilidadesCatalogForFilter()
+      .then((list) => {
+        if (!cancelled) setComorbilidadesCatalog(Array.isArray(list) ? list : []);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          Logger.error('Error cargando catálogo de comorbilidades', err);
+          setComorbilidadesCatalog([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingComorbilidadesCatalog(false);
+      });
+    return () => { cancelled = true; };
+  }, [activeTab, showFiltersModal]);
 
   // Refrescar datos cuando el usuario regrese a la pantalla
   useFocusEffect(
@@ -822,8 +873,17 @@ const GestionAdmin = ({ navigation }) => {
           </View>
         )}
 
-        {/* Error States */}
-        {(doctoresError || pacientesError) && (
+        {/* Error States: solo mostrar error de la pestaña activa y cuando no hay datos (evita mostrar error si los datos ya cargaron) */}
+        {activeTab === 'doctores' && doctoresError && (!doctores || doctores.length === 0) && (
+          <Card style={styles.errorCard}>
+            <Card.Content>
+              <Text style={styles.errorText}>
+                Error al cargar los datos. Desliza hacia abajo para intentar nuevamente.
+              </Text>
+            </Card.Content>
+          </Card>
+        )}
+        {activeTab === 'pacientes' && pacientesError && (!pacientes || pacientes.length === 0) && (
           <Card style={styles.errorCard}>
             <Card.Content>
               <Text style={styles.errorText}>
@@ -973,14 +1033,26 @@ const GestionAdmin = ({ navigation }) => {
         visible={showFiltersModal}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setShowFiltersModal(false)}
+        onRequestClose={() => {
+          setShowEstadoDropdown(false);
+          setShowDateSortDropdown(false);
+          setShowComorbilidadDropdown(false);
+          setShowDoctorModuloDropdown(false);
+          setShowPacienteModuloDropdown(false);
+          setShowFiltersModal(false);
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>🔍 Filtros Disponibles</Text>
               <TouchableOpacity
-                onPress={() => setShowFiltersModal(false)}
+                onPress={() => {
+                  setShowEstadoDropdown(false);
+                  setShowDateSortDropdown(false);
+                  setShowComorbilidadDropdown(false);
+                  setShowFiltersModal(false);
+                }}
               >
                 <Text style={styles.closeButtonX}>X</Text>
               </TouchableOpacity>
@@ -991,83 +1063,188 @@ const GestionAdmin = ({ navigation }) => {
               {activeTab === 'doctores' && (
                 <View style={styles.filterSection}>
                   <Text style={styles.filterSectionTitle}>👨‍⚕️ Filtros de Doctores</Text>
-                  
+
                   <Text style={styles.filterSubtitle}>Estado:</Text>
-                  <View style={styles.filterOptions}>
+                  <View style={styles.filterDropdownContainer}>
                     <TouchableOpacity
                       style={[
-                        styles.filterOption,
-                        doctorFilter === 'activos' && styles.activeFilterOption
+                        styles.filterDropdownSelector,
+                        showEstadoDropdown && styles.filterDropdownSelectorOpen
                       ]}
-                      onPress={() => setDoctorFilter('activos')}
+                      onPress={() => {
+                        setShowDateSortDropdown(false);
+                        setShowDoctorModuloDropdown(false);
+                        setShowEstadoDropdown(!showEstadoDropdown);
+                      }}
+                      activeOpacity={0.7}
                     >
-                      <Text style={[
-                        styles.filterOptionText,
-                        doctorFilter === 'activos' && styles.activeFilterOptionText
-                      ]}>
-                        ✅ Activos
+                      <Text style={styles.filterDropdownText} numberOfLines={1}>
+                        {ESTADO_OPCIONES.find((o) => o.value === doctorFilter)?.label ?? 'Estado'}
+                      </Text>
+                      <Text style={styles.filterDropdownArrow}>
+                        {showEstadoDropdown ? '▲' : '▼'}
                       </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.filterOption,
-                        doctorFilter === 'inactivos' && styles.activeFilterOption
-                      ]}
-                      onPress={() => setDoctorFilter('inactivos')}
-                    >
-                      <Text style={[
-                        styles.filterOptionText,
-                        doctorFilter === 'inactivos' && styles.activeFilterOptionText
-                      ]}>
-                        ❌ Inactivos
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.filterOption,
-                        doctorFilter === 'todos' && styles.activeFilterOption
-                      ]}
-                      onPress={() => setDoctorFilter('todos')}
-                    >
-                      <Text style={[
-                        styles.filterOptionText,
-                        doctorFilter === 'todos' && styles.activeFilterOptionText
-                      ]}>
-                        📋 Todos
-                      </Text>
-                    </TouchableOpacity>
+                    {showEstadoDropdown && (
+                      <View style={styles.filterDropdownList}>
+                        {ESTADO_OPCIONES.map((opt) => {
+                          const isSelected = doctorFilter === opt.value;
+                          return (
+                            <TouchableOpacity
+                              key={opt.value}
+                              style={[
+                                styles.filterDropdownItem,
+                                isSelected && styles.filterDropdownItemSelected
+                              ]}
+                              onPress={() => {
+                                setDoctorFilter(opt.value);
+                                setShowEstadoDropdown(false);
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.filterDropdownItemText,
+                                  isSelected && styles.filterDropdownItemTextSelected
+                                ]}
+                              >
+                                {opt.label}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    )}
                   </View>
 
                   <Text style={styles.filterSubtitle}>Ordenar por fecha:</Text>
-                  <View style={styles.filterOptions}>
+                  <View style={styles.filterDropdownContainer}>
                     <TouchableOpacity
                       style={[
-                        styles.filterOption,
-                        dateFilter === 'recent' && styles.activeFilterOption
+                        styles.filterDropdownSelector,
+                        showDateSortDropdown && styles.filterDropdownSelectorOpen
                       ]}
-                      onPress={() => setDateFilter('recent')}
+                      onPress={() => {
+                        setShowEstadoDropdown(false);
+                        setShowDoctorModuloDropdown(false);
+                        setShowDateSortDropdown(!showDateSortDropdown);
+                      }}
+                      activeOpacity={0.7}
                     >
-                      <Text style={[
-                        styles.filterOptionText,
-                        dateFilter === 'recent' && styles.activeFilterOptionText
-                      ]}>
-                        ⬇️ Más Recientes Primero
+                      <Text style={styles.filterDropdownText} numberOfLines={1}>
+                        {ORDEN_FECHA_OPCIONES.find((o) => o.value === dateFilter)?.label ?? 'Orden'}
+                      </Text>
+                      <Text style={styles.filterDropdownArrow}>
+                        {showDateSortDropdown ? '▲' : '▼'}
                       </Text>
                     </TouchableOpacity>
+                    {showDateSortDropdown && (
+                      <View style={styles.filterDropdownList}>
+                        {ORDEN_FECHA_OPCIONES.map((opt) => {
+                          const isSelected = dateFilter === opt.value;
+                          return (
+                            <TouchableOpacity
+                              key={opt.value}
+                              style={[
+                                styles.filterDropdownItem,
+                                isSelected && styles.filterDropdownItemSelected
+                              ]}
+                              onPress={() => {
+                                setDateFilter(opt.value);
+                                setShowDateSortDropdown(false);
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.filterDropdownItemText,
+                                  isSelected && styles.filterDropdownItemTextSelected
+                                ]}
+                              >
+                                {opt.label}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    )}
+                  </View>
+
+                  <Text style={styles.filterSubtitle}>Filtrar por módulo:</Text>
+                  <View style={styles.filterDropdownContainer}>
                     <TouchableOpacity
                       style={[
-                        styles.filterOption,
-                        dateFilter === 'oldest' && styles.activeFilterOption
+                        styles.filterDropdownSelector,
+                        showDoctorModuloDropdown && styles.filterDropdownSelectorOpen
                       ]}
-                      onPress={() => setDateFilter('oldest')}
+                      onPress={() => {
+                        setShowEstadoDropdown(false);
+                        setShowDateSortDropdown(false);
+                        setShowDoctorModuloDropdown(!showDoctorModuloDropdown);
+                      }}
+                      activeOpacity={0.7}
+                      disabled={loadingModulosCatalog}
                     >
-                      <Text style={[
-                        styles.filterOptionText,
-                        dateFilter === 'oldest' && styles.activeFilterOptionText
-                      ]}>
-                        ⬆️ Más Antiguos Primero
+                      <Text style={styles.filterDropdownText} numberOfLines={1}>
+                        {loadingModulosCatalog
+                          ? 'Cargando...'
+                          : doctorModuloFilterId == null
+                            ? '📂 Todos los módulos'
+                            : (modulosCatalog.find((m) => m.id_modulo === doctorModuloFilterId)?.nombre_modulo ?? 'Módulo')}
+                      </Text>
+                      <Text style={styles.filterDropdownArrow}>
+                        {showDoctorModuloDropdown ? '▲' : '▼'}
                       </Text>
                     </TouchableOpacity>
+                    {showDoctorModuloDropdown && (
+                      <View style={styles.filterDropdownList}>
+                        <ScrollView nestedScrollEnabled style={{ maxHeight: 200 }}>
+                          <TouchableOpacity
+                            style={[
+                              styles.filterDropdownItem,
+                              doctorModuloFilterId == null && styles.filterDropdownItemSelected
+                            ]}
+                            onPress={() => {
+                              setDoctorModuloFilterId(null);
+                              setShowDoctorModuloDropdown(false);
+                            }}
+                          >
+                            <Text
+                              style={[
+                                styles.filterDropdownItemText,
+                                doctorModuloFilterId == null && styles.filterDropdownItemTextSelected
+                              ]}
+                            >
+                              📂 Todos los módulos
+                            </Text>
+                          </TouchableOpacity>
+                          {modulosCatalog.map((m) => {
+                            const isSelected = doctorModuloFilterId === m.id_modulo;
+                            return (
+                              <TouchableOpacity
+                                key={m.id_modulo}
+                                style={[
+                                  styles.filterDropdownItem,
+                                  isSelected && styles.filterDropdownItemSelected
+                                ]}
+                                onPress={() => {
+                                  setDoctorModuloFilterId(m.id_modulo);
+                                  setShowDoctorModuloDropdown(false);
+                                }}
+                              >
+                                <Text
+                                  style={[
+                                    styles.filterDropdownItemText,
+                                    isSelected && styles.filterDropdownItemTextSelected
+                                  ]}
+                                  numberOfLines={1}
+                                >
+                                  {m.nombre_modulo}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </ScrollView>
+                      </View>
+                    )}
                   </View>
                 </View>
               )}
@@ -1076,116 +1253,281 @@ const GestionAdmin = ({ navigation }) => {
               {activeTab === 'pacientes' && (
                 <View style={styles.filterSection}>
                   <Text style={styles.filterSectionTitle}>👥 Filtros de Pacientes</Text>
-                  
+
                   <Text style={styles.filterSubtitle}>Estado:</Text>
-                  <View style={styles.filterOptions}>
+                  <View style={styles.filterDropdownContainer}>
                     <TouchableOpacity
                       style={[
-                        styles.filterOption,
-                        pacienteFilter === 'activos' && styles.activeFilterOption
+                        styles.filterDropdownSelector,
+                        showEstadoDropdown && styles.filterDropdownSelectorOpen
                       ]}
-                      onPress={() => setPacienteFilter('activos')}
+                      onPress={() => {
+                        setShowDateSortDropdown(false);
+                        setShowComorbilidadDropdown(false);
+                        setShowPacienteModuloDropdown(false);
+                        setShowEstadoDropdown(!showEstadoDropdown);
+                      }}
+                      activeOpacity={0.7}
                     >
-                      <Text style={[
-                        styles.filterOptionText,
-                        pacienteFilter === 'activos' && styles.activeFilterOptionText
-                      ]}>
-                        ✅ Activos
+                      <Text style={styles.filterDropdownText} numberOfLines={1}>
+                        {ESTADO_OPCIONES.find((o) => o.value === pacienteFilter)?.label ?? 'Estado'}
+                      </Text>
+                      <Text style={styles.filterDropdownArrow}>
+                        {showEstadoDropdown ? '▲' : '▼'}
                       </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.filterOption,
-                        pacienteFilter === 'inactivos' && styles.activeFilterOption
-                      ]}
-                      onPress={() => setPacienteFilter('inactivos')}
-                    >
-                      <Text style={[
-                        styles.filterOptionText,
-                        pacienteFilter === 'inactivos' && styles.activeFilterOptionText
-                      ]}>
-                        ❌ Inactivos
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.filterOption,
-                        pacienteFilter === 'todos' && styles.activeFilterOption
-                      ]}
-                      onPress={() => setPacienteFilter('todos')}
-                    >
-                      <Text style={[
-                        styles.filterOptionText,
-                        pacienteFilter === 'todos' && styles.activeFilterOptionText
-                      ]}>
-                        👥 Todos
-                      </Text>
-                    </TouchableOpacity>
+                    {showEstadoDropdown && (
+                      <View style={styles.filterDropdownList}>
+                        {ESTADO_OPCIONES.map((opt) => {
+                          const isSelected = pacienteFilter === opt.value;
+                          return (
+                            <TouchableOpacity
+                              key={opt.value}
+                              style={[
+                                styles.filterDropdownItem,
+                                isSelected && styles.filterDropdownItemSelected
+                              ]}
+                              onPress={() => {
+                                setPacienteFilter(opt.value);
+                                setShowEstadoDropdown(false);
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.filterDropdownItemText,
+                                  isSelected && styles.filterDropdownItemTextSelected
+                                ]}
+                              >
+                                {opt.label}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    )}
                   </View>
-                  
+
                   <Text style={styles.filterSubtitle}>Filtrar por comorbilidad:</Text>
-                  <View style={styles.filterOptions}>
-                    {comorbilidadesDisponibles.map((comorbilidad) => (
-                      <TouchableOpacity
-                        key={comorbilidad}
+                  <View style={styles.comorbilidadDropdownContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.comorbilidadDropdownSelector,
+                        showComorbilidadDropdown && styles.comorbilidadDropdownSelectorOpen
+                      ]}
+                      onPress={() => {
+                        setShowEstadoDropdown(false);
+                        setShowDateSortDropdown(false);
+                        setShowPacienteModuloDropdown(false);
+                        setShowComorbilidadDropdown(!showComorbilidadDropdown);
+                      }}
+                      activeOpacity={0.7}
+                      disabled={loadingComorbilidadesCatalog}
+                    >
+                      <Text
                         style={[
-                          styles.filterOption,
-                          comorbilidadFilter === comorbilidad && styles.activeFilterOption
+                          styles.comorbilidadDropdownText,
+                          comorbilidadFilterId == null && styles.comorbilidadDropdownPlaceholder
                         ]}
-                        onPress={() => setComorbilidadFilter(comorbilidad)}
+                        numberOfLines={1}
                       >
-                        <Text style={[
-                          styles.filterOptionText,
-                          comorbilidadFilter === comorbilidad && styles.activeFilterOptionText
-                        ]}>
-                          {comorbilidad === 'todas' ? '🏥 Todas' : 
-                           comorbilidad === 'Diabetes' ? '🩸 Diabetes' :
-                           comorbilidad === 'Hipertensión' ? '❤️ Hipertensión' :
-                           comorbilidad === 'Obesidad' ? '⚖️ Obesidad' :
-                           comorbilidad === 'Dislipidemia' ? '🩸 Dislipidemia' :
-                           comorbilidad === 'Enfermedad renal crónica' ? '🫘 Enfermedad renal crónica' :
-                           comorbilidad === 'EPOC' ? '🫁 EPOC' :
-                           comorbilidad === 'Enfermedad cardiovascular' ? '❤️ Enfermedad cardiovascular' :
-                           comorbilidad === 'Tuberculosis' ? '🦠 Tuberculosis' :
-                           comorbilidad === 'Asma' ? '🫁 Asma' :
-                           comorbilidad === 'Tabaquismo' ? '🚭 Tabaquismo' :
-                           comorbilidad === 'SÍNDROME METABÓLICO' ? '⚕️ Síndrome Metabólico' :
-                           comorbilidad}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+                        {loadingComorbilidadesCatalog
+                          ? 'Cargando...'
+                          : comorbilidadFilterId == null
+                            ? '🏥 Todas las comorbilidades'
+                            : (comorbilidadesCatalog.find((c) => c.id_comorbilidad === comorbilidadFilterId)?.nombre_comorbilidad ?? 'Comorbilidad')}
+                      </Text>
+                      <Text style={styles.comorbilidadDropdownArrow}>
+                        {showComorbilidadDropdown ? '▲' : '▼'}
+                      </Text>
+                    </TouchableOpacity>
+                    {showComorbilidadDropdown && (
+                      <View style={styles.comorbilidadDropdownList}>
+                        <ScrollView
+                          nestedScrollEnabled
+                          style={styles.comorbilidadDropdownScroll}
+                          keyboardShouldPersistTaps="handled"
+                        >
+                          <TouchableOpacity
+                            style={[
+                              styles.comorbilidadDropdownItem,
+                              comorbilidadFilterId == null && styles.comorbilidadDropdownItemSelected
+                            ]}
+                            onPress={() => {
+                              setComorbilidadFilterId(null);
+                              setShowComorbilidadDropdown(false);
+                            }}
+                          >
+                            <Text
+                              style={[
+                                styles.comorbilidadDropdownItemText,
+                                comorbilidadFilterId == null && styles.comorbilidadDropdownItemTextSelected
+                              ]}
+                            >
+                              🏥 Todas las comorbilidades
+                            </Text>
+                          </TouchableOpacity>
+                          {comorbilidadesCatalog.map((c) => {
+                            const isSelected = comorbilidadFilterId === c.id_comorbilidad;
+                            return (
+                              <TouchableOpacity
+                                key={c.id_comorbilidad}
+                                style={[
+                                  styles.comorbilidadDropdownItem,
+                                  isSelected && styles.comorbilidadDropdownItemSelected
+                                ]}
+                                onPress={() => {
+                                  setComorbilidadFilterId(c.id_comorbilidad);
+                                  setShowComorbilidadDropdown(false);
+                                }}
+                              >
+                                <Text
+                                  style={[
+                                    styles.comorbilidadDropdownItemText,
+                                    isSelected && styles.comorbilidadDropdownItemTextSelected
+                                  ]}
+                                  numberOfLines={1}
+                                >
+                                  {c.nombre_comorbilidad}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </ScrollView>
+                      </View>
+                    )}
+                  </View>
+
+                  <Text style={styles.filterSubtitle}>Filtrar por módulo:</Text>
+                  <View style={styles.filterDropdownContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.filterDropdownSelector,
+                        showPacienteModuloDropdown && styles.filterDropdownSelectorOpen
+                      ]}
+                      onPress={() => {
+                        setShowEstadoDropdown(false);
+                        setShowComorbilidadDropdown(false);
+                        setShowDateSortDropdown(false);
+                        setShowPacienteModuloDropdown(!showPacienteModuloDropdown);
+                      }}
+                      activeOpacity={0.7}
+                      disabled={loadingModulosCatalog}
+                    >
+                      <Text style={styles.filterDropdownText} numberOfLines={1}>
+                        {loadingModulosCatalog
+                          ? 'Cargando...'
+                          : pacienteModuloFilterId == null
+                            ? '📂 Todos los módulos'
+                            : (modulosCatalog.find((m) => m.id_modulo === pacienteModuloFilterId)?.nombre_modulo ?? 'Módulo')}
+                      </Text>
+                      <Text style={styles.filterDropdownArrow}>
+                        {showPacienteModuloDropdown ? '▲' : '▼'}
+                      </Text>
+                    </TouchableOpacity>
+                    {showPacienteModuloDropdown && (
+                      <View style={styles.filterDropdownList}>
+                        <ScrollView nestedScrollEnabled style={{ maxHeight: 200 }}>
+                          <TouchableOpacity
+                            style={[
+                              styles.filterDropdownItem,
+                              pacienteModuloFilterId == null && styles.filterDropdownItemSelected
+                            ]}
+                            onPress={() => {
+                              setPacienteModuloFilterId(null);
+                              setShowPacienteModuloDropdown(false);
+                            }}
+                          >
+                            <Text
+                              style={[
+                                styles.filterDropdownItemText,
+                                pacienteModuloFilterId == null && styles.filterDropdownItemTextSelected
+                              ]}
+                            >
+                              📂 Todos los módulos
+                            </Text>
+                          </TouchableOpacity>
+                          {modulosCatalog.map((m) => {
+                            const isSelected = pacienteModuloFilterId === m.id_modulo;
+                            return (
+                              <TouchableOpacity
+                                key={m.id_modulo}
+                                style={[
+                                  styles.filterDropdownItem,
+                                  isSelected && styles.filterDropdownItemSelected
+                                ]}
+                                onPress={() => {
+                                  setPacienteModuloFilterId(m.id_modulo);
+                                  setShowPacienteModuloDropdown(false);
+                                }}
+                              >
+                                <Text
+                                  style={[
+                                    styles.filterDropdownItemText,
+                                    isSelected && styles.filterDropdownItemTextSelected
+                                  ]}
+                                  numberOfLines={1}
+                                >
+                                  {m.nombre_modulo}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </ScrollView>
+                      </View>
+                    )}
                   </View>
                   
                   <Text style={styles.filterSubtitle}>Ordenar por fecha:</Text>
-                  <View style={styles.filterOptions}>
+                  <View style={styles.filterDropdownContainer}>
                     <TouchableOpacity
                       style={[
-                        styles.filterOption,
-                        dateFilter === 'recent' && styles.activeFilterOption
+                        styles.filterDropdownSelector,
+                        showDateSortDropdown && styles.filterDropdownSelectorOpen
                       ]}
-                      onPress={() => setDateFilter('recent')}
+                      onPress={() => {
+                        setShowEstadoDropdown(false);
+                        setShowComorbilidadDropdown(false);
+                        setShowPacienteModuloDropdown(false);
+                        setShowDateSortDropdown(!showDateSortDropdown);
+                      }}
+                      activeOpacity={0.7}
                     >
-                      <Text style={[
-                        styles.filterOptionText,
-                        dateFilter === 'recent' && styles.activeFilterOptionText
-                      ]}>
-                        ⬇️ Más Recientes Primero
+                      <Text style={styles.filterDropdownText} numberOfLines={1}>
+                        {ORDEN_FECHA_OPCIONES.find((o) => o.value === dateFilter)?.label ?? 'Orden'}
+                      </Text>
+                      <Text style={styles.filterDropdownArrow}>
+                        {showDateSortDropdown ? '▲' : '▼'}
                       </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.filterOption,
-                        dateFilter === 'oldest' && styles.activeFilterOption
-                      ]}
-                      onPress={() => setDateFilter('oldest')}
-                    >
-                      <Text style={[
-                        styles.filterOptionText,
-                        dateFilter === 'oldest' && styles.activeFilterOptionText
-                      ]}>
-                        ⬆️ Más Antiguos Primero
-                      </Text>
-                    </TouchableOpacity>
+                    {showDateSortDropdown && (
+                      <View style={styles.filterDropdownList}>
+                        {ORDEN_FECHA_OPCIONES.map((opt) => {
+                          const isSelected = dateFilter === opt.value;
+                          return (
+                            <TouchableOpacity
+                              key={opt.value}
+                              style={[
+                                styles.filterDropdownItem,
+                                isSelected && styles.filterDropdownItemSelected
+                              ]}
+                              onPress={() => {
+                                setDateFilter(opt.value);
+                                setShowDateSortDropdown(false);
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.filterDropdownItemText,
+                                  isSelected && styles.filterDropdownItemTextSelected
+                                ]}
+                              >
+                                {opt.label}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    )}
                   </View>
                 </View>
               )}
@@ -1208,7 +1550,14 @@ const GestionAdmin = ({ navigation }) => {
             <View style={styles.modalFooter}>
               <TouchableOpacity
                 style={styles.modalApplyButton}
-                onPress={() => setShowFiltersModal(false)}
+                onPress={() => {
+                  setShowEstadoDropdown(false);
+                  setShowDateSortDropdown(false);
+                  setShowComorbilidadDropdown(false);
+                  setShowDoctorModuloDropdown(false);
+                  setShowPacienteModuloDropdown(false);
+                  setShowFiltersModal(false);
+                }}
               >
                 <Text style={styles.modalApplyButtonText}>✅ Aplicar Filtros</Text>
               </TouchableOpacity>
@@ -1613,6 +1962,127 @@ const styles = StyleSheet.create({
   activeFilterOptionText: {
     color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
+  },
+  // Dropdown Estado y Orden (compartidos)
+  filterDropdownContainer: {
+    marginBottom: 12,
+  },
+  filterDropdownSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: COLORES.FONDO,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    minHeight: 48,
+  },
+  filterDropdownSelectorOpen: {
+    borderColor: COLORES.NAV_PRIMARIO,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+  filterDropdownText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: COLORES.TEXTO_PRIMARIO,
+    flex: 1,
+  },
+  filterDropdownArrow: {
+    fontSize: 12,
+    color: COLORES.TEXTO_SECUNDARIO,
+    marginLeft: 8,
+  },
+  filterDropdownList: {
+    backgroundColor: COLORES.FONDO,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: '#E0E0E0',
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+  },
+  filterDropdownItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E0E0E0',
+  },
+  filterDropdownItemSelected: {
+    backgroundColor: COLORES.NAV_PRIMARIO + '15',
+  },
+  filterDropdownItemText: {
+    fontSize: 15,
+    color: COLORES.TEXTO_PRIMARIO,
+  },
+  filterDropdownItemTextSelected: {
+    fontWeight: '600',
+    color: COLORES.NAV_PRIMARIO,
+  },
+  // Dropdown comorbilidad (catálogo desde BD)
+  comorbilidadDropdownContainer: {
+    marginBottom: 8,
+  },
+  comorbilidadDropdownSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: COLORES.FONDO,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    minHeight: 48,
+  },
+  comorbilidadDropdownSelectorOpen: {
+    borderColor: COLORES.NAV_PRIMARIO,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+  comorbilidadDropdownText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: COLORES.TEXTO_PRIMARIO,
+    flex: 1,
+  },
+  comorbilidadDropdownPlaceholder: {
+    color: COLORES.TEXTO_SECUNDARIO,
+  },
+  comorbilidadDropdownArrow: {
+    fontSize: 12,
+    color: COLORES.TEXTO_SECUNDARIO,
+    marginLeft: 8,
+  },
+  comorbilidadDropdownList: {
+    backgroundColor: COLORES.FONDO,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: '#E0E0E0',
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    maxHeight: 220,
+  },
+  comorbilidadDropdownScroll: {
+    maxHeight: 220,
+  },
+  comorbilidadDropdownItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E0E0E0',
+  },
+  comorbilidadDropdownItemSelected: {
+    backgroundColor: COLORES.NAV_PRIMARIO + '15',
+  },
+  comorbilidadDropdownItemText: {
+    fontSize: 15,
+    color: COLORES.TEXTO_PRIMARIO,
+  },
+  comorbilidadDropdownItemTextSelected: {
+    fontWeight: '600',
+    color: COLORES.NAV_PRIMARIO,
   },
   filterInfo: {
     fontSize: 13,

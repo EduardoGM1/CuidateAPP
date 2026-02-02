@@ -1,20 +1,28 @@
 import axios from 'axios';
 import ReactNativeBiometrics from 'react-native-biometrics';
 import Logger from '../services/logger';
-import { getApiConfig } from '../config/apiConfig';
+import { getApiConfig, getApiConfigWithFallback } from '../config/apiConfig';
 import { storageService } from '../services/storageService';
 
-// Configuración dinámica de la API
+// Configuración dinámica de la API (misma URL que gestionService para evitar fallos en datos tras login OK)
 let API_CONFIG = null;
 
-// Función para inicializar la configuración
+// Función para inicializar la configuración (usa fallback para coincidir con el resto de la app)
 const initializeApiConfig = async () => {
   if (!API_CONFIG) {
-    API_CONFIG = await getApiConfig();
-    Logger.info('Auth API Config inicializada', { 
-      baseURL: API_CONFIG.baseURL,
-      timeout: API_CONFIG.timeout 
-    });
+    try {
+      API_CONFIG = await getApiConfigWithFallback();
+      Logger.info('Auth API Config inicializada (fallback)', {
+        baseURL: API_CONFIG.baseURL,
+        timeout: API_CONFIG.timeout
+      });
+    } catch (e) {
+      API_CONFIG = await getApiConfig();
+      Logger.info('Auth API Config inicializada (sync)', {
+        baseURL: API_CONFIG.baseURL,
+        timeout: API_CONFIG.timeout
+      });
+    }
   }
   return API_CONFIG;
 };
