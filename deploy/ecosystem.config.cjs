@@ -1,12 +1,13 @@
 /**
- * Configuracion PM2 para CuidateAPP en VPS (LightNode)
- * Uso: desde la raiz del repo: pm2 start deploy/ecosystem.config.cjs
+ * PM2 - CuidateAPP API (api-clinica)
+ * Ejecutar desde la raíz del repo: cd /var/www/CuidateAPP && pm2 start deploy/ecosystem.config.cjs
+ * O desde api-clinica: pm2 start index.js --name api-clinica
  */
 
 module.exports = {
   apps: [
     {
-      name: 'cuidateapp-api',
+      name: 'api-clinica',
       cwd: './api-clinica',
       script: 'index.js',
       interpreter: 'node',
