@@ -14,6 +14,7 @@ try {
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import compression from "compression";
 import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -83,6 +84,10 @@ if (NODE_ENV === 'production') {
   app.use(forceHTTPS);
   logger.info('🔒 HTTPS enforcement enabled for production');
 }
+
+// Compresión gzip para reducir consumo de datos (JSON, HTML, texto)
+app.use(compression());
+logger.info('📦 Compression (gzip) enabled for responses');
 
 // Global middlewares
 app.use(express.json({ limit: '100kb' })); // Limitar tamaño del payload

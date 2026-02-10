@@ -18,27 +18,26 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
+import { COLORES } from '../../utils/constantes';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 /**
- * Calcula el color de una celda basado en su valor relativo al máximo
+ * Calcula el color de una celda basado en su valor relativo al máximo (escala IMSS Bienestar)
  * @param {number} value - Valor de la celda
  * @param {number} maxValue - Valor máximo en todo el dataset
  * @returns {string} Color en formato hexadecimal
  */
 const getHeatmapColor = (value, maxValue) => {
-  if (value === 0) return '#F5F5F5'; // Gris claro para cero
+  if (value === 0) return COLORES.FONDO;
   
-  // Normalizar el valor (0-1)
   const normalized = value / maxValue;
-  
-  // Escala de verde: claro (pocos casos) -> oscuro (muchos casos)
-  if (normalized <= 0.2) return '#C8E6C9'; // Verde muy claro
-  if (normalized <= 0.4) return '#81C784'; // Verde claro
-  if (normalized <= 0.6) return '#66BB6A'; // Verde medio
-  if (normalized <= 0.8) return '#4CAF50'; // Verde
-  return '#2E7D32'; // Verde oscuro (máximo)
+  // Escala verde IMSS: claro -> oscuro
+  if (normalized <= 0.2) return COLORES.BORDE_VERDE_SUAVE;
+  if (normalized <= 0.4) return '#7BB5A8';
+  if (normalized <= 0.6) return COLORES.IMSS_VERDE_MEDIO;
+  if (normalized <= 0.8) return COLORES.PRIMARIO;
+  return COLORES.PRIMARIO_DARK;
 };
 
 /**
@@ -171,15 +170,15 @@ const ComorbilidadesHeatmap = ({
         <Text style={styles.legendLabel}>Intensidad:</Text>
         <View style={styles.legendColors}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendColorBox, { backgroundColor: '#C8E6C9' }]} />
+            <View style={[styles.legendColorBox, { backgroundColor: COLORES.BORDE_VERDE_SUAVE }]} />
             <Text style={styles.legendText}>Bajo</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendColorBox, { backgroundColor: '#66BB6A' }]} />
+            <View style={[styles.legendColorBox, { backgroundColor: COLORES.IMSS_VERDE_MEDIO }]} />
             <Text style={styles.legendText}>Medio</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendColorBox, { backgroundColor: '#2E7D32' }]} />
+            <View style={[styles.legendColorBox, { backgroundColor: COLORES.PRIMARIO_DARK }]} />
             <Text style={styles.legendText}>Alto</Text>
           </View>
         </View>

@@ -1747,18 +1747,23 @@ export const gestionService = {
   // Obtener signos vitales de un paciente específico
   async getPacienteSignosVitales(pacienteId, options = {}) {
     try {
-      const { limit = 10, offset = 0, sort = 'DESC' } = options;
+      const { limit = 10, offset = 0, sort = 'DESC', fechaInicio, fechaFin } = options;
       
       Logger.info('Obteniendo signos vitales del paciente', { 
         pacienteId, 
         limit, 
         offset, 
-        sort 
+        sort,
+        fechaInicio: fechaInicio || null,
+        fechaFin: fechaFin || null
       });
       
       const apiClient = await ensureApiClient();
+      const params = { limit, offset, sort };
+      if (fechaInicio) params.fechaInicio = fechaInicio;
+      if (fechaFin) params.fechaFin = fechaFin;
       const response = await apiClient.get(`/pacientes/${pacienteId}/signos-vitales`, {
-        params: { limit, offset, sort }
+        params
       });
       
       Logger.success('Signos vitales del paciente obtenidos', { 

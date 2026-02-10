@@ -208,24 +208,34 @@ const ReportesAdmin = ({ navigation }) => {
         .sort((a, b) => b.citasAtendidas - a.citasAtendidas)
         .slice(0, 5);
       
-      // 4. Citas por día de la semana
-      const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      // 4. Citas por día de la semana (getDay: 0=Dom, 1=Lun, ... 6=Sab)
+      const diasSemanaCompleto = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const diasSemanaCorto = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
       const citasPorDiaSemanaMap = {};
-      diasSemana.forEach(dia => citasPorDiaSemanaMap[dia] = 0);
+      diasSemanaCompleto.forEach(dia => citasPorDiaSemanaMap[dia] = 0);
       
       citas.forEach(cita => {
         if (cita.fecha_cita) {
-          const fecha = new Date(cita.fecha_cita);
-          const dia = diasSemana[fecha.getDay()];
+          const dateStr = typeof cita.fecha_cita === 'string' ? cita.fecha_cita.split('T')[0] : null;
+          let dayIndex;
+          if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const fechaLocal = new Date(y, m - 1, d);
+            dayIndex = fechaLocal.getDay();
+          } else {
+            const fecha = new Date(cita.fecha_cita);
+            dayIndex = fecha.getDay();
+          }
+          const dia = diasSemanaCompleto[dayIndex];
           citasPorDiaSemanaMap[dia] = (citasPorDiaSemanaMap[dia] || 0) + 1;
         }
       });
       
-      // Ordenar por día de semana (Lunes a Domingo)
-      const ordenDias = [1, 2, 3, 4, 5, 6, 0]; // Lunes=1, Domingo=0
+      // Orden para mostrar: Lunes a Domingo (índices 1..6, 0)
+      const ordenDias = [1, 2, 3, 4, 5, 6, 0];
       const citasPorDiaSemana = ordenDias.map(dayIndex => ({
-        dia: diasSemana[dayIndex],
-        citas: citasPorDiaSemanaMap[diasSemana[dayIndex]] || 0
+        dia: diasSemanaCorto[dayIndex],
+        citas: citasPorDiaSemanaMap[diasSemanaCompleto[dayIndex]] || 0
       }));
       
       // 5. Distribución por edad (usar edad del API cuando venga; si no, calcular desde fecha_nacimiento si es válida)
@@ -498,7 +508,7 @@ const ReportesAdmin = ({ navigation }) => {
                         styles.bar,
                         {
                           height: barHeight,
-                          backgroundColor: '#4CAF50',
+                          backgroundColor: COLORES.PRIMARIO,
                         },
                       ]}
                     />
@@ -718,7 +728,7 @@ const ReportesAdmin = ({ navigation }) => {
                         styles.horizontalBar,
                         {
                           width: `${barWidth}%`,
-                          backgroundColor: '#2196F3',
+                          backgroundColor: COLORES.PRIMARIO,
                         },
                       ]}
                     />
@@ -787,7 +797,7 @@ const ReportesAdmin = ({ navigation }) => {
   }, [moduloFiltro, periodoFiltro, rangoMesesFiltro]);
 
   // Renderizar card de estadística
-  const renderStatCard = (title, value, subtitle, color = '#1976D2') => (
+  const renderStatCard = (title, value, subtitle, color = COLORES.PRIMARIO) => (
     <Card style={[styles.statCard, { borderLeftColor: color }]}>
       <Card.Content style={styles.statContent}>
         <Text style={styles.statValue}>{value}</Text>
@@ -811,7 +821,7 @@ const ReportesAdmin = ({ navigation }) => {
     }
 
     const total = Object.values(data).reduce((sum, val) => sum + val, 0);
-    const colors = ['#4CAF50', '#2196F3', '#FF9800', '#F44336', '#9C27B0', '#00BCD4'];
+    const colors = [COLORES.PRIMARIO, COLORES.SECUNDARIO, COLORES.ADVERTENCIA, COLORES.ERROR, COLORES.IMSS_VERDE_MEDIO, COLORES.IMSS_CLARO];
     const entries = Object.entries(data).map(([key, value], index) => ({
       label: key.charAt(0).toUpperCase() + key.slice(1),
       value,
@@ -880,7 +890,7 @@ const ReportesAdmin = ({ navigation }) => {
                     <View 
                       style={[
                         styles.horizontalBarFill, 
-                        { width: `${percentage}%`, backgroundColor: '#2196F3' }
+                        { width: `${percentage}%`, backgroundColor: COLORES.PRIMARIO }
                       ]} 
                     />
                   </View>
@@ -918,7 +928,7 @@ const ReportesAdmin = ({ navigation }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#1976D2']}
+            colors={[COLORES.PRIMARIO]}
           />
         }
       >
@@ -932,7 +942,7 @@ const ReportesAdmin = ({ navigation }) => {
             disabled={exportingPdf}
           >
             {exportingPdf ? (
-              <ActivityIndicator size="small" color="#FFF" />
+              <ActivityIndicator size="small" color={COLORES.TEXTO_EN_PRIMARIO} />
             ) : (
               <Text style={styles.exportPdfButtonText}>Exportar PDF</Text>
             )}
@@ -947,25 +957,25 @@ const ReportesAdmin = ({ navigation }) => {
               'Pacientes Totales',
               estadisticas?.totalPacientes || metrics?.totalPacientes || 0,
               `${estadisticas?.pacientesActivos || 0} activos`,
-              '#4CAF50'
+              COLORES.PRIMARIO
             )}
             {renderStatCard(
               'Doctores Activos',
               estadisticas?.totalDoctores || metrics?.totalDoctores || 0,
               'en el sistema',
-              '#2196F3'
+              COLORES.SECUNDARIO
             )}
             {renderStatCard(
               'Citas Hoy',
               metrics?.citasHoy?.total || 0,
               'programadas',
-              '#FF9800'
+              COLORES.ADVERTENCIA
             )}
             {renderStatCard(
               'Tasa Activos',
               `${estadisticas?.tasaActivos || 0}%`,
               'de pacientes activos',
-              '#9C27B0'
+              COLORES.IMSS_VERDE_MEDIO
             )}
           </View>
         </View>
@@ -1058,7 +1068,7 @@ const ReportesAdmin = ({ navigation }) => {
         {periodoFiltro && comorbilidadesPorPeriodo?.datos ? (
           <View style={styles.chartsContainer}>
             {renderComorbilidadesPorPeriodo(
-              'Comorbilidades Más Frecuentes',
+              'Comorbilidades más frecuentes por módulo',
               comorbilidadesPorPeriodo.datos,
               true
             )}
@@ -1066,7 +1076,7 @@ const ReportesAdmin = ({ navigation }) => {
         ) : comorbilidadesMasFrecuentes && comorbilidadesMasFrecuentes.length > 0 ? (
           <View style={styles.chartsContainer}>
             {renderHorizontalBarChart(
-              'Comorbilidades Más Frecuentes',
+              'Comorbilidades más frecuentes por módulo',
               comorbilidadesMasFrecuentes,
               'frecuencia',
               'nombre',
@@ -1239,7 +1249,7 @@ const ReportesAdmin = ({ navigation }) => {
 
         {loading && !refreshing && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#1976D2" />
+            <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
             <Text style={styles.loadingText}>Cargando estadísticas...</Text>
           </View>
         )}
@@ -1251,7 +1261,7 @@ const ReportesAdmin = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   scrollView: {
     flex: 1,
@@ -1259,19 +1269,19 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     paddingBottom: 16,
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.PRIMARIO,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     marginBottom: 5,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#E3F2FD',
+    color: COLORES.SECUNDARIO_LIGHT,
     marginBottom: 12,
   },
   exportPdfButton: {
@@ -1289,14 +1299,14 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   exportPdfButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 14,
     fontWeight: '600',
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 15,
     marginLeft: 5,
   },
@@ -1320,18 +1330,18 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 5,
   },
   statTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 2,
   },
   statSubtitle: {
     fontSize: 12,
-    color: '#999',
+    color: COLORES.TEXTO_DISABLED,
   },
   chartsContainer: {
     padding: 20,
@@ -1347,7 +1357,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 15,
     textAlign: 'center',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   chartTitleInHeader: {
     flex: 1,
@@ -1381,18 +1391,18 @@ const styles = StyleSheet.create({
   },
   barLabel: {
     fontSize: 10,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 5,
   },
   barValue: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: COLORES.PRIMARIO,
     marginBottom: 5,
   },
   noDataText: {
     fontSize: 14,
-    color: '#999',
+    color: COLORES.TEXTO_DISABLED,
     textAlign: 'center',
     paddingVertical: 20,
   },
@@ -1407,11 +1417,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 10,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   infoText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     lineHeight: 22,
   },
   loadingContainer: {
@@ -1421,7 +1431,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   accessDeniedContainer: {
     flex: 1,
@@ -1432,12 +1442,12 @@ const styles = StyleSheet.create({
   accessDeniedTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F44336',
+    color: COLORES.ERROR,
     marginBottom: 10,
   },
   accessDeniedMessage: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   horizontalChartContainer: {
@@ -1454,7 +1464,7 @@ const styles = StyleSheet.create({
   },
   horizontalBarLabel: {
     fontSize: 13,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     fontWeight: '500',
     flex: 1,
     marginRight: 8,
@@ -1462,13 +1472,13 @@ const styles = StyleSheet.create({
   horizontalBarValue: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     minWidth: 30,
     textAlign: 'right',
   },
   horizontalBarContainer: {
     height: 24,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -1478,7 +1488,7 @@ const styles = StyleSheet.create({
   },
   horizontalBarTrack: {
     height: 24,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -1509,14 +1519,14 @@ const styles = StyleSheet.create({
   },
   pieChartLabel: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     fontWeight: '500',
     flex: 1,
   },
   pieChartValue: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     marginLeft: 8,
   },
   chartSection: {
@@ -1571,7 +1581,7 @@ const styles = StyleSheet.create({
   },
   modalFilterInfo: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 12,
     fontStyle: 'italic',
   },
@@ -1591,7 +1601,7 @@ const styles = StyleSheet.create({
   periodoSelectorLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 12,
   },
   periodoSelectorButtons: {
@@ -1604,22 +1614,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#fff',
+    borderColor: COLORES.TEXTO_DISABLED,
+    backgroundColor: COLORES.FONDO_CARD,
     alignItems: 'center',
     justifyContent: 'center',
   },
   periodoSelectorButtonActive: {
-    backgroundColor: '#E3F2FD',
-    borderColor: '#2196F3',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
+    borderColor: COLORES.PRIMARIO,
   },
   periodoSelectorButtonText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '500',
   },
   periodoSelectorButtonTextActive: {
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
   },
   // Estilos para selector de módulo
@@ -1630,7 +1640,7 @@ const styles = StyleSheet.create({
   moduloSelectorLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   moduloDropdownButton: {
@@ -1641,45 +1651,45 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#fff',
+    borderColor: COLORES.TEXTO_DISABLED,
+    backgroundColor: COLORES.FONDO_CARD,
   },
   moduloDropdownButtonText: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   moduloDropdownPlaceholder: {
-    color: '#999',
+    color: COLORES.TEXTO_DISABLED,
   },
   moduloDropdownArrow: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginLeft: 8,
   },
   moduloDropdownList: {
     marginTop: 4,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#fff',
+    borderColor: COLORES.TEXTO_DISABLED,
+    backgroundColor: COLORES.FONDO_CARD,
     maxHeight: 200,
   },
   moduloDropdownItem: {
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: COLORES.FONDO,
   },
   moduloDropdownItemSelected: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
   },
   moduloDropdownItemText: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   moduloDropdownItemTextSelected: {
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
   },
 });

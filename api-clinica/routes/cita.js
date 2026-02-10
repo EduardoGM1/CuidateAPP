@@ -32,12 +32,12 @@ const router = Router();
 router.use(authenticateToken);
 
 // Rutas de citas
-// IMPORTANTE: Las rutas específicas deben ir ANTES de las rutas con parámetros dinámicos (/:id)
+// IMPORTANTE: autoDecryptResponse debe ir ANTES del controlador para interceptar res.json()
 router.get('/', 
   authorizeRoles(['Admin', 'Doctor']), 
   searchRateLimit, 
-  getCitas,
-  autoDecryptResponse('citas')
+  autoDecryptResponse('citas'),
+  getCitas
 );
 // Obtener todas las solicitudes de reprogramación (admin/doctor) - DEBE IR ANTES DE /:id
 router.get('/solicitudes-reprogramacion',
@@ -48,20 +48,20 @@ router.get('/solicitudes-reprogramacion',
 router.get('/paciente/:pacienteId', 
   authorizeRoles(['Admin', 'Doctor']), 
   searchRateLimit, 
-  getCitasByPaciente,
-  autoDecryptResponse('citas')
+  autoDecryptResponse('citas'),
+  getCitasByPaciente
 );
 router.get('/doctor/:doctorId', 
   authorizeRoles(['Admin', 'Doctor']), 
   searchRateLimit, 
-  getCitasByDoctor,
-  autoDecryptResponse('citas')
+  autoDecryptResponse('citas'),
+  getCitasByDoctor
 );
 router.get('/:id', 
   authorizeRoles(['Admin', 'Doctor']), 
   searchRateLimit, 
-  getCita,
-  autoDecryptResponse('citas')
+  autoDecryptResponse('citas'),
+  getCita
 );
 
 // Crear cita simple

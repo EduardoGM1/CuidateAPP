@@ -181,7 +181,7 @@ const EditarPaciente = () => {
         </View>
         
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1976D2" />
+          <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
           <Text style={styles.loadingText}>Cargando módulos...</Text>
         </View>
       </SafeAreaView>
@@ -334,9 +334,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: COLORES.SECUNDARIO_LIGHT,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   placeholder: {
     width: 40,
@@ -387,32 +387,32 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 16,
     padding: 16,
-    backgroundColor: '#FFEBEE',
+    backgroundColor: COLORES.FONDO_ERROR_CLARO,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#F44336',
+    borderLeftColor: COLORES.ERROR,
   },
   errorTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#F44336',
+    color: COLORES.ERROR,
     marginBottom: 8,
   },
   errorMessage: {
     fontSize: 14,
-    color: '#D32F2F',
+    color: COLORES.ERROR,
     marginBottom: 12,
     lineHeight: 20,
   },
   retryButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: COLORES.ERROR,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,
     alignSelf: 'flex-start',
   },
   retryText: {
-    color: '#FFFFFF',
+    color: COLORES.BLANCO,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     elevation: 1,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   infoDescription: {
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     elevation: 1,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,

@@ -130,12 +130,12 @@ export const decryptAfterLoad = (Model, encryptedFields) => {
       if (value === undefined || value === null || value === '') {
         return value;
       }
-      
-      // Solo intentar desencriptar si es string
-      if (typeof value !== 'string') {
+      // Aceptar string (JSON) u objeto { encrypted, iv, authTag } (p. ej. devuelto por BD como JSON)
+      const isEncryptedString = typeof value === 'string' && value.trim().startsWith('{');
+      const isEncryptedObject = typeof value === 'object' && value !== null && value.encrypted != null && value.iv != null && value.authTag != null;
+      if (!isEncryptedString && !isEncryptedObject) {
         return value;
       }
-      
       try {
         const decrypted = EncryptionService.decryptField(value);
         if (decrypted !== null && decrypted !== value) {
@@ -156,15 +156,21 @@ export const decryptAfterLoad = (Model, encryptedFields) => {
           
           return decrypted;
         }
+        // Datos encriptados pero desencriptación falló: no exponer el payload en la API
+        if (isEncryptedObject || isEncryptedString) {
+          return null;
+        }
       } catch (error) {
         // Si falla la desencriptación, puede ser que no esté encriptado
-        // Retornar valor original sin loguear (evitar spam de logs)
         if (process.env.NODE_ENV === 'development') {
           logger.debug(`Campo ${fieldName} no desencriptado (puede no estar encriptado):`, error.message);
         }
+        if (isEncryptedObject || isEncryptedString) {
+          return null;
+        }
       }
       
-      return value; // Retornar valor original si falla la desencriptación
+      return value; // Retornar valor original si no era encriptado
     };
     
     // Función auxiliar para desencriptar una instancia

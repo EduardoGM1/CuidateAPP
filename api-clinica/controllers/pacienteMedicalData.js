@@ -28,50 +28,36 @@ import { crearNotificacionDoctor } from './cita.js';
  * Maneja tanto formato JSON como formato iv:tag:data
  */
 const decryptFieldIfNeeded = (value) => {
-  if (!value || value === null || value === undefined || value === '') {
-    return value;
-  }
-  
-  // Solo intentar desencriptar si es string
-  if (typeof value !== 'string') {
-    return value;
-  }
-  
-  try {
-    // Intentar formato JSON primero (EncryptionService - formato {"encrypted":"...","iv":"...","authTag":"..."})
+  if (value === null || value === undefined || value === '') return value;
+  const isEncryptedObject = typeof value === 'object' && value !== null && value.encrypted != null && value.iv != null && value.authTag != null;
+  if (isEncryptedObject) {
     try {
-      const jsonData = JSON.parse(value);
-      if (jsonData.encrypted && jsonData.iv && jsonData.authTag) {
-        // Es formato JSON encriptado, desencriptar
-        const decrypted = EncryptionService.decrypt(value);
-        return decrypted !== null ? decrypted : value;
-      }
-    } catch (jsonError) {
-      // No es JSON válido, continuar con formato iv:tag:data
+      const decrypted = EncryptionService.decryptField(value);
+      return decrypted !== null ? decrypted : null;
+    } catch {
+      return null;
     }
-    
-    // Verificar formato iv:tag:data (3 partes separadas por :)
-    const parts = value.split(':');
-    if (parts.length === 3 && parts[0].length > 0 && parts[1].length > 0 && parts[2].length > 0) {
-      try {
-        // Usar decrypt de utils/encryption.js para formato iv:tag:data
-        const decrypted = decryptUtils(value);
-        // Si se desencriptó correctamente (retorna diferente al original), usar el valor desencriptado
-        if (decrypted !== null && decrypted !== value) {
-          return decrypted;
-        }
-      } catch (decryptError) {
-        // Si falla la desencriptación, retornar valor original
-        logger.debug(`Error desencriptando campo en formato iv:tag:data: ${decryptError.message}`);
-      }
-    }
-    
-    // No parece estar encriptado, retornar valor original
-    return value;
-  } catch (error) {
-    logger.debug(`Error intentando desencriptar campo: ${error.message}`);
-    return value; // En caso de error, retornar valor original
   }
+  if (typeof value !== 'string') return value;
+  try {
+    const jsonData = JSON.parse(value);
+    if (jsonData.encrypted && jsonData.iv && jsonData.authTag) {
+      const decrypted = EncryptionService.decrypt(value);
+      return decrypted !== null ? decrypted : value;
+    }
+  } catch (jsonError) {
+    // No es JSON válido
+  }
+  const parts = value.split(':');
+  if (parts.length === 3 && parts[0].length > 0 && parts[1].length > 0 && parts[2].length > 0) {
+    try {
+      const decrypted = decryptUtils(value);
+      if (decrypted !== null && decrypted !== value) return decrypted;
+    } catch (decryptError) {
+      logger.debug(`Error desencriptando campo en formato iv:tag:data: ${decryptError.message}`);
+    }
+  }
+  return value;
 };
 
 /**
@@ -446,7 +432,7 @@ export const getPacienteCitas = async (req, res) => {
 export const getPacienteSignosVitales = async (req, res) => {
   try {
     const { id } = req.params;
-    const { limit = 10, offset = 0, sort = 'DESC' } = req.query;
+    const { limit = 10, offset = 0, sort = 'DESC', fechaInicio, fechaFin } = req.query;
 
     // Validar parámetros
     if (!id || isNaN(id)) {
@@ -499,10 +485,21 @@ export const getPacienteSignosVitales = async (req, res) => {
       }
     }
 
+    // Filtro opcional por rango de fechas (reduce consumo de datos en app)
+    const whereClause = { id_paciente: pacienteId };
+    if (fechaInicio || fechaFin) {
+      const fechaFilter = {};
+      if (fechaInicio) fechaFilter[Op.gte] = new Date(fechaInicio);
+      if (fechaFin) fechaFilter[Op.lte] = new Date(fechaFin);
+      if (Object.keys(fechaFilter).length > 0) {
+        whereClause.fecha_medicion = fechaFilter;
+      }
+    }
+
     // Obtener signos vitales del paciente
     const signosVitales = await SignoVital.findAndCountAll({
-      where: { id_paciente: pacienteId },
-      order: [['fecha_creacion', sort]],
+      where: whereClause,
+      order: [['fecha_medicion', sort === 'ASC' ? 'ASC' : 'DESC']],
       limit: parseInt(limit),
       offset: parseInt(offset),
       raw: false // Asegurar que retorne instancias de Sequelize para que los hooks funcionen

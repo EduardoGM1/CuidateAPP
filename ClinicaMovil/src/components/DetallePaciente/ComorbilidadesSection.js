@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Card, Title, Chip } from 'react-native-paper';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * ComorbilidadesSection - Muestra las enfermedades crónicas del paciente
@@ -56,12 +57,12 @@ const styles = StyleSheet.create({
     margin: 16,
     marginBottom: 8,
     elevation: 2,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     marginBottom: 12,
   },
   comorbilidadesContainer: {

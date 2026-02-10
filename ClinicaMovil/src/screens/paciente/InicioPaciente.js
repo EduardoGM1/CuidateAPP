@@ -65,7 +65,7 @@ const InicioPaciente = () => {
   useNotificationManager(medicamentos, citas, !loading);
 
   // WebSocket para actualizaciones en tiempo real
-  const { subscribeToEvent, isConnected } = useWebSocket();
+  const { subscribeToEvent } = useWebSocket();
   const pacienteId = paciente?.id_paciente || paciente?.id || userData?.id_paciente || userData?.id;
 
   // Suscribirse a eventos WebSocket relevantes para el dashboard
@@ -182,7 +182,7 @@ const InicioPaciente = () => {
     navigation.navigate(screen);
   }, [navigation, speak]);
 
-  const handleLogout = useCallback(async () => {
+  const performLogout = useCallback(async () => {
     Logger.info('Logout iniciado desde paciente');
     hapticService.medium();
     await speak('Cerrando sesión', {
@@ -191,6 +191,18 @@ const InicioPaciente = () => {
     });
     await logout();
   }, [speak, logout]);
+
+  const handleLogout = useCallback(() => {
+    hapticService.light();
+    Alert.alert(
+      'Cerrar sesión',
+      '¿Seguro que quieres cerrar tu sesión?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Cerrar sesión', style: 'destructive', onPress: performLogout },
+      ]
+    );
+  }, [performLogout]);
 
   // Obtener el nombre completo y el primer nombre del paciente
   const nombreCompleto = construirNombreCompleto();
@@ -285,7 +297,7 @@ const InicioPaciente = () => {
         {/* Opciones principales - Máximo 4 */}
         <View style={styles.optionsContainer}>
           <BigIconButton
-            icon="📅"
+            icon="🗓️"
             label="Mis Citas"
             subLabel="Ver próximas citas médicas"
             color="green"
@@ -296,7 +308,7 @@ const InicioPaciente = () => {
           />
 
           <BigIconButton
-            icon="💓"
+            icon="🩺"
             label="Signos Vitales"
             subLabel="Registrar datos de salud"
             color="red"
@@ -336,396 +348,6 @@ const InicioPaciente = () => {
           />
         </View>
 
-        {/* Panel de Pruebas (solo en modo desarrollo) */}
-        {__DEV__ && (
-          <View style={styles.testPanel}>
-            <Text style={styles.testPanelTitle}>🧪 Panel de Pruebas</Text>
-            
-            {/* Indicador de Estado WebSocket */}
-            <View style={styles.wsStatusContainer}>
-              <View style={[
-                styles.wsStatusDot,
-                { backgroundColor: isConnected ? COLORES.NAV_PACIENTE : COLORES.ERROR_LIGHT }
-              ]} />
-              <Text style={styles.wsStatusText}>
-                WebSocket: {isConnected ? '🟢 Conectado' : '🔴 Desconectado'}
-              </Text>
-            </View>
-            
-            <View style={styles.testButtonsContainer}>
-              <TouchableOpacity
-                style={[styles.testButton, styles.testButtonPrimary]}
-                onPress={async () => {
-                  hapticService.medium();
-                  try {
-                    localNotificationService.showNotification({
-                      title: '💊 Prueba: Recordatorio de Medicamento',
-                      message: 'Esta es una notificación de prueba para medicamentos',
-                      channelId: 'clinica-movil-reminders',
-                      data: { type: 'test', category: 'medication' },
-                    });
-                    await speak('Notificación de prueba de medicamento enviada', {
-                      variant: 'information',
-                      priority: 'low'
-                    });
-                  } catch (error) {
-                    Logger.error('Error en prueba de notificación:', error);
-                    await speak('Error al enviar notificación de prueba', {
-                      variant: 'error',
-                      priority: 'high'
-                    });
-                  }
-                }}
-              >
-                <Text style={styles.testButtonText}>Probar Notificación Medicamento</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.testButton, styles.testButtonPrimary]}
-                onPress={async () => {
-                  hapticService.medium();
-                  try {
-                    localNotificationService.showNotification({
-                      title: '📅 Prueba: Recordatorio de Cita',
-                      message: 'Esta es una notificación de prueba para citas',
-                      channelId: 'clinica-movil-reminders',
-                      data: { type: 'test', category: 'appointment' },
-                    });
-                    await speak('Notificación de prueba de cita enviada', {
-                      variant: 'information',
-                      priority: 'low'
-                    });
-                  } catch (error) {
-                    Logger.error('Error en prueba de notificación:', error);
-                    await speak('Error al enviar notificación de prueba', {
-                      variant: 'error',
-                      priority: 'high'
-                    });
-                  }
-                }}
-              >
-                <Text style={styles.testButtonText}>Probar Notificación Cita</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.testButton, styles.testButtonSecondary]}
-                onPress={async () => {
-                  hapticService.medium();
-                  try {
-                    const notificaciones = await localNotificationService.getScheduledNotifications();
-                    const mensaje = `Tienes ${notificaciones.length} notificaciones programadas`;
-                    Logger.info('Notificaciones programadas:', notificaciones);
-                    await speak(mensaje, {
-                      variant: 'information',
-                      priority: 'medium'
-                    });
-                    // Mostrar detalles en consola
-                    notificaciones.forEach((notif, index) => {
-                      Logger.info(`Notificación ${index + 1}:`, {
-                        title: notif.title,
-                        message: notif.message,
-                        date: notif.date,
-                      });
-                    });
-                  } catch (error) {
-                    Logger.error('Error obteniendo notificaciones:', error);
-                    await speak('Error al obtener notificaciones programadas', {
-                      variant: 'error',
-                      priority: 'high'
-                    });
-                  }
-                }}
-              >
-                <Text style={styles.testButtonText}>Ver Notificaciones Programadas</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.testButton, styles.testButtonSecondary]}
-                onPress={async () => {
-                  hapticService.medium();
-                  try {
-                    // Programar notificación de prueba en 30 segundos
-                    const fechaPrueba = new Date();
-                    fechaPrueba.setSeconds(fechaPrueba.getSeconds() + 30);
-                    
-                    localNotificationService.scheduleNotification(
-                      {
-                        title: '⏰ Prueba: Notificación Programada',
-                        message: 'Esta notificación se programó hace 30 segundos',
-                        channelId: 'clinica-movil-reminders',
-                        data: { type: 'test', category: 'scheduled' },
-                      },
-                      fechaPrueba
-                    );
-                    
-                    await speak('Notificación programada para 30 segundos. Espera y verás la notificación', {
-                      variant: 'information',
-                      priority: 'medium'
-                    });
-                  } catch (error) {
-                    Logger.error('Error programando notificación de prueba:', error);
-                    await speak('Error al programar notificación de prueba', {
-                      variant: 'error',
-                      priority: 'high'
-                    });
-                  }
-                }}
-              >
-                <Text style={styles.testButtonText}>Programar Notificación (30 seg)</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.testButton, styles.testButtonWarning]}
-                onPress={async () => {
-                  hapticService.medium();
-                  try {
-                    const userId = userData?.id || userData?.id_usuario;
-                    
-                    if (!userId) {
-                      await speak('Error: No se encontró el ID de usuario. Por favor, cierra sesión y vuelve a iniciar sesión', {
-                        variant: 'error',
-                        priority: 'high'
-                      });
-                      Alert.alert(
-                        '⚠️ Error',
-                        'No se encontró el ID de usuario. Por favor, cierra sesión y vuelve a iniciar sesión.',
-                        [{ text: 'Entendido' }]
-                      );
-                      return;
-                    }
-
-                    // Verificar que el token esté registrado
-                    const pushTokenService = (await import('../../services/pushTokenService.js')).default;
-                    const tokenRegistrado = await pushTokenService.isTokenRegistrado();
-                    
-                    if (!tokenRegistrado) {
-                      Logger.warn('Token no registrado, intentando registrar...');
-                      
-                      // Intentar forzar obtención del token
-                      await pushTokenService.forzarObtencionToken();
-                      
-                      // Esperar un poco y verificar de nuevo
-                      setTimeout(async () => {
-                        const tokenRegistradoAhora = await pushTokenService.isTokenRegistrado();
-                        if (!tokenRegistradoAhora) {
-                          await speak('El dispositivo aún no está registrado. Por favor, cierra la app y vuelve a iniciar sesión para que el token se registre automáticamente', {
-                            variant: 'information',
-                            priority: 'medium'
-                          });
-                          Alert.alert(
-                            '⚠️ Dispositivo no registrado',
-                            'El dispositivo aún no está registrado para recibir notificaciones push.\n\n' +
-                            'SOLUCIÓN:\n' +
-                            '1. Cierra la app completamente\n' +
-                            '2. Vuelve a abrirla e inicia sesión\n' +
-                            '3. El token se registrará automáticamente\n\n' +
-                            'Si el problema persiste, verifica que los permisos de notificación estén otorgados.',
-                            [{ text: 'Entendido' }]
-                          );
-                        }
-                      }, 2000);
-                      
-                      await speak('Registrando dispositivo... Por favor espera unos segundos y vuelve a intentar', {
-                        variant: 'information',
-                        priority: 'medium'
-                      });
-                      Alert.alert(
-                        '⚠️ Registrando dispositivo',
-                        'Intentando registrar el dispositivo...\n\n' +
-                        'Por favor, espera 3 segundos y vuelve a presionar el botón.\n\n' +
-                        'Si el problema persiste, cierra la app y vuelve a iniciar sesión.',
-                        [{ text: 'Entendido' }]
-                      );
-                      return;
-                    }
-
-                    // Solicitar al servidor que envíe una notificación push de prueba en 15 segundos
-                    // Esto funciona mejor que las notificaciones locales programadas
-                    const servicioApi = (await import('../../api/servicioApi.js')).default;
-                    
-                    try {
-                      Logger.info('Solicitando notificación push de prueba al servidor', { userId, delay_seconds: 15 });
-                      
-                      // Enviar solicitud al servidor para programar notificación push
-                      const response = await servicioApi.post('/mobile/notification/test', {
-                        message: 'Esta notificación prueba que funciona con la app cerrada. Si ves esto, ¡funciona correctamente!',
-                        type: 'test',
-                        delay_seconds: 15, // Enviar en 15 segundos
-                        title: '✅ Prueba: App Cerrada Exitosa',
-                      });
-
-                      Logger.success('Notificación push programada en el servidor', { response });
-
-                      const mensajeCompleto = `Notificación de prueba solicitada al servidor para 15 segundos. 
-                      IMPORTANTE: Cierra la app completamente después de escuchar este mensaje. 
-                      El servidor enviará una notificación push en 15 segundos incluso con la app cerrada. 
-                      Si ves la notificación, significa que funciona correctamente.`;
-                      
-                      await speak(mensajeCompleto, {
-                        variant: 'information',
-                        priority: 'high'
-                      });
-
-                      Alert.alert(
-                        '🧪 Prueba de Notificación Push',
-                        `Notificación push programada para 15 segundos\n\n` +
-                        `INSTRUCCIONES:\n` +
-                        `1. Cierra la app completamente (no solo minimizar)\n` +
-                        `2. Espera 15 segundos\n` +
-                        `3. El servidor enviará una notificación push\n` +
-                        `4. Si aparece, significa que funciona correctamente ✅\n\n` +
-                        `Nota: Este método usa notificaciones push desde el servidor, que funcionan mejor que las locales en todos los dispositivos Android.`,
-                        [{ text: 'Entendido' }]
-                      );
-                    } catch (apiError) {
-                      Logger.error('Error solicitando notificación push de prueba:', apiError);
-                      
-                      // Fallback: usar notificación local si falla el servidor
-                      Logger.warn('Usando notificación local como respaldo');
-                      const fechaPrueba = new Date();
-                      fechaPrueba.setSeconds(fechaPrueba.getSeconds() + 15);
-                      
-                      localNotificationService.scheduleNotification(
-                        {
-                          title: '✅ Prueba: App Cerrada Exitosa',
-                          message: 'Esta notificación prueba que funciona con la app cerrada. Si ves esto, ¡funciona correctamente!',
-                          channelId: 'clinica-movil-reminders',
-                          data: { type: 'test', category: 'app_closed_test', urgent: true },
-                        },
-                        fechaPrueba
-                      );
-
-                      await speak('Notificación local programada como respaldo (el servidor no está disponible o no hay token registrado)', {
-                        variant: 'information',
-                        priority: 'medium'
-                      });
-                      
-                      Alert.alert(
-                        '⚠️ Fallback a Notificación Local',
-                        'El servidor no está disponible o el token no está registrado.\n\n' +
-                        'Se usó una notificación local como respaldo.\n\n' +
-                        'Nota: Las notificaciones locales pueden no funcionar en algunos dispositivos Android con la app cerrada.',
-                        [{ text: 'Entendido' }]
-                      );
-                    }
-                  } catch (error) {
-                    Logger.error('Error programando notificación de prueba con app cerrada:', error);
-                    await speak('Error al programar notificación de prueba', {
-                      variant: 'error',
-                      priority: 'high'
-                    });
-                    Alert.alert(
-                      '❌ Error',
-                      'Error al programar notificación de prueba. Verifica que el servidor esté corriendo.',
-                      [{ text: 'Entendido' }]
-                    );
-                  }
-                }}
-              >
-                <Text style={styles.testButtonText}>🧪 Probar Push con App Cerrada (15 seg)</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.testButton, styles.testButtonDanger]}
-                onPress={async () => {
-                  hapticService.medium();
-                  try {
-                    localNotificationService.cancelAllNotifications();
-                    await speak('Todas las notificaciones programadas han sido canceladas', {
-                      variant: 'information',
-                      priority: 'medium'
-                    });
-                  } catch (error) {
-                    Logger.error('Error cancelando notificaciones:', error);
-                    await speak('Error al cancelar notificaciones', {
-                      variant: 'error',
-                      priority: 'high'
-                    });
-                  }
-                }}
-              >
-                <Text style={styles.testButtonText}>Cancelar Todas las Notificaciones</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Información de recordatorios actuales */}
-            <View style={styles.testInfoContainer}>
-              <Text style={styles.testInfoTitle}>📊 Estado Actual:</Text>
-              <Text style={styles.testInfoText}>
-                Citas próximas: {reminders.citas.totalProximas}
-              </Text>
-              <Text style={styles.testInfoText}>
-                Próximo medicamento: {reminders.medicamentos.proximoMedicamento ? 'Sí' : 'No'}
-              </Text>
-              {reminders.medicamentos.tiempoRestante !== null && (
-                <Text style={styles.testInfoText}>
-                  Tiempo restante: {Math.round(reminders.medicamentos.tiempoRestante)} minutos
-                </Text>
-              )}
-              <Text style={styles.testInfoText}>
-                Necesita recordatorio signos vitales: {reminders.signosVitales.necesitaRecordatorio ? 'Sí' : 'No'}
-              </Text>
-              
-              {/* Información sobre sistema de notificaciones push */}
-              <Text style={[styles.testInfoTitle, { marginTop: 15 }]}>🔔 Sistema de Notificaciones:</Text>
-              <Text style={styles.testInfoText}>
-                Método: Notificaciones Push desde Servidor
-              </Text>
-              <Text style={styles.testInfoText}>
-                Compatible: Todos los dispositivos Android
-              </Text>
-              <Text style={styles.testInfoText}>
-                Funciona con app cerrada: Sí ✅
-              </Text>
-              <Text style={[styles.testInfoText, { fontSize: 12, marginTop: 5, fontStyle: 'italic' }]}>
-                El servidor verifica cada minuto y envía notificaciones push automáticamente
-              </Text>
-              
-              {/* Estado del token */}
-              <TouchableOpacity
-                style={[styles.testButton, { marginTop: 10, backgroundColor: COLORES.SECUNDARIO_LIGHT }]}
-                onPress={async () => {
-                  try {
-                    const pushTokenService = (await import('../../services/pushTokenService.js')).default;
-                    const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-                    const userId = userData?.id || userData?.id_usuario;
-                    
-                    const tokenRegistrado = await pushTokenService.isTokenRegistrado();
-                    const currentToken = pushTokenService.getToken();
-                    const userIdStored = await AsyncStorage.getItem('user_id');
-                    const pendingToken = await AsyncStorage.getItem('pending_push_token');
-                    const tokenGuardado = userId ? await AsyncStorage.getItem(`push_token_${userId}`) : null;
-                    
-                    const info = `Estado del Token:\n\n` +
-                      `Token registrado: ${tokenRegistrado ? '✅ Sí' : '❌ No'}\n` +
-                      `Token actual: ${currentToken ? `${currentToken.substring(0, 20)}...` : 'No disponible'}\n` +
-                      `User ID en storage: ${userIdStored || 'No encontrado'}\n` +
-                      `User ID actual: ${userId || 'No encontrado'}\n` +
-                      `Token pendiente: ${pendingToken ? 'Sí' : 'No'}\n` +
-                      `Token guardado: ${tokenGuardado ? 'Sí' : 'No'}\n\n` +
-                      `Recomendación: ${!tokenRegistrado ? 'Cierra la app y vuelve a iniciar sesión' : 'Token OK'}`;
-                    
-                    Alert.alert('🔍 Diagnóstico de Token', info, [{ text: 'Entendido' }]);
-                    
-                    Logger.info('Diagnóstico de token', {
-                      tokenRegistrado,
-                      hasCurrentToken: !!currentToken,
-                      userIdStored,
-                      userId,
-                      hasPendingToken: !!pendingToken,
-                      hasTokenGuardado: !!tokenGuardado
-                    });
-                  } catch (error) {
-                    Logger.error('Error en diagnóstico de token:', error);
-                    Alert.alert('❌ Error', 'Error obteniendo información del token', [{ text: 'Entendido' }]);
-                  }
-                }}
-              >
-                <Text style={styles.testButtonText}>🔍 Ver Estado del Token</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
 
         {/* Botón de cerrar sesión */}
         <TouchableOpacity
@@ -780,8 +402,8 @@ const styles = StyleSheet.create({
     width: '90%',
     alignSelf: 'center',
     marginBottom: 40,
-    alignItems: 'center', // ✅ Centrar cards horizontalmente
-    justifyContent: 'center', // ✅ Centrar verticalmente si hay espacio
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
   },
   logoutButton: {
     backgroundColor: COLORES.ERROR_LIGHT,
@@ -819,93 +441,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-  },
-  testPanel: {
-    backgroundColor: COLORES.FONDO_ADVERTENCIA_CLARO,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: COLORES.ADVERTENCIA_LIGHT,
-    borderStyle: 'dashed',
-  },
-  testPanelTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORES.ADVERTENCIA_TEXTO,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  testButtonsContainer: {
-    gap: 10,
-    marginBottom: 16,
-  },
-  testButton: {
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: COLORES.NEGRO,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  },
-  testButtonPrimary: {
-    backgroundColor: COLORES.NAV_PACIENTE,
-  },
-  testButtonSecondary: {
-    backgroundColor: COLORES.NAV_PRIMARIO,
-  },
-  testButtonDanger: {
-    backgroundColor: COLORES.ERROR_LIGHT,
-  },
-  testButtonWarning: {
-    backgroundColor: COLORES.ADVERTENCIA_LIGHT,
-  },
-  testButtonText: {
-    color: COLORES.TEXTO_EN_PRIMARIO,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  testInfoContainer: {
-    backgroundColor: COLORES.FONDO_CARD,
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: COLORES.ADVERTENCIA_LIGHT,
-  },
-  testInfoTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORES.ADVERTENCIA_TEXTO,
-    marginBottom: 8,
-  },
-  testInfoText: {
-    fontSize: 12,
-    color: COLORES.TEXTO_SECUNDARIO,
-    marginBottom: 4,
-  },
-  wsStatusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORES.FONDO_CARD,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: COLORES.ADVERTENCIA_LIGHT,
-  },
-  wsStatusDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 8,
-  },
-  wsStatusText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORES.TEXTO_PRIMARIO,
   },
 });
 

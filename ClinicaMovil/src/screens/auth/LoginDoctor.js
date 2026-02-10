@@ -209,7 +209,7 @@ const LoginDoctor = ({ navigation }) => {
                       disabled={loading}
                     >
                       <Text style={styles.eyeIcon}>
-                        {showPassword ? '🙈' : '👁️'}
+                        {showPassword ? '🔒' : '🔓'}
                       </Text>
                     </TouchableOpacity>
                   </View>

@@ -21,7 +21,7 @@ import useTodasCitas from '../../hooks/useTodasCitas';
 import { useDoctores, usePacientes, useModulos } from '../../hooks/useGestion';
 import { formatDateTime } from '../../utils/dateUtils';
 import { gestionService } from '../../api/gestionService';
-import { ESTADOS_CITA, COLORES, NETWORK_STAGGER } from '../../utils/constantes';
+import { ESTADOS_CITA, COLORES, NETWORK_STAGGER, getDisplayMotivo } from '../../utils/constantes';
 import DateTimePickerButton from '../../components/DateTimePickerButton';
 import CompletarCitaWizard from '../../components/CompletarCitaWizard';
 import DetalleCitaModal from '../../components/DetalleCitaModal/DetalleCitaModal';
@@ -31,12 +31,12 @@ const VerTodasCitas = ({ navigation }) => {
   const route = useRoute();
   
   // Obtener parámetros de ruta (si viene desde dashboard o DetalleDoctor)
-  const { id_cita, highlightCitaId, desde_dashboard } = route.params || {};
+  const { id_cita, highlightCitaId, desde_dashboard, filterDoctorId } = route.params || {};
   // Usar highlightCitaId si está disponible, sino usar id_cita
   const citaIdToHighlight = highlightCitaId || id_cita;
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterDoctor, setFilterDoctor] = useState(null);
+  const [filterDoctor, setFilterDoctor] = useState(filterDoctorId ?? null);
   const [filterFechaDesde, setFilterFechaDesde] = useState(null);
   const [filterFechaHasta, setFilterFechaHasta] = useState(null);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
@@ -84,6 +84,13 @@ const VerTodasCitas = ({ navigation }) => {
     const t = setTimeout(() => fetchModulos(), NETWORK_STAGGER.MODULOS_MS);
     return () => clearTimeout(t);
   }, [fetchModulos]);
+
+  // Aplicar filtro por doctor cuando se navega desde DetalleDoctor (Ver historial completo)
+  useEffect(() => {
+    if (filterDoctorId != null) {
+      setFilterDoctor(filterDoctorId);
+    }
+  }, [filterDoctorId]);
 
   // Cargar la cita destacada cuando viene con highlightCitaId (retraso para no saturar)
   useEffect(() => {
@@ -221,7 +228,7 @@ const VerTodasCitas = ({ navigation }) => {
       filtered = filtered.filter(cita => {
         const pacienteMatch = cita.paciente_nombre?.toLowerCase().includes(query);
         const doctorMatch = cita.doctor_nombre?.toLowerCase().includes(query);
-        const motivoMatch = cita.motivo?.toLowerCase().includes(query);
+        const motivoMatch = getDisplayMotivo(cita.motivo)?.toLowerCase().includes(query);
         
         // Si es doctor, solo buscar en sus pacientes asignados
         if ((userRole === 'Doctor' || userRole === 'doctor') && pacientesIdsDoctor) {
@@ -563,6 +570,7 @@ const VerTodasCitas = ({ navigation }) => {
           value={searchQuery}
           style={styles.searchBar}
           showClearIcon={false}
+          icon={() => null}
         />
       </View>
 
@@ -575,7 +583,7 @@ const VerTodasCitas = ({ navigation }) => {
               {filterDoctor && (userRole === 'Admin' || userRole === 'admin') && (
                 <Chip 
                   style={styles.filterChip}
-                  onClose={() => setFilterDoctor(null)}
+                  onPress={() => setFilterDoctor(null)}
                 >
                   <Text>Doctor: {(() => {
                     const doc = doctores.find(d => d.id_doctor === filterDoctor);
@@ -587,7 +595,7 @@ const VerTodasCitas = ({ navigation }) => {
               {filterModulo && (userRole === 'Admin' || userRole === 'admin') && (
                 <Chip 
                   style={styles.filterChip}
-                  onClose={() => setFilterModulo(null)}
+                  onPress={() => setFilterModulo(null)}
                 >
                   <Text>Módulo: {modulos.find(m => m.id_modulo === filterModulo)?.nombre_modulo || 'ID ' + filterModulo}</Text>
                 </Chip>
@@ -595,7 +603,7 @@ const VerTodasCitas = ({ navigation }) => {
               {filterFechaDesde && (
                 <Chip 
                   style={styles.filterChip}
-                  onClose={() => setFilterFechaDesde(null)}
+                  onPress={() => setFilterFechaDesde(null)}
                 >
                   <Text>Desde: {filterFechaDesde}</Text>
                 </Chip>
@@ -603,7 +611,7 @@ const VerTodasCitas = ({ navigation }) => {
               {filterFechaHasta && (
                 <Chip 
                   style={styles.filterChip}
-                  onClose={() => setFilterFechaHasta(null)}
+                  onPress={() => setFilterFechaHasta(null)}
                 >
                   <Text>Hasta: {filterFechaHasta}</Text>
                 </Chip>
@@ -674,23 +682,19 @@ const VerTodasCitas = ({ navigation }) => {
                     <Text style={styles.infoIcon}>📅</Text>
                     <Text style={styles.infoText}>{formatDateTime(citaDestacada.fecha_cita)}</Text>
                   </View>
-                  {citaDestacada.motivo && (
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoIcon}>🩺</Text>
-                      <Text style={styles.infoText}>{citaDestacada.motivo}</Text>
-                    </View>
-                  )}
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoIcon}>🩺</Text>
+                    <Text style={styles.infoText}>{getDisplayMotivo(citaDestacada.motivo)}</Text>
+                  </View>
                 </View>
                 
-                {/* Observaciones si existen */}
-                {citaDestacada.observaciones && (
-                  <View style={styles.observacionesContainer}>
-                    <Text style={styles.observacionesLabel}>📝 Observaciones:</Text>
-                    <Text style={styles.observacionesText}>
-                      {citaDestacada.observaciones}
-                    </Text>
-                  </View>
-                )}
+                {/* Observaciones */}
+                <View style={styles.observacionesContainer}>
+                  <Text style={styles.observacionesLabel}>📝 Observaciones:</Text>
+                  <Text style={styles.observacionesText}>
+                    {getDisplayMotivo(citaDestacada.observaciones, 'Sin observaciones')}
+                  </Text>
+                </View>
               </Card.Content>
             </TouchableOpacity>
 
@@ -817,23 +821,19 @@ const VerTodasCitas = ({ navigation }) => {
                         </Text>
                       </View>
                       
-                      {cita.motivo && (
-                        <View style={styles.infoRow}>
-                          <Text style={styles.infoIcon}>🩺</Text>
-                          <Text style={styles.infoText}>{cita.motivo}</Text>
-                        </View>
-                      )}
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoIcon}>🩺</Text>
+                        <Text style={styles.infoText}>{getDisplayMotivo(cita.motivo)}</Text>
+                      </View>
                     </View>
 
-                    {/* Observaciones si existen */}
-                    {cita.observaciones && (
-                      <View style={styles.observacionesContainer}>
-                        <Text style={styles.observacionesLabel}>📝 Observaciones:</Text>
-                        <Text style={styles.observacionesText}>
-                          {cita.observaciones}
-                        </Text>
-                      </View>
-                    )}
+                    {/* Observaciones */}
+                    <View style={styles.observacionesContainer}>
+                      <Text style={styles.observacionesLabel}>📝 Observaciones:</Text>
+                      <Text style={styles.observacionesText}>
+                        {getDisplayMotivo(cita.observaciones, 'Sin observaciones')}
+                      </Text>
+                    </View>
                   </Card.Content>
                 </TouchableOpacity>
 
@@ -1617,7 +1617,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: '#555',
+    color: COLORES.TEXTO_SECUNDARIO,
     flex: 1,
   },
   observacionesContainer: {

@@ -170,42 +170,40 @@ export const decryptPIIFields = async (obj, fields = []) => {
   for (const field of fields) {
     if (decrypted[field] !== null && decrypted[field] !== undefined && decrypted[field] !== '') {
       try {
-        // Solo intentar desencriptar si es un string
-        if (typeof decrypted[field] === 'string') {
+        const raw = decrypted[field];
+        const isEncryptedObject = typeof raw === 'object' && raw !== null && raw.encrypted != null && raw.iv != null && raw.authTag != null;
+        const isEncryptedString = typeof raw === 'string' && raw.trim().startsWith('{');
+        if (isEncryptedObject && EncryptionService) {
+          const decryptedValue = EncryptionService.decrypt(raw);
+          decrypted[field] = decryptedValue !== null ? decryptedValue : null;
+          continue;
+        }
+        if (typeof raw === 'string') {
           let decryptedValue = null;
-          
-          // Intentar formato JSON primero (EncryptionService) - formato: {"encrypted":"...","iv":"...","authTag":"..."}
-          if (EncryptionService) {
+          if (EncryptionService && isEncryptedString) {
             try {
-              const jsonData = JSON.parse(decrypted[field]);
+              const jsonData = JSON.parse(raw);
               if (jsonData.encrypted && jsonData.iv && jsonData.authTag) {
-                // Es formato JSON, usar EncryptionService
-                decryptedValue = EncryptionService.decrypt(decrypted[field]);
-                if (decryptedValue && decryptedValue !== null && decryptedValue !== decrypted[field]) {
+                decryptedValue = EncryptionService.decrypt(raw);
+                if (decryptedValue != null && decryptedValue !== raw) {
                   decrypted[field] = decryptedValue;
-                  continue; // Campo desencriptado, continuar con el siguiente
+                  continue;
                 }
               }
             } catch (jsonError) {
               // No es JSON válido, continuar con formato iv:tag:data
             }
           }
-          
-          // Si no se desencriptó con formato JSON, intentar formato iv:tag:data
-          if (!decryptedValue || decryptedValue === decrypted[field]) {
-            // Verificar si parece estar encriptado (formato: iv:tag:data)
-            if (decrypted[field].includes(':') && decrypted[field].split(':').length === 3) {
-              decryptedValue = decrypt(decrypted[field]);
-              if (decryptedValue && decryptedValue !== decrypted[field]) {
+          if (!decryptedValue || decryptedValue === raw) {
+            if (raw.includes(':') && raw.split(':').length === 3) {
+              decryptedValue = decrypt(raw);
+              if (decryptedValue && decryptedValue !== raw) {
                 decrypted[field] = decryptedValue;
               }
             }
           }
         }
-        // Si no es string, mantener el valor original (números, fechas, etc.)
       } catch (error) {
-        // Si falla la desencriptación, mantener el valor original
-        // (puede ser que no esté encriptado o tenga formato incorrecto)
         logger.debug(`No se pudo desencriptar campo ${field}, manteniendo valor original:`, error.message);
       }
     }

@@ -34,7 +34,11 @@ const GraficosEvolucion = () => {
   const { userData } = useAuth();
   const pacienteId = userData?.id_paciente || userData?.id;
   
-  // Obtener TODOS los signos vitales (monitoreo continuo + consultas) para evolución completa
+  // Ventana de últimos 12 meses para reducir consumo de datos (una petición en lugar de traer todo)
+  const ahora = new Date();
+  const fechaFinPac = ahora.toISOString().split('T')[0];
+  const fechaInicioPac = new Date(ahora.getFullYear() - 1, ahora.getMonth(), ahora.getDate()).toISOString().split('T')[0];
+
   const {
     signosVitales,
     loading,
@@ -42,8 +46,12 @@ const GraficosEvolucion = () => {
     total: totalSignosVitales,
     error,
   } = usePacienteSignosVitales(pacienteId, {
-    getAll: true, // Obtener todos los signos vitales (evolución completa)
-    sort: 'ASC', // Orden cronológico ascendente para mostrar evolución
+    getAll: false,
+    limit: 500,
+    offset: 0,
+    sort: 'ASC',
+    fechaInicio: fechaInicioPac,
+    fechaFin: fechaFinPac,
     autoFetch: !!pacienteId,
   });
   

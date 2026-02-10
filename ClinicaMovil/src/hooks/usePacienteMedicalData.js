@@ -246,7 +246,9 @@ export const usePacienteSignosVitales = (pacienteId, options = {}) => {
     offset = 0,
     sort = 'DESC',
     autoFetch = true,
-    getAll = false // Si es true, obtiene TODOS los signos vitales (monitoreo continuo + consultas)
+    getAll = false, // Si es true, obtiene TODOS (evitar en datos móviles; preferir fechaInicio/fechaFin)
+    fechaInicio = null, // Ventana de fechas: reduce consumo (ej. últimos 12 meses)
+    fechaFin = null,
   } = options;
 
   const fetchSignosVitales = useCallback(async () => {
@@ -266,16 +268,16 @@ export const usePacienteSignosVitales = (pacienteId, options = {}) => {
     // Crear nuevo AbortController para este request
     abortControllerRef.current = new AbortController();
 
-    // Generar cacheKey dentro de la función para evitar dependencias
-    const currentCacheKey = getAll 
+    // Generar cacheKey (incluir ventana de fechas si se usa)
+    const currentCacheKey = getAll
       ? `signos_all_${pacienteId}_${sort}`
-      : `signos_${pacienteId}_${limit}_${offset}_${sort}`;
+      : `signos_${pacienteId}_${limit}_${offset}_${sort}_${fechaInicio || ''}_${fechaFin || ''}`;
 
-    // Verificar cache (solo si el cache es muy reciente < 10 segundos)
-    // Para cache más antiguo, siempre recargar para asegurar datos frescos
+    // TTL caché: 60s cuando no es getAll (reduce peticiones sin perder frescura)
+    const cacheTTL = getAll ? 10 * 1000 : 60 * 1000;
     const cacheEntry = medicalDataCache.signosVitales[currentCacheKey];
     const cacheAge = cacheEntry ? (Date.now() - cacheEntry.timestamp) : Infinity;
-    const isCacheVeryRecent = cacheEntry && cacheAge < 10 * 1000; // Solo 10 segundos
+    const isCacheVeryRecent = cacheEntry && cacheAge < cacheTTL;
     
     if (isCacheVeryRecent) {
       Logger.debug(`usePacienteSignosVitales (${pacienteId}): Sirviendo desde caché (muy reciente: ${Math.round(cacheAge/1000)}s)`);
@@ -300,35 +302,40 @@ export const usePacienteSignosVitales = (pacienteId, options = {}) => {
       const gestionService = (await import('../api/gestionService.js')).default;
       
       // Usar requestWithRetry para manejo robusto de errores
+      const useDateWindow = !getAll && (fechaInicio || fechaFin);
+      const effectiveLimit = useDateWindow ? Math.min(limit, 500) : limit;
+
       let response;
       if (getAll) {
-        // Obtener TODOS los signos vitales (monitoreo continuo + consultas) para evolución completa
         Logger.info(`usePacienteSignosVitales (${pacienteId}): Obteniendo TODOS los signos vitales (evolución completa)`);
         response = await requestWithRetry(
-          async (signal) => {
-            return await gestionService.getAllPacienteSignosVitales(pacienteId, { sort });
-          },
+          async (signal) => gestionService.getAllPacienteSignosVitales(pacienteId, { sort }),
           {
             maxRetries: 3,
             retryDelay: 1000,
-            timeout: 15000, // Timeout más largo para getAll
+            timeout: 15000,
             abortController: abortControllerRef.current
           }
         );
       } else {
-        Logger.info(`usePacienteSignosVitales (${pacienteId}): Obteniendo signos vitales del paciente`);
+        Logger.info(`usePacienteSignosVitales (${pacienteId}): Obteniendo signos vitales`, {
+          limit: effectiveLimit,
+          offset,
+          sort,
+          fechaInicio: fechaInicio || null,
+          fechaFin: fechaFin || null
+        });
         response = await requestWithRetry(
           async (signal) => {
-            return await gestionService.getPacienteSignosVitales(pacienteId, {
-              limit,
-              offset,
-              sort
-            });
+            const opts = { limit: effectiveLimit, offset, sort };
+            if (fechaInicio) opts.fechaInicio = fechaInicio;
+            if (fechaFin) opts.fechaFin = fechaFin;
+            return await gestionService.getPacienteSignosVitales(pacienteId, opts);
           },
           {
-            maxRetries: 5, // Aumentar reintentos
-            retryDelay: 2000, // Aumentar delay entre reintentos
-            timeout: 20000, // Aumentar timeout a 20 segundos
+            maxRetries: 5,
+            retryDelay: 2000,
+            timeout: 20000,
             abortController: abortControllerRef.current
           }
         );
@@ -382,18 +389,19 @@ export const usePacienteSignosVitales = (pacienteId, options = {}) => {
     } finally {
       setLoading(false);
     }
-  }, [pacienteId, limit, offset, sort, getAll]);
+  }, [pacienteId, limit, offset, sort, getAll, fechaInicio, fechaFin]);
 
   const refreshSignosVitales = useCallback(() => {
     if (pacienteId) {
-      // Limpiar cache usando la clave actual
-      const currentCacheKey = `signos_${pacienteId}_${limit}_${offset}_${sort}`;
+      const currentCacheKey = getAll
+        ? `signos_all_${pacienteId}_${sort}`
+        : `signos_${pacienteId}_${limit}_${offset}_${sort}_${fechaInicio || ''}_${fechaFin || ''}`;
       delete medicalDataCache.signosVitales[currentCacheKey];
       // Forzar recarga
       setLoading(true);
       fetchSignosVitales();
     }
-  }, [pacienteId, limit, offset, sort, fetchSignosVitales]);
+  }, [pacienteId, limit, offset, sort, getAll, fechaInicio, fechaFin, fetchSignosVitales]);
 
   useEffect(() => {
     if (autoFetch && pacienteId) {

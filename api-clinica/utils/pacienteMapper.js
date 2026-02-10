@@ -15,34 +15,27 @@ import EncryptionService from '../services/encryptionService.js';
  * Maneja tanto formato JSON como formato iv:tag:data
  */
 const decryptFieldIfNeeded = (value) => {
-  if (!value || value === null || value === undefined || value === '') {
-    return value;
-  }
-  
-  // Solo intentar desencriptar si es string
-  if (typeof value !== 'string') {
-    return value;
-  }
-  
-  try {
-    // Intentar formato JSON primero (EncryptionService)
+  if (value === null || value === undefined || value === '') return value;
+  const isEncryptedObject = typeof value === 'object' && value !== null && value.encrypted != null && value.iv != null && value.authTag != null;
+  if (isEncryptedObject) {
     try {
-      const jsonData = JSON.parse(value);
-      if (jsonData.encrypted && jsonData.iv && jsonData.authTag) {
-        // Es formato JSON encriptado, desencriptar
-        const decrypted = EncryptionService.decrypt(value);
-        return decrypted !== null ? decrypted : value;
-      }
-    } catch (jsonError) {
-      // No es JSON válido, continuar
+      const decrypted = EncryptionService.decryptField(value);
+      return decrypted !== null ? decrypted : null;
+    } catch {
+      return null;
     }
-    
-    // Si no parece estar encriptado, retornar valor original
-    return value;
-  } catch (error) {
-    // En caso de error, retornar valor original
-    return value;
   }
+  if (typeof value !== 'string') return value;
+  try {
+    const jsonData = JSON.parse(value);
+    if (jsonData.encrypted && jsonData.iv && jsonData.authTag) {
+      const decrypted = EncryptionService.decrypt(value);
+      return decrypted !== null ? decrypted : value;
+    }
+  } catch (jsonError) {
+    // No es JSON válido
+  }
+  return value;
 };
 
 /**

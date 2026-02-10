@@ -9,6 +9,7 @@ import {
   Modal,
   ScrollView,
 } from 'react-native';
+import { Icon } from 'react-native-paper';
 import { COLORES } from '../../utils/constantes';
 
 /**
@@ -155,7 +156,7 @@ const FormField = ({
           disabled={disabled}
           style={styles.iconButton}
         >
-          <Text style={styles.iconText}>📅</Text>
+          <Icon source="calendar-blank" size={22} color="#666" />
         </TouchableOpacity>
       );
     }

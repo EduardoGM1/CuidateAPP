@@ -35,17 +35,17 @@ const calcularIMC = (pesoKg, tallaM) => {
 const getEstadoCitaColor = (estado) => {
   switch (estado) {
     case ESTADOS_CITA.ATENDIDA:
-      return '#4CAF50';
+      return COLORES.PRIMARIO;
     case ESTADOS_CITA.PENDIENTE:
-      return '#FF9800';
+      return COLORES.ADVERTENCIA;
     case ESTADOS_CITA.NO_ASISTIDA:
-      return '#F44336';
+      return COLORES.ERROR;
     case ESTADOS_CITA.REPROGRAMADA:
-      return '#2196F3';
+      return COLORES.INFO;
     case ESTADOS_CITA.CANCELADA:
-      return '#9E9E9E';
+      return COLORES.TEXTO_SECUNDARIO;
     default:
-      return '#9E9E9E';
+      return COLORES.TEXTO_SECUNDARIO;
   }
 };
 
@@ -134,7 +134,7 @@ const DetalleCitaModal = ({
                       styles.statusChip,
                       { backgroundColor: getEstadoCitaColor(citaDetalle.estado) }
                     ]}
-                    textStyle={{ color: '#FFFFFF', fontSize: 11, fontWeight: '600' }}
+                    textStyle={{ color: COLORES.TEXTO_EN_PRIMARIO, fontSize: 11, fontWeight: '600' }}
                   >
                     {getEstadoCitaTexto(citaDetalle.estado)}
                   </Chip>
@@ -270,40 +270,40 @@ const DetalleCitaModal = ({
 
               {/* Botones de acción para la cita */}
               {(onEditCita || onCancelCita || onDeleteCita) && (
-                <View style={{ paddingHorizontal: 8, paddingTop: 24, paddingBottom: 16, borderTopWidth: 1, borderTopColor: '#e0e0e0', marginTop: 16 }}>
+                <View style={{ paddingHorizontal: 8, paddingTop: 24, paddingBottom: 16, borderTopWidth: 1, borderTopColor: COLORES.BORDE_CLARO, marginTop: 16 }}>
                   <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                     {onEditCita && (
                       <TouchableOpacity
-                        style={{ flex: 1, minWidth: '45%', backgroundColor: '#2196F3', padding: 12, borderRadius: 8, alignItems: 'center' }}
+                        style={{ flex: 1, minWidth: '45%', backgroundColor: COLORES.PRIMARIO, padding: 12, borderRadius: 8, alignItems: 'center' }}
                         onPress={() => {
                           onClose();
                           onEditCita(citaDetalle);
                         }}
                       >
-                        <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>✏️ Editar Cita</Text>
+                        <Text style={{ color: COLORES.BLANCO, fontWeight: '600', fontSize: 14 }}>✏️ Editar Cita</Text>
                       </TouchableOpacity>
                     )}
                     {onCancelCita && citaDetalle.estado !== 'cancelada' && citaDetalle.estado !== 'atendida' && (
                       <TouchableOpacity
-                        style={{ flex: 1, minWidth: '45%', backgroundColor: '#FF9800', padding: 12, borderRadius: 8, alignItems: 'center' }}
+                        style={{ flex: 1, minWidth: '45%', backgroundColor: COLORES.ADVERTENCIA, padding: 12, borderRadius: 8, alignItems: 'center' }}
                         onPress={() => {
                           onClose();
                           onCancelCita(citaDetalle);
                         }}
                       >
-                        <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>❌ Cancelar</Text>
+                        <Text style={{ color: COLORES.BLANCO, fontWeight: '600', fontSize: 14 }}>❌ Cancelar</Text>
                       </TouchableOpacity>
                     )}
                     {onDeleteCita && (userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador' ||
                       userRole === 'Doctor' || userRole === 'doctor') && (
                       <TouchableOpacity
-                        style={{ flex: 1, minWidth: '45%', backgroundColor: '#f44336', padding: 12, borderRadius: 8, alignItems: 'center' }}
+                        style={{ flex: 1, minWidth: '45%', backgroundColor: COLORES.ERROR, padding: 12, borderRadius: 8, alignItems: 'center' }}
                         onPress={() => {
                           onClose();
                           onDeleteCita(citaDetalle);
                         }}
                       >
-                        <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>🗑️ Eliminar</Text>
+                        <Text style={{ color: COLORES.BLANCO, fontWeight: '600', fontSize: 14 }}>🗑️ Eliminar</Text>
                       </TouchableOpacity>
                     )}
                   </View>

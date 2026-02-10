@@ -357,6 +357,7 @@ const GestionUsuarios = ({ navigation }) => {
           value={searchQuery}
           style={styles.searchBar}
           showClearIcon={false}
+          icon={() => null}
         />
       </View>
 
@@ -456,12 +457,10 @@ const GestionUsuarios = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.optionsModalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                Opciones - {selectedVacuna?.nombre_vacuna || 'Vacuna'}
+              <Text style={styles.modalTitleOptions} numberOfLines={1} ellipsizeMode="tail">
+                {selectedVacuna?.nombre_vacuna || 'Vacuna'}
               </Text>
-              <TouchableOpacity
-                onPress={handleCloseOptions}
-              >
+              <TouchableOpacity onPress={handleCloseOptions} style={styles.modalCloseButton}>
                 <Text style={styles.closeButtonX}>X</Text>
               </TouchableOpacity>
             </View>
@@ -508,12 +507,13 @@ const GestionUsuarios = ({ navigation }) => {
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
+              <Text style={styles.modalTitleOptions} numberOfLines={1} ellipsizeMode="tail">
                 {editingVacuna ? 'Editar Vacuna' : 'Nueva Vacuna'}
               </Text>
               <TouchableOpacity
                 onPress={() => !saving && (setShowModal(false), resetForm())}
                 disabled={saving}
+                style={styles.modalCloseButton}
               >
                 <Text style={styles.closeButtonX}>X</Text>
               </TouchableOpacity>
@@ -723,6 +723,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   optionsModalContent: {
+    width: '100%',
+    alignSelf: 'stretch',
     backgroundColor: COLORES.BLANCO,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -836,6 +838,16 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: COLORES.PRIMARIO,
+  },
+  modalTitleOptions: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORES.PRIMARIO,
+    flex: 1,
+    minWidth: 0,
+  },
+  modalCloseButton: {
+    flexShrink: 0,
   },
   modalBody: {
     paddingHorizontal: 20,

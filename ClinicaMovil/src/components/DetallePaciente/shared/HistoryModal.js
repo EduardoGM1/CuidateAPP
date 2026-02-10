@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { Card, Title } from 'react-native-paper';
 import ModalBase from './ModalBase';
+import { COLORES } from '../../../utils/constantes';
 
 /**
  * HistoryModal - Modal reutilizable para mostrar historiales completos
@@ -53,7 +54,7 @@ const HistoryModal = ({
       >
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#2196F3" />
+            <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
             <Text style={styles.loadingText}>Cargando...</Text>
           </View>
         ) : items && Array.isArray(items) && items.length > 0 ? (
@@ -108,7 +109,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   itemsContainer: {
     padding: 0,
@@ -128,7 +129,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
 });

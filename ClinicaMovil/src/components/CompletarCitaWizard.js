@@ -678,7 +678,7 @@ const CompletarCitaWizard = ({
           <Text 
             style={{ 
               fontSize: 12, 
-              color: '#3182CE', 
+              color: COLORES.PRIMARIO, 
               marginBottom: 4,
               flexWrap: 'wrap'
             }}
@@ -692,7 +692,7 @@ const CompletarCitaWizard = ({
               }}
               style={{ paddingVertical: 2, alignSelf: 'flex-start' }}
             >
-              <Text style={{ fontSize: 12, color: '#3182CE', textDecorationLine: 'underline' }}>
+              <Text style={{ fontSize: 12, color: COLORES.PRIMARIO, textDecorationLine: 'underline' }}>
                 Editar Manualmente
               </Text>
             </TouchableOpacity>
@@ -700,8 +700,8 @@ const CompletarCitaWizard = ({
         </View>
       )}
       {signosVitales.hba1c_porcentaje && signosVitales.edad_paciente_en_medicion && (
-        <View style={{ backgroundColor: '#fff3cd', padding: 12, borderRadius: 8, marginTop: 8 }}>
-          <Text style={{ fontSize: 12, color: '#856404' }}>
+        <View style={{ backgroundColor: COLORES.FONDO_ADVERTENCIA_CLARO, padding: 12, borderRadius: 8, marginTop: 8 }}>
+          <Text style={{ fontSize: 12, color: COLORES.ADVERTENCIA_TEXTO }}>
             {(() => {
               const edad = parseInt(signosVitales.edad_paciente_en_medicion, 10);
               const hba1c = parseFloat(signosVitales.hba1c_porcentaje);
@@ -903,8 +903,8 @@ const CompletarCitaWizard = ({
               </View>
             </View>
             <View style={[styles.content, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
-              <ActivityIndicator size="large" color="#2196F3" />
-              <Text style={{ textAlign: 'center', marginTop: 16, color: '#666', fontSize: 16 }}>
+              <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
+              <Text style={{ textAlign: 'center', marginTop: 16, color: COLORES.TEXTO_SECUNDARIO, fontSize: 16 }}>
                 Cargando datos de la cita...
               </Text>
             </View>
@@ -1039,7 +1039,7 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   headerTop: {
     flexDirection: 'row',
@@ -1053,7 +1053,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     fontSize: 24,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: 'bold',
   },
   progressBarContainer: {
@@ -1061,19 +1061,19 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: COLORES.BORDE_CLARO,
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 8,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
     borderRadius: 4,
   },
   progressText: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   content: {
@@ -1093,11 +1093,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 8,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   pasoSubtitulo: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 16,
   },
   opcionesContainer: {
@@ -1107,21 +1107,21 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#e0e0e0',
+    borderColor: COLORES.BORDE_CLARO,
     marginBottom: 12,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORES.FONDO,
   },
   opcionButtonActiva: {
-    borderColor: '#2196F3',
-    backgroundColor: '#e3f2fd',
+    borderColor: COLORES.PRIMARIO,
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
   },
   opcionTexto: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   opcionTextoActiva: {
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: 'bold',
   },
   motivoContainer: {
@@ -1141,11 +1141,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   labelHint: {
     fontSize: 11,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 4,
     fontStyle: 'italic',
     flexShrink: 1,
@@ -1154,35 +1154,35 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 16,
     padding: 12,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORES.FONDO,
     borderRadius: 8,
   },
   formSectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 8,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORES.BORDE_CLARO,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   inputDisabled: {
-    backgroundColor: '#f5f5f5',
-    borderColor: '#e0e0e0',
-    color: '#666',
+    backgroundColor: COLORES.FONDO,
+    borderColor: COLORES.BORDE_CLARO,
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   textArea: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORES.BORDE_CLARO,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: COLORES.FONDO_CARD,
     minHeight: 100,
     textAlignVertical: 'top',
   },
@@ -1190,7 +1190,7 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   imcContainer: {
-    backgroundColor: '#e3f2fd',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
@@ -1198,18 +1198,18 @@ const styles = StyleSheet.create({
   imcTexto: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1976d2',
+    color: COLORES.PRIMARIO,
     textAlign: 'center',
   },
   tipContainer: {
-    backgroundColor: '#fff3cd',
+    backgroundColor: COLORES.FONDO_ADVERTENCIA_CLARO,
     padding: 12,
     borderRadius: 8,
     marginTop: 16,
   },
   tipTexto: {
     fontSize: 14,
-    color: '#856404',
+    color: COLORES.ADVERTENCIA_TEXTO,
   },
   resumenContainer: {
     maxHeight: 300,
@@ -1218,21 +1218,21 @@ const styles = StyleSheet.create({
   resumenItem: {
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   resumenLabel: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 4,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   resumenValor: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   resumenSubvalor: {
     fontSize: 12,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 4,
     fontStyle: 'italic',
   },
@@ -1247,29 +1247,29 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderWidth: 2,
-    borderColor: '#2196F3',
+    borderColor: COLORES.PRIMARIO,
     borderRadius: 4,
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxBoxChecked: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
   },
   checkboxCheck: {
-    color: '#fff',
+    color: COLORES.BLANCO,
     fontWeight: 'bold',
     fontSize: 16,
   },
   checkboxLabel: {
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   footer: {
     flexDirection: 'row',
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: COLORES.BORDE_CLARO,
   },
   buttonAtras: {
     flex: 1,
@@ -1282,7 +1282,7 @@ const styles = StyleSheet.create({
   },
   buttonFinalizar: {
     flex: 2,
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.PRIMARIO,
   },
 });
 

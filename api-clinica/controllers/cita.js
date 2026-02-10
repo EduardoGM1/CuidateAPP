@@ -434,9 +434,9 @@ export const getCitas = async (req, res) => {
           asistencia: citaData.asistencia, // Mantener para compatibilidad
           fecha_reprogramada: citaData.fecha_reprogramada,
           motivo_reprogramacion: citaData.motivo_reprogramacion,
-          motivo: citaData.motivo || null, // Los hooks ya desencriptaron si estaba encriptado
+          motivo: decryptCitaField(citaData.motivo) ?? null,
           es_primera_consulta: citaData.es_primera_consulta,
-          observaciones: citaData.observaciones || null, // Los hooks ya desencriptaron si estaba encriptado
+          observaciones: decryptCitaField(citaData.observaciones) ?? null,
           fecha_creacion: citaData.fecha_creacion,
           paciente_nombre: citaData.Paciente ? 
             `${citaData.Paciente.nombre || ''} ${citaData.Paciente.apellido_paterno || ''} ${citaData.Paciente.apellido_materno || ''}`.trim() : 
@@ -487,6 +487,23 @@ export const getCitas = async (req, res) => {
   }
 };
 
+/**
+ * Desencripta motivo/observaciones de cita (string u objeto { encrypted, iv, authTag }).
+ * Reutilizado en getCitas y getCita para no exponer payload en respuestas.
+ */
+const decryptCitaField = (value) => {
+  if (value === null || value === undefined || value === '') return value;
+  try {
+    const decrypted = EncryptionService.decryptField(value);
+    if (decrypted !== null && decrypted !== value) return decrypted;
+    const isEncrypted = (typeof value === 'object' && value?.encrypted != null) ||
+      (typeof value === 'string' && value.trim().startsWith('{'));
+    return isEncrypted ? null : value;
+  } catch {
+    return (typeof value === 'object' && value?.encrypted) ? null : value;
+  }
+};
+
 // Función helper para determinar el estado de la cita (compatibilidad hacia atrás)
 const determinarEstadoCita = (cita) => {
   // Si tiene campo estado, usarlo directamente
@@ -525,51 +542,45 @@ export const getCita = async (req, res) => {
     // Desencriptar campos encriptados (fallback si los hooks no funcionaron)
     const citaData = cita.toJSON ? cita.toJSON() : cita;
     
-    // Helper para desencriptar campos (soporta formato JSON y formato iv:tag:data)
+    // Helper para desencriptar campos (soporta string JSON, objeto { encrypted, iv, authTag } y formato iv:tag:data)
     const decryptFieldIfNeeded = (value) => {
-      if (!value || value === null || value === undefined || value === '') {
+      if (value === null || value === undefined || value === '') {
         return value;
+      }
+      const isEncryptedObject = typeof value === 'object' && value !== null && value.encrypted != null && value.iv != null && value.authTag != null;
+      if (isEncryptedObject) {
+        const decrypted = EncryptionService.decryptField(value);
+        return decrypted !== null ? decrypted : null;
       }
       if (typeof value !== 'string') {
         return value;
       }
-      
-      // Intentar formato JSON primero (EncryptionService - formato {"encrypted":"...","iv":"...","authTag":"..."})
       try {
         const jsonData = JSON.parse(value);
         if (jsonData.encrypted && jsonData.iv && jsonData.authTag) {
           const decrypted = EncryptionService.decrypt(value);
-          return decrypted !== null ? decrypted : value;
+          return decrypted !== null ? decrypted : null;
         }
       } catch (jsonError) {
         // No es JSON válido, continuar con formato iv:tag:data
       }
-      
-      // Verificar formato iv:tag:data (3 partes separadas por :)
       const parts = value.split(':');
       if (parts.length === 3 && parts[0].length > 0 && parts[1].length > 0 && parts[2].length > 0) {
         try {
-          // Usar decrypt de utils/encryption.js para formato iv:tag:data
           const decrypted = decryptUtils(value);
-          // Si se desencriptó correctamente (retorna diferente al original), usar el valor desencriptado
-          if (decrypted !== null && decrypted !== value) {
-            return decrypted;
-          }
+          if (decrypted !== null && decrypted !== value) return decrypted;
         } catch (decryptError) {
-          // Si falla la desencriptación, retornar valor original
           logger.debug(`Error desencriptando campo en formato iv:tag:data: ${decryptError.message}`);
         }
       }
-      
-      // No parece estar encriptado, retornar valor original
       return value;
     };
     
-    // Desencriptar campos de la cita
+    // Desencriptar campos de la cita (reutilizar helper compartido)
     const citaFormateada = {
       ...citaData,
-      motivo: decryptFieldIfNeeded(citaData.motivo),
-      observaciones: decryptFieldIfNeeded(citaData.observaciones)
+      motivo: decryptCitaField(citaData.motivo),
+      observaciones: decryptCitaField(citaData.observaciones)
     };
     
         // Desencriptar campos de SignosVitales si existen
@@ -733,7 +744,17 @@ export const getCitasByPaciente = async (req, res) => {
       include: [{ model: Doctor, attributes: ['nombre', 'apellido_paterno'] }],
       order: [['fecha_cita', 'DESC']]
     });
-    res.json(citas);
+    const formateadas = citas.map(c => {
+      const raw = c.toJSON ? c.toJSON() : c;
+      const motivoDes = decryptCitaField(raw.motivo);
+      const obsDes = decryptCitaField(raw.observaciones);
+      return {
+        ...raw,
+        motivo: motivoDes !== null && motivoDes !== undefined ? motivoDes : null,
+        observaciones: obsDes !== null && obsDes !== undefined ? obsDes : null
+      };
+    });
+    res.json(formateadas);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -746,7 +767,17 @@ export const getCitasByDoctor = async (req, res) => {
       include: [{ model: Paciente, attributes: ['nombre', 'apellido_paterno'] }],
       order: [['fecha_cita', 'DESC']]
     });
-    res.json(citas);
+    const formateadas = citas.map(c => {
+      const raw = c.toJSON ? c.toJSON() : c;
+      const motivoDes = decryptCitaField(raw.motivo);
+      const obsDes = decryptCitaField(raw.observaciones);
+      return {
+        ...raw,
+        motivo: motivoDes !== null && motivoDes !== undefined ? motivoDes : null,
+        observaciones: obsDes !== null && obsDes !== undefined ? obsDes : null
+      };
+    });
+    res.json(formateadas);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -7,6 +7,7 @@ import {
   Modal,
   ScrollView,
 } from 'react-native';
+import { COLORES } from '../../utils/constantes';
 
 const MESES = [
   { value: 1, label: 'Enero' },
@@ -384,11 +385,11 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   modalOptionTextSelected: {
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
   },
   modalOptionTextDisabled: {
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
 });
 

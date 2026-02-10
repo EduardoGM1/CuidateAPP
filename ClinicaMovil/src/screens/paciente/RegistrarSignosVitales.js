@@ -12,6 +12,7 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -607,6 +608,7 @@ const RegistrarSignosVitales = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORES.NAV_PACIENTE} />
           <Text style={styles.loadingText}>Cargando...</Text>
         </View>
       </SafeAreaView>
@@ -636,6 +638,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
+    marginTop: 16,
     fontSize: 18,
     color: COLORES.TEXTO_SECUNDARIO,
   },

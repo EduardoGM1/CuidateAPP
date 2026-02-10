@@ -494,22 +494,7 @@ const DashboardAdmin = ({ navigation }) => {
           </View>
         </View>
 
-            {/* Gráficos Rápidos */}
-            <View style={styles.chartsContainer}>
-              <Text style={styles.sectionTitle}>Gráficos Rápidos</Text>
-              
-              {/* Gráfico de Citas */}
-              <View style={styles.singleChartContainer}>
-                {renderChartCard('Citas Últimos 7 Días', chartDataFormatted)}
-              </View>
-
-              {/* Gráfico de Pacientes Nuevos */}
-              <View style={styles.singleChartContainer}>
-                {renderChartCard('Pacientes Nuevos Últimos 7 Días', pacientesNuevosFormatted, 'pacientes')}
-              </View>
-            </View>
-
-            {/* Notificaciones */}
+            {/* Notificaciones - lista deslizante vertical */}
             <View style={styles.notificationsContainer}>
               <View style={styles.notificationsHeader}>
                 <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Notificaciones Importantes</Text>
@@ -518,7 +503,14 @@ const DashboardAdmin = ({ navigation }) => {
                 </TouchableOpacity>
               </View>
               {notifications.length > 0 ? (
-                notifications.map(renderNotification)
+                <ScrollView
+                  style={styles.notificationsScrollView}
+                  showsVerticalScrollIndicator={true}
+                  contentContainerStyle={styles.notificationsScrollContent}
+                  nestedScrollEnabled={true}
+                >
+                  {notifications.map(renderNotification)}
+                </ScrollView>
               ) : (
                 <Card style={styles.noDataCard}>
                   <Card.Content>
@@ -930,6 +922,13 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     marginLeft: 5,
     marginRight: 5,
+  },
+  notificationsScrollView: {
+    maxHeight: 280,
+  },
+  notificationsScrollContent: {
+    paddingVertical: 4,
+    paddingBottom: 8,
   },
   verTodasLabel: {
     fontSize: 14,

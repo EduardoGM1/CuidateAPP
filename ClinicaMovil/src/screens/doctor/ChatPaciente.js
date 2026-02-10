@@ -306,7 +306,7 @@ const ChatPaciente = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
           <Text style={styles.loadingText}>Cargando mensajes...</Text>
         </View>
       </SafeAreaView>
@@ -383,8 +383,8 @@ const ChatPaciente = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              colors={['#2196F3']}
-              tintColor="#2196F3"
+              colors={[COLORES.PRIMARIO]}
+              tintColor={COLORES.PRIMARIO}
             />
           }
         >
@@ -426,7 +426,7 @@ const ChatPaciente = () => {
           {escribiendo && (
             <View style={styles.typingIndicator}>
               <Text style={styles.typingText}>Paciente está escribiendo...</Text>
-              <ActivityIndicator size="small" color="#999" style={styles.typingSpinner} />
+              <ActivityIndicator size="small" color={COLORES.TEXTO_DISABLED} style={styles.typingSpinner} />
             </View>
           )}
         </ScrollView>
@@ -454,7 +454,7 @@ const ChatPaciente = () => {
           <TextInput
             style={styles.textInput}
             placeholder="Escribe un mensaje..."
-            placeholderTextColor="#999"
+            placeholderTextColor={COLORES.TEXTO_DISABLED}
             value={typeof mensajeTexto === 'string' ? mensajeTexto : String(mensajeTexto || '')}
             onChangeText={handleTextChange}
             multiline
@@ -476,7 +476,7 @@ const ChatPaciente = () => {
             disabled={!(typeof mensajeTexto === 'string' ? mensajeTexto.trim() : '') || enviando}
           >
             {enviando ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={COLORES.TEXTO_EN_PRIMARIO} />
             ) : (
               <Text style={styles.sendButtonText}>➤</Text>
             )}
@@ -627,7 +627,7 @@ const ChatPaciente = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   keyboardView: {
     flex: 1,
@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#F44336',
+    color: COLORES.ERROR,
     marginBottom: 20,
   },
   header: {
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
     borderBottomColor: COLORES.TEXTO_DISABLED,
   },
@@ -668,7 +668,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
   },
   title: {
@@ -702,40 +702,40 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
+    color: COLORES.TEXTO_DISABLED,
   },
   mensajeDoctor: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
   },
   mensajePaciente: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: COLORES.SECUNDARIO_LIGHT,
   },
   recorderContainer: {
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.SECUNDARIO_LIGHT,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.SECUNDARIO_LIGHT,
   },
   audioButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
   },
   audioButtonActive: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
   },
   audioButtonText: {
     fontSize: 20,
@@ -746,7 +746,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     fontSize: 16,
     color: COLORES.TEXTO_PRIMARIO,
   },
@@ -754,16 +754,16 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
   },
   sendButtonDisabled: {
-    backgroundColor: '#CCCCCC',
+    backgroundColor: COLORES.TEXTO_DISABLED,
   },
   sendButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 20,
     fontWeight: 'bold',
   },
@@ -774,7 +774,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 16,
     padding: 24,
     width: '85%',
@@ -792,13 +792,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginVertical: 8,
     borderRadius: 12,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
     minHeight: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -808,8 +808,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   modalOptionDanger: {
-    backgroundColor: '#FFF5F5',
-    borderColor: '#FFCDD2',
+    backgroundColor: COLORES.FONDO_ERROR_CLARO,
+    borderColor: COLORES.BORDE_ERROR_CLARO,
   },
   modalOptionText: {
     fontSize: 18,
@@ -818,11 +818,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   modalOptionTextDanger: {
-    color: '#F44336',
+    color: COLORES.ERROR,
     fontWeight: '700',
   },
   editModalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 16,
     padding: 20,
     width: '90%',
@@ -838,7 +838,7 @@ const styles = StyleSheet.create({
   },
   editTextInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -858,10 +858,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   editModalButtonCancel: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   editModalButtonSave: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
   },
   editModalButtonText: {
     fontSize: 16,
@@ -869,7 +869,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   editModalButtonTextSave: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
   },
   // Estilos para información del paciente en header
   pacienteInfoContainer: {
@@ -882,13 +882,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   pacienteIniciales: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -902,7 +902,7 @@ const styles = StyleSheet.create({
   },
   pacienteActividad: {
     fontSize: 12,
-    color: '#999',
+    color: COLORES.TEXTO_DISABLED,
     marginTop: 2,
   },
   // Estilos para agrupación por fecha
@@ -915,12 +915,12 @@ const styles = StyleSheet.create({
   dateSeparatorLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: COLORES.SECUNDARIO_LIGHT,
   },
   dateSeparatorText: {
     marginHorizontal: 12,
     fontSize: 12,
-    color: '#999',
+    color: COLORES.TEXTO_DISABLED,
     fontWeight: '600',
   },
   // Estilos para indicador "escribiendo..."
@@ -933,7 +933,7 @@ const styles = StyleSheet.create({
   },
   typingText: {
     fontSize: 14,
-    color: '#999',
+    color: COLORES.TEXTO_DISABLED,
     fontStyle: 'italic',
     marginRight: 8,
   },

@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import { COLORES } from '../../utils/constantes';
 
 const Logo = ({ 
   size = 'large', 
   showText = true, 
   logoSource = null,
-  logoText = 'Clínica Móvil',
+  logoText = 'CuidaTeApp',
   logoEmoji = '🏥'
 }) => {
   const getSizeStyles = () => {
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
   },
   logoText: {
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: COLORES.PRIMARIO,
     textAlign: 'center',
   },
 });

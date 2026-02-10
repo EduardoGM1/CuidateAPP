@@ -107,6 +107,11 @@ android {
         }
     }
 
+    // Evita fallos AAPT "file failed to compile" con algunos PNG (p. ej. logo)
+    aaptOptions {
+        cruncherEnabled = false
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17

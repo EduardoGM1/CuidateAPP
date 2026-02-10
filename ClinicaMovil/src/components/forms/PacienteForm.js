@@ -13,6 +13,7 @@ import EstadoSelector from './EstadoSelector';
 import MunicipioSelector from './MunicipioSelector';
 import { formValidation } from './FormValidation';
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * Componente de formulario específico para pacientes
@@ -684,7 +685,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   moduleOptionTextSelected: {
-    color: '#4CAF50',
+    color: COLORES.PRIMARIO,
     fontWeight: '500',
   },
   moduleRadio: {
@@ -692,22 +693,22 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#E9ECEF',
+    borderColor: COLORES.BORDE_CLARO,
     justifyContent: 'center',
     alignItems: 'center',
   },
   moduleRadioSelected: {
-    borderColor: '#4CAF50',
+    borderColor: COLORES.PRIMARIO,
   },
   moduleRadioInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.PRIMARIO,
   },
   loadingText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     padding: 12,
   },

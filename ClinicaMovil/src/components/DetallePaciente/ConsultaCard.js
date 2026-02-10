@@ -16,6 +16,7 @@ import {
   trigliceridosFueraDeRango
 } from '../../utils/vitalSignsRanges';
 import { formatTime12h, formatDate } from '../../utils/dateUtils';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * Componente para mostrar una consulta individual con sus datos asociados
@@ -78,13 +79,13 @@ const ConsultaCard = ({
   const borderColor = useMemo(() => {
     switch (estado) {
       case 'completa':
-        return '#4CAF50'; // Verde
+        return COLORES.PRIMARIO;
       case 'parcial':
-        return '#FF9800'; // Amarillo
+        return COLORES.ADVERTENCIA;
       case 'solo_cita':
-        return '#9E9E9E'; // Gris
+        return COLORES.TEXTO_SECUNDARIO;
       default:
-        return '#E0E0E0';
+        return COLORES.BORDE_CLARO;
     }
   }, [estado]);
 
@@ -92,13 +93,13 @@ const ConsultaCard = ({
   const backgroundColor = useMemo(() => {
     switch (estado) {
       case 'completa':
-        return '#E8F5E9'; // Verde claro
+        return COLORES.FONDO_VERDE_SUAVE;
       case 'parcial':
-        return '#FFF3E0'; // Amarillo claro
+        return COLORES.FONDO_ADVERTENCIA_CLARO;
       case 'solo_cita':
-        return '#F5F5F5'; // Gris claro
+        return COLORES.FONDO;
       default:
-        return '#FFFFFF';
+        return COLORES.FONDO_CARD;
     }
   }, [estado]);
 
@@ -163,7 +164,7 @@ const ConsultaCard = ({
             <View style={styles.asistenciaContainer}>
               <Text style={[
                 styles.asistencia,
-                { color: cita.asistencia ? '#4CAF50' : '#F44336' }
+                { color: cita.asistencia ? COLORES.PRIMARIO : COLORES.ERROR }
               ]}>
                 {cita.asistencia ? '✅ Asistió' : '❌ No asistió'}
               </Text>
@@ -411,13 +412,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8
   },
   statusChipText: {
-    color: '#FFFFFF',
+    color: COLORES.BLANCO,
     fontSize: 11,
     fontWeight: '600'
   },
   motivo: {
     fontSize: 14,
-    color: '#424242',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 8,
     fontWeight: '500'
   },
@@ -433,12 +434,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0'
+    borderTopColor: COLORES.BORDE_CLARO
   },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#212121',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8
   },
   signoItem: {
@@ -447,7 +448,7 @@ const styles = StyleSheet.create({
   },
   signoFecha: {
     fontSize: 12,
-    color: '#757575',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 6,
     fontStyle: 'italic'
   },
@@ -460,7 +461,7 @@ const styles = StyleSheet.create({
   signoGroupTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#424242',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 4
   },
   signoValues: {
@@ -470,28 +471,28 @@ const styles = StyleSheet.create({
   },
   signoValue: {
     fontSize: 13,
-    color: '#616161',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginRight: 12
   },
   signoValueOutOfRange: {
-    color: '#F44336', // Rojo para valores fuera de rango
-    fontWeight: '700' // Negrita para mayor visibilidad
+    color: COLORES.ERROR,
+    fontWeight: '700'
   },
   signoItemResaltado: {
-    backgroundColor: '#FFF3E0', // Fondo naranja claro para resaltar
+    backgroundColor: COLORES.FONDO_ADVERTENCIA_CLARO,
     borderWidth: 2,
-    borderColor: '#FF5722', // Borde naranja
+    borderColor: COLORES.ADVERTENCIA,
     borderRadius: 8,
     padding: 8,
     marginVertical: 4
   },
   signoFechaResaltado: {
-    color: '#FF5722', // Color naranja para fecha resaltada
+    color: COLORES.ADVERTENCIA_TEXTO,
     fontWeight: '700'
   },
   observaciones: {
     fontSize: 12,
-    color: '#757575',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     marginTop: 4
   },
@@ -501,20 +502,20 @@ const styles = StyleSheet.create({
   },
   diagnosticoTexto: {
     fontSize: 14,
-    color: '#212121',
+    color: COLORES.TEXTO_PRIMARIO,
     lineHeight: 20,
     marginBottom: 4
   },
   diagnosticoFecha: {
     fontSize: 11,
-    color: '#757575',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic'
   },
   noDataSection: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
     gap: 8
   },
   noDataItem: {
@@ -527,18 +528,18 @@ const styles = StyleSheet.create({
   },
   noDataText: {
     fontSize: 13,
-    color: '#9E9E9E',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic'
   },
   observacionesCita: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0'
+    borderTopColor: COLORES.BORDE_CLARO
   },
   observacionesCitaText: {
     fontSize: 13,
-    color: '#616161',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic'
   },
   actions: {
@@ -547,40 +548,40 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
     gap: 8
   },
   actionButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
     borderRadius: 6
   },
   actionButtonSecondary: {
-    backgroundColor: 'transparent',
+    backgroundColor: COLORES.TRANSPARENTE,
     borderWidth: 1,
-    borderColor: '#2196F3'
+    borderColor: COLORES.PRIMARIO
   },
   actionButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.BLANCO,
     fontSize: 13,
     fontWeight: '600'
   },
   actionButtonTextSecondary: {
-    color: '#2196F3'
+    color: COLORES.PRIMARIO
   },
   compactModeHint: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
     padding: 8,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderRadius: 6
   },
   compactModeHintText: {
     fontSize: 12,
-    color: '#757575',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     textAlign: 'center'
   }

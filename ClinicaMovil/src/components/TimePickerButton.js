@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { COLORES } from '../utils/constantes';
 
 /**
  * Selector solo de hora (HH:mm).
@@ -127,8 +128,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 24,
   },
-  cancelText: { fontSize: 16, color: '#666', paddingVertical: 12 },
-  okText: { fontSize: 16, color: '#2196F3', fontWeight: '600', paddingVertical: 12 },
+  cancelText: { fontSize: 16, color: COLORES.TEXTO_SECUNDARIO, paddingVertical: 12 },
+  okText: { fontSize: 16, color: COLORES.PRIMARIO, fontWeight: '600', paddingVertical: 12 },
 });
 
 export default TimePickerButton;

@@ -1,6 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Card, Title } from 'react-native-paper';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * MedicalSummary - Resumen médico con contadores
@@ -72,12 +73,12 @@ const styles = StyleSheet.create({
     margin: 16,
     marginBottom: 8,
     elevation: 2,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     marginBottom: 16,
   },
   summaryGrid: {
@@ -90,12 +91,12 @@ const styles = StyleSheet.create({
   summaryNumber: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     marginBottom: 4,
   },
   summaryLabel: {
     fontSize: 12,
-    color: '#666666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
 });

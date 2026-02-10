@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform, Pressable } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import { COLORES } from '../utils/constantes';
 
 /**
  * Componente de selector de fecha y hora para citas médicas
@@ -372,11 +373,11 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   dateTimeButtonError: {
-    borderColor: '#f44336',
+    borderColor: COLORES.ERROR,
   },
   dateTimeButtonValid: {
-    borderColor: '#4CAF50',
-    backgroundColor: '#FFFFFF',
+    borderColor: COLORES.PRIMARIO,
+    backgroundColor: COLORES.FONDO_CARD,
     borderWidth: 2,
   },
   dateTimeButtonPressed: {

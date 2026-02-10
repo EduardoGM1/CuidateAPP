@@ -58,16 +58,25 @@ const GraficosEvolucion = () => {
       setLoading(true);
       setError(null);
       
-      // Obtener TODOS los signos vitales (monitoreo continuo + consultas) ordenados cronológicamente
-      const response = await gestionService.getAllPacienteSignosVitales(pacienteId, { 
-        sort: 'ASC' // Orden ascendente para mostrar evolución cronológica
+      // Ventana de últimos 12 meses para reducir consumo de datos (una sola petición en lugar de getAll)
+      const ahora = new Date();
+      const fechaFin = ahora.toISOString().split('T')[0];
+      const fechaInicio = new Date(ahora.getFullYear() - 1, ahora.getMonth(), ahora.getDate()).toISOString().split('T')[0];
+      const LIMIT_GRAFICOS = 500;
+      
+      const response = await gestionService.getPacienteSignosVitales(pacienteId, {
+        limit: LIMIT_GRAFICOS,
+        offset: 0,
+        sort: 'ASC',
+        fechaInicio,
+        fechaFin,
       });
       
-      // El servicio retorna { data: [...], total: ... }
-      const signos = Array.isArray(response.data) ? response.data : (response?.data || []);
+      const signosData = response?.data?.data ?? response?.data ?? [];
+      const signos = Array.isArray(signosData) ? signosData : [];
       setSignosVitales(signos);
-      setSignosVitalesCompletos(signos); // Guardar todos los signos para la comparativa
-      Logger.info(`Signos vitales cargados (evolución completa): ${signos.length} registros (monitoreo continuo + consultas)`);
+      setSignosVitalesCompletos(signos);
+      Logger.info(`Signos vitales cargados (ventana 12 meses, limit ${LIMIT_GRAFICOS}): ${signos.length} registros`);
     } catch (error) {
       // Capturar toda la información del error de manera segura
       const errorInfo = {

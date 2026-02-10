@@ -7,6 +7,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * Componente de filtro por mes para consultas
@@ -136,39 +137,39 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#424242',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 8
   },
   dropdownButton: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0'
+    borderColor: COLORES.BORDE_CLARO
   },
   dropdownButtonText: {
     fontSize: 14,
-    color: '#212121',
+    color: COLORES.TEXTO_PRIMARIO,
     fontWeight: '500',
     flex: 1
   },
   dropdownArrow: {
     fontSize: 12,
-    color: '#616161',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginLeft: 8
   },
   dropdownList: {
     marginTop: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -181,17 +182,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5'
+    borderBottomColor: COLORES.FONDO
   },
   dropdownItemSelected: {
-    backgroundColor: '#E3F2FD'
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS
   },
   dropdownItemText: {
     fontSize: 14,
-    color: '#212121'
+    color: COLORES.TEXTO_PRIMARIO
   },
   dropdownItemTextSelected: {
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: '600'
   }
 });

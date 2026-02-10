@@ -20,10 +20,9 @@ import { usePacientes } from '../../hooks/useGestion';
 import useNotificacionesDoctor from '../../hooks/useNotificacionesDoctor';
 import { formatDate, formatTime, formatDateTime, formatDateWithWeekday } from '../../utils/dateUtils';
 import useWebSocket from '../../hooks/useWebSocket';
-import useScreenFocus from '../../hooks/useScreenFocus';
 import gestionService from '../../api/gestionService';
 import { estaFueraDeRango, RANGOS_NORMALES } from '../../utils/vitalSignsRanges';
-import { COLORES } from '../../utils/constantes';
+import { COLORES, getDisplayMotivo } from '../../utils/constantes';
 
 const { width } = Dimensions.get('window');
 
@@ -105,15 +104,8 @@ const DashboardDoctor = ({ navigation }) => {
     }
   }, [userData?.id_usuario, refreshDashboard, refreshPacientes, refreshNotificaciones]);
 
-  // Refrescar datos cuando la pantalla se enfoca
-  useScreenFocus(
-    [refreshDashboard, refreshPacientes, refreshNotificaciones],
-    {
-      enabled: !!userData?.id_usuario,
-      screenName: 'DashboardDoctor',
-      dependencies: [userData?.id_usuario]
-    }
-  );
+  // No refetch en foco: reutilizar datos en caché (useDoctorDashboard, usePacientes, useNotificacionesDoctor)
+  // para evitar solicitudes redundantes. Actualización con pull-to-refresh y en eventos WebSocket.
 
   // Suscribirse a eventos WebSocket (solo cuando esté conectado)
   useEffect(() => {
@@ -623,9 +615,7 @@ const DashboardDoctor = ({ navigation }) => {
               </View>
             </View>
             <Text style={styles.pacienteNombre}>{cita.paciente}</Text>
-            {cita.motivo && (
-              <Text style={styles.citaMotivo}>{cita.motivo}</Text>
-            )}
+            <Text style={styles.citaMotivo}>{getDisplayMotivo(cita.motivo)}</Text>
           </Card.Content>
         </Card>
       </TouchableOpacity>

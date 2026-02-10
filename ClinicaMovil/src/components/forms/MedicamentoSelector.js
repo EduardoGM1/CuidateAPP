@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import gestionService from '../../api/gestionService';
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * Componente selector de medicamentos
@@ -265,52 +266,52 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   required: {
-    color: '#F44336',
+    color: COLORES.ERROR,
   },
   selector: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORES.BORDE_CLARO,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: '#fff',
+    backgroundColor: COLORES.FONDO_CARD,
     minHeight: 48,
   },
   selectorError: {
-    borderColor: '#F44336',
+    borderColor: COLORES.ERROR,
   },
   selectorDisabled: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORES.FONDO,
     opacity: 0.6,
   },
   selectorText: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   selectorPlaceholder: {
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   selectorIcon: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginLeft: 8,
   },
   errorText: {
     fontSize: 12,
-    color: '#F44336',
+    color: COLORES.ERROR,
     marginTop: 4,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORES.FONDO_CARD,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '80%',

@@ -36,6 +36,7 @@ import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 import { storageService } from '../../services/storageService';
 import { getApiConfig } from '../../config/apiConfig';
+import NetInfo from '@react-native-community/netinfo';
 
 // Nuevos hooks y contextos para refactorización
 import useModalManager from '../../hooks/useModalManager';
@@ -62,8 +63,6 @@ import CompletarCitaWizard from '../../components/CompletarCitaWizard';
 // Hooks personalizados
 import useFormState from '../../hooks/useFormState';
 import useSaveHandler from '../../hooks/useSaveHandler';
-import useScreenFocus from '../../hooks/useScreenFocus';
-
 // Componente interno que usa los hooks
 const DetallePacienteContent = ({ route, navigation }) => {
   const { paciente: initialPaciente } = route.params;
@@ -143,31 +142,15 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const { comorbilidades: comorbilidadesPaciente, loading: loadingComorbilidades, refresh: refreshComorbilidades } = usePacienteComorbilidades(pacienteId, { autoFetch: true });
   const { detecciones, loading: loadingDetecciones, refresh: refreshDetecciones } = usePacienteDeteccionesComplicaciones(pacienteId, { autoFetch: true, limit: 5 });
   const { sesionesEducativas, loading: loadingSesionesEducativas, refresh: refreshSesionesEducativas } = usePacienteSesionesEducativas(pacienteId, { autoFetch: true, limit: 10 });
-  const { saludBucal, loading: loadingSaludBucal, refresh: refreshSaludBucal } = usePacienteSaludBucal(pacienteId, { autoFetch: true, limit: 5 });
-  const { deteccionesTuberculosis, loading: loadingDeteccionesTuberculosis, refresh: refreshDeteccionesTuberculosis } = usePacienteDeteccionTuberculosis(pacienteId, { autoFetch: true, limit: 5 });
+  // Carga bajo demanda: solo se piden al abrir "Ver historial" (reduce peticiones al abrir pantalla)
+  const { saludBucal, loading: loadingSaludBucal, refresh: refreshSaludBucal } = usePacienteSaludBucal(pacienteId, { autoFetch: false, limit: 5 });
+  const { deteccionesTuberculosis, loading: loadingDeteccionesTuberculosis, refresh: refreshDeteccionesTuberculosis } = usePacienteDeteccionTuberculosis(pacienteId, { autoFetch: false, limit: 5 });
   
   // Hook para obtener doctores para selector de citas
   const { doctores: doctoresList } = useDoctores('activos', 'recent');
   
-  // Refrescar datos cuando la pantalla se enfoca
-  useScreenFocus(
-    [
-      refresh,
-      refreshMedicalData,
-      refreshRedApoyo,
-      refreshEsquemaVacunacion,
-      refreshComorbilidades,
-      refreshDetecciones,
-      refreshSesionesEducativas,
-      refreshSaludBucal,
-      refreshDeteccionesTuberculosis
-    ],
-    {
-      enabled: !!pacienteId,
-      screenName: 'DetallePaciente',
-      dependencies: [pacienteId]
-    }
-  );
+  // No refetch en foco: reutilizar datos en caché (TTL en hooks) para evitar solicitudes redundantes.
+  // La actualización se hace con pull-to-refresh y tras mutaciones (guardar, eliminar, etc.).
   
   // Estados para vacunas del sistema (catálogo)
   const [vacunasSistema, setVacunasSistema] = useState([]);
@@ -219,10 +202,14 @@ const DetallePacienteContent = ({ route, navigation }) => {
     complicaciones: false,
     comorbilidades: false,
     medicamentos: false,
+    registroTomas: false, // Registro de tomas de medicamentos (adherencia)
     sesionesEducativas: false,
     saludBucal: false, // ✅ Instrucción ⑫
     deteccionesTuberculosis: false // ✅ Instrucción ⑬
   });
+  // Registro de tomas de medicamentos (para doctor/admin)
+  const [tomasRegistro, setTomasRegistro] = useState([]);
+  const [loadingTomasRegistro, setLoadingTomasRegistro] = useState(false);
   const [formDeteccion, setFormDeteccion] = useState({
     tipo_complicacion: '', // Instrucción ⑩
     fecha_deteccion: new Date().toISOString().split('T')[0], // Obligatorio
@@ -471,6 +458,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const [doctoresPaciente, setDoctoresPaciente] = useState([]);
   const [loadingDoctoresPaciente, setLoadingDoctoresPaciente] = useState(false);
   const [showAddDoctor, setShowAddDoctor] = useState(false);
+  const [showDoctorDropdownAsignar, setShowDoctorDropdownAsignar] = useState(false);
   const [showReplaceDoctor, setShowReplaceDoctor] = useState(false);
   const [savingDoctor, setSavingDoctor] = useState(false);
   const [doctorSeleccionado, setDoctorSeleccionado] = useState(null);
@@ -650,17 +638,17 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const getEstadoCitaColor = useCallback((estado) => {
     switch (estado) {
       case ESTADOS_CITA.ATENDIDA:
-        return '#4CAF50';
+        return COLORES.EXITO;
       case ESTADOS_CITA.PENDIENTE:
-        return '#FF9800';
+        return COLORES.ADVERTENCIA;
       case ESTADOS_CITA.NO_ASISTIDA:
-        return '#F44336';
+        return COLORES.ERROR;
       case ESTADOS_CITA.REPROGRAMADA:
-        return '#2196F3';
+        return COLORES.PRIMARIO;
       case ESTADOS_CITA.CANCELADA:
-        return '#9E9E9E';
+        return COLORES.TEXTO_DISABLED;
       default:
-        return '#9E9E9E';
+        return COLORES.TEXTO_DISABLED;
     }
   }, []);
 
@@ -753,12 +741,12 @@ const DetallePacienteContent = ({ route, navigation }) => {
 
   // Función para determinar el color del IMC según clasificación OMS - Memoizada
   const getIMCColor = useCallback((imc) => {
-    if (!imc) return { color: '#666' };
+    if (!imc) return { color: COLORES.TEXTO_SECUNDARIO };
     
-    if (imc < 18.5) return { color: '#2196F3' }; // Bajo peso
-    if (imc < 25) return { color: '#4CAF50' };   // Normal
-    if (imc < 30) return { color: '#FF9800' };   // Sobrepeso
-    return { color: '#F44336' };                  // Obesidad
+    if (imc < 18.5) return { color: COLORES.PRIMARIO }; // Bajo peso
+    if (imc < 25) return { color: COLORES.EXITO };   // Normal
+    if (imc < 30) return { color: COLORES.ADVERTENCIA };   // Sobrepeso
+    return { color: COLORES.ERROR };                  // Obesidad
   }, []);
 
   // =====================================================
@@ -833,6 +821,23 @@ const DetallePacienteContent = ({ route, navigation }) => {
     return obtenerDoctorAsignado();
   }, [paciente, obtenerDoctorAsignado]);
 
+  // Lista de nombres de todos los doctores asignados (para el header)
+  const nombresDoctoresAsignados = useMemo(() => {
+    if (doctoresPaciente && doctoresPaciente.length > 0) {
+      return doctoresPaciente.map(d => 
+        d.nombre_completo || `${d.nombre || ''} ${d.apellido_paterno || ''} ${d.apellido_materno || ''}`.trim()
+      ).filter(Boolean);
+    }
+    if (paciente?.Doctors && paciente.Doctors.length > 0) {
+      return paciente.Doctors.map(d =>
+        `${d.nombre || ''} ${d.apellido_paterno || ''} ${d.apellido_materno || ''}`.trim()
+      ).filter(Boolean);
+    }
+    const uno = obtenerDoctorAsignado();
+    if (uno && uno !== 'Sin doctor asignado') return [uno];
+    return [];
+  }, [paciente, doctoresPaciente, obtenerDoctorAsignado]);
+
   // Memoizar totales calculados
   const totalDiagnosticos = useMemo(() => {
     return diagnosticos?.length || 0;
@@ -844,7 +849,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
 
   // ✅ Optimización: Memoizar listas que se usan en el render
   const redApoyoMostrar = useMemo(() => {
-    return redApoyo?.slice(0, 2) || [];
+    return redApoyo?.slice(0, 5) || [];
   }, [redApoyo]);
 
   /** Opciones del modal de acciones al tocar un contacto de Red de Apoyo (Llamar / Enviar email) */
@@ -859,7 +864,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
         icon: '📞',
         label: 'Llamar',
         onPress: () => Linking.openURL(`tel:${numero}`),
-        color: '#2196F3',
+        color: COLORES.PRIMARIO,
       });
     }
     if (email) {
@@ -867,7 +872,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
         icon: '📧',
         label: 'Enviar email',
         onPress: () => Linking.openURL(`mailto:${email}`),
-        color: '#2196F3',
+        color: COLORES.PRIMARIO,
       });
     }
     if (opts.length === 0) {
@@ -875,22 +880,22 @@ const DetallePacienteContent = ({ route, navigation }) => {
         icon: 'ℹ️',
         label: 'Sin teléfono ni email registrado',
         onPress: () => {},
-        color: '#666',
+        color: COLORES.TEXTO_SECUNDARIO,
       });
     }
     return opts;
   }, [contactoRedApoyoSeleccionado]);
 
   const esquemaVacunacionMostrar = useMemo(() => {
-    return esquemaVacunacion?.slice(0, 2) || [];
+    return esquemaVacunacion?.slice(0, 5) || [];
   }, [esquemaVacunacion]);
 
   const comorbilidadesMostrar = useMemo(() => {
-    return comorbilidadesPaciente?.slice(0, 2) || [];
+    return comorbilidadesPaciente?.slice(0, 5) || [];
   }, [comorbilidadesPaciente]);
 
   const deteccionesMostrar = useMemo(() => {
-    return detecciones?.slice(0, 3) || [];
+    return detecciones?.slice(0, 5) || [];
   }, [detecciones]);
 
   const sesionesEducativasMostrar = useMemo(() => {
@@ -899,11 +904,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
 
   // ✅ Salud Bucal y Tuberculosis - Memoizar listas
   const saludBucalMostrar = useMemo(() => {
-    return saludBucal?.slice(0, 3) || [];
+    return saludBucal?.slice(0, 5) || [];
   }, [saludBucal]);
 
   const deteccionesTuberculosisMostrar = useMemo(() => {
-    return deteccionesTuberculosis?.slice(0, 3) || [];
+    return deteccionesTuberculosis?.slice(0, 5) || [];
   }, [deteccionesTuberculosis]);
 
   // ✅ Optimización: Memoizar listas de opciones que no cambian
@@ -926,11 +931,44 @@ const DetallePacienteContent = ({ route, navigation }) => {
   };
 
   const toggleAccordion = useCallback((key) => {
-    setAccordionState(prev => ({ ...prev, [key]: !prev[key] }));
-  }, []);
+    setAccordionState(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      if (next[key]) {
+        if (key === 'saludBucal') refreshSaludBucal();
+        if (key === 'deteccionesTuberculosis') refreshDeteccionesTuberculosis();
+      }
+      return next;
+    });
+  }, [refreshSaludBucal, refreshDeteccionesTuberculosis]);
+
+  // Cargar registro de tomas de medicamentos (últimos 7 días) cuando se abre el acordeón
+  const loadTomasRegistro = useCallback(async () => {
+    if (!pacienteId) return;
+    setLoadingTomasRegistro(true);
+    try {
+      const fin = new Date();
+      const inicio = new Date();
+      inicio.setDate(inicio.getDate() - 7);
+      const fechaInicio = inicio.toISOString().split('T')[0];
+      const fechaFin = fin.toISOString().split('T')[0];
+      const data = await gestionService.getTomasMedicamento(pacienteId, { fechaInicio, fechaFin });
+      setTomasRegistro(Array.isArray(data) ? data : []);
+    } catch (err) {
+      Logger.error('DetallePaciente: Error cargando registro de tomas', err);
+      setTomasRegistro([]);
+    } finally {
+      setLoadingTomasRegistro(false);
+    }
+  }, [pacienteId]);
+
+  useEffect(() => {
+    if (accordionState.registroTomas && pacienteId) {
+      loadTomasRegistro();
+    }
+  }, [accordionState.registroTomas, pacienteId, loadTomasRegistro]);
 
   const renderAccordionIcon = useCallback((expanded) => (
-    <Text style={{ fontSize: 18, color: '#2196F3', fontWeight: 'bold' }}>
+    <Text style={{ fontSize: 18, color: COLORES.PRIMARIO, fontWeight: 'bold' }}>
       {expanded ? '▲' : '▼'}
     </Text>
   ), []);
@@ -1242,8 +1280,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const opcionesVacunaEsquema = useMemo(() => {
     if (!vacunaEsquemaSeleccionada) return [];
     return [
-      { icon: 'pencil', label: 'Editar', onPress: () => { handleEditEsquemaVacunacion(vacunaEsquemaSeleccionada); setVacunaEsquemaSeleccionada(null); }, color: '#2196F3' },
-      { icon: 'delete', label: 'Eliminar', onPress: () => { handleDeleteEsquemaVacunacion(vacunaEsquemaSeleccionada); setVacunaEsquemaSeleccionada(null); }, color: '#F44336' }
+      { icon: 'pencil', label: 'Editar', onPress: () => { handleEditEsquemaVacunacion(vacunaEsquemaSeleccionada); setVacunaEsquemaSeleccionada(null); }, color: COLORES.PRIMARIO },
+      { icon: 'delete', label: 'Eliminar', onPress: () => { handleDeleteEsquemaVacunacion(vacunaEsquemaSeleccionada); setVacunaEsquemaSeleccionada(null); }, color: COLORES.ERROR }
     ];
   }, [vacunaEsquemaSeleccionada]);
 
@@ -1251,8 +1289,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const opcionesMedicamentoSeleccionado = useMemo(() => {
     if (!medicamentoSeleccionado) return [];
     return [
-      { icon: 'magnify', label: 'Ver detalle del plan', onPress: () => { setShowAllMedicamentos(true); setMedicamentoSeleccionado(null); }, color: '#666' },
-      { icon: 'pencil', label: 'Editar plan', onPress: () => { handleEditMedicamento(medicamentoSeleccionado); setMedicamentoSeleccionado(null); }, color: '#2196F3' }
+      { icon: 'magnify', label: 'Ver detalle del plan', onPress: () => { setShowAllMedicamentos(true); setMedicamentoSeleccionado(null); }, color: COLORES.TEXTO_SECUNDARIO },
+      { icon: 'pencil', label: 'Editar plan', onPress: () => { handleEditMedicamento(medicamentoSeleccionado); setMedicamentoSeleccionado(null); }, color: COLORES.PRIMARIO }
     ];
   }, [medicamentoSeleccionado]);
 
@@ -1260,8 +1298,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const opcionesDeteccionComplicacion = useMemo(() => {
     if (!deteccionComplicacionSeleccionada) return [];
     return [
-      { icon: 'pencil', label: 'Editar', onPress: () => { openDeteccionModal(deteccionComplicacionSeleccionada); setDeteccionComplicacionSeleccionada(null); }, color: '#2196F3' },
-      { icon: 'delete', label: 'Eliminar', onPress: () => { handleDeleteDeteccion(deteccionComplicacionSeleccionada); setDeteccionComplicacionSeleccionada(null); }, color: '#F44336' }
+      { icon: 'pencil', label: 'Editar', onPress: () => { openDeteccionModal(deteccionComplicacionSeleccionada); setDeteccionComplicacionSeleccionada(null); }, color: COLORES.PRIMARIO },
+      { icon: 'delete', label: 'Eliminar', onPress: () => { handleDeleteDeteccion(deteccionComplicacionSeleccionada); setDeteccionComplicacionSeleccionada(null); }, color: COLORES.ERROR }
     ];
   }, [deteccionComplicacionSeleccionada]);
 
@@ -1269,8 +1307,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const opcionesComorbilidadSeleccionada = useMemo(() => {
     if (!comorbilidadSeleccionada) return [];
     return [
-      { icon: 'pencil', label: 'Editar', onPress: () => { handleEditComorbilidad(comorbilidadSeleccionada); setShowAddComorbilidad(true); setComorbilidadSeleccionada(null); }, color: '#2196F3' },
-      { icon: 'delete', label: 'Eliminar', onPress: () => { handleDeleteComorbilidad(comorbilidadSeleccionada); setComorbilidadSeleccionada(null); }, color: '#F44336' }
+      { icon: 'pencil', label: 'Editar', onPress: () => { handleEditComorbilidad(comorbilidadSeleccionada); setShowAddComorbilidad(true); setComorbilidadSeleccionada(null); }, color: COLORES.PRIMARIO },
+      { icon: 'delete', label: 'Eliminar', onPress: () => { handleDeleteComorbilidad(comorbilidadSeleccionada); setComorbilidadSeleccionada(null); }, color: COLORES.ERROR }
     ];
   }, [comorbilidadSeleccionada]);
 
@@ -1278,8 +1316,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const opcionesRegistroSaludBucal = useMemo(() => {
     if (!registroSaludBucalSeleccionado) return [];
     return [
-      { icon: 'pencil', label: 'Editar', onPress: () => { openSaludBucalModal(registroSaludBucalSeleccionado); setRegistroSaludBucalSeleccionado(null); }, color: '#2196F3' },
-      { icon: 'delete', label: 'Eliminar', onPress: () => { handleDeleteSaludBucal(registroSaludBucalSeleccionado); setRegistroSaludBucalSeleccionado(null); }, color: '#F44336' }
+      { icon: 'pencil', label: 'Editar', onPress: () => { openSaludBucalModal(registroSaludBucalSeleccionado); setRegistroSaludBucalSeleccionado(null); }, color: COLORES.PRIMARIO },
+      { icon: 'delete', label: 'Eliminar', onPress: () => { handleDeleteSaludBucal(registroSaludBucalSeleccionado); setRegistroSaludBucalSeleccionado(null); }, color: COLORES.ERROR }
     ];
   }, [registroSaludBucalSeleccionado]);
 
@@ -1287,8 +1325,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const opcionesDeteccionTb = useMemo(() => {
     if (!deteccionTbSeleccionada) return [];
     return [
-      { icon: 'pencil', label: 'Editar', onPress: () => { openDeteccionTuberculosisModal(deteccionTbSeleccionada); setDeteccionTbSeleccionada(null); }, color: '#2196F3' },
-      { icon: 'delete', label: 'Eliminar', onPress: () => { handleDeleteDeteccionTuberculosis(deteccionTbSeleccionada); setDeteccionTbSeleccionada(null); }, color: '#F44336' }
+      { icon: 'pencil', label: 'Editar', onPress: () => { openDeteccionTuberculosisModal(deteccionTbSeleccionada); setDeteccionTbSeleccionada(null); }, color: COLORES.PRIMARIO },
+      { icon: 'delete', label: 'Eliminar', onPress: () => { handleDeleteDeteccionTuberculosis(deteccionTbSeleccionada); setDeteccionTbSeleccionada(null); }, color: COLORES.ERROR }
     ];
   }, [deteccionTbSeleccionada]);
 
@@ -1363,30 +1401,20 @@ const DetallePacienteContent = ({ route, navigation }) => {
   // Funciones de exportación
   const handleExportarExpedienteCompleto = useCallback(async () => {
     if (!pacienteId) return;
-    
-    try {
-      Alert.alert(
-        'Exportar Expediente Completo',
-        'Se generará un PDF con toda la información médica del paciente relacionada y estructurada.',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Exportar',
-            onPress: async () => {
-              // Wrapper de seguridad MÁXIMO para evitar que la app se cierre
-              // Usar un try-catch anidado para capturar cualquier error no manejado
-              try {
-                const fecha = new Date().toISOString().split('T')[0];
-                const filename = `expediente-medico-${pacienteId}-${fecha}.pdf`;
-                
-                // Mostrar indicador de carga (Modal controlado por estado)
-                setExportandoExpediente(true);
-                
-                Logger.info('Iniciando exportación de expediente completo (HTML → PDF)', { pacienteId, filename });
-                
-                // 1. Obtener URL del HTML desde el servicio
-                const htmlUrl = await gestionService.exportarExpedienteCompleto(pacienteId);
-                
+
+    const runExport = async () => {
+      try {
+        const fecha = new Date().toISOString().split('T')[0];
+        const filename = `expediente-medico-${pacienteId}-${fecha}.pdf`;
+        const ahora = new Date();
+        const fechaFinExp = ahora.toISOString().split('T')[0];
+        const fechaInicioExp = new Date(ahora.getFullYear() - 1, ahora.getMonth(), ahora.getDate()).toISOString().split('T')[0];
+
+        setExportandoExpediente(true);
+        Logger.info('Iniciando exportación de expediente completo (HTML → PDF)', { pacienteId, filename, fechaInicioExp, fechaFinExp });
+
+        const htmlUrl = await gestionService.exportarExpedienteCompleto(pacienteId, fechaInicioExp, fechaFinExp);
+
                 // 2. Descargar el HTML
                 const apiConfig = await getApiConfig();
                 const token = await storageService.getAuthToken();
@@ -1570,64 +1598,38 @@ const DetallePacienteContent = ({ route, navigation }) => {
                     ]
                   );
                 }, 200);
-              } catch (error) {
-                // Cerrar modal de loading en caso de error
-                setExportandoExpediente(false);
-                
-                const errorMessage = error?.message || String(error) || 'Error desconocido';
-                Logger.error('Error exportando expediente completo', {
-                  message: errorMessage,
-                  stack: error?.stack,
-                  pacienteId,
-                  error: errorMessage
-                });
-                
-                // Mensaje de error más descriptivo
-                let userMessage = 'No se pudo exportar el expediente médico.';
-                if (errorMessage.includes('conexión') || errorMessage.includes('conectar') || errorMessage.includes('network')) {
-                  userMessage = 'Error de conexión. Verifica tu conexión a internet.';
-                } else if (errorMessage.includes('autenticación') || errorMessage.includes('token') || errorMessage.includes('401')) {
-                  userMessage = 'Error de autenticación. Por favor, inicia sesión nuevamente.';
-                } else if (errorMessage.includes('404')) {
-                  userMessage = 'El paciente no fue encontrado.';
-                } else if (errorMessage.includes('500') || errorMessage.includes('servidor') || errorMessage.includes('server')) {
-                  userMessage = 'Error del servidor. El servidor puede estar ocupado o hay un problema técnico. Por favor, intenta más tarde.';
-                } else if (errorMessage.includes('Timeout') || errorMessage.includes('timeout')) {
-                  userMessage = 'La generación del PDF está tomando demasiado tiempo. Por favor, intenta nuevamente.';
-                } else if (errorMessage.includes('Puppeteer') || errorMessage.includes('puppeteer') || errorMessage.includes('pdfkit')) {
-                  userMessage = 'Error al generar el PDF. Por favor, intenta nuevamente o contacta al soporte técnico.';
-                } else if (errorMessage) {
-                  userMessage = errorMessage.length > 150 ? errorMessage.substring(0, 150) + '...' : errorMessage;
-                }
-                
-                // Usar setTimeout para asegurar que el Alert se muestre después de cerrar el modal
-                // Y usar try-catch para evitar que el Alert cause un crash
-                setTimeout(() => {
-                  try {
-                    Alert.alert('❌ Error', userMessage, [{ text: 'OK' }]);
-                  } catch (alertError) {
-                    Logger.error('Error mostrando alert de error:', alertError);
-                    // Si el Alert falla, al menos loguear el error
-                  }
-                }, 200);
-              }
-            }
-          }
-        ]
-      );
-    } catch (error) {
-      // Asegurar que el modal se cierre incluso si hay error en el Alert inicial
-      setExportandoExpediente(false);
-      
-      const errorMessage = error?.message || String(error) || 'Error desconocido';
-      Logger.error('Error en exportación de expediente completo', {
-        message: errorMessage,
-        stack: error?.stack,
-        error: errorMessage
-      });
-      Alert.alert('Error', 'No se pudo exportar el expediente médico');
-    }
-  }, [pacienteId]);
+      } catch (error) {
+        setExportandoExpediente(false);
+        const errorMessage = error?.message || String(error) || 'Error desconocido';
+        Logger.error('Error exportando expediente completo', { message: errorMessage, stack: error?.stack, pacienteId });
+        let userMessage = 'No se pudo exportar el expediente médico.';
+        if (errorMessage.includes('conexión') || errorMessage.includes('conectar') || errorMessage.includes('network')) userMessage = 'Error de conexión. Verifica tu conexión a internet.';
+        else if (errorMessage.includes('autenticación') || errorMessage.includes('token') || errorMessage.includes('401')) userMessage = 'Error de autenticación. Por favor, inicia sesión nuevamente.';
+        else if (errorMessage.includes('404')) userMessage = 'El paciente no fue encontrado.';
+        else if (errorMessage.includes('500') || errorMessage.includes('servidor')) userMessage = 'Error del servidor. Intenta más tarde.';
+        else if (errorMessage.includes('Timeout') || errorMessage.includes('timeout')) userMessage = 'La generación está tomando demasiado tiempo. Intenta nuevamente.';
+        else if (errorMessage) userMessage = errorMessage.length > 150 ? errorMessage.substring(0, 150) + '...' : errorMessage;
+        setTimeout(() => { try { Alert.alert('Error', userMessage, [{ text: 'OK' }]); } catch (e) { Logger.error('Error mostrando alert', e); } }, 200);
+      }
+    };
+
+    NetInfo.fetch().then((state) => {
+      const isCellular = state?.type === 'cellular';
+      if (isCellular) {
+        Alert.alert(
+          'Datos móviles',
+          'Esta descarga puede consumir bastante datos. ¿Deseas continuar?',
+          [{ text: 'Cancelar', style: 'cancel' }, { text: 'Exportar', onPress: () => runExport() }]
+        );
+      } else {
+        Alert.alert(
+          'Exportar Expediente Completo',
+          'Se generará un PDF con la información médica del paciente (últimos 12 meses).',
+          [{ text: 'Cancelar', style: 'cancel' }, { text: 'Exportar', onPress: () => runExport() }]
+        );
+      }
+    });
+  }, [pacienteId, abrirPDFConFileViewer]);
 
   const handleExportarSignosVitales = useCallback(async () => {
     if (!pacienteId) return;
@@ -2917,7 +2919,15 @@ const DetallePacienteContent = ({ route, navigation }) => {
     }
   }, [pacienteId, paciente?.id_paciente]);
 
-  // Cargar doctores cuando se abre el modal
+  // Cargar doctores del paciente al abrir el detalle (para mostrarlos en el header)
+  useEffect(() => {
+    const currentPacienteId = pacienteId || paciente?.id_paciente;
+    if (currentPacienteId) {
+      loadDoctoresPaciente();
+    }
+  }, [pacienteId, paciente?.id_paciente, loadDoctoresPaciente]);
+
+  // Recargar doctores cuando se abre el modal de opciones (por si se asignó uno nuevo)
   useEffect(() => {
     if (modalManager.isOpen('optionsDoctores') || modalManager.isOpen('showAllDoctores')) {
       loadDoctoresPaciente();
@@ -4283,7 +4293,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
           <Text style={styles.loadingText}>Cargando información del paciente...</Text>
         </View>
       </SafeAreaView>
@@ -4295,7 +4305,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
           <Text style={styles.loadingText}>Cargando datos del paciente...</Text>
         </View>
       </SafeAreaView>
@@ -4342,6 +4352,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
           paciente={paciente}
           calcularEdad={calcularEdad}
           obtenerDoctorAsignado={obtenerDoctorAsignado}
+          nombresDoctoresAsignados={nombresDoctoresAsignados}
           formatearFecha={formatearFecha}
         />
 
@@ -4355,7 +4366,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
               style={[styles.exportButton, styles.expedienteCompletoButton]}
               onPress={handleExportarExpedienteCompleto}
             >
-              <Text style={[styles.exportButtonIcon, { color: '#FFFFFF' }]}>📄</Text>
+              <Text style={[styles.exportButtonIcon, { color: COLORES.TEXTO_EN_PRIMARIO }]}>📄</Text>
               <Text style={[styles.exportButtonText, styles.expedienteCompletoText]}>
                 Expediente Médico Completo
               </Text>
@@ -4465,7 +4476,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
           refreshTrigger={refreshSignosTrigger}
         />
 
-        {/* Medicamentos */}
+        {/* Medicamentos - máx. 5 en card; resto en Opciones → Ver historial completo */}
         <Card style={styles.card}>
           <Card.Content>
             <View style={styles.cardHeader}>
@@ -4484,72 +4495,141 @@ const DetallePacienteContent = ({ route, navigation }) => {
             {accordionState.medicamentos && (
               <>
                 {medicamentos && medicamentos.length > 0 ? (
-                  medicamentos.map((medicamento, medIndex) => (
-                    <TouchableOpacity
+                  <>
+                    {(medicamentos.length > 5) && (
+                      <Text style={styles.cardResumenText}>Mostrando 5 de {medicamentos.length}. Ver historial en Opciones.</Text>
+                    )}
+                    {medicamentos.slice(0, 5).map((medicamento, medIndex) => (
+                    <View
                       key={`med-${medicamento.id_plan}-${medicamento.id_medicamento || medIndex}-${medIndex}`}
-                      style={styles.listItem}
-                      onPress={() => setMedicamentoSeleccionado(medicamento)}
-                      activeOpacity={0.7}
+                      style={[styles.listItem, styles.medicamentoItemRow]}
                     >
-                      <View style={styles.listItemHeader}>
-                        <Text style={styles.listItemTitle}>
-                          {medicamento.nombre_medicamento || 'Sin nombre'}
+                      <TouchableOpacity
+                        style={styles.medicamentoItemContent}
+                        onPress={() => setMedicamentoSeleccionado(medicamento)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.listItemHeader}>
+                          <Text style={styles.listItemTitle}>
+                            {medicamento.nombre_medicamento || 'Sin nombre'}
+                          </Text>
+                          <Chip 
+                            mode="outlined" 
+                            style={[
+                              styles.statusChip,
+                              medicamento.estado === 'Activo' ? styles.statusActive : styles.statusInactive
+                            ]}
+                          >
+                            {medicamento.estado}
+                          </Chip>
+                        </View>
+                        <Text style={styles.listItemSubtitle}>
+                          {medicamento.doctor_nombre || 'Sin doctor asignado'}
                         </Text>
-                        <Chip 
-                          mode="outlined" 
-                          style={[
-                            styles.statusChip,
-                            medicamento.estado === 'Activo' ? styles.statusActive : styles.statusInactive
-                          ]}
-                        >
-                          {medicamento.estado}
-                        </Chip>
-                      </View>
-                      <Text style={styles.listItemSubtitle}>
-                        {medicamento.doctor_nombre || 'Sin doctor asignado'}
-                      </Text>
-                      <View style={styles.medicationGrid}>
-                        {medicamento.dosis && (
-                          <View style={styles.medicationItem}>
-                            <Text style={styles.medicationLabel}>Dosis:</Text>
-                            <Text style={styles.medicationValue}>{medicamento.dosis}</Text>
-                          </View>
+                        <View style={styles.medicationGrid}>
+                          {medicamento.dosis && (
+                            <View style={styles.medicationItem}>
+                              <Text style={styles.medicationLabel}>Dosis:</Text>
+                              <Text style={styles.medicationValue}>{medicamento.dosis}</Text>
+                            </View>
+                          )}
+                          {medicamento.frecuencia && (
+                            <View style={styles.medicationItem}>
+                              <Text style={styles.medicationLabel}>Frecuencia:</Text>
+                              <Text style={styles.medicationValue}>{medicamento.frecuencia}</Text>
+                            </View>
+                          )}
+                          {(medicamento.horarios && Array.isArray(medicamento.horarios) && medicamento.horarios.length > 0) ? (
+                            <View style={styles.medicationItem}>
+                              <Text style={styles.medicationLabel}>Horarios:</Text>
+                              <Text style={styles.medicationValue}>
+                                {medicamento.horarios.join(', ')}
+                              </Text>
+                            </View>
+                          ) : medicamento.horario ? (
+                            <View style={styles.medicationItem}>
+                              <Text style={styles.medicationLabel}>Horario:</Text>
+                              <Text style={styles.medicationValue}>{medicamento.horario}</Text>
+                            </View>
+                          ) : null}
+                          {medicamento.via_administracion && (
+                            <View style={styles.medicationItem}>
+                              <Text style={styles.medicationLabel}>Vía:</Text>
+                              <Text style={styles.medicationValue}>{medicamento.via_administracion}</Text>
+                            </View>
+                          )}
+                        </View>
+                        {medicamento.observaciones && (
+                          <Text style={styles.listItemDescription}>
+                            {medicamento.observaciones}
+                          </Text>
                         )}
-                        {medicamento.frecuencia && (
-                          <View style={styles.medicationItem}>
-                            <Text style={styles.medicationLabel}>Frecuencia:</Text>
-                            <Text style={styles.medicationValue}>{medicamento.frecuencia}</Text>
-                          </View>
-                        )}
-                        {(medicamento.horarios && Array.isArray(medicamento.horarios) && medicamento.horarios.length > 0) ? (
-                          <View style={styles.medicationItem}>
-                            <Text style={styles.medicationLabel}>Horarios:</Text>
-                            <Text style={styles.medicationValue}>
-                              {medicamento.horarios.join(', ')}
-                            </Text>
-                          </View>
-                        ) : medicamento.horario ? (
-                          <View style={styles.medicationItem}>
-                            <Text style={styles.medicationLabel}>Horario:</Text>
-                            <Text style={styles.medicationValue}>{medicamento.horario}</Text>
-                          </View>
-                        ) : null}
-                        {medicamento.via_administracion && (
-                          <View style={styles.medicationItem}>
-                            <Text style={styles.medicationLabel}>Vía:</Text>
-                            <Text style={styles.medicationValue}>{medicamento.via_administracion}</Text>
-                          </View>
-                        )}
-                      </View>
-                      {medicamento.observaciones && (
-                        <Text style={styles.listItemDescription}>
-                          {medicamento.observaciones}
-                        </Text>
-                      )}
-                    </TouchableOpacity>
-                  ))
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.medicamentoOpcionesButton}
+                        onPress={() => setMedicamentoSeleccionado(medicamento)}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.medicamentoOpcionesButtonText}>Opciones</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  </>
                 ) : (
                   <Text style={styles.noDataText}>No hay medicamentos registrados</Text>
+                )}
+              </>
+            )}
+          </Card.Content>
+        </Card>
+
+        {/* Registro de tomas (adherencia) */}
+        <Card style={styles.card}>
+          <Card.Content>
+            <View style={styles.cardHeader}>
+              <Title style={styles.cardTitle}>📋 Registro de tomas</Title>
+              <View style={styles.cardActions}>
+                <IconButton
+                  icon={() => renderAccordionIcon(accordionState.registroTomas)}
+                  size={28}
+                  onPress={() => toggleAccordion('registroTomas')}
+                />
+              </View>
+            </View>
+            {accordionState.registroTomas && (
+              <>
+                {loadingTomasRegistro ? (
+                  <ActivityIndicator size="large" color={COLORES.PRIMARIO} style={{ padding: 20 }} />
+                ) : tomasRegistro && tomasRegistro.length > 0 ? (
+                  <>
+                    {tomasRegistro.length > 5 && (
+                      <Text style={styles.cardResumenText}>Mostrando 5 de {tomasRegistro.length}. Ver historial en Opciones.</Text>
+                    )}
+                    {tomasRegistro.slice(0, 5).map((toma, index) => {
+                    const nombreMedicamento = toma.PlanDetalle?.Medicamento?.nombre_medicamento || 'Sin nombre';
+                    const fechaStr = formatearFecha(toma.fecha_toma, false);
+                    const horaStr = toma.hora_toma || '—';
+                    const confirmadoPor = toma.confirmado_por || '—';
+                    return (
+                      <View
+                        key={`toma-${toma.id_toma ?? index}-${index}`}
+                        style={styles.listItem}
+                      >
+                        <Text style={styles.listItemTitle}>{nombreMedicamento}</Text>
+                        <Text style={styles.listItemSubtitle}>
+                          {fechaStr} · {horaStr}
+                        </Text>
+                        {confirmadoPor !== '—' && (
+                          <Text style={styles.listItemDescription}>
+                            Confirmado por: {confirmadoPor}
+                          </Text>
+                        )}
+                      </View>
+                    );
+                  })}
+                  </>
+                ) : (
+                  <Text style={styles.noDataText}>No hay tomas registradas en los últimos 7 días</Text>
                 )}
               </>
             )}
@@ -4575,9 +4655,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
             {accordionState.redApoyo && (
               <>
                 {loadingRedApoyo ? (
-                  <ActivityIndicator size="large" color="#2196F3" style={{ padding: 20 }} />
+                  <ActivityIndicator size="large" color={COLORES.PRIMARIO} style={{ padding: 20 }} />
                 ) : redApoyo && redApoyo.length > 0 ? (
-                  redApoyoMostrar.map((contacto, index) => (
+                  <>
+                    {redApoyo.length > 5 && (
+                      <Text style={styles.cardResumenText}>Mostrando 5 de {redApoyo.length}. Ver historial en Opciones.</Text>
+                    )}
+                    {redApoyoMostrar.map((contacto, index) => (
                     <TouchableOpacity
                       key={`red-${contacto.id_red_apoyo}-${index}`}
                       style={styles.listItem}
@@ -4595,7 +4679,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         <Text style={styles.listItemDescription}>📧 {contacto.email}</Text>
                       )}
                     </TouchableOpacity>
-                  ))
+                  ))}
+                  </>
                 ) : (
                   <Text style={styles.noDataText}>No hay contactos registrados</Text>
                 )}
@@ -4623,9 +4708,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
             {accordionState.esquemaVacunacion && (
               <>
                 {loadingEsquemaVacunacion ? (
-                  <ActivityIndicator size="large" color="#2196F3" style={{ padding: 20 }} />
+                  <ActivityIndicator size="large" color={COLORES.PRIMARIO} style={{ padding: 20 }} />
                 ) : esquemaVacunacion && esquemaVacunacion.length > 0 ? (
-                  esquemaVacunacionMostrar.map((vacuna, index) => (
+                  <>
+                    {esquemaVacunacion.length > 5 && (
+                      <Text style={styles.cardResumenText}>Mostrando 5 de {esquemaVacunacion.length}. Ver historial en Opciones.</Text>
+                    )}
+                    {esquemaVacunacionMostrar.map((vacuna, index) => (
                     <TouchableOpacity
                       key={`vacuna-${vacuna.id_esquema}-${index}`}
                       style={styles.listItem}
@@ -4645,7 +4734,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         <Text style={styles.listItemNotes}>{vacuna.observaciones}</Text>
                       )}
                     </TouchableOpacity>
-                  ))
+                  ))}
+                  </>
                 ) : (
                   <Text style={styles.noDataText}>No hay vacunas registradas</Text>
                 )}
@@ -4674,9 +4764,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
             {accordionState.complicaciones && (
               <>
                 {loadingDetecciones ? (
-                  <ActivityIndicator size="large" color="#2196F3" style={{ padding: 20 }} />
+                  <ActivityIndicator size="large" color={COLORES.PRIMARIO} style={{ padding: 20 }} />
                 ) : detecciones && detecciones.length > 0 ? (
-                  deteccionesMostrar.map((det, index) => (
+                  <>
+                    {detecciones.length > 5 && (
+                      <Text style={styles.cardResumenText}>Mostrando 5 de {detecciones.length}. Ver historial en Opciones.</Text>
+                    )}
+                    {deteccionesMostrar.map((det, index) => (
                     <TouchableOpacity
                       key={`det-${det.id_deteccion || index}`}
                       style={styles.listItem}
@@ -4715,7 +4809,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         <Text style={styles.listItemNotes}>{det.observaciones}</Text>
                       ) : null}
                     </TouchableOpacity>
-                  ))
+                  ))}
+                  </>
                 ) : (
                   <Text style={styles.noDataText}>No hay complicaciones registradas</Text>
                 )}
@@ -4743,21 +4838,23 @@ const DetallePacienteContent = ({ route, navigation }) => {
             {accordionState.comorbilidades && (
               <>
                 {loadingComorbilidades ? (
-                  <ActivityIndicator size="large" color="#2196F3" style={{ padding: 20 }} />
+                  <ActivityIndicator size="large" color={COLORES.PRIMARIO} style={{ padding: 20 }} />
                 ) : comorbilidadesPaciente && comorbilidadesPaciente.length > 0 ? (
-                  comorbilidadesMostrar.map((comorbilidad, index) => (
+                  <>
+                    {comorbilidadesPaciente.length > 5 && (
+                      <Text style={styles.cardResumenText}>Mostrando 5 de {comorbilidadesPaciente.length}. Ver historial en Opciones.</Text>
+                    )}
+                    {comorbilidadesMostrar.map((comorbilidad, index) => (
                     <TouchableOpacity
                       key={`comorbilidad-${comorbilidad.id_comorbilidad}-${index}`}
                       style={styles.listItem}
                       onPress={() => setComorbilidadSeleccionada(comorbilidad)}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.listItemTitle}>{comorbilidad.nombre || comorbilidad.nombre_comorbilidad}</Text>
-                      {comorbilidad.fecha_deteccion && (
-                        <Text style={styles.listItemSubtitle}>
-                          Detectada: {formatearFecha(comorbilidad.fecha_deteccion)}
-                        </Text>
-                      )}
+                      <Text style={styles.listItemTitle}>
+                        {comorbilidad.nombre || comorbilidad.nombre_comorbilidad}
+                        {comorbilidad.fecha_deteccion ? ` · ${formatearFecha(comorbilidad.fecha_deteccion)}` : ''}
+                      </Text>
                       {comorbilidad.anos_padecimiento && (
                         <Text style={styles.listItemSubtitle}>
                           Años con padecimiento: {comorbilidad.anos_padecimiento}
@@ -4767,7 +4864,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         <Text style={styles.listItemDescription}>{comorbilidad.observaciones}</Text>
                       )}
                     </TouchableOpacity>
-                  ))
+                  ))}
+                  </>
                 ) : (
                   <Text style={styles.noDataText}>No hay comorbilidades registradas</Text>
                 )}
@@ -4795,9 +4893,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
             {accordionState.sesionesEducativas && (
               <>
                 {loadingSesionesEducativas ? (
-                  <ActivityIndicator size="large" color="#2196F3" style={{ padding: 20 }} />
+                  <ActivityIndicator size="large" color={COLORES.PRIMARIO} style={{ padding: 20 }} />
                 ) : sesionesEducativas && sesionesEducativas.length > 0 ? (
-                  sesionesEducativasMostrar.map((sesion, index) => (
+                  <>
+                    {sesionesEducativas.length > 5 && (
+                      <Text style={styles.cardResumenText}>Mostrando 5 de {sesionesEducativas.length}. Ver historial en Opciones.</Text>
+                    )}
+                    {sesionesEducativasMostrar.map((sesion, index) => (
                     <View key={`sesion-${sesion.id_sesion}-${index}`} style={styles.listItem}>
                       <View style={styles.listItemHeader}>
                         <Text style={styles.listItemTitle}>
@@ -4813,7 +4915,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         </Text>
                       </View>
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-                        <Chip style={{ backgroundColor: sesion.asistio ? '#4CAF50' : '#F44336' }}>
+                        <Chip style={{ backgroundColor: sesion.asistio ? COLORES.EXITO : COLORES.ERROR }}>
                           {sesion.asistio ? '✅ Asistió' : '❌ No asistió'}
                         </Chip>
                         {sesion.numero_intervenciones > 1 && (
@@ -4828,23 +4930,24 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         userRole === 'Doctor' || userRole === 'doctor') && (
                         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                           <TouchableOpacity
-                            style={{ flex: 1, backgroundColor: '#2196F3', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                            style={{ flex: 1, backgroundColor: COLORES.PRIMARIO, padding: 8, borderRadius: 6, alignItems: 'center' }}
                             onPress={() => handleEditSesionEducativa(sesion)}
                           >
-                            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
+                            <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
                           </TouchableOpacity>
                           {(userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador') && (
                             <TouchableOpacity
-                              style={{ flex: 1, backgroundColor: '#f44336', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                              style={{ flex: 1, backgroundColor: COLORES.ERROR, padding: 8, borderRadius: 6, alignItems: 'center' }}
                               onPress={() => handleDeleteSesionEducativa(sesion)}
                             >
-                              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
+                              <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
                             </TouchableOpacity>
                           )}
                         </View>
                       )}
                     </View>
-                  ))
+                  ))}
+                  </>
                 ) : (
                   <Text style={styles.noDataText}>No hay sesiones educativas registradas</Text>
                 )}
@@ -4872,9 +4975,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
             {accordionState.saludBucal && (
               <>
                 {loadingSaludBucal ? (
-                  <ActivityIndicator size="large" color="#2196F3" style={{ padding: 20 }} />
+                  <ActivityIndicator size="large" color={COLORES.PRIMARIO} style={{ padding: 20 }} />
                 ) : saludBucal && saludBucal.length > 0 ? (
-                  saludBucal.slice(0, 3).map((registro, index) => (
+                  <>
+                    {saludBucal.length > 5 && (
+                      <Text style={styles.cardResumenText}>Mostrando 5 de {saludBucal.length}. Ver historial en Opciones.</Text>
+                    )}
+                    {saludBucal.slice(0, 5).map((registro, index) => (
                     <TouchableOpacity
                       key={`salud-bucal-${registro.id_salud_bucal}-${index}`}
                       style={styles.listItem}
@@ -4902,19 +5009,10 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         <Text style={styles.listItemNotes}>{registro.observaciones}</Text>
                       )}
                     </TouchableOpacity>
-                  ))
+                  ))}
+                  </>
                 ) : (
                   <Text style={styles.noDataText}>No hay registros de salud bucal</Text>
-                )}
-                {saludBucal && saludBucal.length > 3 && (
-                  <TouchableOpacity
-                    style={{ marginTop: 12, padding: 12, backgroundColor: '#e3f2fd', borderRadius: 8, alignItems: 'center' }}
-                    onPress={() => setShowAllSaludBucal(true)}
-                  >
-                    <Text style={{ color: '#1976d2', fontWeight: '600' }}>
-                      Ver todos ({saludBucal.length})
-                    </Text>
-                  </TouchableOpacity>
                 )}
               </>
             )}
@@ -4940,9 +5038,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
             {accordionState.deteccionesTuberculosis && (
               <>
                 {loadingDeteccionesTuberculosis ? (
-                  <ActivityIndicator size="large" color="#2196F3" style={{ padding: 20 }} />
+                  <ActivityIndicator size="large" color={COLORES.PRIMARIO} style={{ padding: 20 }} />
                 ) : deteccionesTuberculosis && deteccionesTuberculosis.length > 0 ? (
-                  deteccionesTuberculosis.slice(0, 3).map((deteccion, index) => (
+                  <>
+                    {deteccionesTuberculosis.length > 5 && (
+                      <Text style={styles.cardResumenText}>Mostrando 5 de {deteccionesTuberculosis.length}. Ver historial en Opciones.</Text>
+                    )}
+                    {deteccionesTuberculosis.slice(0, 5).map((deteccion, index) => (
                     <TouchableOpacity
                       key={`tb-${deteccion.id_deteccion_tb}-${index}`}
                       style={styles.listItem}
@@ -4980,19 +5082,10 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         <Text style={styles.listItemNotes}>{deteccion.observaciones}</Text>
                       )}
                     </TouchableOpacity>
-                  ))
+                  ))}
+                  </>
                 ) : (
                   <Text style={styles.noDataText}>No hay detecciones de tuberculosis registradas</Text>
-                )}
-                {deteccionesTuberculosis && deteccionesTuberculosis.length > 3 && (
-                  <TouchableOpacity
-                    style={{ marginTop: 12, padding: 12, backgroundColor: '#e3f2fd', borderRadius: 8, alignItems: 'center' }}
-                    onPress={() => setShowAllDeteccionesTuberculosis(true)}
-                  >
-                    <Text style={{ color: '#1976d2', fontWeight: '600' }}>
-                      Ver todos ({deteccionesTuberculosis.length})
-                    </Text>
-                  </TouchableOpacity>
                 )}
               </>
             )}
@@ -5007,7 +5100,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
               onPress={handleEditPaciente}
               style={[styles.actionButton, styles.editButton]}
               buttonColor={COLORES.NAV_PRIMARIO}
-              textColor="#FFFFFF"
+              textColor={COLORES.TEXTO_EN_PRIMARIO}
             >
               Editar
             </Button>
@@ -5018,7 +5111,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 onPress={handleChangeDoctor}
                 style={[styles.actionButton, styles.changeDoctorButton]}
                 buttonColor={COLORES.ADVERTENCIA_LIGHT}
-                textColor="#FFFFFF"
+                textColor={COLORES.TEXTO_EN_PRIMARIO}
               >
                 Cambiar Doctor
               </Button>
@@ -5032,7 +5125,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 onPress={handleToggleStatus}
                 style={[styles.actionButton, styles.toggleButton]}
                 buttonColor={paciente.activo ? COLORES.ERROR_LIGHT : COLORES.EXITO_LIGHT}
-                textColor="#FFFFFF"
+                textColor={COLORES.TEXTO_EN_PRIMARIO}
               >
                 {paciente.activo ? 'Desactivar' : 'Activar'}
               </Button>
@@ -5044,7 +5137,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 onPress={handleDeletePaciente}
                 style={[styles.actionButton, styles.deleteButton]}
                 buttonColor={COLORES.ERROR}
-                textColor="#FFFFFF"
+                textColor={COLORES.TEXTO_EN_PRIMARIO}
               >
                 Eliminar
               </Button>
@@ -5106,8 +5199,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
               <View style={styles.formSection}>
                 <Text style={styles.label}>📅 Asociar a Cita (Opcional)</Text>
                 {formDataSignosVitales.id_cita && formDataSignosVitales.id_cita !== '' ? (
-                  <View style={{ backgroundColor: '#e3f2fd', padding: 12, borderRadius: 8, marginBottom: 8 }}>
-                    <Text style={[styles.label, { fontSize: 12, color: '#1976d2', fontWeight: '600' }]}>
+                  <View style={{ backgroundColor: COLORES.FONDO_VERDE_SUAVE, padding: 12, borderRadius: 8, marginBottom: 8 }}>
+                    <Text style={[styles.label, { fontSize: 12, color: COLORES.PRIMARIO, fontWeight: '600' }]}>
                       ✅ Cita ya asociada: {(() => {
                         const citaSeleccionada = citas?.find(c => String(c.id_cita) === formDataSignosVitales.id_cita);
                         return citaSeleccionada ? `${formatearFecha(citaSeleccionada.fecha_cita)} - ${citaSeleccionada.motivo || 'Sin motivo'}` : 'Cita seleccionada';
@@ -5115,7 +5208,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                     </Text>
                   </View>
                 ) : (
-                  <Text style={[styles.label, { fontSize: 12, color: '#666', marginBottom: 8, fontWeight: 'normal' }]}>
+                  <Text style={[styles.label, { fontSize: 12, color: COLORES.TEXTO_SECUNDARIO, marginBottom: 8, fontWeight: 'normal' }]}>
                     Selecciona una cita para asociar estos signos vitales a una consulta específica
                   </Text>
                 )}
@@ -5153,8 +5246,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
                     ))}
                   </ScrollView>
                 ) : (
-                  <View style={{ padding: 12, backgroundColor: '#f5f5f5', borderRadius: 8 }}>
-                    <Text style={[styles.label, { fontSize: 13, color: '#666', fontWeight: 'normal' }]}>
+                  <View style={{ padding: 12, backgroundColor: COLORES.FONDO, borderRadius: 8 }}>
+                    <Text style={[styles.label, { fontSize: 13, color: COLORES.TEXTO_SECUNDARIO, fontWeight: 'normal' }]}>
                       No hay citas disponibles para este paciente
                     </Text>
                   </View>
@@ -5173,7 +5266,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       value={formDataSignosVitales.peso_kg}
                       onChangeText={(value) => updateFormField('peso_kg', value)}
                       placeholder="Ej: 75.5"
-                      placeholderTextColor="#9E9E9E"
+                      placeholderTextColor={COLORES.TEXTO_DISABLED}
                       keyboardType="decimal-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5185,7 +5278,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       value={formDataSignosVitales.talla_m}
                       onChangeText={(value) => updateFormField('talla_m', value)}
                       placeholder="Ej: 1.70"
-                      placeholderTextColor="#9E9E9E"
+                      placeholderTextColor={COLORES.TEXTO_DISABLED}
                       keyboardType="decimal-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5209,7 +5302,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       value={formDataSignosVitales.medida_cintura_cm}
                       onChangeText={(value) => updateFormField('medida_cintura_cm', value)}
                       placeholder="Ej: 85"
-                      placeholderTextColor="#9E9E9E"
+                      placeholderTextColor={COLORES.TEXTO_DISABLED}
                       keyboardType="decimal-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5229,7 +5322,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       value={formDataSignosVitales.presion_sistolica}
                       onChangeText={(value) => updateFormField('presion_sistolica', value)}
                       placeholder="Ej: 120"
-                      placeholderTextColor="#9E9E9E"
+                      placeholderTextColor={COLORES.TEXTO_DISABLED}
                       keyboardType="number-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5241,7 +5334,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       value={formDataSignosVitales.presion_diastolica}
                       onChangeText={(value) => updateFormField('presion_diastolica', value)}
                       placeholder="Ej: 80"
-                      placeholderTextColor="#9E9E9E"
+                      placeholderTextColor={COLORES.TEXTO_DISABLED}
                       keyboardType="number-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5262,7 +5355,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       value={formDataSignosVitales.glucosa_mg_dl}
                       onChangeText={(value) => updateFormField('glucosa_mg_dl', value)}
                       placeholder="Ej: 95"
-                      placeholderTextColor="#9E9E9E"
+                      placeholderTextColor={COLORES.TEXTO_DISABLED}
                       keyboardType="decimal-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5275,7 +5368,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       value={formDataSignosVitales.colesterol_mg_dl}
                       onChangeText={(value) => updateFormField('colesterol_mg_dl', value)}
                       placeholder="Ej: 180"
-                      placeholderTextColor="#9E9E9E"
+                      placeholderTextColor={COLORES.TEXTO_DISABLED}
                       keyboardType="decimal-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5295,7 +5388,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                           value={formDataSignosVitales.colesterol_ldl}
                           onChangeText={(value) => updateFormField('colesterol_ldl', value)}
                           placeholder="Ej: 100"
-                          placeholderTextColor="#9E9E9E"
+                          placeholderTextColor={COLORES.TEXTO_DISABLED}
                           keyboardType="decimal-pad"
                           editable={!savingSignosVitales}
                         />
@@ -5307,7 +5400,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                           value={formDataSignosVitales.colesterol_hdl}
                           onChangeText={(value) => updateFormField('colesterol_hdl', value)}
                           placeholder="Ej: 40"
-                          placeholderTextColor="#9E9E9E"
+                          placeholderTextColor={COLORES.TEXTO_DISABLED}
                           keyboardType="decimal-pad"
                           editable={!savingSignosVitales}
                         />
@@ -5327,7 +5420,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         value={formDataSignosVitales.trigliceridos_mg_dl}
                         onChangeText={(value) => updateFormField('trigliceridos_mg_dl', value)}
                         placeholder="Ej: 120"
-                        placeholderTextColor="#9E9E9E"
+                        placeholderTextColor={COLORES.TEXTO_DISABLED}
                         keyboardType="decimal-pad"
                         editable={!savingSignosVitales}
                       />
@@ -5345,7 +5438,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       value={formDataSignosVitales.hba1c_porcentaje}
                       onChangeText={(value) => updateFormField('hba1c_porcentaje', value)}
                       placeholder="Ej: 6.5"
-                      placeholderTextColor="#9E9E9E"
+                      placeholderTextColor={COLORES.TEXTO_DISABLED}
                       keyboardType="decimal-pad"
                       editable={!savingSignosVitales}
                     />
@@ -5362,15 +5455,15 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         updateFormField('edad_paciente_en_medicion', edad);
                       }}
                       placeholder={paciente?.fecha_nacimiento ? `Ej: ${calcularEdad(paciente.fecha_nacimiento)}` : "Ej: 45"}
-                      placeholderTextColor="#9E9E9E"
+                      placeholderTextColor={COLORES.TEXTO_DISABLED}
                       keyboardType="number-pad"
                       editable={!savingSignosVitales}
                     />
                   </View>
                 </View>
                 {formDataSignosVitales.hba1c_porcentaje && formDataSignosVitales.edad_paciente_en_medicion && (
-                  <View style={{ backgroundColor: '#fff3cd', padding: 12, borderRadius: 8, marginTop: 8 }}>
-                    <Text style={{ fontSize: 12, color: '#856404' }}>
+                  <View style={{ backgroundColor: COLORES.FONDO_ADVERTENCIA_CLARO, padding: 12, borderRadius: 8, marginTop: 8 }}>
+                    <Text style={{ fontSize: 12, color: COLORES.ADVERTENCIA_TEXTO }}>
                       {(() => {
                         const edad = parseInt(formDataSignosVitales.edad_paciente_en_medicion, 10);
                         const hba1c = parseFloat(formDataSignosVitales.hba1c_porcentaje);
@@ -5399,7 +5492,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                   value={formDataSignosVitales.observaciones}
                   onChangeText={(value) => updateFormField('observaciones', value)}
                   placeholder="Notas adicionales..."
-                  placeholderTextColor="#9E9E9E"
+                  placeholderTextColor={COLORES.TEXTO_DISABLED}
                   multiline
                   numberOfLines={4}
                   editable={!savingSignosVitales}
@@ -5553,26 +5646,26 @@ const DetallePacienteContent = ({ route, navigation }) => {
               )}
               
               {/* Botones de acción */}
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#e0e0e0' }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORES.BORDE_CLARO }}>
                 <TouchableOpacity
-                  style={{ flex: 1, backgroundColor: '#2196F3', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                  style={{ flex: 1, backgroundColor: COLORES.PRIMARIO, padding: 8, borderRadius: 6, alignItems: 'center' }}
                   onPress={() => {
                     setShowAllSignosVitales(false);
                     handleEditSignosVitales(signo);
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
+                  <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
                 </TouchableOpacity>
                 {(userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador' ||
                   userRole === 'Doctor' || userRole === 'doctor') && (
                   <TouchableOpacity
-                    style={{ flex: 1, backgroundColor: '#f44336', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                    style={{ flex: 1, backgroundColor: COLORES.ERROR, padding: 8, borderRadius: 6, alignItems: 'center' }}
                     onPress={() => {
                       setShowAllSignosVitales(false);
                       handleDeleteSignosVitales(signo);
                     }}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
+                    <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -5683,8 +5776,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
 
             {loadingCitaDetalle ? (
               <View style={{ padding: 16, alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#6200ee" />
-                <Text style={{ marginTop: 10, color: '#666' }}>Cargando detalle...</Text>
+                <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
+                <Text style={{ marginTop: 10, color: COLORES.TEXTO_SECUNDARIO }}>Cargando detalle...</Text>
               </View>
             ) : citaDetalle ? (
               <ScrollView 
@@ -5704,7 +5797,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         styles.statusChip,
                         { backgroundColor: getEstadoCitaColor(citaDetalle.estado) }
                       ]}
-                      textStyle={{ color: '#FFFFFF', fontSize: 11, fontWeight: '600' }}
+                      textStyle={{ color: COLORES.TEXTO_EN_PRIMARIO, fontSize: 11, fontWeight: '600' }}
                     >
                       {getEstadoCitaTexto(citaDetalle.estado)}
                     </Chip>
@@ -5739,11 +5832,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
                   )}
 
                   {/* ✅ Botones de acción para completar la cita */}
-                  <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#e0e0e0', gap: 10 }}>
+                  <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: COLORES.BORDE_CLARO, gap: 10 }}>
                     {/* Botón principal: Wizard (Nuevo - Recomendado) */}
                     <TouchableOpacity
                       style={{
-                        backgroundColor: '#4CAF50',
+                        backgroundColor: COLORES.EXITO,
                         padding: 14,
                         borderRadius: 8,
                         alignItems: 'center',
@@ -5753,18 +5846,18 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       }}
                       onPress={() => handleOpenWizard(citaDetalle.id_cita)}
                     >
-                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
+                      <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '700', fontSize: 16 }}>
                         Completar Cita (Wizard)
                       </Text>
                     </TouchableOpacity>
-                    <Text style={{ fontSize: 11, color: '#666', textAlign: 'center', marginBottom: 8 }}>
+                    <Text style={{ fontSize: 11, color: COLORES.TEXTO_SECUNDARIO, textAlign: 'center', marginBottom: 8 }}>
                       Recomendado: Flujo guiado paso a paso con guardado progresivo
                     </Text>
 
                     {/* Botón secundario: Solo agregar signos vitales */}
                     <TouchableOpacity
                       style={{
-                        backgroundColor: '#e3f2fd',
+                        backgroundColor: COLORES.FONDO_VERDE_SUAVE,
                         padding: 10,
                         borderRadius: 8,
                         alignItems: 'center',
@@ -5772,11 +5865,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         justifyContent: 'center',
                         gap: 8,
                         borderWidth: 1,
-                        borderColor: '#90caf9'
+                        borderColor: COLORES.BORDE_VERDE_SUAVE
                       }}
                       onPress={() => handleOpenSignosVitalesFromCita(citaDetalle.id_cita)}
                     >
-                      <Text style={{ color: '#1976d2', fontWeight: '600', fontSize: 14 }}>
+                      <Text style={{ color: COLORES.PRIMARIO, fontWeight: '600', fontSize: 14 }}>
                         Solo Agregar Signos Vitales
                       </Text>
                     </TouchableOpacity>
@@ -5884,38 +5977,38 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 </View>
 
                 {/* Botones de acción para la cita */}
-                <View style={{ paddingHorizontal: 8, paddingTop: 24, paddingBottom: 16, borderTopWidth: 1, borderTopColor: '#e0e0e0', marginTop: 16 }}>
+                <View style={{ paddingHorizontal: 8, paddingTop: 24, paddingBottom: 16, borderTopWidth: 1, borderTopColor: COLORES.BORDE_CLARO, marginTop: 16 }}>
                   <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                     <TouchableOpacity
-                      style={{ flex: 1, minWidth: '45%', backgroundColor: '#2196F3', padding: 12, borderRadius: 8, alignItems: 'center' }}
+                      style={{ flex: 1, minWidth: '45%', backgroundColor: COLORES.PRIMARIO, padding: 12, borderRadius: 8, alignItems: 'center' }}
                       onPress={() => {
                         handleCloseDetalleCita();
                         handleEditCita(citaDetalle);
                       }}
                     >
-                      <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>✏️ Editar Cita</Text>
+                      <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 14 }}>✏️ Editar Cita</Text>
                     </TouchableOpacity>
                     {citaDetalle.estado !== 'cancelada' && citaDetalle.estado !== 'atendida' && (
                       <TouchableOpacity
-                        style={{ flex: 1, minWidth: '45%', backgroundColor: '#FF9800', padding: 12, borderRadius: 8, alignItems: 'center' }}
+                        style={{ flex: 1, minWidth: '45%', backgroundColor: COLORES.ADVERTENCIA, padding: 12, borderRadius: 8, alignItems: 'center' }}
                         onPress={() => {
                           handleCloseDetalleCita();
                           handleCancelarCita(citaDetalle);
                         }}
                       >
-                        <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>❌ Cancelar</Text>
+                        <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 14 }}>❌ Cancelar</Text>
                       </TouchableOpacity>
                     )}
                 {(userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador' ||
                   userRole === 'Doctor' || userRole === 'doctor') && (
                   <TouchableOpacity
-                    style={{ flex: 1, minWidth: '45%', backgroundColor: '#f44336', padding: 12, borderRadius: 8, alignItems: 'center' }}
+                    style={{ flex: 1, minWidth: '45%', backgroundColor: COLORES.ERROR, padding: 12, borderRadius: 8, alignItems: 'center' }}
                     onPress={() => {
                       handleCloseDetalleCita();
                       handleDeleteCita(citaDetalle);
                     }}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>🗑️ Eliminar</Text>
+                    <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 14 }}>🗑️ Eliminar</Text>
                   </TouchableOpacity>
                 )}
                   </View>
@@ -5959,7 +6052,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
               modalManager.close('optionsCitas');
               handleShowAllCitas();
             },
-            color: '#666'
+            color: COLORES.TEXTO_SECUNDARIO
           }
         ]}
       />
@@ -6262,13 +6355,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
               modalManager.close('optionsDiagnosticos');
               setShowAddDiagnostico(true);
             },
-            color: '#2196F3'
+            color: COLORES.PRIMARIO
           },
           {
             icon: 'magnify',
             label: 'Ver Historial Completo',
             onPress: () => setShowAllDiagnosticos(true),
-            color: '#666'
+            color: COLORES.TEXTO_SECUNDARIO
           }
         ]}
       />
@@ -6286,13 +6379,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
               await cargarMedicamentos();
               setShowAddMedicamentos(true);
             },
-            color: '#2196F3'
+            color: COLORES.PRIMARIO
           },
           {
             icon: 'magnify',
             label: 'Ver Historial Completo',
             onPress: () => setShowAllMedicamentos(true),
-            color: '#666'
+            color: COLORES.TEXTO_SECUNDARIO
           }
         ]}
       />
@@ -6450,12 +6543,12 @@ const DetallePacienteContent = ({ route, navigation }) => {
             >
               {/* Modo indicador */}
               {modoConsulta === 'completar_existente' && citaSeleccionadaCompleta && (
-                <View style={{ backgroundColor: '#e3f2fd', padding: 12, borderRadius: 8, marginBottom: 16 }}>
-                  <Text style={{ color: '#1976d2', fontWeight: '600', fontSize: 14 }}>
+                <View style={{ backgroundColor: COLORES.FONDO_VERDE_SUAVE, padding: 12, borderRadius: 8, marginBottom: 16 }}>
+                  <Text style={{ color: COLORES.PRIMARIO, fontWeight: '600', fontSize: 14 }}>
                     ✅ Completando cita del {formatearFecha(citaSeleccionadaCompleta.fecha_cita)}
                   </Text>
                   {citaSeleccionadaCompleta.motivo && (
-                    <Text style={{ color: '#1976d2', fontSize: 12, marginTop: 4 }}>
+                    <Text style={{ color: COLORES.PRIMARIO, fontSize: 12, marginTop: 4 }}>
                       Motivo: {citaSeleccionadaCompleta.motivo}
                     </Text>
                   )}
@@ -6470,7 +6563,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 
                 {modoConsulta === 'completar_existente' ? (
                   // Modo solo lectura para completar existente
-                  <View style={{ backgroundColor: '#f5f5f5', padding: 12, borderRadius: 8 }}>
+                  <View style={{ backgroundColor: COLORES.FONDO, padding: 12, borderRadius: 8 }}>
                     <Text style={styles.label}>Doctor: {citaSeleccionadaCompleta?.doctor_nombre || 'Sin doctor'}</Text>
                     <Text style={styles.label}>Fecha: {formatearFecha(formDataConsultaCompleta.cita.fecha_cita)}</Text>
                     {formDataConsultaCompleta.cita.motivo && (
@@ -6560,15 +6653,15 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         width: 24,
                         height: 24,
                         borderWidth: 2,
-                        borderColor: '#2196F3',
+                        borderColor: COLORES.PRIMARIO,
                         borderRadius: 4,
                         marginRight: 8,
-                        backgroundColor: formDataConsultaCompleta.cita.es_primera_consulta ? '#2196F3' : 'transparent',
+                        backgroundColor: formDataConsultaCompleta.cita.es_primera_consulta ? COLORES.PRIMARIO : 'transparent',
                         justifyContent: 'center',
                         alignItems: 'center'
                       }}>
                         {formDataConsultaCompleta.cita.es_primera_consulta && (
-                          <Text style={{ color: '#fff', fontWeight: 'bold' }}>✓</Text>
+                          <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: 'bold' }}>✓</Text>
                         )}
                       </View>
                       <Text style={styles.label}>Es primera consulta</Text>
@@ -6616,8 +6709,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
                     </View>
 
                     {formDataConsultaCompleta.signos_vitales.peso_kg && formDataConsultaCompleta.signos_vitales.talla_m && (
-                      <View style={{ marginTop: 8, padding: 8, backgroundColor: '#e3f2fd', borderRadius: 6 }}>
-                        <Text style={{ fontSize: 12, color: '#1976d2' }}>
+                      <View style={{ marginTop: 8, padding: 8, backgroundColor: COLORES.FONDO_VERDE_SUAVE, borderRadius: 6 }}>
+                        <Text style={{ fontSize: 12, color: COLORES.PRIMARIO }}>
                           IMC calculado: {calcularIMC(formDataConsultaCompleta.signos_vitales.peso_kg, formDataConsultaCompleta.signos_vitales.talla_m) || 'N/A'}
                         </Text>
                       </View>
@@ -6748,8 +6841,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 </TouchableOpacity>
 
                 {seccionesExpandidas.planMedicacion && (
-                  <View style={{ backgroundColor: '#fff3cd', padding: 12, borderRadius: 8 }}>
-                    <Text style={{ fontSize: 12, color: '#856404' }}>
+                  <View style={{ backgroundColor: COLORES.FONDO_ADVERTENCIA_CLARO, padding: 12, borderRadius: 8 }}>
+                    <Text style={{ fontSize: 12, color: COLORES.ADVERTENCIA_TEXTO }}>
                       💡 El plan de medicación completo se puede agregar después desde la sección dedicada.
                       Este formulario permite crear la consulta básica con signos vitales y diagnóstico.
                     </Text>
@@ -6777,7 +6870,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 onPress={handleSaveConsultaCompleta}
                 loading={savingConsultaCompleta}
                 disabled={savingConsultaCompleta}
-                style={[styles.modalSaveButton, { backgroundColor: '#1976d2' }]}
+                style={[styles.modalSaveButton, { backgroundColor: COLORES.PRIMARIO }]}
               >
                 {modoConsulta === 'completar_existente' ? 'Completar Consulta' : 'Guardar Consulta'}
               </Button>
@@ -6862,7 +6955,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                   value={formDataMedicamentos.observaciones}
                   onChangeText={(value) => updateMedicamentoField('observaciones', value)}
                   placeholder="Notas adicionales sobre el plan de medicación..."
-                  placeholderTextColor="#9E9E9E"
+                  placeholderTextColor={COLORES.TEXTO_DISABLED}
                   multiline
                   numberOfLines={5}
                   textAlignVertical="top"
@@ -6908,7 +7001,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                           disabled={savingMedicamentos}
                           style={{ padding: 8, opacity: savingMedicamentos ? 0.5 : 1 }}
                         >
-                          <Text style={{ fontSize: 18, color: '#ff5252' }}>🗑️</Text>
+                          <Text style={{ fontSize: 18, color: COLORES.ERROR }}>🗑️</Text>
                         </TouchableOpacity>
                       </View>
                       
@@ -6955,7 +7048,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                                   }}
                                   style={{ padding: 8 }}
                                 >
-                                  <Text style={{ color: '#F44336', fontSize: 18 }}>✕</Text>
+                                  <Text style={{ color: COLORES.ERROR, fontSize: 18 }}>✕</Text>
                                 </TouchableOpacity>
                               )}
                             </View>
@@ -6966,14 +7059,14 @@ const DetallePacienteContent = ({ route, navigation }) => {
                               actualizarMedicamento(index, 'horarios', nuevosHorarios);
                             }}
                             style={{ 
-                              backgroundColor: '#E3F2FD', 
+                              backgroundColor: COLORES.FONDO_VERDE_SUAVE, 
                               padding: 10, 
                               borderRadius: 8, 
                               alignItems: 'center',
                               marginTop: 4
                             }}
                           >
-                            <Text style={{ color: '#2196F3', fontWeight: '600' }}>+ Agregar otro horario</Text>
+                            <Text style={{ color: COLORES.PRIMARIO, fontWeight: '600' }}>+ Agregar otro horario</Text>
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -7391,12 +7484,12 @@ const DetallePacienteContent = ({ route, navigation }) => {
             <ScrollView style={styles.modalFormScrollView} keyboardShouldPersistTaps="handled">
               {loadingVacunas && vacunasSistema.length === 0 ? (
                 <View style={{ padding: 20, alignItems: 'center' }}>
-                  <ActivityIndicator size="large" color="#2196F3" />
-                  <Text style={{ marginTop: 10, color: '#666' }}>Cargando vacunas...</Text>
+                  <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
+                  <Text style={{ marginTop: 10, color: COLORES.TEXTO_SECUNDARIO }}>Cargando vacunas...</Text>
                 </View>
               ) : vacunasSistema.length === 0 ? (
                 <View style={{ padding: 20, alignItems: 'center' }}>
-                  <Text style={{ color: '#666', textAlign: 'center' }}>
+                  <Text style={{ color: COLORES.TEXTO_SECUNDARIO, textAlign: 'center' }}>
                     No hay vacunas disponibles en el sistema.{'\n'}
                     Por favor, agrega vacunas desde la gestión administrativa.
                   </Text>
@@ -7469,13 +7562,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
             icon: 'plus',
             label: 'Agregar Contacto',
             onPress: () => setShowAddRedApoyo(true),
-            color: '#2196F3'
+            color: COLORES.PRIMARIO
           },
           {
             icon: 'magnify',
             label: 'Ver Todos los Contactos',
             onPress: () => setShowAllRedApoyo(true),
-            color: '#666'
+            color: COLORES.TEXTO_SECUNDARIO
           }
         ]}
       />
@@ -7498,12 +7591,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
         options={opcionesVacunaEsquema}
       />
 
-      {/* Modal al tocar un medicamento */}
+      {/* Menú deslizable al tocar un medicamento o "Opciones" */}
       <OptionsModal
         visible={!!medicamentoSeleccionado}
         onClose={() => setMedicamentoSeleccionado(null)}
-        title={medicamentoSeleccionado ? `Medicamento: ${medicamentoSeleccionado.nombre_medicamento || 'Sin nombre'}` : 'Opciones'}
+        title={medicamentoSeleccionado ? `Opciones - ${medicamentoSeleccionado.nombre_medicamento || 'Sin nombre'}` : 'Opciones'}
         options={opcionesMedicamentoSeleccionado}
+        showCancelButton
       />
 
       {/* Modal al tocar una complicación */}
@@ -7548,13 +7642,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
             icon: 'plus',
             label: 'Agregar Vacuna',
             onPress: () => setShowAddEsquemaVacunacion(true),
-            color: '#2196F3'
+            color: COLORES.PRIMARIO
           },
           {
             icon: 'magnify',
             label: 'Ver Historial Completo',
             onPress: () => setShowAllEsquemaVacunacion(true),
-            color: '#666'
+            color: COLORES.TEXTO_SECUNDARIO
           }
         ]}
       />
@@ -7572,13 +7666,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
               resetFormComorbilidad();
               setShowAddComorbilidad(true);
             },
-            color: '#2196F3'
+            color: COLORES.PRIMARIO
           },
           {
             icon: 'magnify',
             label: 'Ver Historial Completo',
             onPress: () => setShowAllComorbilidades(true),
-            color: '#666'
+            color: COLORES.TEXTO_SECUNDARIO
           }
         ]}
       />
@@ -7603,6 +7697,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
             label: 'Ver Historial Completo',
             onPress: () => {
               setShowOptionsSaludBucal(false);
+              refreshSaludBucal();
               setShowAllSaludBucal(true);
             },
             color: COLORES.SECUNDARIO_LIGHT
@@ -7630,6 +7725,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
             label: 'Ver Historial Completo',
             onPress: () => {
               setShowOptionsDeteccionesTuberculosis(false);
+              refreshDeteccionesTuberculosis();
               setShowAllDeteccionesTuberculosis(true);
             },
             color: COLORES.SECUNDARIO_LIGHT
@@ -7650,7 +7746,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
               setShowOptionsDetecciones(false);
               openDeteccionForCreate();
             },
-            color: '#4CAF50'
+            color: COLORES.EXITO
           },
           ...(detecciones && detecciones.length > 0 ? [{
             icon: 'pencil',
@@ -7659,7 +7755,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
               setShowOptionsDetecciones(false);
               openDeteccionForEdit();
             },
-            color: '#2196F3'
+            color: COLORES.PRIMARIO
           }] : [])
         ]}
       />
@@ -7693,37 +7789,37 @@ const DetallePacienteContent = ({ route, navigation }) => {
               )}
               
               {/* Botones de acción */}
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#e0e0e0', flexWrap: 'wrap' }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORES.BORDE_CLARO, flexWrap: 'wrap' }}>
                 {(contacto.numero_celular || contacto.email) && (
                   <TouchableOpacity
-                    style={{ flex: 1, minWidth: 80, backgroundColor: '#4CAF50', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                    style={{ flex: 1, minWidth: 80, backgroundColor: COLORES.EXITO, padding: 8, borderRadius: 6, alignItems: 'center' }}
                     onPress={() => {
                       setShowAllRedApoyo(false);
                       setContactoRedApoyoSeleccionado(contacto);
                     }}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>📞 Contactar</Text>
+                    <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>📞 Contactar</Text>
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity
-                  style={{ flex: 1, minWidth: 80, backgroundColor: '#2196F3', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                  style={{ flex: 1, minWidth: 80, backgroundColor: COLORES.PRIMARIO, padding: 8, borderRadius: 6, alignItems: 'center' }}
                   onPress={() => {
                     setShowAllRedApoyo(false);
                     handleEditRedApoyo(contacto);
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
+                  <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
                 </TouchableOpacity>
                 {(userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador' ||
                   userRole === 'Doctor' || userRole === 'doctor') && (
                   <TouchableOpacity
-                    style={{ flex: 1, minWidth: 80, backgroundColor: '#f44336', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                    style={{ flex: 1, minWidth: 80, backgroundColor: COLORES.ERROR, padding: 8, borderRadius: 6, alignItems: 'center' }}
                     onPress={() => {
                       setShowAllRedApoyo(false);
                       handleDeleteRedApoyo(contacto);
                     }}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
+                    <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -7757,26 +7853,26 @@ const DetallePacienteContent = ({ route, navigation }) => {
               )}
               
               {/* Botones de acción */}
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#e0e0e0' }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORES.BORDE_CLARO }}>
                 <TouchableOpacity
-                  style={{ flex: 1, backgroundColor: '#2196F3', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                  style={{ flex: 1, backgroundColor: COLORES.PRIMARIO, padding: 8, borderRadius: 6, alignItems: 'center' }}
                   onPress={() => {
                     setShowAllEsquemaVacunacion(false);
                     handleEditEsquemaVacunacion(vacuna);
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
+                  <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
                 </TouchableOpacity>
                 {(userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador' ||
                   userRole === 'Doctor' || userRole === 'doctor') && (
                   <TouchableOpacity
-                    style={{ flex: 1, backgroundColor: '#f44336', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                    style={{ flex: 1, backgroundColor: COLORES.ERROR, padding: 8, borderRadius: 6, alignItems: 'center' }}
                     onPress={() => {
                       setShowAllEsquemaVacunacion(false);
                       handleDeleteEsquemaVacunacion(vacuna);
                     }}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
+                    <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -8143,7 +8239,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
           </View>
           {formDeteccionTuberculosis.baciloscopia_realizada && (
             <View>
-              <Text style={{ fontSize: 14, marginBottom: 8, color: '#666' }}>Resultado de baciloscopia *</Text>
+              <Text style={{ fontSize: 14, marginBottom: 8, color: COLORES.TEXTO_SECUNDARIO }}>Resultado de baciloscopia *</Text>
               <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                 {['positivo', 'negativo', 'pendiente', 'no_aplicable'].map((resultado) => (
                   <TouchableOpacity
@@ -8153,14 +8249,14 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         padding: 10,
                         borderRadius: 8,
                         borderWidth: 2,
-                        borderColor: formDeteccionTuberculosis.baciloscopia_resultado === resultado ? '#2196F3' : '#e0e0e0',
-                        backgroundColor: formDeteccionTuberculosis.baciloscopia_resultado === resultado ? '#e3f2fd' : '#fff'
+                        borderColor: formDeteccionTuberculosis.baciloscopia_resultado === resultado ? COLORES.PRIMARIO : COLORES.BORDE_CLARO,
+                        backgroundColor: formDeteccionTuberculosis.baciloscopia_resultado === resultado ? COLORES.FONDO_VERDE_SUAVE : COLORES.FONDO_CARD
                       }
                     ]}
                     onPress={() => setFormDeteccionTuberculosis(prev => ({ ...prev, baciloscopia_resultado: resultado }))}
                   >
                     <Text style={{
-                      color: formDeteccionTuberculosis.baciloscopia_resultado === resultado ? '#2196F3' : '#666',
+                      color: formDeteccionTuberculosis.baciloscopia_resultado === resultado ? COLORES.PRIMARIO : COLORES.TEXTO_SECUNDARIO,
                       fontWeight: formDeteccionTuberculosis.baciloscopia_resultado === resultado ? '600' : 'normal',
                       textTransform: 'capitalize'
                     }}>
@@ -8238,25 +8334,25 @@ const DetallePacienteContent = ({ route, navigation }) => {
               {registro.observaciones && (
                 <Text style={styles.listItemNotes}>{registro.observaciones}</Text>
               )}
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#e0e0e0' }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORES.BORDE_CLARO }}>
                 <TouchableOpacity
-                  style={{ flex: 1, backgroundColor: '#2196F3', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                  style={{ flex: 1, backgroundColor: COLORES.PRIMARIO, padding: 8, borderRadius: 6, alignItems: 'center' }}
                   onPress={() => {
                     setShowAllSaludBucal(false);
                     openSaludBucalModal(registro);
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
+                  <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
                 </TouchableOpacity>
                 {(userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador') && (
                   <TouchableOpacity
-                    style={{ flex: 1, backgroundColor: '#f44336', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                    style={{ flex: 1, backgroundColor: COLORES.ERROR, padding: 8, borderRadius: 6, alignItems: 'center' }}
                     onPress={() => {
                       setShowAllSaludBucal(false);
                       handleDeleteSaludBucal(registro);
                     }}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
+                    <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -8304,25 +8400,25 @@ const DetallePacienteContent = ({ route, navigation }) => {
               {deteccion.observaciones && (
                 <Text style={styles.listItemNotes}>{deteccion.observaciones}</Text>
               )}
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#e0e0e0' }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORES.BORDE_CLARO }}>
                 <TouchableOpacity
-                  style={{ flex: 1, backgroundColor: '#2196F3', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                  style={{ flex: 1, backgroundColor: COLORES.PRIMARIO, padding: 8, borderRadius: 6, alignItems: 'center' }}
                   onPress={() => {
                     setShowAllDeteccionesTuberculosis(false);
                     openDeteccionTuberculosisModal(deteccion);
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
+                  <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
                 </TouchableOpacity>
                 {(userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador') && (
                   <TouchableOpacity
-                    style={{ flex: 1, backgroundColor: '#f44336', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                    style={{ flex: 1, backgroundColor: COLORES.ERROR, padding: 8, borderRadius: 6, alignItems: 'center' }}
                     onPress={() => {
                       setShowAllDeteccionesTuberculosis(false);
                       handleDeleteDeteccionTuberculosis(deteccion);
                     }}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
+                    <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -8355,26 +8451,26 @@ const DetallePacienteContent = ({ route, navigation }) => {
               </Text>
               
               {/* Botones de acción */}
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#e0e0e0' }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORES.BORDE_CLARO }}>
                 <TouchableOpacity
-                  style={{ flex: 1, backgroundColor: '#2196F3', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                  style={{ flex: 1, backgroundColor: COLORES.PRIMARIO, padding: 8, borderRadius: 6, alignItems: 'center' }}
                   onPress={() => {
                     setShowAllDiagnosticos(false);
                     handleEditDiagnostico(diagnostico);
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
+                  <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
                 </TouchableOpacity>
                 {(userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador' ||
                   userRole === 'Doctor' || userRole === 'doctor') && (
                   <TouchableOpacity
-                    style={{ flex: 1, backgroundColor: '#f44336', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                    style={{ flex: 1, backgroundColor: COLORES.ERROR, padding: 8, borderRadius: 6, alignItems: 'center' }}
                     onPress={() => {
                       setShowAllDiagnosticos(false);
                       handleDeleteDiagnostico(diagnostico);
                     }}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
+                    <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -8444,26 +8540,26 @@ const DetallePacienteContent = ({ route, navigation }) => {
               )}
               
               {/* Botones de acción - mismo diseño que Esquema de Vacunación (Editar + Eliminar) */}
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#e0e0e0' }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORES.BORDE_CLARO }}>
                 <TouchableOpacity
-                  style={{ flex: 1, backgroundColor: '#2196F3', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                  style={{ flex: 1, backgroundColor: COLORES.PRIMARIO, padding: 8, borderRadius: 6, alignItems: 'center' }}
                   onPress={() => {
                     setShowAllMedicamentos(false);
                     handleEditMedicamento(medicamento);
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
+                  <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
                 </TouchableOpacity>
                 {(userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador' ||
                   userRole === 'Doctor' || userRole === 'doctor') && (
                   <TouchableOpacity
-                    style={{ flex: 1, backgroundColor: '#f44336', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                    style={{ flex: 1, backgroundColor: COLORES.ERROR, padding: 8, borderRadius: 6, alignItems: 'center' }}
                     onPress={() => {
                       setShowAllMedicamentos(false);
                       handleDeleteMedicamento(medicamento);
                     }}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
+                    <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -8599,7 +8695,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                     Recibe tratamiento farmacológico
                   </Text>
                 </View>
-                <Text style={[styles.labelHint, { marginLeft: 40, fontSize: 11, color: '#1976d2' }]}>
+                <Text style={[styles.labelHint, { marginLeft: 40, fontSize: 11, color: COLORES.PRIMARIO }]}>
                   (Se sincroniza automáticamente con Plan de Medicación activo)
                 </Text>
               </View>
@@ -8640,12 +8736,12 @@ const DetallePacienteContent = ({ route, navigation }) => {
             <ScrollView style={styles.modalFormScrollView}>
               {loadingComorbilidadesSistema ? (
                 <View style={{ padding: 20, alignItems: 'center' }}>
-                  <ActivityIndicator size="large" color="#2196F3" />
-                  <Text style={{ marginTop: 10, color: '#666' }}>Cargando comorbilidades...</Text>
+                  <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
+                  <Text style={{ marginTop: 10, color: COLORES.TEXTO_SECUNDARIO }}>Cargando comorbilidades...</Text>
                 </View>
               ) : comorbilidadesSistema.length === 0 ? (
                 <View style={{ padding: 20, alignItems: 'center' }}>
-                  <Text style={{ color: '#666', textAlign: 'center' }}>
+                  <Text style={{ color: COLORES.TEXTO_SECUNDARIO, textAlign: 'center' }}>
                     No hay comorbilidades disponibles en el sistema.{'\n'}
                     Por favor, agrega comorbilidades desde la gestión administrativa.
                   </Text>
@@ -8728,26 +8824,26 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 <Text style={styles.listItemNotes}>{comorbilidad.observaciones}</Text>
               )}
               {/* Botones de acción - mismo diseño que Esquema de Vacunación */}
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#e0e0e0' }}>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORES.BORDE_CLARO }}>
                 <TouchableOpacity
-                  style={{ flex: 1, backgroundColor: '#2196F3', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                  style={{ flex: 1, backgroundColor: COLORES.PRIMARIO, padding: 8, borderRadius: 6, alignItems: 'center' }}
                   onPress={() => {
                     setShowAllComorbilidades(false);
                     handleEditComorbilidad(comorbilidad);
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
+                  <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
                 </TouchableOpacity>
                 {(userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador' ||
                   userRole === 'Doctor' || userRole === 'doctor') && (
                   <TouchableOpacity
-                    style={{ flex: 1, backgroundColor: '#f44336', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                    style={{ flex: 1, backgroundColor: COLORES.ERROR, padding: 8, borderRadius: 6, alignItems: 'center' }}
                     onPress={() => {
                       setShowAllComorbilidades(false);
                       handleDeleteComorbilidad(comorbilidad);
                     }}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
+                    <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -8877,13 +8973,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
               resetFormDoctorWrapper();
               setShowAddDoctor(true);
             },
-            color: '#2196F3'
+            color: COLORES.PRIMARIO
           },
           {
             icon: 'magnify',
             label: 'Ver Doctores Asignados',
             onPress: () => setShowAllDoctores(true),
-            color: '#666'
+            color: COLORES.TEXTO_SECUNDARIO
           }
         ]}
       />
@@ -8947,7 +9043,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                   mode="outlined"
                   compact
                   buttonColor={COLORES.ERROR_LIGHT}
-                  textColor="#FFFFFF"
+                  textColor={COLORES.TEXTO_EN_PRIMARIO}
                   onPress={() => handleDeleteDoctor(doctor)}
                 >
                   Desasignar
@@ -8975,7 +9071,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
           >
             <View style={styles.modalHeader}>
               <Title style={styles.modalTitle}>Asignar Doctor</Title>
-              <TouchableOpacity onPress={() => { setShowAddDoctor(false); resetFormDoctor(); }}>
+              <TouchableOpacity onPress={() => { setShowAddDoctor(false); setShowDoctorDropdownAsignar(false); resetFormDoctor(); }}>
                 <Text style={styles.closeButtonX}>×</Text>
               </TouchableOpacity>
             </View>
@@ -8984,32 +9080,59 @@ const DetallePacienteContent = ({ route, navigation }) => {
               contentContainerStyle={styles.modalFormScrollContent}
               keyboardShouldPersistTaps="handled"
             >
-              {/* Selección de Doctor */}
+              {/* Selección de Doctor - Dropdown */}
               <View style={styles.formSection}>
                 <Text style={styles.label}>Doctor *</Text>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.doctoresList}
+                <TouchableOpacity
+                  style={styles.doctorDropdownSelector}
+                  onPress={() => setShowDoctorDropdownAsignar(!showDoctorDropdownAsignar)}
+                  disabled={savingDoctor}
                 >
-                  {doctoresList && doctoresList.map((doctor) => (
-                    <TouchableOpacity
-                      key={doctor.id_doctor || doctor.id}
-                      style={[
-                        styles.doctorChip,
-                        formDataDoctor.id_doctor === (doctor.id_doctor || doctor.id) && styles.doctorChipActive
-                      ]}
-                      onPress={() => handleSelectDoctor(doctor)}
-                    >
-                      <Text style={[
-                        styles.doctorChipText,
-                        formDataDoctor.id_doctor === (doctor.id_doctor || doctor.id) && styles.doctorChipTextActive
-                      ]}>
-                        {`${doctor.nombre} ${doctor.apellido_paterno}`.trim()}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+                  <Text style={[
+                    styles.doctorDropdownText,
+                    !formDataDoctor.id_doctor && styles.doctorDropdownPlaceholder
+                  ]}>
+                    {formDataDoctor.id_doctor
+                      ? (() => {
+                          const doc = doctoresList?.find(d => (d.id_doctor || d.id) === formDataDoctor.id_doctor || Number(formDataDoctor.id_doctor) === (d.id_doctor || d.id));
+                          return doc ? `${doc.nombre} ${doc.apellido_paterno || ''}`.trim() : 'Doctor seleccionado';
+                        })()
+                      : 'Seleccionar doctor'}
+                  </Text>
+                  <Text style={styles.dropdownArrow}>
+                    {showDoctorDropdownAsignar ? '▲' : '▼'}
+                  </Text>
+                </TouchableOpacity>
+                {showDoctorDropdownAsignar && (
+                  <View style={styles.doctorDropdownList}>
+                    <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
+                      {doctoresList && doctoresList.map((doctor) => {
+                        const isSelected = formDataDoctor.id_doctor === (doctor.id_doctor || doctor.id) || Number(formDataDoctor.id_doctor) === (doctor.id_doctor || doctor.id);
+                        const nombreCompleto = `${doctor.nombre} ${doctor.apellido_paterno || ''}`.trim();
+                        return (
+                          <TouchableOpacity
+                            key={doctor.id_doctor || doctor.id}
+                            style={[
+                              styles.doctorDropdownItem,
+                              isSelected && styles.doctorDropdownItemSelected
+                            ]}
+                            onPress={() => {
+                              handleSelectDoctor(doctor);
+                              setShowDoctorDropdownAsignar(false);
+                            }}
+                          >
+                            <Text style={[
+                              styles.doctorDropdownItemText,
+                              isSelected && styles.doctorDropdownItemTextSelected
+                            ]}>
+                              {nombreCompleto}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                )}
               </View>
 
               {/* Observaciones */}
@@ -9038,7 +9161,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 </Button>
                 <Button
                   mode="outlined"
-                  onPress={() => { setShowAddDoctor(false); resetFormDoctor(); }}
+                  onPress={() => { setShowAddDoctor(false); setShowDoctorDropdownAsignar(false); resetFormDoctor(); }}
                   disabled={savingDoctor}
                 >
                   Cancelar
@@ -9172,7 +9295,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
       >
         <View style={styles.loadingModalOverlay}>
           <View style={styles.loadingModalContent}>
-            <ActivityIndicator size="large" color="#2196F3" />
+            <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
             <Text style={styles.loadingModalText}>
               Generando expediente...
             </Text>
@@ -9189,7 +9312,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORES.FONDO,
   },
   scrollView: {
     flex: 1,
@@ -9203,7 +9326,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   errorContainer: {
     flex: 1,
@@ -9214,13 +9337,13 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#F44336',
+    color: COLORES.ERROR,
     textAlign: 'center',
     marginBottom: 10,
   },
   errorDetails: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -9235,15 +9358,21 @@ const styles = StyleSheet.create({
   },
   noDataText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginBottom: 20,
+  },
+  cardResumenText: {
+    fontSize: 12,
+    color: COLORES.TEXTO_SECUNDARIO,
+    marginBottom: 10,
+    fontStyle: 'italic',
   },
   backButton: {
     marginTop: 10,
   },
   header: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
     padding: 20,
     paddingTop: 10,
   },
@@ -9260,7 +9389,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -9273,7 +9402,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
   },
   patientInfo: {
     flex: 1,
@@ -9281,12 +9410,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     marginBottom: 8,
   },
   statusContainer: {
@@ -9301,7 +9430,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
   },
   headerDetails: {
@@ -9319,7 +9448,7 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 14,
-    color: '#E3F2FD',
+    color: COLORES.FONDO_VERDE_SUAVE,
     flex: 1,
   },
   card: {
@@ -9331,12 +9460,12 @@ const styles = StyleSheet.create({
     margin: 16,
     marginBottom: 8,
     elevation: 2,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
   },
   exportTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 12,
   },
   exportButtonsContainer: {
@@ -9348,15 +9477,15 @@ const styles = StyleSheet.create({
   exportButton: {
     flex: 1,
     minWidth: '30%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -9364,13 +9493,13 @@ const styles = StyleSheet.create({
   expedienteCompletoButton: {
     width: '100%',
     minWidth: '100%',
-    backgroundColor: '#1976D2',
-    borderColor: '#1565C0',
+    backgroundColor: COLORES.PRIMARIO,
+    borderColor: COLORES.PRIMARIO_DARK,
     marginBottom: 12,
     paddingVertical: 18,
   },
   expedienteCompletoText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -9398,7 +9527,7 @@ const styles = StyleSheet.create({
   },
   exportButtonText: {
     fontSize: 12,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -9406,18 +9535,18 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
   },
   chatButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -9428,14 +9557,14 @@ const styles = StyleSheet.create({
   },
   chatButtonText: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
     marginRight: 8,
   },
@@ -9462,13 +9591,13 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '600',
     marginBottom: 2,
   },
   infoValue: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   summaryGrid: {
     flexDirection: 'row',
@@ -9480,18 +9609,40 @@ const styles = StyleSheet.create({
   summaryNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
   },
   summaryLabel: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 4,
   },
   listItem: {
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.BORDE_CLARO,
     paddingBottom: 12,
     marginBottom: 12,
+  },
+  medicamentoItemRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  medicamentoItemContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  medicamentoOpcionesButton: {
+    backgroundColor: COLORES.NAV_PRIMARIO,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  medicamentoOpcionesButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORES.TEXTO_EN_PRIMARIO,
   },
   listItemHeader: {
     flexDirection: 'column',
@@ -9502,7 +9653,7 @@ const styles = StyleSheet.create({
   listItemTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
     flexWrap: 'wrap',
     marginRight: 8,
@@ -9511,7 +9662,7 @@ const styles = StyleSheet.create({
   },
   listItemSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 6,
     lineHeight: 18,
   },
@@ -9534,24 +9685,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   statusCompleted: {
-    backgroundColor: '#E8F5E8',
-    borderColor: '#4CAF50',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
+    borderColor: COLORES.EXITO,
   },
   statusScheduled: {
-    backgroundColor: '#E3F2FD',
-    borderColor: '#2196F3',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
+    borderColor: COLORES.PRIMARIO,
   },
   statusCancelled: {
-    backgroundColor: '#FFEBEE',
-    borderColor: '#F44336',
+    backgroundColor: COLORES.FONDO_ERROR_CLARO,
+    borderColor: COLORES.ERROR,
   },
   statusActive: {
-    backgroundColor: '#E8F5E8',
-    borderColor: '#4CAF50',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
+    borderColor: COLORES.EXITO,
   },
   statusInactive: {
-    backgroundColor: '#FFEBEE',
-    borderColor: '#F44336',
+    backgroundColor: COLORES.FONDO_ERROR_CLARO,
+    borderColor: COLORES.ERROR,
   },
   vitalsGrid: {
     flexDirection: 'row',
@@ -9564,12 +9715,12 @@ const styles = StyleSheet.create({
   },
   vitalLabel: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '600',
   },
   vitalValue: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     fontWeight: 'bold',
   },
   vitalSection: {
@@ -9579,12 +9730,12 @@ const styles = StyleSheet.create({
   vitalSectionTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     marginBottom: 6,
   },
   diagnosisLabel: {
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   medicationGrid: {
     flexDirection: 'row',
@@ -9597,12 +9748,12 @@ const styles = StyleSheet.create({
   },
   medicationLabel: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '600',
   },
   medicationValue: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   actionButtonsContainer: {
     padding: 16,
@@ -9645,7 +9796,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORES.FONDO_CARD,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '90%',
@@ -9659,7 +9810,7 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingRight: 8, // Reducir padding derecho para dar espacio al botón X
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   modalHeaderButtons: {
     flexDirection: 'row',
@@ -9670,11 +9821,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#27AE60',
+    borderColor: COLORES.EXITO,
   },
   fillDataButtonText: {
     fontSize: 16,
@@ -9682,14 +9833,14 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18, // Reducir un poco para dar más espacio
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
     marginRight: 8,
   },
   closeButtonX: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: '#f44336',
+    color: COLORES.ERROR,
     paddingHorizontal: 8,
     paddingVertical: 4,
     minWidth: 40,
@@ -9719,7 +9870,7 @@ const styles = StyleSheet.create({
   },
   comorbilidadFecha: {
     fontSize: 11,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     marginLeft: 4,
   },
@@ -9731,7 +9882,7 @@ const styles = StyleSheet.create({
   modalLoadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   modalScrollView: {
     flex: 1,
@@ -9741,7 +9892,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   modalListItem: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderRadius: 10,
     padding: 16,
     marginBottom: 16,
@@ -9751,24 +9902,24 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   modalListItemTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     marginBottom: 4,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 12,
     marginTop: 8,
   },
   modalListItemSubtitle: {
     fontSize: 13,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   
   // Estilos para formulario de signos vitales
@@ -9784,12 +9935,12 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   sectionSubtitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 6,
   },
   modalButtons: {
@@ -9803,9 +9954,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: COLORES.FONDO_CARD,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: COLORES.BORDE_CLARO,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
@@ -9817,7 +9968,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   cancelButton: {
-    borderColor: '#666',
+    borderColor: COLORES.TEXTO_SECUNDARIO,
   },
   saveButton: {
     // No necesita estilos adicionales
@@ -9825,7 +9976,7 @@ const styles = StyleSheet.create({
   formSectionTitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     marginBottom: 10,
   },
   formRow: {
@@ -9848,13 +9999,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#424242',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 6,
     letterSpacing: 0.1,
   },
   labelHint: {
     fontSize: 10,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     marginBottom: 6,
     marginTop: -2,
@@ -9867,15 +10018,15 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1.5,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     height: 42,
-    color: '#212121',
-    shadowColor: '#000',
+    color: COLORES.TEXTO_PRIMARIO,
+    shadowColor: COLORES.NEGRO,
     shadowOffset: {
       width: 0,
       height: 1,
@@ -9887,12 +10038,12 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   inputEnabled: {
-    borderColor: '#BDBDBD',
-    backgroundColor: '#FFFFFF',
+    borderColor: COLORES.TEXTO_DISABLED,
+    backgroundColor: COLORES.FONDO_CARD,
   },
   inputDisabled: {
-    backgroundColor: '#F5F5F5',
-    borderColor: '#E0E0E0',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
+    borderColor: COLORES.BORDE_CLARO,
     opacity: 0.7,
   },
   inputContainer: {
@@ -9902,11 +10053,11 @@ const styles = StyleSheet.create({
   },
   inputRedApoyo: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: COLORES.BORDE_CLARO,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: COLORES.FONDO_CARD,
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -9914,39 +10065,39 @@ const styles = StyleSheet.create({
   },
   inputText: {
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   placeholderText: {
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   arrowText: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginLeft: 8,
   },
   optionButtonSelected: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
     borderWidth: 1,
-    borderColor: '#2196F3',
+    borderColor: COLORES.PRIMARIO,
   },
   optionTextSelected: {
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
   },
   checkMark: {
     fontSize: 16,
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: 'bold',
     marginLeft: 8,
   },
   dropdownList: {
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: COLORES.BORDE_CLARO,
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: COLORES.FONDO_CARD,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -9955,17 +10106,17 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   dropdownItemSelected: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   dropdownItemText: {
     fontSize: 15,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   dropdownItemTextSelected: {
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
   },
   textArea: {
@@ -9980,13 +10131,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
     padding: 12,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORES.FONDO,
     borderRadius: 8,
   },
   imcLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   imcValue: {
     fontSize: 20,
@@ -10004,8 +10155,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingBottom: 24,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    backgroundColor: '#fff',
+    borderTopColor: COLORES.BORDE_CLARO,
+    backgroundColor: COLORES.FONDO_CARD,
   },
   modalCancelButton: {
     flex: 1,
@@ -10018,7 +10169,7 @@ const styles = StyleSheet.create({
   
   // Estilos para modales de opciones (menú de 3 puntos)
   optionsModalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     padding: 16,
     width: '100%',
@@ -10032,7 +10183,7 @@ const styles = StyleSheet.create({
   optionsModalTitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
     textAlign: 'center',
   },
@@ -10043,19 +10194,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 8,
     marginBottom: 6,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORES.FONDO,
     minHeight: 44,
   },
   optionText: {
     fontSize: 13,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginLeft: 4,
     flex: 1,
     flexWrap: 'wrap',
   },
   optionsText: {
     fontSize: 14,
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -10068,36 +10219,36 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
-    backgroundColor: '#fff',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   citaOptionSelected: {
-    borderColor: '#2196F3',
-    backgroundColor: '#e3f2fd',
+    borderColor: COLORES.PRIMARIO,
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   citaOptionText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   citaOptionDate: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   helperText: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 4,
   },
   
   // Estilos para medicamento card
   medicamentoCard: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: COLORES.BORDE_CLARO,
   },
   medicamentoHeader: {
     flexDirection: 'row',
@@ -10108,7 +10259,7 @@ const styles = StyleSheet.create({
   medicamentoTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     flex: 1,
   },
   // Estilos para checkbox
@@ -10121,25 +10272,25 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderWidth: 2,
-    borderColor: '#2196F3',
+    borderColor: COLORES.PRIMARIO,
     borderRadius: 4,
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   checkboxChecked: {
-    backgroundColor: '#2196F3',
-    borderColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
+    borderColor: COLORES.PRIMARIO,
   },
   checkboxCheck: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: 'bold',
   },
   checkboxLabel: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   // Estilos para lista de doctores
@@ -10151,19 +10302,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     marginRight: 8,
   },
   doctorChipActive: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
   },
   doctorChipText: {
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontSize: 14,
     fontWeight: '500',
   },
   doctorChipTextActive: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
   },
   // Estilos para dropdown de doctor en modal de citas
@@ -10172,32 +10323,32 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#BDBDBD',
+    borderColor: COLORES.TEXTO_DISABLED,
     borderRadius: 8,
     padding: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   doctorDropdownText: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   doctorDropdownPlaceholder: {
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   dropdownArrow: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginLeft: 8,
   },
   doctorDropdownList: {
     marginTop: 4,
     borderWidth: 1,
-    borderColor: '#BDBDBD',
+    borderColor: COLORES.TEXTO_DISABLED,
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -10207,17 +10358,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   doctorDropdownItemSelected: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   doctorDropdownItemText: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   doctorDropdownItemTextSelected: {
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
   },
   // Estilos para textArea
@@ -10232,12 +10383,12 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   loadingText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     marginTop: 8,
   },
@@ -10247,33 +10398,33 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderWidth: 1,
-    borderColor: '#E9ECEF',
+    borderColor: COLORES.BORDE_CLARO,
     borderRadius: 8,
     minHeight: 50,
   },
   vacunaSelectorButtonEmpty: {
-    borderColor: '#DEE2E6',
+    borderColor: COLORES.TEXTO_DISABLED,
   },
   vacunaSelectorButtonText: {
     fontSize: 16,
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   vacunaSelectorButtonTextPlaceholder: {
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   vacunaSelectorButtonIcon: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginLeft: 10,
   },
   vacunaSelectorList: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E9ECEF',
+    borderColor: COLORES.BORDE_CLARO,
     overflow: 'hidden',
     marginBottom: 10,
   },
@@ -10281,10 +10432,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F8F9FA',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   vacunaOptionSelected: {
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   vacunaOptionContent: {
     flexDirection: 'row',
@@ -10297,22 +10448,22 @@ const styles = StyleSheet.create({
   },
   vacunaOptionText: {
     fontSize: 16,
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
     fontWeight: '500',
     marginBottom: 4,
   },
   vacunaOptionTextSelected: {
-    color: '#4CAF50',
+    color: COLORES.EXITO,
     fontWeight: '600',
   },
   vacunaOptionSubtext: {
     fontSize: 13,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 2,
   },
   vacunaOptionDescription: {
     fontSize: 12,
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginTop: 4,
     lineHeight: 16,
   },
@@ -10321,20 +10472,20 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#E9ECEF',
+    borderColor: COLORES.BORDE_CLARO,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   vacunaRadioSelected: {
-    borderColor: '#4CAF50',
-    backgroundColor: '#F0F9F0',
+    borderColor: COLORES.EXITO,
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   vacunaRadioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.EXITO,
   },
   // Estilos para modal de carga de expediente
   loadingModalOverlay: {
@@ -10344,7 +10495,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingModalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     padding: 30,
     alignItems: 'center',
@@ -10359,13 +10510,13 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     textAlign: 'center',
   },
   loadingModalSubtext: {
     marginTop: 10,
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
 });

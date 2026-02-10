@@ -8,7 +8,11 @@ const cache = {
   pacientes: { data: null, timestamp: 0 },
   doctorDetails: {}, // { doctorId: { data: null, timestamp: 0 } }
   pacienteDetails: {}, // { pacienteId: { data: null, timestamp: 0 } }
+  doctorPatientData: {}, // { doctorId: { data: null, timestamp: 0 } } - dashboard doctor
+  adminSummary: { data: null, timestamp: 0 },
+  doctorSummary: { data: null, timestamp: 0 },
 };
+const CACHE_DURATION_SUMMARY = 90 * 1000; // 90 segundos para dashboards
 
 const CACHE_DURATION = 30 * 1000; // 30 segundos (reducido para actualizaciones más rápidas)
 const CACHE_DURATION_DETAILS = 60 * 1000; // 1 minuto
@@ -430,7 +434,14 @@ export const useAdminSummary = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchSummary = useCallback(async () => {
+  const fetchSummary = useCallback(async (forceRefresh = false) => {
+    if (!forceRefresh && cache.adminSummary.data && (Date.now() - cache.adminSummary.timestamp < CACHE_DURATION_SUMMARY)) {
+      Logger.debug('useAdminSummary: Sirviendo desde caché');
+      setSummary(cache.adminSummary.data);
+      setLoading(false);
+      setError(null);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -438,7 +449,8 @@ export const useAdminSummary = () => {
       const response = await gestionService.getAdminSummary();
       const summaryData = response.data || response;
       setSummary(summaryData);
-      Logger.debug('useAdminSummary: Datos actualizados');
+      cache.adminSummary = { data: summaryData, timestamp: Date.now() };
+      Logger.debug('useAdminSummary: Datos actualizados y cacheado');
     } catch (err) {
       Logger.error('useAdminSummary: Error al obtener resumen', err);
       setError(err);
@@ -451,7 +463,12 @@ export const useAdminSummary = () => {
     fetchSummary();
   }, [fetchSummary]);
 
-  return { summary, loading, error, refresh: fetchSummary };
+  const refresh = useCallback(() => {
+    cache.adminSummary = { data: null, timestamp: 0 };
+    fetchSummary(true);
+  }, [fetchSummary]);
+
+  return { summary, loading, error, refresh };
 };
 
 export const useDoctorSummary = () => {
@@ -459,7 +476,14 @@ export const useDoctorSummary = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchSummary = useCallback(async () => {
+  const fetchSummary = useCallback(async (forceRefresh = false) => {
+    if (!forceRefresh && cache.doctorSummary.data && (Date.now() - cache.doctorSummary.timestamp < CACHE_DURATION_SUMMARY)) {
+      Logger.debug('useDoctorSummary: Sirviendo desde caché');
+      setSummary(cache.doctorSummary.data);
+      setLoading(false);
+      setError(null);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -467,7 +491,8 @@ export const useDoctorSummary = () => {
       const response = await gestionService.getDoctorSummary();
       const summaryData = response.data || response;
       setSummary(summaryData);
-      Logger.debug('useDoctorSummary: Datos actualizados');
+      cache.doctorSummary = { data: summaryData, timestamp: Date.now() };
+      Logger.debug('useDoctorSummary: Datos actualizados y cacheado');
     } catch (err) {
       Logger.error('useDoctorSummary: Error al obtener resumen', err);
       setError(err);
@@ -480,7 +505,12 @@ export const useDoctorSummary = () => {
     fetchSummary();
   }, [fetchSummary]);
 
-  return { summary, loading, error, refresh: fetchSummary };
+  const refresh = useCallback(() => {
+    cache.doctorSummary = { data: null, timestamp: 0 };
+    fetchSummary(true);
+  }, [fetchSummary]);
+
+  return { summary, loading, error, refresh };
 };
 
 export const useDoctorPatientDataById = (pacienteId) => {
@@ -860,9 +890,21 @@ export const useDoctorPatientData = (doctorId) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (forceRefresh = false) => {
     if (!doctorId) {
       setLoading(false);
+      return;
+    }
+
+    const cacheKey = doctorId;
+    const cached = cache.doctorPatientData[cacheKey];
+    const isValid = cached && (Date.now() - cached.timestamp < CACHE_DURATION_DETAILS);
+
+    if (!forceRefresh && isValid) {
+      Logger.debug(`useDoctorPatientData (${doctorId}): Sirviendo desde caché`);
+      setData(cached.data);
+      setLoading(false);
+      setError(null);
       return;
     }
 
@@ -870,7 +912,10 @@ export const useDoctorPatientData = (doctorId) => {
       setLoading(true);
       setError(null);
       const response = await gestionService.getDoctorDashboard(doctorId);
-      setData(response.data);
+      const nextData = response.data;
+      setData(nextData);
+      cache.doctorPatientData[cacheKey] = { data: nextData, timestamp: Date.now() };
+      Logger.debug(`useDoctorPatientData (${doctorId}): Datos actualizados y cacheado`);
     } catch (err) {
       setError(err);
     } finally {
@@ -878,15 +923,22 @@ export const useDoctorPatientData = (doctorId) => {
     }
   }, [doctorId]);
 
+  const refetch = useCallback(() => {
+    if (doctorId) {
+      cache.doctorPatientData[doctorId] = { data: null, timestamp: 0 };
+      fetchData(true);
+    }
+  }, [doctorId, fetchData]);
+
   useEffect(() => {
-    fetchData();
+    fetchData(false);
   }, [fetchData]);
 
   return {
     ...data,
     loading,
     error,
-    refetch: fetchData
+    refetch
   };
 };
 

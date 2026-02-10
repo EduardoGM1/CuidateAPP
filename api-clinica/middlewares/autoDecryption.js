@@ -68,19 +68,16 @@ export const autoDecryptResponse = (modelName) => {
           if (data && ENCRYPTED_FIELDS[modelName]) {
             // Función auxiliar para verificar si un campo necesita desencriptación
             const needsDecryption = (value) => {
-              if (!value || typeof value !== 'string') return false;
-              
-              // Verificar formato JSON (EncryptionService) - formato: {"encrypted":"...","iv":"...","authTag":"..."}
+              if (value === null || value === undefined) return false;
+              // Objeto ya parseado (p. ej. devuelto por BD como JSON)
+              if (typeof value === 'object' && value.encrypted != null && value.iv != null && value.authTag != null) return true;
+              if (typeof value !== 'string') return false;
               try {
                 const jsonData = JSON.parse(value);
-                if (jsonData.encrypted && jsonData.iv && jsonData.authTag) {
-                  return true;
-                }
+                if (jsonData.encrypted && jsonData.iv && jsonData.authTag) return true;
               } catch (jsonError) {
-                // No es JSON válido, continuar con formato iv:tag:data
+                // No es JSON válido
               }
-              
-              // Verificar formato encriptado: iv:tag:data (3 partes separadas por :)
               const parts = value.split(':');
               return parts.length === 3 && parts[0].length > 0 && parts[1].length > 0 && parts[2].length > 0;
             };

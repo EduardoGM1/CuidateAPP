@@ -106,7 +106,7 @@ const DatePickerButton = ({
         <View style={styles.buttonContent}>
           {!hideIcons && (
             <IconButton
-              icon="calendar"
+              icon="calendar-blank"
               size={20}
               iconColor={hasValue ? '#1976d2' : '#999'}
               disabled={true}

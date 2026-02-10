@@ -8,6 +8,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import OptionsModal from '../OptionsModal';
+import { COLORES } from '../../../../utils/constantes';
 
 // Mock de react-native-paper para evitar problemas con módulos nativos
 jest.mock('react-native-paper', () => {
@@ -30,13 +31,13 @@ describe('OptionsModal', () => {
       icon: 'plus',
       label: 'Agregar Item',
       onPress: jest.fn(),
-      color: '#2196F3',
+      color: COLORES.NAV_PRIMARIO,
     },
     {
       icon: 'magnify',
       label: 'Ver Historial',
       onPress: jest.fn(),
-      color: '#666',
+      color: COLORES.TEXTO_SECUNDARIO,
     },
   ];
 

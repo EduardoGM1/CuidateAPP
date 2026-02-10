@@ -1,5 +1,24 @@
 import DashboardRepository from '../repositories/dashboardRepository.js';
 import logger from '../utils/logger.js';
+import EncryptionService from '../services/encryptionService.js';
+
+/**
+ * Desencripta motivo/observaciones de cita (string JSON o objeto { encrypted, iv, authTag }).
+ * Si falla o no está encriptado, devuelve el valor original o null.
+ */
+function decryptCitaField(value) {
+  if (value === undefined || value === null || value === '') return value;
+  try {
+    const decrypted = EncryptionService.decryptField(value);
+    if (decrypted !== null && decrypted !== value) return decrypted;
+    // Valor encriptado pero desencriptación falló: no exponer payload
+    const isEncrypted = (typeof value === 'string' && value.trim().startsWith('{')) ||
+      (typeof value === 'object' && value?.encrypted != null && value?.iv != null && value?.authTag != null);
+    return isEncrypted ? null : value;
+  } catch {
+    return (typeof value === 'object' && value?.encrypted) ? null : value;
+  }
+}
 
 export class DashboardService {
   constructor() {
@@ -194,23 +213,27 @@ export class DashboardService {
           const fechaISO = cita.fecha_cita 
             ? (cita.fecha_cita instanceof Date ? cita.fecha_cita.toISOString() : new Date(cita.fecha_cita).toISOString())
             : null;
-          
+          const motivoDes = decryptCitaField(cita.motivo);
           return {
             id: cita.id_cita,
             paciente: `${cita.Paciente?.nombre || ''} ${cita.Paciente?.apellido_paterno || ''}`.trim() || 'Paciente desconocido',
             hora: fechaISO,
-            motivo: cita.motivo || 'Sin motivo',
+            motivo: motivoDes || 'Sin motivo',
             asistencia: cita.asistencia,
             estado: cita.estado || 'pendiente',
             telefono: cita.Paciente?.numero_celular || null
           };
         }),
-        pacientes: pacientes.map(paciente => ({
-          id: paciente.id_paciente,
-          nombre: `${paciente.nombre} ${paciente.apellido_paterno}`,
-          ultimaConsulta: paciente.Citas?.[0]?.fecha_cita || null,
-          motivoUltimaConsulta: paciente.Citas?.[0]?.motivo || null
-        })),
+        pacientes: pacientes.map(paciente => {
+          const cita0 = paciente.Citas?.[0];
+          const motivoUltima = cita0 ? decryptCitaField(cita0.motivo) : null;
+          return {
+            id: paciente.id_paciente,
+            nombre: `${paciente.nombre} ${paciente.apellido_paterno}`,
+            ultimaConsulta: cita0?.fecha_cita || null,
+            motivoUltimaConsulta: motivoUltima ?? null
+          };
+        }),
         mensajesPendientes: mensajesPendientes.map(mensaje => ({
           id: mensaje.id_mensaje,
           paciente: `${mensaje.Paciente.nombre} ${mensaje.Paciente.apellido_paterno}`,
@@ -221,7 +244,7 @@ export class DashboardService {
           id: cita.id_cita,
           paciente: `${cita.Paciente.nombre} ${cita.Paciente.apellido_paterno}`,
           fecha: cita.fecha_cita,
-          motivo: cita.motivo,
+          motivo: decryptCitaField(cita.motivo) ?? cita.motivo,
           estado: cita.estado,
           telefono: cita.Paciente.numero_celular
         })),
@@ -264,15 +287,19 @@ export class DashboardService {
 
       const pacientes = await this.dashboardRepository.getPacientesDoctor(doctorId);
 
+      const citaField = (p) => p.Citas?.[0];
       return {
-        pacientes: pacientes.map(paciente => ({
-          id: paciente.id_paciente,
-          nombre: `${paciente.nombre} ${paciente.apellido_paterno}`,
-          edad: this.calcularEdad(paciente.fecha_nacimiento),
-          ultimaConsulta: paciente.Citas?.[0]?.fecha_cita || null,
-          motivoUltimaConsulta: paciente.Citas?.[0]?.motivo || null,
-          asistenciaUltimaConsulta: paciente.Citas?.[0]?.asistencia || null
-        })),
+        pacientes: pacientes.map(paciente => {
+          const c0 = citaField(paciente);
+          return {
+            id: paciente.id_paciente,
+            nombre: `${paciente.nombre} ${paciente.apellido_paterno}`,
+            edad: this.calcularEdad(paciente.fecha_nacimiento),
+            ultimaConsulta: c0?.fecha_cita || null,
+            motivoUltimaConsulta: c0 ? decryptCitaField(c0.motivo) : null,
+            asistenciaUltimaConsulta: c0?.asistencia || null
+          };
+        }),
         timestamp: new Date().toISOString()
       };
     } catch (error) {
@@ -298,7 +325,7 @@ export class DashboardService {
           id: cita.id_cita,
           paciente: `${cita.Paciente.nombre} ${cita.Paciente.apellido_paterno}`,
           fecha: cita.fecha_cita,
-          motivo: cita.motivo,
+          motivo: decryptCitaField(cita.motivo) ?? cita.motivo,
           asistencia: cita.asistencia,
           telefono: cita.Paciente.numero_celular
         })),
@@ -433,7 +460,7 @@ export class DashboardService {
         citasHoy: citasHoy.map(c => ({
           id: c.id_cita,
           fecha_cita: c.fecha_cita,
-          motivo: c.motivo,
+          motivo: decryptCitaField(c.motivo) ?? c.motivo,
           estado: c.estado,
           paciente: {
             nombre: c.Paciente.nombre,
@@ -443,7 +470,7 @@ export class DashboardService {
         citasRecientes: citasRecientes.map(c => ({
           id: c.id_cita,
           fecha_cita: c.fecha_cita,
-          motivo: c.motivo,
+          motivo: decryptCitaField(c.motivo) ?? c.motivo,
           estado: c.estado,
           paciente: {
             nombre: c.Paciente.nombre,

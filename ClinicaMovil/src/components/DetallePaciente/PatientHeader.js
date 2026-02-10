@@ -1,27 +1,21 @@
 import React, { memo, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * PatientHeader - Header del paciente con información principal
  * 
- * Muestra avatar, nombre completo, edad, sexo y estado.
+ * Muestra avatar, nombre completo, edad, sexo, estado y doctores asignados.
  * OPTIMIZADO: Memoizado con React.memo para evitar re-renders innecesarios
  * 
  * @param {Object} props
  * @param {Object} props.paciente - Objeto con datos del paciente
  * @param {Function} props.calcularEdad - Función para calcular edad
- * @param {Function} props.obtenerDoctorAsignado - Función para obtener doctor
+ * @param {Function} props.obtenerDoctorAsignado - Función para obtener doctor (fallback si no hay lista)
+ * @param {string[]} [props.nombresDoctoresAsignados] - Lista de nombres de todos los doctores asignados
  * @param {Function} props.formatearFecha - Función para formatear fecha
- * 
- * @example
- * <PatientHeader 
- *   paciente={paciente}
- *   calcularEdad={calcularEdad}
- *   obtenerDoctorAsignado={obtenerDoctorAsignado}
- *   formatearFecha={formatearFecha}
- * />
  */
-const PatientHeader = ({ paciente, calcularEdad, obtenerDoctorAsignado, formatearFecha }) => {
+const PatientHeader = ({ paciente, calcularEdad, obtenerDoctorAsignado, nombresDoctoresAsignados, formatearFecha }) => {
   if (!paciente) return null;
 
   // Memoizar cálculos costosos
@@ -44,7 +38,14 @@ const PatientHeader = ({ paciente, calcularEdad, obtenerDoctorAsignado, formatea
     [paciente.sexo]
   );
   
-  const doctorAsignado = useMemo(() => obtenerDoctorAsignado(), [obtenerDoctorAsignado]);
+  // Lista de doctores a mostrar: si viene la lista usarla, si no el fallback de un solo nombre
+  const doctoresAMostrar = useMemo(() => {
+    if (nombresDoctoresAsignados && nombresDoctoresAsignados.length > 0) {
+      return nombresDoctoresAsignados;
+    }
+    const uno = obtenerDoctorAsignado ? obtenerDoctorAsignado() : '';
+    return uno && uno !== 'Sin doctor asignado' ? [uno] : [];
+  }, [nombresDoctoresAsignados, obtenerDoctorAsignado]);
   
   const fechaRegistroFormateada = useMemo(() => 
     formatearFecha(paciente.fecha_registro),
@@ -84,9 +85,14 @@ const PatientHeader = ({ paciente, calcularEdad, obtenerDoctorAsignado, formatea
         
         {/* Detalles adicionales */}
         <View style={styles.headerDetails}>
+          {/* Doctores asignados: todos en una línea separados por coma */}
           <View style={styles.detailRow}>
             <Text style={styles.detailIcon}>👨‍⚕️</Text>
-            <Text style={styles.detailText}>{doctorAsignado}</Text>
+            <Text style={styles.detailText} numberOfLines={2}>
+              {doctoresAMostrar.length === 0
+                ? 'Sin doctor asignado'
+                : doctoresAMostrar.join(', ')}
+            </Text>
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailIcon}>🏥</Text>
@@ -106,10 +112,10 @@ const PatientHeader = ({ paciente, calcularEdad, obtenerDoctorAsignado, formatea
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   headerContent: {
     width: '100%',
@@ -122,7 +128,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -186,7 +192,10 @@ const styles = StyleSheet.create({
 
 // Función de comparación personalizada para React.memo
 const areEqual = (prevProps, nextProps) => {
-  // Comparar solo las propiedades críticas
+  const prevNombres = prevProps.nombresDoctoresAsignados;
+  const nextNombres = nextProps.nombresDoctoresAsignados;
+  const mismosDoctores = (prevNombres?.length ?? 0) === (nextNombres?.length ?? 0) &&
+    (!prevNombres?.length || (prevNombres.join('|') === nextNombres?.join('|')));
   return (
     prevProps.paciente?.id_paciente === nextProps.paciente?.id_paciente &&
     prevProps.paciente?.activo === nextProps.paciente?.activo &&
@@ -196,7 +205,8 @@ const areEqual = (prevProps, nextProps) => {
     prevProps.paciente?.fecha_registro === nextProps.paciente?.fecha_registro &&
     prevProps.calcularEdad === nextProps.calcularEdad &&
     prevProps.obtenerDoctorAsignado === nextProps.obtenerDoctorAsignado &&
-    prevProps.formatearFecha === nextProps.formatearFecha
+    prevProps.formatearFecha === nextProps.formatearFecha &&
+    mismosDoctores
   );
 };
 

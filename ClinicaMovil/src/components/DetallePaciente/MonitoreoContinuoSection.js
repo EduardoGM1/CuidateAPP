@@ -17,6 +17,7 @@ import {
   colesterolFueraDeRango,
   trigliceridosFueraDeRango
 } from '../../utils/vitalSignsRanges';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * Componente para mostrar signos vitales de monitoreo continuo
@@ -223,7 +224,7 @@ const MonitoreoContinuoSection = ({
     if (loading) {
       return (
         <View style={styles.emptyContainer}>
-          <ActivityIndicator size="small" color="#2196F3" />
+          <ActivityIndicator size="small" color={COLORES.PRIMARIO} />
           <Text style={styles.emptyText}>Cargando...</Text>
         </View>
       );
@@ -332,7 +333,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#212121'
+    color: COLORES.TEXTO_PRIMARIO
   },
   optionsText: {
     fontSize: 14,
@@ -351,14 +352,14 @@ const styles = StyleSheet.create({
   },
   signoItem: {
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#2196F3',
+    borderLeftColor: COLORES.PRIMARIO,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: {
       width: 0,
       height: 2
@@ -373,12 +374,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0'
+    borderBottomColor: COLORES.BORDE_CLARO
   },
   signoFecha: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212121',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1, // Permitir que el texto use el espacio disponible
     marginRight: 8, // Espacio entre fecha y tipo
     minWidth: 0 // Permitir que se reduzca si es necesario
@@ -396,12 +397,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5'
+    borderBottomColor: COLORES.FONDO
   },
   signoGroupTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#424242',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 4
   },
   signoValues: {
@@ -419,12 +420,12 @@ const styles = StyleSheet.create({
     maxWidth: '100%' // No exceder el ancho del contenedor
   },
   signoValueOutOfRange: {
-    color: '#F44336', // Rojo para valores fuera de rango
-    fontWeight: '700' // Negrita para mayor visibilidad
+    color: COLORES.ERROR,
+    fontWeight: '700'
   },
   observaciones: {
     fontSize: 12,
-    color: '#757575',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     marginTop: 4,
     flexWrap: 'wrap', // Permitir que el texto se ajuste
@@ -436,16 +437,16 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: COLORES.BORDE_CLARO,
     gap: 20
   },
   actionText: {
     fontSize: 13,
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: '600'
   },
   actionTextDanger: {
-    color: '#F44336'
+    color: COLORES.ERROR
   },
   emptyContainer: {
     padding: 20,
@@ -454,32 +455,32 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#757575',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginTop: 8
   },
   emptySubtext: {
     fontSize: 12,
-    color: '#9E9E9E',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginTop: 4
   },
   errorSubtext: {
     fontSize: 12,
-    color: '#757575',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginTop: 4,
     marginBottom: 12
   },
   retryButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
     marginTop: 8
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.BLANCO,
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center'

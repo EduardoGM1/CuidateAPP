@@ -76,30 +76,36 @@ class EncryptionService {
 
   /**
    * Desencripta un texto encriptado
-   * @param {string} encryptedData - String JSON con encrypted, iv, authTag
+   * @param {string|object} encryptedData - String JSON o objeto con encrypted, iv, authTag
    * @returns {string} - Texto desencriptado
    */
   static decrypt(encryptedData) {
     try {
-      if (!encryptedData || typeof encryptedData !== 'string') {
+      if (encryptedData === undefined || encryptedData === null) {
         return null;
       }
 
-      // Intentar parsear como JSON
       let data;
-      try {
-        data = JSON.parse(encryptedData);
-      } catch (parseError) {
-        // Si no es JSON, podría ser texto plano (migración)
-        logger.warn('Datos no encriptados detectados (migración pendiente)', {
-          data: encryptedData.substring(0, 50)
-        });
-        return encryptedData; // Retornar como está para compatibilidad
+      if (typeof encryptedData === 'object' && encryptedData !== null) {
+        // Ya viene como objeto (p. ej. MySQL/Sequelize devolvió JSON parseado)
+        data = encryptedData;
+      } else if (typeof encryptedData === 'string') {
+        try {
+          data = JSON.parse(encryptedData);
+        } catch (parseError) {
+          // Si no es JSON, podría ser texto plano (migración)
+          logger.warn('Datos no encriptados detectados (migración pendiente)', {
+            data: encryptedData.substring(0, 50)
+          });
+          return encryptedData; // Retornar como está para compatibilidad
+        }
+      } else {
+        return null;
       }
 
       if (!data.encrypted || !data.iv || !data.authTag) {
         logger.warn('Formato de datos encriptados inválido');
-        return encryptedData; // Retornar como está
+        return typeof encryptedData === 'string' ? encryptedData : null;
       }
 
       const algorithm = 'aes-256-gcm';
@@ -118,7 +124,7 @@ class EncryptionService {
       logger.error('Error desencriptando datos', {
         error: error.message,
         stack: error.stack,
-        dataLength: encryptedData?.length
+        dataLength: typeof encryptedData === 'string' ? encryptedData?.length : '(object)'
       });
       
       // En caso de error, retornar null en lugar de lanzar excepción
@@ -150,10 +156,13 @@ class EncryptionService {
    * @returns {string|null} - Valor desencriptado o null
    */
   static decryptField(encryptedValue) {
-    if (!encryptedValue || encryptedValue === null || encryptedValue === undefined) {
+    if (encryptedValue === null || encryptedValue === undefined) {
       return null;
     }
-    
+    // Acepta string (JSON) u objeto { encrypted, iv, authTag }
+    if (typeof encryptedValue !== 'string' && (typeof encryptedValue !== 'object' || !encryptedValue?.encrypted)) {
+      return null;
+    }
     return this.decrypt(encryptedValue);
   }
 

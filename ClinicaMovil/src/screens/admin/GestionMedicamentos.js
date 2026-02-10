@@ -333,6 +333,7 @@ const GestionMedicamentos = ({ navigation }) => {
           value={searchQuery}
           style={styles.searchBar}
           showClearIcon={false}
+          icon={() => null}
         />
       </View>
 
@@ -432,12 +433,10 @@ const GestionMedicamentos = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.optionsModalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                Opciones - {selectedMedicamento?.nombre_medicamento || 'Medicamento'}
+              <Text style={styles.modalTitle} numberOfLines={1} ellipsizeMode="tail">
+                {selectedMedicamento?.nombre_medicamento || 'Medicamento'}
               </Text>
-              <TouchableOpacity
-                onPress={handleCloseOptions}
-              >
+              <TouchableOpacity onPress={handleCloseOptions} style={styles.modalCloseButton}>
                 <Text style={styles.closeButtonX}>X</Text>
               </TouchableOpacity>
             </View>
@@ -665,11 +664,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   optionsModalContent: {
+    width: '100%',
+    alignSelf: 'stretch',
     backgroundColor: COLORES.BLANCO,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '50%',
     paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+    overflow: 'hidden',
   },
   optionsList: {
     paddingHorizontal: 20,
@@ -769,15 +771,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: COLORES.TEXTO_DISABLED,
+    minHeight: 48,
   },
   modalTitle: {
-    fontSize: 20,
+    flex: 1,
+    fontSize: 18,
     fontWeight: '700',
     color: COLORES.PRIMARIO,
+    marginRight: 8,
+  },
+  modalCloseButton: {
+    flexShrink: 0,
+    padding: 4,
+    minWidth: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalBody: {
     paddingHorizontal: 20,
@@ -831,13 +843,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   closeButtonX: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#f44336',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 40,
-    textAlign: 'center',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
 });
 

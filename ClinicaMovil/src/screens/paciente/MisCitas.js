@@ -17,6 +17,7 @@ import {
   Modal,
   TextInput,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -25,7 +26,6 @@ import { Button } from 'react-native-paper';
 import usePacienteData from '../../hooks/usePacienteData';
 import { useAppointmentReminders } from '../../hooks/useReminders';
 import ReminderBanner from '../../components/paciente/ReminderBanner';
-import Badge from '../../components/paciente/Badge';
 import { gestionService } from '../../api/gestionService';
 import useTTS from '../../hooks/useTTS';
 import ttsService from '../../services/ttsService';
@@ -659,9 +659,10 @@ const MisCitas = () => {
     return solicitud || null;
   }, [solicitudes]);
 
-  // Solo mostrar loading si realmente está cargando Y no hay datos Y no hay pacienteId
-  // Si hay datos pero aún está cargando (actualización en background), mostrar los datos
-  const shouldShowLoading = (loadingPaciente || loadingCitas) && citasData.length === 0 && !pacienteId;
+  // Mostrar loading: mientras se obtiene el paciente o mientras se cargan citas y aún no hay datos
+  const shouldShowLoading =
+    (loadingPaciente && !pacienteId) ||
+    (loadingCitas && citasData.length === 0);
   
   if (shouldShowLoading) {
     return (
@@ -701,15 +702,7 @@ const MisCitas = () => {
           </TouchableOpacity>
           
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>📅 Mis Citas</Text>
-            {reminders.totalProximas > 0 && (
-              <Badge
-                count={reminders.totalProximas}
-                variant={reminders.citas5h.length > 0 ? 'danger' : 'warning'}
-                size="medium"
-                style={styles.titleBadge}
-              />
-            )}
+            <Text style={styles.title}>Mis Citas</Text>
           </View>
           
           <TouchableOpacity
@@ -743,7 +736,7 @@ const MisCitas = () => {
         {/* Banner de alerta para citas próximas (24h) */}
         {reminders.citas24h.length > 0 && reminders.citas24h[0] && reminders.citas5h.length === 0 && (
           <ReminderBanner
-            title="📅 Recordatorio de Cita"
+            title="Recordatorio de Cita"
             message={`${reminders.citas24h[0].motivo || 'Consulta médica'} - ${formatFecha(reminders.citas24h[0].fecha_cita)}`}
             timeRemaining={reminders.citas24h[0].tiempoRestante}
             variant="warning"
@@ -805,7 +798,6 @@ const MisCitas = () => {
                 accessibilityLabel={`Cita ${formatFecha(cita.fecha_cita)}. ${cita.motivo || ''}`}
               >
                 <View style={styles.citaHeader}>
-                  <Text style={styles.citaIcon}>📅</Text>
                   {esHoy && <View style={styles.badgeToday}><Text style={styles.badgeText}>HOY</Text></View>}
                   {esMañana && <View style={styles.badgeTomorrow}><Text style={styles.badgeText}>MAÑANA</Text></View>}
                   <Text style={styles.citaDias}>{diasTexto}</Text>
@@ -947,16 +939,23 @@ const MisCitas = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Mis Solicitudes de Reprogramación</Text>
+              <Text style={styles.modalTitle} numberOfLines={2}>
+                Mis Solicitudes de Reprogramación
+              </Text>
               <TouchableOpacity
                 onPress={() => setShowSolicitudesModal(false)}
                 style={styles.modalCloseButton}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               >
                 <Text style={styles.modalCloseText}>✕</Text>
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalScrollView}>
+            <ScrollView
+              style={styles.modalScrollView}
+              contentContainerStyle={styles.modalScrollViewContent}
+              showsVerticalScrollIndicator={true}
+            >
               {loadingSolicitudes ? (
                 <View style={styles.modalLoading}>
                   <ActivityIndicator size="large" color={COLORES.NAV_PACIENTE} />
@@ -970,7 +969,7 @@ const MisCitas = () => {
                 (Array.isArray(solicitudes) ? solicitudes : []).map((solicitud, index) => (
                   <View key={solicitud.id_solicitud || index} style={styles.solicitudCard}>
                     <View style={styles.solicitudHeader}>
-                      <Text style={styles.solicitudFecha}>
+                      <Text style={styles.solicitudFecha} numberOfLines={2}>
                         📅 {solicitud.fecha_creacion ? formatFecha(solicitud.fecha_creacion) : 'Fecha no disponible'}
                       </Text>
                       <View
@@ -979,7 +978,7 @@ const MisCitas = () => {
                           { backgroundColor: getEstadoSolicitudColor(solicitud.estado) }
                         ]}
                       >
-                        <Text style={styles.solicitudEstadoText}>
+                        <Text style={styles.solicitudEstadoText} numberOfLines={1}>
                           {getEstadoSolicitudTexto(solicitud.estado)}
                         </Text>
                       </View>
@@ -1077,9 +1076,6 @@ const styles = StyleSheet.create({
     color: COLORES.EXITO,
     textAlign: 'center',
   },
-  titleBadge: {
-    marginLeft: 8,
-  },
   listenButton: {
     padding: 8,
     borderRadius: 8,
@@ -1158,10 +1154,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
     flexWrap: 'wrap',
-  },
-  citaIcon: {
-    fontSize: 32,
-    marginRight: 12,
   },
   badgeToday: {
     backgroundColor: COLORES.ERROR_LIGHT,
@@ -1284,7 +1276,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 16,
     width: '100%',
-    maxHeight: '80%',
+    maxHeight: '85%',
+    height: Dimensions.get('window').height * 0.85,
     padding: 20,
   },
   modalHeader: {
@@ -1295,21 +1288,29 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORES.TEXTO_DISABLED,
     paddingBottom: 12,
+    gap: 12,
   },
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
     color: COLORES.TEXTO_PRIMARIO,
+    flex: 1,
+    marginRight: 8,
   },
   modalCloseButton: {
-    padding: 4,
+    padding: 8,
+    flexShrink: 0,
   },
   modalCloseText: {
     fontSize: 24,
     color: COLORES.TEXTO_SECUNDARIO,
   },
   modalScrollView: {
-    maxHeight: 500,
+    flex: 1,
+  },
+  modalScrollViewContent: {
+    flexGrow: 1,
+    paddingBottom: 24,
   },
   modalCitaInfo: {
     backgroundColor: COLORES.FONDO,
@@ -1391,16 +1392,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    gap: 8,
   },
   solicitudFecha: {
     fontSize: 14,
     color: COLORES.TEXTO_SECUNDARIO,
     fontWeight: '600',
+    flex: 1,
+    marginRight: 8,
   },
   solicitudEstadoBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
+    flexShrink: 0,
   },
   solicitudEstadoText: {
     color: COLORES.TEXTO_EN_PRIMARIO,

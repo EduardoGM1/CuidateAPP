@@ -98,7 +98,7 @@ const BigIconButton = memo(({
   };
 
   return (
-    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
+    <Animated.View style={[styles.wrapper, { transform: [{ scale: scaleAnim }] }, style]}>
       <TouchableOpacity
         style={[
           styles.button,
@@ -141,15 +141,23 @@ const BigIconButton = memo(({
 
 BigIconButton.displayName = 'BigIconButton';
 
+const CARD_HEIGHT = 220; // Altura fija para todas las cards (icono + texto + padding sin recorte)
+
 const styles = StyleSheet.create({
+  wrapper: {
+    width: '100%',
+    minHeight: CARD_HEIGHT + 20, // card + marginVertical
+    flexShrink: 0,
+    alignSelf: 'center',
+  },
   button: {
-    width: '100%', // ✅ Ocupa todo el ancho del contenedor (90% de la pantalla)
-    height: 200, // ✅ Altura aumentada a 200px para cards más grandes
-    minHeight: 200, // ✅ Altura mínima igual a la altura fija
-    maxHeight: 200, // ✅ Altura máxima igual a la altura fija
-    borderRadius: 24, // ✅ Border radius aumentado proporcionalmente
-    paddingVertical: 20, // ✅ Padding vertical aumentado
-    paddingHorizontal: 24, // ✅ Padding horizontal aumentado
+    width: '100%',
+    height: CARD_HEIGHT,
+    minHeight: CARD_HEIGHT,
+    maxHeight: CARD_HEIGHT,
+    borderRadius: 24,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
@@ -161,9 +169,10 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    marginVertical: 10, // ✅ Espaciado vertical aumentado
-    alignSelf: 'center', // ✅ Centrar cada card individualmente
-    overflow: 'visible', // ✅ Cambiado a 'visible' para que el badge no afecte el tamaño
+    marginVertical: 10,
+    alignSelf: 'center',
+    overflow: 'visible',
+    flexShrink: 0,
   },
   iconContainer: {
     position: 'relative',

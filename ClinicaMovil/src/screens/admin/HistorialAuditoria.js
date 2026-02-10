@@ -18,6 +18,7 @@ import useAuditoria from '../../hooks/useAuditoria';
 import FilterModal from '../../components/common/FilterModal';
 import FilterChips from '../../components/common/FilterChips';
 import ListCard from '../../components/common/ListCard';
+import DetalleCitaModal from '../../components/DetalleCitaModal/DetalleCitaModal';
 import { emptyStateStyles, modalStyles } from '../../utils/sharedStyles';
 import { formatDateTime } from '../../utils/dateUtils';
 import { COLORES } from '../../utils/constantes';
@@ -68,6 +69,10 @@ const HistorialAuditoria = ({ navigation }) => {
   const [showFiltersModal, setShowFiltersModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [registroSeleccionado, setRegistroSeleccionado] = useState(null);
+  // Modal detalle de cita (al pulsar "Ver Cita" en auditoría de cita)
+  const [showDetalleCitaModal, setShowDetalleCitaModal] = useState(false);
+  const [citaDetalle, setCitaDetalle] = useState(null);
+  const [loadingCitaDetalle, setLoadingCitaDetalle] = useState(false);
   
   // Estados de filtros
   const [filterTipoAccion, setFilterTipoAccion] = useState(null);
@@ -224,15 +229,24 @@ const HistorialAuditoria = ({ navigation }) => {
   };
 
   // Funciones de navegación contextual
-  const navegarACita = (idCita) => {
+  const handleOpenCitaDetalle = async (idCita) => {
     if (!idCita) return;
     try {
-      Logger.navigation('HistorialAuditoria', 'VerTodasCitas', { id_cita: idCita });
       setShowDetailModal(false);
       setRegistroSeleccionado(null);
-      navigation.navigate('VerTodasCitas', { highlightCitaId: idCita });
+      setLoadingCitaDetalle(true);
+      setCitaDetalle(null);
+      setShowDetalleCitaModal(true);
+      Logger.info('HistorialAuditoria: Obteniendo detalle de cita', { citaId: idCita });
+      const citaData = await gestionService.getCitaById(idCita);
+      Logger.success('HistorialAuditoria: Detalle de cita obtenido', { citaId: idCita });
+      setCitaDetalle(citaData);
     } catch (error) {
-      Logger.error('Error navegando a cita', error);
+      Logger.error('HistorialAuditoria: Error obteniendo detalle de cita', error);
+      Alert.alert('Error', 'No se pudo cargar el detalle de la cita');
+      setShowDetalleCitaModal(false);
+    } finally {
+      setLoadingCitaDetalle(false);
     }
   };
 
@@ -517,6 +531,7 @@ const HistorialAuditoria = ({ navigation }) => {
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchBar}
+          icon={() => null}
         />
       </View>
 
@@ -563,7 +578,7 @@ const HistorialAuditoria = ({ navigation }) => {
               subtitle={registro.entidad_afectada ? `Entidad: ${registro.entidad_afectada}` : null}
               metadata={[
                 {
-                  icon: '📅',
+                  icon: '🗓️',
                   text: formatDateTime(registro.fecha_creacion),
                 },
                 {
@@ -662,7 +677,7 @@ const HistorialAuditoria = ({ navigation }) => {
                 <View style={styles.detailContent}>
               {/* Información Principal */}
               <View style={styles.detailSection}>
-                <Text style={styles.detailSectionTitle}>📋 Información General</Text>
+                <Text style={styles.detailSectionTitle}>Información General</Text>
                 
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Descripción:</Text>
@@ -725,9 +740,8 @@ const HistorialAuditoria = ({ navigation }) => {
                       <View style={styles.navigationButtonContainer}>
                         <Button
                           mode="contained"
-                          onPress={() => navegarACita(idEntidad)}
+                          onPress={() => handleOpenCitaDetalle(idEntidad)}
                           style={styles.navigationButton}
-                          icon="calendar"
                         >
                           Ver Cita #{idEntidad}
                         </Button>
@@ -908,6 +922,19 @@ const HistorialAuditoria = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+
+      {/* Modal Detalle de Cita (al pulsar "Ver Cita" en registro de auditoría de cita) */}
+      <DetalleCitaModal
+        visible={showDetalleCitaModal}
+        onClose={() => {
+          setShowDetalleCitaModal(false);
+          setCitaDetalle(null);
+        }}
+        citaDetalle={citaDetalle}
+        loading={loadingCitaDetalle}
+        userRole={userRole}
+        formatearFecha={formatDateTime}
+      />
     </SafeAreaView>
   );
 };

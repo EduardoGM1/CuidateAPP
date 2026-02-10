@@ -63,13 +63,16 @@ export const connectionDiagnosticService = {
     try {
       Logger.info(`Probando login en: ${baseUrl}`, { email });
       
-      const response = await axios.post(`${baseUrl}/api/auth/login`, {
+      // Mismo endpoint que el login real de la app (/api/mobile/login)
+      const response = await axios.post(`${baseUrl}/api/mobile/login`, {
         email,
         password,
       }, {
         timeout: 10000,
         headers: {
           'Content-Type': 'application/json',
+          'X-Platform': 'android',
+          'X-Client-Type': 'app',
         },
       });
 

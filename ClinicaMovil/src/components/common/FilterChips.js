@@ -52,7 +52,7 @@ const FilterChips = ({ filters, onRemoveFilter, onClearAll, getFilterLabel }) =>
             <Chip
               key={key}
               style={styles.filterChip}
-              onClose={() => onRemoveFilter(key)}
+              onPress={() => onRemoveFilter(key)}
               mode="outlined"
             >
               {getLabel(key, value)}

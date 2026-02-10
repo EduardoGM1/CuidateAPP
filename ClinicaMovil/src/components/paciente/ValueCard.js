@@ -9,6 +9,7 @@ import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import useTTS from '../../hooks/useTTS';
 import hapticService from '../../services/hapticService';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * Tarjeta para mostrar un valor médico
@@ -31,12 +32,12 @@ const ValueCard = memo(({
 }) => {
   const { speak } = useTTS();
 
-  // Colores por estado
+  // Colores por estado (paleta IMSS Bienestar)
   const statusColors = {
-    normal: { border: '#4CAF50', bg: '#F1F8E9', text: '#2E7D32' },
-    warning: { border: '#FF9800', bg: '#FFF3E0', text: '#F57C00' },
-    critical: { border: '#F44336', bg: '#FFEBEE', text: '#C62828' },
-    empty: { border: '#E0E0E0', bg: '#F5F5F5', text: '#9E9E9E' },
+    normal: { border: COLORES.PRIMARIO, bg: COLORES.FONDO_VERDE_SUAVE, text: COLORES.PRIMARIO },
+    warning: { border: COLORES.SECUNDARIO, bg: COLORES.FONDO_ADVERTENCIA_CLARO, text: COLORES.ADVERTENCIA_TEXTO },
+    critical: { border: COLORES.ERROR, bg: COLORES.FONDO_ERROR_CLARO, text: COLORES.ERROR },
+    empty: { border: COLORES.BORDE_CLARO, bg: COLORES.FONDO, text: COLORES.TEXTO_SECUNDARIO },
   };
 
   const selectedStatus = statusColors[status] || statusColors.normal;

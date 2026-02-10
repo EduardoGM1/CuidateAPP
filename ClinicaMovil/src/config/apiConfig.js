@@ -6,19 +6,19 @@
 import { Platform } from 'react-native';
 import { API_BASE_URL_OVERRIDE } from './apiUrlOverride';
 
-// Función para obtener la IP local (actualizar con ipconfig cuando cambie la red)
-// ipconfig (Windows): buscar "Dirección IPv4" en el adaptador Wi‑Fi/Ethernet activo
+// Función para obtener la IP local (actualizado con ipconfig - Wi-Fi 2 y Wi-Fi 3).
 const getLocalIP = () => {
   const commonIPs = [
-    '192.168.1.68',    // IP actual (ipconfig 2026-01-28 - Wi-Fi 3)
-    '192.168.1.79',    // IP anterior
+    '192.168.1.69',    // Wi-Fi 3 (ipconfig actual)
+    '192.168.1.68',    // Wi-Fi 2
+    '192.168.1.79',
     '192.168.1.74',
     '192.168.1.65',
     '192.168.1.100',
     '192.168.0.100',
     '10.0.2.2',        // Solo emulador Android
   ];
-  return commonIPs[0]; // 192.168.1.68
+  return commonIPs[0];
 };
 
 // Configuración de API por entorno
@@ -39,10 +39,10 @@ const API_CONFIG = {
     description: 'Emulador Android'
   },
   production: {
-    baseURL: 'https://api.tuclinica.com', // HTTPS obligatorio en producción
+    // API en Railway (usada al compilar en release: npx react-native run-android --mode=release)
+    baseURL: 'https://cuidateappbackend-production.up.railway.app',
     timeout: 60000,
-    description: 'Servidor de producción',
-    // Forzar HTTPS en producción
+    description: 'Servidor de producción (Railway)',
     forceHttps: true
   }
 };
@@ -184,9 +184,10 @@ export const testApiConnectivity = async (urlToTest = null) => {
   
   // Probar primero con el endpoint raíz (más simple)
   const endpointsToTest = [
-    `${config.baseURL}/health`,  // Health check (más rápido)
-    `${config.baseURL}/`,  // Endpoint raíz
-    `${config.baseURL}/api/mobile/config`,  // Endpoint móvil
+    `${config.baseURL}/Health`,   // Railway usa /Health
+    `${config.baseURL}/health`,
+    `${config.baseURL}/`,
+    `${config.baseURL}/api/mobile/config`,
   ];
   
   for (const testUrl of endpointsToTest) {
@@ -302,9 +303,10 @@ export const getApiConfigWithFallback = async () => {
           return API_CONFIG.development;
         }
       } else {
-        // Para dispositivos físicos: Probar override primero (si está configurado), luego localhost, luego red local
+        // DISPOSITIVO FÍSICO: en el teléfono "localhost" es el propio dispositivo, no la PC.
+        // Probar primero red local (IP de la PC) y opcionalmente override; localhost solo si usas adb reverse.
         if (__DEV__) {
-          console.log('🔍 Dispositivo físico detectado');
+          console.log('🔍 Dispositivo físico detectado - probando IP de red local primero');
         }
         
         // PRIMERO: Si el usuario configuró API_BASE_URL_OVERRIDE, probarla
@@ -322,39 +324,35 @@ export const getApiConfigWithFallback = async () => {
           }
         }
         
-        // SEGUNDO: Probar localhost (adb reverse) con timeout corto
+        // SEGUNDO: Probar IP de red local (PC en el mismo WiFi) — lo más habitual en teléfono físico
+        const localNetworkURL = API_CONFIG.localNetwork.baseURL;
+        if (__DEV__) {
+          console.log(`🔄 Probando red local (mismo WiFi): ${localNetworkURL}`);
+        }
+        const localNetworkTest = await testApiConnectivity(localNetworkURL);
+        if (localNetworkTest.success) {
+          cachedEnvironment = 'localNetwork';
+          if (__DEV__) {
+            console.log('✅ Red local funcionando - usando IP de la PC');
+          }
+          return API_CONFIG.localNetwork;
+        }
+        
+        // TERCERO: Probar localhost (solo funciona con: adb reverse tcp:3000 tcp:3000)
         const localhostConfig = API_CONFIG.development;
         if (__DEV__) {
           console.log(`🔄 Probando localhost (adb reverse): ${localhostConfig.baseURL}`);
         }
-        
-        // Usar timeout más corto para localhost en dispositivos físicos (3 segundos)
         const localhostTest = await Promise.race([
           testApiConnectivity(localhostConfig.baseURL),
           new Promise((resolve) => setTimeout(() => resolve({ success: false, error: 'Timeout' }), 3000))
         ]);
-        
         if (localhostTest.success) {
           cachedEnvironment = 'development';
           if (__DEV__) {
-            console.log('✅ ADB reverse detectado y funcionando - usando localhost');
+            console.log('✅ ADB reverse detectado - usando localhost');
           }
           return localhostConfig;
-        }
-        
-        // SEGUNDO: Si localhost falla rápidamente, probar con IP de red local inmediatamente
-        if (__DEV__) {
-          console.log(`⚠️ Localhost falló, probando red local: ${API_CONFIG.localNetwork.baseURL}`);
-        }
-        
-        const localNetworkTest = await testApiConnectivity(API_CONFIG.localNetwork.baseURL);
-        
-        if (localNetworkTest.success) {
-          cachedEnvironment = 'localNetwork';
-          if (__DEV__) {
-            console.log('✅ Red local funcionando - usando IP de red');
-          }
-          return API_CONFIG.localNetwork;
         }
       }
       
@@ -391,15 +389,20 @@ export const getApiConfigWithFallback = async () => {
         }
       }
       
-      // Si todos fallan, usar localhost como fallback (requiere adb reverse)
+      // Si todos fallan: en dispositivo físico usar IP de red como fallback (más útil que localhost)
       if (__DEV__) {
         console.warn('⚠️ No se pudo conectar con ninguna configuración');
-        console.warn('   Usando localhost como fallback (requiere adb reverse)');
-        console.warn('   Ejecuta: adb reverse tcp:3000 tcp:3000');
+        if (!isEmulator) {
+          console.warn('   Teléfono físico: revisa que la PC y el teléfono estén en el mismo WiFi');
+          console.warn('   Pon la IP de tu PC en apiUrlOverride.js (ipconfig → Dirección IPv4)');
+          console.warn('   Y que el firewall de Windows permita conexiones entrantes en el puerto 3000');
+          cachedEnvironment = 'localNetwork';
+          return API_CONFIG.localNetwork;
+        }
+        console.warn('   Emulador: ejecuta adb reverse tcp:3000 tcp:3000');
       }
-      
-      cachedEnvironment = 'development';
-      return localhostConfig;
+      cachedEnvironment = isEmulator ? 'development' : 'localNetwork';
+      return isEmulator ? API_CONFIG.development : API_CONFIG.localNetwork;
     }
     
     // Para otros entornos, usar detección normal

@@ -307,6 +307,7 @@ const ListaPacientesDoctor = ({ navigation }) => {
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchbar}
+          icon={() => null}
         />
         <TouchableOpacity
           style={listActionButtonStyles.filtersButton}

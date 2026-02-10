@@ -868,7 +868,7 @@ const GestionAdmin = ({ navigation }) => {
         {/* Loading States */}
         {(doctoresLoading || pacientesLoading) && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#1976D2" />
+            <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
             <Text style={styles.loadingText}>Cargando datos...</Text>
           </View>
         )}
@@ -928,7 +928,7 @@ const GestionAdmin = ({ navigation }) => {
                   <View style={styles.listFooter}>
                     {doctoresLoadingMore && (
                       <View style={styles.loadingMoreContainer}>
-                        <ActivityIndicator size="small" color="#1976D2" />
+                        <ActivityIndicator size="small" color={COLORES.PRIMARIO} />
                         <Text style={styles.loadingMoreText}>Cargando más doctores...</Text>
                       </View>
                     )}
@@ -956,7 +956,7 @@ const GestionAdmin = ({ navigation }) => {
                     refreshing={refreshing}
                     onRefresh={handleRefresh}
                     colors={[COLORES.NAV_PRIMARIO]}
-                    tintColor="#1976D2"
+                    tintColor={COLORES.PRIMARIO}
                   />
                 }
               />
@@ -992,7 +992,7 @@ const GestionAdmin = ({ navigation }) => {
                   <View style={styles.listFooter}>
                     {pacientesLoadingMore && (
                       <View style={styles.loadingMoreContainer}>
-                        <ActivityIndicator size="small" color="#1976D2" />
+                        <ActivityIndicator size="small" color={COLORES.PRIMARIO} />
                         <Text style={styles.loadingMoreText}>Cargando más pacientes...</Text>
                       </View>
                     )}
@@ -1020,7 +1020,7 @@ const GestionAdmin = ({ navigation }) => {
                     refreshing={refreshing}
                     onRefresh={handleRefresh}
                     colors={[COLORES.NAV_PRIMARIO]}
-                    tintColor="#1976D2"
+                    tintColor={COLORES.PRIMARIO}
                   />
                 }
               />
@@ -1654,7 +1654,7 @@ const styles = StyleSheet.create({
   },
   sortingText: {
     fontSize: 13,
-    color: COLORES.NAV_PRIMARIO,
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '500',
     textAlign: 'center',
   },
@@ -1872,11 +1872,11 @@ const styles = StyleSheet.create({
     elevation: 2,
     backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderLeftWidth: 4,
-    borderLeftColor: '#F44336',
+    borderLeftColor: COLORES.ERROR,
   },
   errorText: {
     fontSize: 16,
-    color: '#D32F2F',
+    color: COLORES.ERROR,
     textAlign: 'center',
   },
   // Estilos del Modal
@@ -1899,7 +1899,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.SECUNDARIO_LIGHT,
   },
   modalTitle: {
     fontSize: 20,
@@ -1909,7 +1909,7 @@ const styles = StyleSheet.create({
   closeButtonX: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: '#f44336',
+    color: COLORES.ERROR,
     paddingHorizontal: 8,
     paddingVertical: 4,
     minWidth: 40,
@@ -1946,13 +1946,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: COLORES.FONDO,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
     minWidth: 120,
     alignItems: 'center',
   },
   activeFilterOption: {
     backgroundColor: COLORES.NAV_PRIMARIO,
-    borderColor: '#1976D2',
+    borderColor: COLORES.PRIMARIO,
   },
   filterOptionText: {
     fontSize: 14,
@@ -1976,7 +1976,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: COLORES.FONDO,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
     minHeight: 48,
   },
   filterDropdownSelectorOpen: {
@@ -1999,7 +1999,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORES.FONDO,
     borderWidth: 1,
     borderTopWidth: 0,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
   },
@@ -2007,7 +2007,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.SECUNDARIO_LIGHT,
   },
   filterDropdownItemSelected: {
     backgroundColor: COLORES.NAV_PRIMARIO + '15',
@@ -2033,7 +2033,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: COLORES.FONDO,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
     minHeight: 48,
   },
   comorbilidadDropdownSelectorOpen: {
@@ -2059,7 +2059,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORES.FONDO,
     borderWidth: 1,
     borderTopWidth: 0,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
     maxHeight: 220,
@@ -2071,7 +2071,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.SECUNDARIO_LIGHT,
   },
   comorbilidadDropdownItemSelected: {
     backgroundColor: COLORES.NAV_PRIMARIO + '15',
@@ -2127,7 +2127,7 @@ const styles = StyleSheet.create({
   scrollHintText: {
     textAlign: 'center',
     fontSize: 13,
-    color: '#888',
+    color: COLORES.TEXTO_DISABLED,
     paddingVertical: 10,
   },
   endOfListContainer: {

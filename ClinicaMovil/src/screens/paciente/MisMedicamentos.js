@@ -398,9 +398,11 @@ const MisMedicamentos = () => {
     }
   };
 
-  // Solo mostrar loading si realmente está cargando Y no hay datos Y no hay pacienteId
-  // Si hay datos pero aún está cargando (actualización en background), mostrar los datos
-  const shouldShowLoading = (loadingPaciente || loadingMedicamentos) && medicamentos.length === 0 && !pacienteId;
+  // Mostrar loading: mientras se obtiene el paciente o mientras se cargan medicamentos y aún no hay datos
+  // Si ya hay datos y se está refrescando, se usa RefreshControl en el ScrollView
+  const shouldShowLoading =
+    (loadingPaciente && !pacienteId) ||
+    (loadingMedicamentos && medicamentos.length === 0);
   
   if (shouldShowLoading) {
     return (

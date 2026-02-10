@@ -36,6 +36,7 @@ import hapticService from '../services/hapticService';
 import audioFeedbackService from '../services/audioFeedbackService';
 import Logger from '../services/logger';
 import useWebSocket from '../hooks/useWebSocket';
+import { COLORES } from '../utils/constantes';
 
 const DashboardPaciente = () => {
   const navigation = useNavigation();
@@ -183,7 +184,7 @@ const DashboardPaciente = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4CAF50" />
+          <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
           <Text style={styles.loadingText}>Cargando información...</Text>
         </View>
       </SafeAreaView>
@@ -200,8 +201,8 @@ const DashboardPaciente = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#4CAF50']}
-            tintColor="#4CAF50"
+            colors={[COLORES.PRIMARIO]}
+            tintColor={COLORES.PRIMARIO}
           />
         }
       >
@@ -327,7 +328,7 @@ const DashboardPaciente = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   scrollView: {
     flex: 1,
@@ -344,7 +345,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   header: {
     marginBottom: 24,
@@ -355,22 +356,22 @@ const styles = StyleSheet.create({
   saludo: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.PRIMARIO,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: '#4CAF50',
+    color: COLORES.PRIMARIO_LIGHT,
   },
   listenButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.PRIMARIO,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 12,
     alignSelf: 'flex-start',
   },
   listenButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -382,10 +383,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginBottom: 24,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 16,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -396,12 +397,12 @@ const styles = StyleSheet.create({
   summaryNumber: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.PRIMARIO,
     marginBottom: 4,
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
   optionsContainer: {
@@ -410,11 +411,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.PRIMARIO,
     marginBottom: 16,
   },
   logoutButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: COLORES.ERROR,
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 12,
@@ -422,7 +423,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   logoutButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 18,
     fontWeight: '600',
   },

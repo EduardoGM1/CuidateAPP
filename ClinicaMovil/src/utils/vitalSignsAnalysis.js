@@ -3,7 +3,10 @@
  * 
  * Funciones para calcular tendencias, estadísticas y comparaciones
  * de signos vitales a lo largo del tiempo.
+ * Colores: paleta IMSS Bienestar (constantes).
  */
+
+import { COLORES } from './constantes';
 
 /**
  * Obtiene el nombre del campo del signo vital según el tipo de gráfica
@@ -138,13 +141,13 @@ export const calcularTendencia = (datos, campo) => {
       // Para valores donde mayor es mejor (ej: saturación)
       tendencia = 'mejorando';
       mensaje = 'Mejorando';
-      color = '#4CAF50';
+      color = COLORES.PRIMARIO;
       icono = '📈';
     } else {
       // Para valores donde menor es mejor (ej: glucosa, presión)
       tendencia = 'empeorando';
       mensaje = 'Aumentando';
-      color = '#F44336';
+      color = COLORES.ERROR;
       icono = '📈';
     }
   } else {
@@ -152,12 +155,12 @@ export const calcularTendencia = (datos, campo) => {
     if (esMejorValorMayor(campo)) {
       tendencia = 'empeorando';
       mensaje = 'Disminuyendo';
-      color = '#F44336';
+      color = COLORES.ERROR;
       icono = '📉';
     } else {
       tendencia = 'mejorando';
       mensaje = 'Mejorando';
-      color = '#4CAF50';
+      color = COLORES.PRIMARIO;
       icono = '📉';
     }
   }
@@ -209,16 +212,16 @@ export const calcularEstadisticas = (datos, campo) => {
   
   // Determinar estabilidad
   let estabilidad = 'estable';
-  let colorEstabilidad = '#4CAF50';
+  let colorEstabilidad = COLORES.PRIMARIO;
   let mensajeEstabilidad = 'Estable';
   
   if (coeficienteVariacion > 20) {
     estabilidad = 'variable';
-    colorEstabilidad = '#F44336';
+    colorEstabilidad = COLORES.ERROR;
     mensajeEstabilidad = 'Variable';
   } else if (coeficienteVariacion > 10) {
     estabilidad = 'moderada';
-    colorEstabilidad = '#FF9800';
+    colorEstabilidad = COLORES.ADVERTENCIA;
     mensajeEstabilidad = 'Moderadamente variable';
   }
   
@@ -279,7 +282,7 @@ export const compararPeriodos = (datos, campo, diasPeriodo = 30) => {
   
   let estado = 'igual';
   let mensaje = '';
-  let color = '#666';
+  let color = COLORES.TEXTO_SECUNDARIO;
   
   // Umbrales para determinar cambio significativo
   const umbralAbsoluto = getUmbralSignificativo(campo) * 5; // 5 veces el umbral de tendencia
@@ -287,25 +290,25 @@ export const compararPeriodos = (datos, campo, diasPeriodo = 30) => {
   if (Math.abs(diferencia) < umbralAbsoluto) {
     estado = 'igual';
     mensaje = 'Estable';
-    color = '#FF9800';
+    color = COLORES.ADVERTENCIA;
   } else if (diferencia < 0 && !esMejorValorMayor(campo)) {
     estado = 'mejoro';
     mensaje = 'Mejoró';
-    color = '#4CAF50';
+    color = COLORES.PRIMARIO;
   } else if (diferencia > 0 && !esMejorValorMayor(campo)) {
     estado = 'empeoro';
     mensaje = 'Aumentó';
-    color = '#F44336';
+    color = COLORES.ERROR;
   } else {
     // Para valores donde mayor es mejor
     if (diferencia > 0) {
       estado = 'mejoro';
       mensaje = 'Mejoró';
-      color = '#4CAF50';
+      color = COLORES.PRIMARIO;
     } else {
       estado = 'empeoro';
       mensaje = 'Disminuyó';
-      color = '#F44336';
+      color = COLORES.ERROR;
     }
   }
   

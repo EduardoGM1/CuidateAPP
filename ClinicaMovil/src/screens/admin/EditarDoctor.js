@@ -327,7 +327,7 @@ const EditarDoctor = () => {
         </View>
         
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1976D2" />
+          <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
           <Text style={styles.loadingText}>Cargando módulos...</Text>
         </View>
       </SafeAreaView>
@@ -589,7 +589,7 @@ const EditarDoctor = () => {
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={COLORES.TEXTO_EN_PRIMARIO} />
                 ) : (
                   <Text style={styles.submitButtonText}>Actualizar Doctor</Text>
                 )}
@@ -617,9 +617,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: COLORES.SECUNDARIO_LIGHT,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   placeholder: {
     width: 40,
@@ -651,18 +651,18 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: COLORES.SECUNDARIO_LIGHT,
   },
   progressStep: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#E9ECEF',
+    backgroundColor: COLORES.SECUNDARIO_LIGHT,
     justifyContent: 'center',
     alignItems: 'center',
   },
   progressStepActive: {
-    backgroundColor: '#1976D2', // Azul para doctores
+    backgroundColor: COLORES.PRIMARIO,
   },
   progressStepText: {
     fontSize: 14,
@@ -670,16 +670,16 @@ const styles = StyleSheet.create({
     color: COLORES.TEXTO_SECUNDARIO,
   },
   progressStepTextActive: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
   },
   progressLine: {
     width: 40,
     height: 2,
-    backgroundColor: '#E9ECEF',
+    backgroundColor: COLORES.SECUNDARIO_LIGHT,
     marginHorizontal: 8,
   },
   progressLineActive: {
-    backgroundColor: '#1976D2', // Azul para doctores
+    backgroundColor: COLORES.PRIMARIO,
   },
 
   // Contenido
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     elevation: 1,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -710,7 +710,7 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   stepDescription: {
@@ -726,12 +726,12 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   errorText: {
     fontSize: 12,
-    color: '#F44336',
+    color: COLORES.ERROR,
     marginTop: 4,
   },
   readOnlyField: {
@@ -751,10 +751,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F8F9FA',
+    borderBottomColor: COLORES.FONDO_SECUNDARIO,
   },
   moduleOptionSelected: {
-    backgroundColor: '#E3F2FD', // Azul claro para doctores
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   moduleOptionContent: {
     flexDirection: 'row',
@@ -763,11 +763,11 @@ const styles = StyleSheet.create({
   },
   moduleOptionText: {
     fontSize: 16,
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   moduleOptionTextSelected: {
-    color: '#1976D2', // Azul para doctores
+    color: COLORES.PRIMARIO,
     fontWeight: '500',
   },
   moduleRadio: {
@@ -780,13 +780,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   moduleRadioSelected: {
-    borderColor: '#1976D2', // Azul para doctores
+    borderColor: COLORES.PRIMARIO,
   },
   moduleRadioInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#1976D2', // Azul para doctores
+    backgroundColor: COLORES.PRIMARIO,
   },
 
   // Estilos para selector de Grado de Estudio (dropdown)
@@ -795,7 +795,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
     borderRadius: 8,
     backgroundColor: COLORES.FONDO_CARD,
     paddingHorizontal: 12,
@@ -803,15 +803,15 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   placeholderSelector: {
-    borderColor: '#E2E8F0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
   },
   gradoEstudioSelectorText: {
     fontSize: 16,
-    color: '#2D3748',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   placeholderText: {
-    color: '#999',
+    color: COLORES.TEXTO_DISABLED,
   },
   arrowText: {
     fontSize: 12,
@@ -819,13 +819,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   inputError: {
-    borderColor: '#E53E3E',
+    borderColor: COLORES.ERROR,
     borderWidth: 2,
   },
   dropdownList: {
     marginTop: 4,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
     borderRadius: 8,
     backgroundColor: COLORES.FONDO_CARD,
     overflow: 'hidden',
@@ -834,55 +834,55 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: COLORES.SECUNDARIO_LIGHT,
   },
   dropdownItemSelected: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   dropdownItemText: {
     fontSize: 16,
-    color: '#2D3748',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   dropdownItemTextSelected: {
-    color: '#1976D2',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
   },
 
   // Botones
   nextButton: {
-    backgroundColor: '#1976D2', // Azul para doctores
+    backgroundColor: COLORES.PRIMARIO,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 24,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   nextButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: '600',
   },
   submitButton: {
-    backgroundColor: '#1976D2', // Azul para doctores
+    backgroundColor: COLORES.PRIMARIO,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 24,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   submitButtonDisabled: {
-    backgroundColor: '#BDBDBD',
+    backgroundColor: COLORES.TEXTO_DISABLED,
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -909,7 +909,7 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#F44336',
+    color: COLORES.ERROR,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -921,13 +921,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   retryButton: {
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.PRIMARIO,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
   },
   retryText: {
-    color: '#FFFFFF',
+    color: COLORES.BLANCO,
     fontSize: 16,
     fontWeight: '600',
   },

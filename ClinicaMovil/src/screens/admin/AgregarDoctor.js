@@ -296,7 +296,7 @@ const AgregarDoctor = () => {
         </View>
         
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1976D2" />
+          <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
           <Text style={styles.loadingText}>Cargando módulos...</Text>
         </View>
       </SafeAreaView>
@@ -417,7 +417,7 @@ const AgregarDoctor = () => {
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={COLORES.BLANCO} />
                 ) : (
                   <Text style={styles.submitButtonText}>Crear Usuario</Text>
                 )}
@@ -606,7 +606,7 @@ const AgregarDoctor = () => {
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={COLORES.TEXTO_EN_PRIMARIO} />
                 ) : (
                   <Text style={styles.submitButtonText}>Crear Doctor</Text>
                 )}
@@ -622,7 +622,7 @@ const AgregarDoctor = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
   },
   
   // Header
@@ -634,9 +634,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: COLORES.BORDE_CLARO,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -644,17 +644,17 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: COLORES.FONDO,
   },
   backButtonText: {
     fontSize: 24,
-    color: '#2E86AB',
+    color: COLORES.PRIMARIO,
     fontWeight: 'bold',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   placeholder: {
     width: 40,
@@ -668,18 +668,18 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   progressStep: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#E9ECEF',
+    backgroundColor: COLORES.BORDE_CLARO,
     justifyContent: 'center',
     alignItems: 'center',
   },
   progressStepActive: {
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.PRIMARIO,
   },
   progressStepText: {
     fontSize: 14,
@@ -687,16 +687,16 @@ const styles = StyleSheet.create({
     color: COLORES.TEXTO_SECUNDARIO,
   },
   progressStepTextActive: {
-    color: '#FFFFFF',
+    color: COLORES.BLANCO,
   },
   progressLine: {
     width: 40,
     height: 2,
-    backgroundColor: '#E9ECEF',
+    backgroundColor: COLORES.BORDE_CLARO,
     marginHorizontal: 8,
   },
   progressLineActive: {
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.PRIMARIO,
   },
 
   // Contenido
@@ -719,7 +719,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     elevation: 1,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -727,7 +727,7 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   stepDescription: {
@@ -738,14 +738,14 @@ const styles = StyleSheet.create({
   userCreatedIndicator: {
     marginTop: 12,
     padding: 12,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#4CAF50',
+    borderLeftColor: COLORES.PRIMARIO,
   },
   userCreatedText: {
     fontSize: 14,
-    color: '#2E7D32',
+    color: COLORES.PRIMARIO,
     fontWeight: '500',
   },
   stepHeaderWithButton: {
@@ -760,11 +760,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORES.EXITO_LIGHT,
+    borderColor: COLORES.PRIMARIO,
     marginLeft: 12,
   },
   fillDataButtonText: {
@@ -778,12 +778,12 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   errorText: {
     fontSize: 12,
-    color: '#F44336',
+    color: COLORES.ERROR,
     marginTop: 4,
   },
 
@@ -792,17 +792,17 @@ const styles = StyleSheet.create({
     backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E9ECEF',
+    borderColor: COLORES.BORDE_CLARO,
     overflow: 'hidden',
   },
   moduleOption: {
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F8F9FA',
+    borderBottomColor: COLORES.FONDO_SECUNDARIO,
   },
   moduleOptionSelected: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   moduleOptionContent: {
     flexDirection: 'row',
@@ -811,11 +811,11 @@ const styles = StyleSheet.create({
   },
   moduleOptionText: {
     fontSize: 16,
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   moduleOptionTextSelected: {
-    color: '#1976D2',
+    color: COLORES.PRIMARIO,
     fontWeight: '500',
   },
   moduleRadio: {
@@ -823,18 +823,18 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#E9ECEF',
+    borderColor: COLORES.BORDE_CLARO,
     justifyContent: 'center',
     alignItems: 'center',
   },
   moduleRadioSelected: {
-    borderColor: '#1976D2',
+    borderColor: COLORES.PRIMARIO,
   },
   moduleRadioInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.PRIMARIO,
   },
 
   // Estilos para selector de Grado de Estudio
@@ -843,7 +843,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: COLORES.BORDE_CLARO,
     borderRadius: 8,
     backgroundColor: COLORES.FONDO_CARD,
     paddingHorizontal: 12,
@@ -851,15 +851,15 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   placeholderSelector: {
-    borderColor: '#E2E8F0',
+    borderColor: COLORES.BORDE_CLARO,
   },
   gradoEstudioSelectorText: {
     fontSize: 16,
-    color: '#2D3748',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   placeholderText: {
-    color: '#999',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   arrowText: {
     fontSize: 12,
@@ -867,17 +867,17 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   inputError: {
-    borderColor: '#E53E3E',
+    borderColor: COLORES.ERROR,
     borderWidth: 2,
   },
   dropdownList: {
     marginTop: 4,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: COLORES.BORDE_CLARO,
     borderRadius: 8,
     backgroundColor: COLORES.FONDO_CARD,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -888,38 +888,38 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F7FAFC',
+    borderBottomColor: COLORES.FONDO_SECUNDARIO,
   },
   dropdownItemSelected: {
-    backgroundColor: '#E6FFFA',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   dropdownItemText: {
     fontSize: 15,
     color: COLORES.TEXTO_PRIMARIO,
   },
   dropdownItemTextSelected: {
-    color: '#319795',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
   },
 
   // Botón de envío
   submitButton: {
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.PRIMARIO,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 24,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   submitButtonDisabled: {
-    backgroundColor: '#BDBDBD',
+    backgroundColor: COLORES.TEXTO_DISABLED,
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.BLANCO,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -943,32 +943,32 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 16,
     padding: 16,
-    backgroundColor: '#FFEBEE',
+    backgroundColor: COLORES.FONDO_ERROR_CLARO,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#F44336',
+    borderLeftColor: COLORES.ERROR,
   },
   errorTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#F44336',
+    color: COLORES.ERROR,
     marginBottom: 8,
   },
   errorMessage: {
     fontSize: 14,
-    color: '#D32F2F',
+    color: COLORES.ERROR,
     marginBottom: 12,
     lineHeight: 20,
   },
   retryButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: COLORES.ERROR,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,
     alignSelf: 'flex-start',
   },
   retryText: {
-    color: '#FFFFFF',
+    color: COLORES.BLANCO,
     fontSize: 14,
     fontWeight: '600',
   },

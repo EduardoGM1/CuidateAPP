@@ -12,6 +12,7 @@ import ConsultaCard from './ConsultaCard';
 import useConsultasAgrupadas from '../../hooks/useConsultasAgrupadas';
 import { obtenerProximaOUltimaCita, obtenerTextoDescriptivoCita } from '../../utils/citaHelpers';
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * Componente para mostrar la próxima o última cita con toda su información
@@ -188,12 +189,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#212121',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1
   },
   optionsText: {
     fontSize: 14,
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
     paddingHorizontal: 8,
     paddingVertical: 4
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: '#757575'
+    color: COLORES.TEXTO_SECUNDARIO
   },
   errorContainer: {
     padding: 20,
@@ -212,25 +213,25 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: '#F44336',
+    color: COLORES.ERROR,
     fontWeight: '600',
     marginBottom: 4
   },
   errorSubtext: {
     fontSize: 12,
-    color: '#757575',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginBottom: 12
   },
   retryButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
     alignSelf: 'center'
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.BLANCO,
     fontSize: 14,
     fontWeight: '600'
   },

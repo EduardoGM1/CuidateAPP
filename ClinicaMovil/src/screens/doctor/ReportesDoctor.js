@@ -682,17 +682,17 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     marginBottom: 5,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#E8F5E9',
+    color: COLORES.SECUNDARIO_LIGHT,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 15,
     marginLeft: 5,
   },
@@ -716,7 +716,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 5,
   },
   statTitle: {
@@ -727,7 +727,7 @@ const styles = StyleSheet.create({
   },
   statSubtitle: {
     fontSize: 12,
-    color: '#999',
+    color: COLORES.TEXTO_DISABLED,
   },
   chartsContainer: {
     padding: 20,
@@ -743,7 +743,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 15,
     textAlign: 'center',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   chartTitleInHeader: {
     flex: 1,
@@ -788,7 +788,7 @@ const styles = StyleSheet.create({
   },
   noDataText: {
     fontSize: 14,
-    color: '#999',
+    color: COLORES.TEXTO_DISABLED,
     textAlign: 'center',
     paddingVertical: 20,
   },
@@ -803,7 +803,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 10,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   infoText: {
     fontSize: 14,
@@ -851,7 +851,7 @@ const styles = StyleSheet.create({
   },
   horizontalBarLabel: {
     fontSize: 13,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     fontWeight: '500',
     flex: 1,
     marginRight: 8,
@@ -865,7 +865,7 @@ const styles = StyleSheet.create({
   },
   horizontalBarContainer: {
     height: 24,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -885,15 +885,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
     flexShrink: 0,
   },
   filterButtonActive: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
     borderColor: COLORES.NAV_PRIMARIO,
   },
   filterButtonText: {
@@ -903,17 +903,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -2,
     right: -2,
-    backgroundColor: '#f44336',
+    backgroundColor: COLORES.ERROR,
     borderRadius: 10,
     width: 18,
     height: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: COLORES.BLANCO,
   },
   filterBadgeText: {
-    color: '#fff',
+    color: COLORES.BLANCO,
     fontSize: 10,
     fontWeight: 'bold',
   },
@@ -944,7 +944,7 @@ const styles = StyleSheet.create({
   periodoSelectorLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 12,
   },
   periodoSelectorButtons: {
@@ -957,13 +957,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#fff',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
+    backgroundColor: COLORES.FONDO_CARD,
     alignItems: 'center',
     justifyContent: 'center',
   },
   periodoSelectorButtonActive: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
     borderColor: COLORES.NAV_PRIMARIO,
   },
   periodoSelectorButtonText: {

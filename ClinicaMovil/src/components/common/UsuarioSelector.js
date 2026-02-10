@@ -69,6 +69,7 @@ const UsuarioSelector = ({ selectedUsuario, onSelectUsuario, style }) => {
         value={selectedUsuario ? selectedUsuario.email : searchQuery}
         onFocus={() => setShowList(true)}
         style={styles.searchbar}
+        icon={() => null}
       />
       
       {selectedUsuario && (

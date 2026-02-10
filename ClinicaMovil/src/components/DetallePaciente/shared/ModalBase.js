@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import { Modal, View, TouchableOpacity, Text, StyleSheet, KeyboardAvoidingView, Platform, Animated } from 'react-native';
-import { Title } from 'react-native-paper';
 import { COLORES } from '../../../utils/constantes';
 
 /**
@@ -181,11 +180,11 @@ const ModalBase = ({
             >
               {/* Header del Modal */}
               <View style={styles.modalHeader}>
-                {title && <Title style={styles.modalTitle}>{title}</Title>}
+                {title && <Text style={styles.modalTitle} numberOfLines={1} ellipsizeMode="tail">{title}</Text>}
                 {showCloseButton && (
                   <TouchableOpacity
                     onPress={handleClose}
-                    style={styles.closeButton}
+                    style={[styles.closeButton, styles.closeButtonShrink]}
                     testID={`${testID}-close-button`}
                     accessibilityRole="button"
                     accessibilityLabel="Cerrar modal"
@@ -265,6 +264,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
+  },
+  closeButtonShrink: {
+    flexShrink: 0,
   },
   closeButtonInner: {
     width: 28,

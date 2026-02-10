@@ -18,7 +18,6 @@ import Logger from '../../services/logger';
 import { useDoctorDetails, useDoctorPatientData } from '../../hooks/useGestion';
 import useDoctorForm from '../../hooks/useDoctorForm';
 import { formatDate, formatDateTime, formatAppointmentDate, formatTodayAppointment } from '../../utils/dateUtils';
-import { useFocusEffect } from '@react-navigation/native';
 import { ESTADOS_CITA, COLORES } from '../../utils/constantes';
 import OptionsModal from '../../components/DetallePaciente/shared/OptionsModal';
 import DetalleCitaModal from '../../components/DetalleCitaModal/DetalleCitaModal';
@@ -65,6 +64,8 @@ const DetalleDoctor = ({ route, navigation }) => {
   const [fechaReprogramada, setFechaReprogramada] = useState('');
   const [motivoReprogramacion, setMotivoReprogramacion] = useState('');
   const [actualizando, setActualizando] = useState(false);
+  // Modal Opciones de la card "Citas Recientes" (Ver historial completo)
+  const [showOptionsCitasRecientes, setShowOptionsCitasRecientes] = useState(false);
   
   // Hook para operaciones de doctor (incluyendo soft delete, reactivar, hard delete)
   const { 
@@ -119,14 +120,8 @@ const DetalleDoctor = ({ route, navigation }) => {
   }, [userRole, navigation]);
 
   // Refrescar datos al volver a la pantalla
-  useFocusEffect(
-    React.useCallback(() => {
-      Logger.info('DetalleDoctor: Pantalla enfocada, refrescando datos');
-      if (refetch) {
-        refetch();
-      }
-    }, [refetch])
-  );
+  // No refetch en foco: reutilizar datos en caché (useDoctorPatientData) para evitar solicitudes redundantes.
+  // La actualización se hace con pull-to-refresh (handleRefresh) y tras mutaciones (asignar, completar cita, etc.).
 
   // Priorizar initialDoctor que viene de GestionAdmin (tiene id_doctor garantizado)
   // Solo usar datos del hook para campos adicionales, no para el ID
@@ -161,17 +156,17 @@ const DetalleDoctor = ({ route, navigation }) => {
   const getEstadoCitaColor = (estado) => {
     switch (estado) {
       case ESTADOS_CITA.ATENDIDA:
-        return '#4CAF50';
+        return COLORES.PRIMARIO;
       case ESTADOS_CITA.PENDIENTE:
-        return '#FF9800';
+        return COLORES.ADVERTENCIA;
       case ESTADOS_CITA.NO_ASISTIDA:
-        return '#F44336';
+        return COLORES.ERROR;
       case ESTADOS_CITA.REPROGRAMADA:
-        return '#2196F3';
+        return COLORES.INFO;
       case ESTADOS_CITA.CANCELADA:
-        return '#9E9E9E';
+        return COLORES.TEXTO_SECUNDARIO;
       default:
-        return '#9E9E9E';
+        return COLORES.TEXTO_SECUNDARIO;
     }
   };
 
@@ -930,7 +925,7 @@ const DetalleDoctor = ({ route, navigation }) => {
               onPress={() => handleUnassignPatient(paciente)}
               style={[styles.patientActionButton, styles.unassignButton]}
               buttonColor={COLORES.ERROR_LIGHT}
-              textColor="#FFFFFF"
+              textColor={COLORES.TEXTO_EN_PRIMARIO}
               loading={unassignLoading[paciente.id]}
               disabled={unassignLoading[paciente.id]}
             >
@@ -969,7 +964,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                 styles.statusChip,
                 { backgroundColor: getEstadoCitaColor(cita.estado || ESTADOS_CITA.PENDIENTE) }
               ]}
-              textStyle={{ color: '#FFFFFF', fontSize: 12, fontWeight: '600' }}
+              textStyle={{ color: COLORES.TEXTO_EN_PRIMARIO, fontSize: 12, fontWeight: '600' }}
             >
               {getEstadoCitaTexto(cita.estado || ESTADOS_CITA.PENDIENTE)}
             </Chip>
@@ -1099,6 +1094,21 @@ const DetalleDoctor = ({ route, navigation }) => {
     return `Cita: ${nombre} - ${fecha} - ${estadoTexto}`;
   }, [citaRecienteSeleccionada]);
 
+  // Opciones del modal de la card "Citas Recientes" (nivel card, no por ítem)
+  const opcionesCitasRecientesCard = React.useMemo(() => [
+    {
+      label: 'Ver historial completo',
+      onPress: () => {
+        setShowOptionsCitasRecientes(false);
+        const doctorId = currentDoctor?.id_doctor || currentDoctor?.id;
+        if (doctorId) {
+          navigation.navigate('VerTodasCitas', { filterDoctorId: doctorId });
+        }
+      },
+      color: COLORES.NAV_PRIMARIO,
+    },
+  ], [currentDoctor, navigation]);
+
   // Si no es administrador, no renderizar nada
   // Usar datos dinámicos o fallback a datos iniciales con validación
 
@@ -1147,7 +1157,7 @@ const DetalleDoctor = ({ route, navigation }) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1976D2" />
+          <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
           <Text style={styles.loadingText}>Cargando detalles del doctor...</Text>
         </View>
       </SafeAreaView>
@@ -1202,8 +1212,8 @@ const DetalleDoctor = ({ route, navigation }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#1976D2']}
-            tintColor="#1976D2"
+            colors={[COLORES.PRIMARIO]}
+            tintColor={COLORES.PRIMARIO}
           />
         }
       >
@@ -1233,7 +1243,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                   onPress={handleEditDoctor}
                   style={[styles.topButton, styles.editButton]}
                   buttonColor={COLORES.ADVERTENCIA_LIGHT}
-                  textColor="#FFFFFF"
+                  textColor={COLORES.TEXTO_EN_PRIMARIO}
                   labelStyle={styles.buttonLabel}
                 >
                   Editar
@@ -1243,7 +1253,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                   onPress={handleDeleteDoctor}
                   style={[styles.topButton, styles.deleteButton]}
                   buttonColor={COLORES.ERROR_LIGHT}
-                  textColor="#FFFFFF"
+                  textColor={COLORES.TEXTO_EN_PRIMARIO}
                   labelStyle={styles.buttonLabel}
                   disabled={deleteLoading}
                   loading={deleteLoading}
@@ -1258,7 +1268,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                 onPress={() => setShowPasswordModal(true)}
                 style={[styles.fullWidthButton, styles.passwordButton]}
                 buttonColor={COLORES.SECUNDARIO_LIGHT}
-                textColor="#FFFFFF"
+                textColor={COLORES.TEXTO_EN_PRIMARIO}
                 labelStyle={styles.buttonLabel}
                 icon="key"
               >
@@ -1273,7 +1283,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                 onPress={handleReactivateDoctor}
                 style={[styles.actionButton, styles.reactivateButton]}
                 buttonColor={COLORES.EXITO_LIGHT}
-                textColor="#FFFFFF"
+                textColor={COLORES.TEXTO_EN_PRIMARIO}
                 labelStyle={styles.buttonLabel}
                 disabled={deleteLoading}
                 loading={deleteLoading}
@@ -1285,7 +1295,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                 onPress={handleHardDeleteDoctor}
                 style={[styles.actionButton, styles.hardDeleteButton]}
                 buttonColor={COLORES.ERROR}
-                textColor="#FFFFFF"
+                textColor={COLORES.TEXTO_EN_PRIMARIO}
                 labelStyle={styles.buttonLabel}
                 disabled={deleteLoading}
                 loading={deleteLoading}
@@ -1357,7 +1367,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                   onPress={handleOpenAssignModal}
                   style={styles.assignButton}
                   buttonColor={COLORES.EXITO_LIGHT}
-                  textColor="#FFFFFF"
+                  textColor={COLORES.TEXTO_EN_PRIMARIO}
                   loading={assignLoading}
                   disabled={assignLoading}
                   compact={true}
@@ -1389,21 +1399,42 @@ const DetalleDoctor = ({ route, navigation }) => {
         {/* Citas Recientes */}
         <Card style={styles.infoCard}>
           <Card.Content>
-            <Title style={styles.cardTitle}>Citas Recientes</Title>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardTitleContainer}>
+                <Title style={styles.cardHeaderTitle}>📅 Citas Recientes</Title>
+                <Text style={styles.patientCount}>({citasRecientes.length})</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowOptionsCitasRecientes(true)}>
+                <Text style={styles.optionsText}>Opciones</Text>
+              </TouchableOpacity>
+            </View>
             {citasRecientes.length > 0 ? (
-              <ScrollView 
-                style={styles.citasRecientesList}
-                nestedScrollEnabled={true}
-                showsVerticalScrollIndicator={true}
-              >
-                {citasRecientes.map(renderAppointmentCard)}
-              </ScrollView>
+              <>
+                {citasRecientes.length > 5 && (
+                  <Text style={styles.cardResumenText}>Mostrando 5 de {citasRecientes.length}. Ver historial en Opciones.</Text>
+                )}
+                <ScrollView 
+                  style={styles.citasRecientesList}
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                >
+                  {citasRecientes.slice(0, 5).map(renderAppointmentCard)}
+                </ScrollView>
+              </>
             ) : (
               <Text style={styles.noDataText}>No hay citas recientes</Text>
             )}
           </Card.Content>
         </Card>
       </ScrollView>
+
+      {/* Modal Opciones de la card Citas Recientes (Ver historial completo) */}
+      <OptionsModal
+        visible={showOptionsCitasRecientes}
+        onClose={() => setShowOptionsCitasRecientes(false)}
+        title="Citas Recientes"
+        options={opcionesCitasRecientesCard}
+      />
 
       {/* Modal al tocar una cita de hoy (Citas de Hoy) */}
       <OptionsModal
@@ -1488,7 +1519,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                       style={[
                         styles.estadoOption,
                         nuevoEstado === estado && styles.estadoOptionActive,
-                        { backgroundColor: nuevoEstado === estado ? getEstadoCitaColor(estado) : '#E0E0E0' }
+                        { backgroundColor: nuevoEstado === estado ? getEstadoCitaColor(estado) : COLORES.BORDE_CLARO }
                       ]}
                       onPress={() => setNuevoEstado(estado)}
                     >
@@ -1784,7 +1815,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                         onPress={() => handleAssignPatient(patient)}
                         style={styles.assignPatientButton}
                         buttonColor={COLORES.EXITO_LIGHT}
-                        textColor="#FFFFFF"
+                        textColor={COLORES.TEXTO_EN_PRIMARIO}
                         icon="plus"
                         loading={assignLoading}
                         disabled={assignLoading}
@@ -1823,13 +1854,13 @@ const DetalleDoctor = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   scrollView: {
     flex: 1,
   },
   header: {
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.PRIMARIO,
     padding: 20,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
@@ -1845,12 +1876,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     marginBottom: 5,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: '#E3F2FD',
+    color: COLORES.SECUNDARIO_LIGHT,
   },
   actionButtons: {
     padding: 20,
@@ -1872,40 +1903,41 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   editButton: {
-    backgroundColor: '#FFC107',
+    backgroundColor: COLORES.SECUNDARIO,
     borderWidth: 2,
-    borderColor: '#000000',
+    borderColor: COLORES.PRIMARIO_DARK,
   },
   toggleButton: {
-    borderColor: '#000000',
+    borderColor: COLORES.PRIMARIO_DARK,
     borderWidth: 2,
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.EXITO,
   },
   deleteButton: {
-    borderColor: '#000000',
+    borderColor: COLORES.PRIMARIO_DARK,
     borderWidth: 2,
-    backgroundColor: '#F44336',
+    backgroundColor: COLORES.ERROR,
   },
   passwordButton: {
-    borderColor: '#9C27B0',
+    borderColor: COLORES.SECUNDARIO_DARK,
     borderWidth: 2,
-    backgroundColor: '#9C27B0',
+    backgroundColor: COLORES.SECUNDARIO_DARK,
   },
   buttonLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
   },
   infoCard: {
     margin: 20,
     marginTop: 0,
     elevation: 3,
     borderRadius: 12,
+    backgroundColor: COLORES.FONDO_CARD,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 15,
     flexShrink: 1,
   },
@@ -1920,12 +1952,12 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     flex: 1,
   },
   infoValue: {
     fontSize: 14,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
     textAlign: 'right',
   },
@@ -1933,6 +1965,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     elevation: 2,
     borderRadius: 8,
+    backgroundColor: COLORES.FONDO_CARD,
   },
   patientHeader: {
     flexDirection: 'row',
@@ -1946,12 +1979,12 @@ const styles = StyleSheet.create({
   patientName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 5,
   },
   patientDetails: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 10,
   },
   detailRow: {
@@ -1961,18 +1994,19 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     width: 80,
   },
   detailValue: {
     fontSize: 12,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   appointmentCard: {
     marginBottom: 15,
     elevation: 2,
     borderRadius: 8,
+    backgroundColor: COLORES.FONDO_CARD,
   },
   appointmentHeader: {
     flexDirection: 'row',
@@ -1983,20 +2017,20 @@ const styles = StyleSheet.create({
   appointmentTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   appointmentTime: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   appointmentMotivo: {
     fontSize: 14,
-    color: '#555',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 5,
   },
   appointmentDiagnostico: {
     fontSize: 14,
-    color: '#555',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 10,
   },
   appointmentStatus: {
@@ -2006,7 +2040,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     elevation: 2,
     borderRadius: 8,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   todayAppointmentHeader: {
     flexDirection: 'row',
@@ -2018,34 +2052,34 @@ const styles = StyleSheet.create({
   todayAppointmentTime: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: COLORES.PRIMARIO,
     flexShrink: 1,
     marginRight: 8,
   },
   todayAppointmentTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 5,
   },
   todayAppointmentMotivo: {
     fontSize: 14,
-    color: '#555',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   criticalChip: {
-    backgroundColor: '#FFEBEE',
+    backgroundColor: COLORES.FONDO_ERROR_CLARO,
   },
   followUpChip: {
-    backgroundColor: '#FFF3E0',
+    backgroundColor: COLORES.FONDO_ADVERTENCIA_CLARO,
   },
   stableChip: {
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   attendedChip: {
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   pendingChip: {
-    backgroundColor: '#FFF3E0',
+    backgroundColor: COLORES.FONDO_ADVERTENCIA_CLARO,
   },
   statusChip: {
     height: 29,
@@ -2060,7 +2094,7 @@ const styles = StyleSheet.create({
     maxWidth: 100,
   },
   statusBadgeText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 11,
     fontWeight: '600',
     textAlign: 'center',
@@ -2074,7 +2108,7 @@ const styles = StyleSheet.create({
   },
   noDataText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     fontStyle: 'italic',
     marginVertical: 20,
@@ -2088,25 +2122,25 @@ const styles = StyleSheet.create({
   accessDeniedTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F44336',
+    color: COLORES.ERROR,
     marginBottom: 20,
     textAlign: 'center',
   },
   accessDeniedMessage: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginBottom: 30,
     lineHeight: 24,
   },
   goBackButton: {
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.PRIMARIO,
     borderRadius: 12,
     paddingVertical: 15,
     paddingHorizontal: 30,
   },
   goBackText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -2120,7 +2154,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   errorContainer: {
     flex: 1,
@@ -2131,50 +2165,50 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#F44336',
+    color: COLORES.ERROR,
     marginBottom: 20,
     textAlign: 'center',
   },
   errorMessage: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginBottom: 30,
     lineHeight: 24,
   },
   retryButton: {
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.PRIMARIO,
     borderRadius: 12,
     paddingVertical: 15,
     paddingHorizontal: 30,
   },
   retryText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: '600',
   },
   // Estilos para botones de estado
   reactivateButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.EXITO,
   },
   hardDeleteButton: {
-    backgroundColor: '#D32F2F',
+    backgroundColor: COLORES.ERROR,
   },
   // Estilos para modal de contraseña
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORES.FONDO_OVERLAY,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 20,
     padding: 20,
     width: '90%',
     maxWidth: 400,
     elevation: 10,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -2186,17 +2220,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.SECUNDARIO_LIGHT,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   closeButtonX: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: '#f44336',
+    color: COLORES.ERROR,
     paddingHorizontal: 8,
     paddingVertical: 4,
     minWidth: 40,
@@ -2207,7 +2241,7 @@ const styles = StyleSheet.create({
   },
   modalSubtitle: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -2217,20 +2251,20 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   passwordInput: {
     borderWidth: 1,
-    borderColor: '#DDD',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
   },
   passwordHint: {
     fontSize: 12,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 10,
@@ -2245,7 +2279,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   modalCancelButton: {
-    borderColor: '#999',
+    borderColor: COLORES.TEXTO_DISABLED,
   },
   modalApplyButton: {},
   modalScrollView: {
@@ -2256,14 +2290,14 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   modalCitaInfo: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     padding: 12,
     borderRadius: 8,
     marginBottom: 20,
   },
   modalCitaInfoText: {
     fontSize: 16,
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   filterSection: {
@@ -2272,7 +2306,7 @@ const styles = StyleSheet.create({
   filterLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   estadosContainer: {
@@ -2291,22 +2325,22 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   estadoOptionText: {
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontSize: 14,
     fontWeight: '500',
   },
   estadoOptionTextActive: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
   },
   modalTextInput: {
     borderWidth: 1,
-    borderColor: '#BDBDBD',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
     borderRadius: 8,
     padding: 12,
     fontSize: 14,
     minHeight: 80,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   // Estilos para asignación de pacientes
   cardHeader: {
@@ -2325,13 +2359,13 @@ const styles = StyleSheet.create({
   cardHeaderTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flexShrink: 1,
   },
   patientCount: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1976D2',
+    color: COLORES.PRIMARIO,
     marginLeft: 5,
   },
   cardHeaderButtons: {
@@ -2339,8 +2373,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  optionsText: {
+    fontSize: 14,
+    color: COLORES.NAV_PRIMARIO,
+    fontWeight: '600',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  cardResumenText: {
+    fontSize: 12,
+    color: COLORES.TEXTO_SECUNDARIO,
+    marginBottom: 10,
+    fontStyle: 'italic',
+  },
   searchButton: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
     borderRadius: 8,
     padding: 10,
     justifyContent: 'center',
@@ -2361,13 +2408,13 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
     marginBottom: 16,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
   },
   searchResultsList: {
     maxHeight: 350,
@@ -2379,8 +2426,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    backgroundColor: '#FFFFFF',
+    borderBottomColor: COLORES.SECUNDARIO_LIGHT,
+    backgroundColor: COLORES.FONDO_CARD,
   },
   searchResultInfo: {
     flex: 1,
@@ -2388,21 +2435,21 @@ const styles = StyleSheet.create({
   searchResultName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   searchResultDetails: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   searchResultArrow: {
     fontSize: 20,
-    color: '#1976D2',
+    color: COLORES.PRIMARIO,
     marginLeft: 8,
   },
   noResultsText: {
     fontSize: 14,
-    color: '#999',
+    color: COLORES.TEXTO_DISABLED,
     textAlign: 'center',
     paddingVertical: 20,
     fontStyle: 'italic',
@@ -2417,10 +2464,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   viewButton: {
-    borderColor: '#1976D2',
+    borderColor: COLORES.PRIMARIO,
   },
   unassignButton: {
-    borderColor: '#F44336',
+    borderColor: COLORES.ERROR,
   },
   // Estilos para modal de asignación
   patientsList: {
@@ -2433,10 +2480,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 15,
     marginVertical: 5,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.SECUNDARIO_LIGHT,
   },
   patientOptionInfo: {
     flex: 1,
@@ -2445,12 +2492,12 @@ const styles = StyleSheet.create({
   patientOptionName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 4,
   },
   patientOptionDetails: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   assignPatientButton: {
     borderRadius: 8,
@@ -2462,7 +2509,7 @@ const styles = StyleSheet.create({
   },
   noPatientsText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
   },
 });

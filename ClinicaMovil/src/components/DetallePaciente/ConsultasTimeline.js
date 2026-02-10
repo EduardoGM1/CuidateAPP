@@ -12,6 +12,7 @@ import ConsultaCard from './ConsultaCard';
 import FiltrosConsultas from './FiltrosConsultas';
 import useConsultasAgrupadas from '../../hooks/useConsultasAgrupadas';
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * Componente principal para mostrar el timeline de consultas
@@ -141,7 +142,7 @@ const ConsultasTimeline = ({
     if (loading) {
       return (
         <View style={styles.emptyContainer}>
-          <ActivityIndicator size="large" color="#2196F3" />
+          <ActivityIndicator size="large" color={COLORES.PRIMARIO} />
           <Text style={styles.emptyText}>Cargando consultas...</Text>
         </View>
       );
@@ -205,7 +206,7 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: COLORES.BORDE_CLARO,
     width: '100%',
     margin: 0
   },
@@ -218,12 +219,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#212121',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1
   },
   optionsText: {
     fontSize: 14,
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
     paddingHorizontal: 8,
     paddingVertical: 4
@@ -240,7 +241,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#757575',
+    color: COLORES.TEXTO_SECUNDARIO,
     textAlign: 'center',
     marginBottom: 8
   },

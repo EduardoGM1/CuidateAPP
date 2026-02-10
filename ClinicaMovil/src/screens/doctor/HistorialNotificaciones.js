@@ -327,9 +327,9 @@ const HistorialNotificaciones = ({ navigation }) => {
       case 'leida':
         return COLORES.EXITO_LIGHT;
       case 'archivada':
-        return '#9E9E9E';
+        return COLORES.TEXTO_DISABLED;
       default:
-        return '#757575';
+        return COLORES.TEXTO_SECUNDARIO;
     }
   };
 
@@ -366,6 +366,7 @@ const HistorialNotificaciones = ({ navigation }) => {
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchBar}
+          icon={() => null}
         />
       </View>
 
@@ -523,11 +524,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 8,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
     borderBottomColor: COLORES.BORDE_CLARO,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -542,11 +543,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   searchContainer: {
     padding: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
     borderBottomColor: COLORES.BORDE_CLARO,
   },
@@ -581,12 +582,12 @@ const styles = StyleSheet.create({
   notificacionCard: {
     marginBottom: 0,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
   },
   cardContent: {
     padding: 16,
@@ -605,7 +606,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     lineHeight: 22,
   },
   cardSubtitle: {
@@ -636,7 +637,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 11,
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontWeight: '600',
     textTransform: 'capitalize',
   },
@@ -647,7 +648,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     gap: 10,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: COLORES.SECUNDARIO_LIGHT,
   },
   actionButton: {
     flex: 1,
@@ -657,7 +658,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   actionButtonSecondary: {
-    borderColor: '#BDBDBD',
+    borderColor: COLORES.TEXTO_DISABLED,
   },
   actionButtonLabel: {
     fontSize: 13,

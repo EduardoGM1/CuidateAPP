@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Title, Paragraph } from 'react-native-paper';
 import axios from 'axios';
 import { getApiConfigSync, getApiConfigWithFallback } from '../config/apiConfig';
+import { COLORES } from '../utils/constantes';
 
 const MAX_DETAILS_LENGTH = 2000; // Evitar mostrar 200KB+ en pantalla (truncar JSON)
 
@@ -47,12 +48,17 @@ const DiagnosticScreen = ({ navigation }) => {
       results.push({ test: 'Autenticación', status: 'running' });
       setDiagnosticResults([...results]);
 
-      const loginResponse = await axios.post(`${API_BASE_URL}/api/auth/login`, {
-        email: 'admin@clinica.com',
-        password: 'admin123'
+      // Mismo endpoint que el login real de la app (/api/mobile/login)
+      const loginResponse = await axios.post(`${API_BASE_URL}/api/mobile/login`, {
+        email: 'Administrador@cuidateapp.com',
+        password: 'admin123!'
       }, {
         timeout: timeoutMs,
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Platform': 'android',
+          'X-Client-Type': 'app'
+        }
       });
 
       results[1] = {
@@ -154,11 +160,11 @@ const DiagnosticScreen = ({ navigation }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'success': return '#4CAF50';
-      case 'error': return '#F44336';
-      case 'running': return '#FF9800';
-      case 'info': return '#2196F3';
-      default: return '#9E9E9E';
+      case 'success': return COLORES.EXITO;
+      case 'error': return COLORES.ERROR;
+      case 'running': return COLORES.ADVERTENCIA;
+      case 'info': return COLORES.PRIMARIO;
+      default: return COLORES.TEXTO_DISABLED;
     }
   };
 
@@ -249,7 +255,7 @@ const DiagnosticScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORES.FONDO,
   },
   scrollView: {
     flex: 1,
@@ -261,19 +267,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
   },
   card: {
     marginBottom: 20,
     elevation: 3,
   },
   button: {
-    backgroundColor: '#1976D2',
+    backgroundColor: COLORES.PRIMARIO,
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
@@ -281,20 +287,20 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   buttonDisabled: {
-    backgroundColor: '#BDBDBD',
+    backgroundColor: COLORES.TEXTO_DISABLED,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: '600',
   },
   secondaryButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderWidth: 1,
-    borderColor: '#1976D2',
+    borderColor: COLORES.PRIMARIO,
   },
   secondaryButtonText: {
-    color: '#1976D2',
+    color: COLORES.PRIMARIO,
   },
   resultsContainer: {
     marginBottom: 20,
@@ -302,7 +308,7 @@ const styles = StyleSheet.create({
   resultsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 15,
   },
   resultCard: {
@@ -322,7 +328,7 @@ const styles = StyleSheet.create({
   resultTest: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   resultStatus: {
@@ -331,23 +337,23 @@ const styles = StyleSheet.create({
   },
   resultMessage: {
     fontSize: 14,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 8,
   },
   resultDetails: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     padding: 10,
     borderRadius: 4,
   },
   detailsTitle: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 5,
   },
   detailsText: {
     fontSize: 11,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     fontFamily: 'monospace',
   },
 });

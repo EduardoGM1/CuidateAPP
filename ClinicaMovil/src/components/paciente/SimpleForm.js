@@ -18,6 +18,7 @@ import useTTS from '../../hooks/useTTS';
 import hapticService from '../../services/hapticService';
 import audioFeedbackService from '../../services/audioFeedbackService';
 import Logger from '../../services/logger';
+import { COLORES } from '../../utils/constantes';
 
 /**
  * Formulario simple paso a paso
@@ -260,7 +261,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: COLORES.PRIMARIO,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -269,28 +270,28 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORES.TEXTO_SECUNDARIO,
     marginBottom: 8,
     textAlign: 'center',
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: COLORES.BORDE_CLARO,
     borderRadius: 4,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.PRIMARIO,
     borderRadius: 4,
   },
   fieldContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -301,50 +302,50 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 12,
     textAlign: 'center',
   },
   listenButton: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2196F3',
+    borderColor: COLORES.PRIMARIO,
   },
   listenButtonText: {
     fontSize: 16,
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
   },
   input: {
     borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderColor: COLORES.BORDE_CLARO,
     borderRadius: 12,
     padding: 16,
     fontSize: 24,
     textAlign: 'center',
-    backgroundColor: '#FAFAFA',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
     minHeight: 60,
   },
   inputError: {
-    borderColor: '#F44336',
-    backgroundColor: '#FFEBEE',
+    borderColor: COLORES.ERROR,
+    backgroundColor: COLORES.FONDO_ERROR_CLARO,
   },
   inputSuccess: {
-    borderColor: '#4CAF50',
-    backgroundColor: '#F1F8E9',
+    borderColor: COLORES.PRIMARIO,
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   errorText: {
-    color: '#F44336',
+    color: COLORES.ERROR,
     fontSize: 14,
     marginTop: 8,
     textAlign: 'center',
   },
   successText: {
-    color: '#4CAF50',
+    color: COLORES.PRIMARIO,
     fontSize: 14,
     marginTop: 8,
     textAlign: 'center',
@@ -365,19 +366,19 @@ const styles = StyleSheet.create({
     minHeight: 60,
   },
   buttonBack: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: COLORES.BORDE_CLARO,
   },
   buttonNext: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.PRIMARIO,
   },
   buttonText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: COLORES.BLANCO,
   },
   error: {
     fontSize: 16,
-    color: '#F44336',
+    color: COLORES.ERROR,
     textAlign: 'center',
     marginTop: 20,
   },

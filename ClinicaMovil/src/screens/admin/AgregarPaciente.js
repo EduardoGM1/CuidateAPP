@@ -1750,7 +1750,7 @@ const AgregarPaciente = () => {
                 minimumDate={new Date()}
                 disabled={false}
               />
-              <Text style={{ fontSize: 12, color: '#999', marginTop: 4, marginBottom: 12 }}>
+              <Text style={{ fontSize: 12, color: COLORES.TEXTO_DISABLED, marginTop: 4, marginBottom: 12 }}>
                 Selecciona la fecha y hora para la primera consulta médica
               </Text>
 
@@ -1920,7 +1920,7 @@ const AgregarPaciente = () => {
                     <Text 
                       style={{ 
                         fontSize: 12, 
-                        color: '#3182CE', 
+                        color: COLORES.PRIMARIO, 
                         marginBottom: 4,
                         flexWrap: 'wrap'
                       }}
@@ -1944,7 +1944,7 @@ const AgregarPaciente = () => {
                         }}
                         style={{ paddingVertical: 2, alignSelf: 'flex-start' }}
                       >
-                        <Text style={{ fontSize: 12, color: '#3182CE', textDecorationLine: 'underline' }}>
+                        <Text style={{ fontSize: 12, color: COLORES.PRIMARIO, textDecorationLine: 'underline' }}>
                           Editar manualmente
                         </Text>
                       </TouchableOpacity>
@@ -1955,8 +1955,8 @@ const AgregarPaciente = () => {
                 {/* Validación de rangos de HbA1c según edad */}
                 {formData.primeraConsulta.signos_vitales.hba1c_porcentaje && 
                  formData.primeraConsulta.signos_vitales.edad_paciente_en_medicion && (
-                  <View style={{ backgroundColor: '#fff3cd', padding: 12, borderRadius: 8, marginTop: 8 }}>
-                    <Text style={{ fontSize: 12, color: '#856404' }}>
+                  <View style={{ backgroundColor: COLORES.FONDO_ADVERTENCIA_CLARO, padding: 12, borderRadius: 8, marginTop: 8 }}>
+                    <Text style={{ fontSize: 12, color: COLORES.ADVERTENCIA_TEXTO }}>
                       {(() => {
                         const edad = parseInt(formData.primeraConsulta.signos_vitales.edad_paciente_en_medicion, 10);
                         const hba1c = parseFloat(formData.primeraConsulta.signos_vitales.hba1c_porcentaje);
@@ -2124,7 +2124,7 @@ const AgregarPaciente = () => {
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={COLORES.TEXTO_EN_PRIMARIO} />
                 ) : (
                   <Text style={styles.submitButtonText}>Crear Paciente con Primera Consulta</Text>
                 )}
@@ -2140,7 +2140,7 @@ const AgregarPaciente = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
   },
   
   // Header
@@ -2152,9 +2152,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: COLORES.BORDE_CLARO,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -2162,17 +2162,17 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: COLORES.FONDO_SECUNDARIO,
   },
   backButtonText: {
     fontSize: 24,
-    color: '#2E86AB',
+    color: COLORES.PRIMARIO,
     fontWeight: 'bold',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
     textAlign: 'center',
   },
@@ -2185,14 +2185,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E8F4FD',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2E86AB',
+    borderColor: COLORES.PRIMARIO,
   },
   testModeButtonActive: {
-    backgroundColor: '#2E86AB',
+    backgroundColor: COLORES.PRIMARIO,
   },
   testModeButtonText: {
     fontSize: 18,
@@ -2201,11 +2201,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#27AE60',
+    borderColor: COLORES.EXITO,
   },
   fillDataButtonText: {
     fontSize: 18,
@@ -2222,18 +2222,18 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: COLORES.FONDO_CARD,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: COLORES.BORDE_CLARO,
   },
   progressStep: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#E9ECEF',
+    backgroundColor: COLORES.BORDE_CLARO,
     justifyContent: 'center',
     alignItems: 'center',
   },
   progressStepActive: {
-    backgroundColor: '#4CAF50', // Verde para pacientes
+    backgroundColor: COLORES.PRIMARIO,
   },
   progressStepText: {
     fontSize: 14,
@@ -2241,16 +2241,16 @@ const styles = StyleSheet.create({
     color: COLORES.TEXTO_SECUNDARIO,
   },
   progressStepTextActive: {
-    color: '#FFFFFF',
+    color: COLORES.BLANCO,
   },
   progressLine: {
     width: 40,
     height: 2,
-    backgroundColor: '#E9ECEF',
+    backgroundColor: COLORES.BORDE_CLARO,
     marginHorizontal: 8,
   },
   progressLineActive: {
-    backgroundColor: '#4CAF50', // Verde para pacientes
+    backgroundColor: COLORES.PRIMARIO,
   },
 
   // Contenido
@@ -2273,7 +2273,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 12,
     elevation: 1,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -2281,7 +2281,7 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   stepDescription: {
@@ -2292,14 +2292,14 @@ const styles = StyleSheet.create({
   userCreatedIndicator: {
     marginTop: 12,
     padding: 12,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#4CAF50',
+    borderLeftColor: COLORES.PRIMARIO,
   },
   userCreatedText: {
     fontSize: 14,
-    color: '#2E7D32',
+    color: COLORES.PRIMARIO,
     fontWeight: '500',
   },
 
@@ -2310,12 +2310,12 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
     marginBottom: 8,
   },
   errorText: {
     fontSize: 12,
-    color: '#F44336',
+    color: COLORES.ERROR,
     marginTop: 4,
   },
 
@@ -2324,17 +2324,17 @@ const styles = StyleSheet.create({
     backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E9ECEF',
+    borderColor: COLORES.BORDE_CLARO,
     overflow: 'hidden',
   },
   moduleOption: {
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F8F9FA',
+    borderBottomColor: COLORES.FONDO_SECUNDARIO,
   },
   moduleOptionSelected: {
-    backgroundColor: '#E8F5E8', // Verde claro para pacientes
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
   moduleOptionContent: {
     flexDirection: 'row',
@@ -2343,11 +2343,11 @@ const styles = StyleSheet.create({
   },
   moduleOptionText: {
     fontSize: 16,
-    color: '#2C3E50',
+    color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
   },
   moduleOptionTextSelected: {
-    color: '#4CAF50', // Verde para pacientes
+    color: COLORES.PRIMARIO,
     fontWeight: '500',
   },
   moduleRadio: {
@@ -2355,38 +2355,38 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#E9ECEF',
+    borderColor: COLORES.BORDE_CLARO,
     justifyContent: 'center',
     alignItems: 'center',
   },
   moduleRadioSelected: {
-    borderColor: '#4CAF50', // Verde para pacientes
+    borderColor: COLORES.PRIMARIO,
   },
   moduleRadioInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#4CAF50', // Verde para pacientes
+    backgroundColor: COLORES.PRIMARIO,
   },
 
   // Botón de envío
   submitButton: {
-    backgroundColor: '#4CAF50', // Verde para pacientes
+    backgroundColor: COLORES.PRIMARIO,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 24,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORES.NEGRO,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   submitButtonDisabled: {
-    backgroundColor: '#BDBDBD',
+    backgroundColor: COLORES.TEXTO_DISABLED,
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -2409,12 +2409,12 @@ const styles = StyleSheet.create({
   redApoyoTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1976D2',
+    color: COLORES.PRIMARIO,
   },
   removeContactButton: {
     padding: 8,
     borderRadius: 6,
-    backgroundColor: '#FFEBEE',
+    backgroundColor: COLORES.FONDO_ERROR_CLARO,
   },
   removeContactButtonText: {
     fontSize: 16,
@@ -2422,17 +2422,17 @@ const styles = StyleSheet.create({
   addContactButton: {
     marginBottom: 24,
     padding: 16,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#1976D2',
+    borderColor: COLORES.PRIMARIO,
     borderStyle: 'dashed',
     alignItems: 'center',
   },
   addContactButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1976D2',
+    color: COLORES.PRIMARIO,
   },
 
   // Estilos para Paso 4 - Primera Consulta
@@ -2461,8 +2461,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORES.FONDO_CARD,
   },
   checkboxItemSelected: {
-    backgroundColor: '#E3F2FD',
-    borderColor: '#2196F3',
+    backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,
+    borderColor: COLORES.PRIMARIO,
   },
   checkbox: {
     width: 20,
@@ -2475,20 +2475,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkboxSelected: {
-    backgroundColor: '#2196F3',
-    borderColor: '#2196F3',
+    backgroundColor: COLORES.PRIMARIO,
+    borderColor: COLORES.PRIMARIO,
   },
   checkboxText: {
-    color: '#FFFFFF',
+    color: COLORES.BLANCO,
     fontSize: 12,
     fontWeight: 'bold',
   },
   checkboxLabel: {
     fontSize: 14,
-    color: '#333333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   checkboxLabelSelected: {
-    color: '#2196F3',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
   },
 
@@ -2508,8 +2508,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORES.FONDO_CARD,
   },
   radioOptionSelected: {
-    backgroundColor: '#E8F5E8',
-    borderColor: '#4CAF50',
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
+    borderColor: COLORES.PRIMARIO,
   },
   radioButton: {
     width: 20,
@@ -2522,20 +2522,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioButtonSelected: {
-    borderColor: '#4CAF50',
+    borderColor: COLORES.PRIMARIO,
   },
   radioButtonInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.PRIMARIO,
   },
   radioLabel: {
     fontSize: 14,
-    color: '#333333',
+    color: COLORES.TEXTO_PRIMARIO,
   },
   radioLabelSelected: {
-    color: '#4CAF50',
+    color: COLORES.PRIMARIO,
     fontWeight: '600',
   },
 
@@ -2550,10 +2550,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   removeMedicamentoButton: {
-    marginTop: 24, // Alinear con el selector (considerando el label)
+    marginTop: 24,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#FF5252',
+    backgroundColor: COLORES.ERROR,
     borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
@@ -2561,7 +2561,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   removeMedicamentoText: {
-    color: '#FFFFFF',
+    color: COLORES.BLANCO,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -2569,12 +2569,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORES.PRIMARIO,
     borderRadius: 8,
     alignItems: 'center',
   },
   addMedicamentoText: {
-    color: '#FFFFFF',
+    color: COLORES.BLANCO,
     fontSize: 14,
     fontWeight: '600',
   },

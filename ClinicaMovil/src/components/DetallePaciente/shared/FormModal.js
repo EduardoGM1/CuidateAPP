@@ -2,6 +2,7 @@ import React from 'react';
 import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { Button, Title } from 'react-native-paper';
 import ModalBase from './ModalBase';
+import { COLORES } from '../../../utils/constantes';
 
 /**
  * FormModal - Modal reutilizable para formularios
@@ -41,7 +42,7 @@ const FormModal = ({
   disabled = false,
   saveLabel = 'Guardar',
   cancelLabel = 'Cancelar',
-  saveButtonColor = '#2196F3',
+  saveButtonColor = COLORES.PRIMARIO,
   showSaveButton = true,
   showCancelButton = true
 }) => {

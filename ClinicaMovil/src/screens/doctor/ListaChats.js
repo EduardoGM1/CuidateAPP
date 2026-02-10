@@ -116,6 +116,7 @@ const ListaChats = ({ navigation }) => {
         value={searchQuery}
         style={styles.searchbar}
         inputStyle={styles.searchbarInput}
+        icon={() => null}
       />
     </View>
   );

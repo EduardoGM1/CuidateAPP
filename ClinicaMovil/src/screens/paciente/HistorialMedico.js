@@ -15,10 +15,8 @@ import {
   RefreshControl,
   ActivityIndicator,
   Dimensions,
-  Alert,
-  Linking,
 } from 'react-native';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Rect } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
@@ -127,168 +125,6 @@ const HistorialMedico = () => {
     
     await speak(`Mostrando ${tabNames[tab]}`);
   };
-
-  // Funciones de exportación
-  const pacienteId = paciente?.id_paciente || paciente?.id;
-
-  const handleExportarSignosVitales = useCallback(async () => {
-    if (!pacienteId) return;
-    
-    try {
-      Alert.alert(
-        'Exportar Signos Vitales',
-        '¿En qué formato deseas exportar?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'CSV',
-            onPress: async () => {
-              try {
-                const url = await gestionService.exportarSignosVitalesCSV(pacienteId);
-                const canOpen = await Linking.canOpenURL(url);
-                if (canOpen) {
-                  await Linking.openURL(url);
-                  Alert.alert('Éxito', 'El archivo CSV se está descargando');
-                } else {
-                  Alert.alert('Error', 'No se puede abrir la URL de descarga');
-                }
-              } catch (error) {
-                Logger.error('Error exportando signos vitales:', error);
-                Alert.alert('Error', 'No se pudo exportar los signos vitales');
-              }
-            }
-          },
-          {
-            text: 'PDF',
-            onPress: async () => {
-              try {
-                const url = await gestionService.exportarPDF('signos-vitales', pacienteId);
-                const canOpen = await Linking.canOpenURL(url);
-                if (canOpen) {
-                  await Linking.openURL(url);
-                  Alert.alert('Éxito', 'El archivo PDF se está descargando');
-                } else {
-                  Alert.alert('Error', 'No se puede abrir la URL de descarga');
-                }
-              } catch (error) {
-                Logger.error('Error exportando signos vitales PDF:', error);
-                Alert.alert('Error', 'No se pudo exportar los signos vitales');
-              }
-            }
-          }
-        ]
-      );
-    } catch (error) {
-      Logger.error('Error en exportación de signos vitales:', error);
-      Alert.alert('Error', 'No se pudo exportar los signos vitales');
-    }
-  }, [pacienteId]);
-
-  const handleExportarCitas = useCallback(async () => {
-    if (!pacienteId) return;
-    
-    try {
-      Alert.alert(
-        'Exportar Citas',
-        '¿En qué formato deseas exportar?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'CSV',
-            onPress: async () => {
-              try {
-                const url = await gestionService.exportarCitasCSV(pacienteId);
-                const canOpen = await Linking.canOpenURL(url);
-                if (canOpen) {
-                  await Linking.openURL(url);
-                  Alert.alert('Éxito', 'El archivo CSV se está descargando');
-                } else {
-                  Alert.alert('Error', 'No se puede abrir la URL de descarga');
-                }
-              } catch (error) {
-                Logger.error('Error exportando citas:', error);
-                Alert.alert('Error', 'No se pudo exportar las citas');
-              }
-            }
-          },
-          {
-            text: 'PDF',
-            onPress: async () => {
-              try {
-                const url = await gestionService.exportarPDF('citas', pacienteId);
-                const canOpen = await Linking.canOpenURL(url);
-                if (canOpen) {
-                  await Linking.openURL(url);
-                  Alert.alert('Éxito', 'El archivo PDF se está descargando');
-                } else {
-                  Alert.alert('Error', 'No se puede abrir la URL de descarga');
-                }
-              } catch (error) {
-                Logger.error('Error exportando citas PDF:', error);
-                Alert.alert('Error', 'No se pudo exportar las citas');
-              }
-            }
-          }
-        ]
-      );
-    } catch (error) {
-      Logger.error('Error en exportación de citas:', error);
-      Alert.alert('Error', 'No se pudo exportar las citas');
-    }
-  }, [pacienteId]);
-
-  const handleExportarDiagnosticos = useCallback(async () => {
-    if (!pacienteId) return;
-    
-    try {
-      Alert.alert(
-        'Exportar Diagnósticos',
-        '¿En qué formato deseas exportar?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'CSV',
-            onPress: async () => {
-              try {
-                const url = await gestionService.exportarDiagnosticosCSV(pacienteId);
-                const canOpen = await Linking.canOpenURL(url);
-                if (canOpen) {
-                  await Linking.openURL(url);
-                  Alert.alert('Éxito', 'El archivo CSV se está descargando');
-                } else {
-                  Alert.alert('Error', 'No se puede abrir la URL de descarga');
-                }
-              } catch (error) {
-                Logger.error('Error exportando diagnósticos:', error);
-                Alert.alert('Error', 'No se pudo exportar los diagnósticos');
-              }
-            }
-          },
-          {
-            text: 'PDF',
-            onPress: async () => {
-              try {
-                const url = await gestionService.exportarPDF('diagnosticos', pacienteId);
-                const canOpen = await Linking.canOpenURL(url);
-                if (canOpen) {
-                  await Linking.openURL(url);
-                  Alert.alert('Éxito', 'El archivo PDF se está descargando');
-                } else {
-                  Alert.alert('Error', 'No se puede abrir la URL de descarga');
-                }
-              } catch (error) {
-                Logger.error('Error exportando diagnósticos PDF:', error);
-                Alert.alert('Error', 'No se pudo exportar los diagnósticos');
-              }
-            }
-          }
-        ]
-      );
-    } catch (error) {
-      Logger.error('Error en exportación de diagnósticos:', error);
-      Alert.alert('Error', 'No se pudo exportar los diagnósticos');
-    }
-  }, [pacienteId]);
 
   // Obtener últimos signos vitales
   const ultimosSignos = signosVitales?.[0] || null;
@@ -532,17 +368,14 @@ const HistorialMedico = () => {
     const svgHeight = alturaGrafico - 50;
     const anchoPunto = svgWidth / Math.max(datosConIndice.length - 1, 1);
 
-    // Normalizar índice de salud para el gráfico
+    // Normalizar índice de salud para el gráfico (altura de cada barra)
     const normalizarIndice = (indice) => {
       return ((indice - minIndice) / (maxIndice - minIndice)) * svgHeight;
     };
 
-    // Construir path SVG
-    const puntos = datosConIndice.map((punto, idx) => {
-      const x = idx * anchoPunto;
-      const y = svgHeight - normalizarIndice(punto.indiceSalud);
-      return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
-    }).join(' ');
+    // Ancho de cada barra (dejar espacio entre barras)
+    const barWidth = Math.max(12, anchoPunto * 0.55);
+    const barGap = (anchoPunto - barWidth) / 2;
 
     // Construir mensaje TTS completo para una fecha
     const construirMensajeTTS = (punto) => {
@@ -588,7 +421,7 @@ const HistorialMedico = () => {
 
     return (
       <View style={styles.graficoContainer}>
-        <Text style={styles.graficoTitulo}>📊 Evolución de tu Salud</Text>
+        <Text style={styles.graficoTitulo}>Evolución de tu Salud</Text>
         <Text style={styles.graficoSubtitle}>
           Toca cualquier fecha para escuchar todos tus datos de ese día
         </Text>
@@ -608,41 +441,33 @@ const HistorialMedico = () => {
               <Text style={styles.labelYUnico}>{Math.round(minIndice)}</Text>
             </View>
 
-            {/* Área de trazado */}
+            {/* Área de trazado - Gráfico de barras */}
             <View style={styles.areaTrazadoUnico}>
               <Svg width={svgWidth} height={svgHeight} style={styles.svgChartUnico}>
-                {/* Línea del gráfico */}
-                <Path
-                  d={puntos}
-                  stroke={COLORES.NAV_PACIENTE}
-                  strokeWidth="5"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                
-                {/* Puntos en la línea */}
+                {/* Barras por fecha */}
                 {datosConIndice.map((punto, index) => {
-                  const x = index * anchoPunto;
-                  const y = svgHeight - normalizarIndice(punto.indiceSalud);
+                  const barHeight = normalizarIndice(punto.indiceSalud);
+                  const x = index * anchoPunto + barGap;
+                  const y = svgHeight - barHeight;
                   
                   // Color según índice de salud
-                  let colorPunto = COLORES.NAV_PACIENTE; // Verde (bueno)
+                  let colorBarra = COLORES.PRIMARIO; // Verde (bien)
                   if (punto.indiceSalud < 50) {
-                    colorPunto = COLORES.ERROR_LIGHT; // Rojo (crítico)
+                    colorBarra = COLORES.ERROR_LIGHT; // Rojo (crítico)
                   } else if (punto.indiceSalud < 75) {
-                    colorPunto = COLORES.ADVERTENCIA_LIGHT; // Naranja (atención)
+                    colorBarra = COLORES.ADVERTENCIA_LIGHT; // Naranja (atención)
                   }
                   
                   return (
-                    <Circle
-                      key={`punto-${index}`}
-                      cx={x}
-                      cy={y}
-                      r="6"
-                      fill={colorPunto}
-                      stroke={COLORES.BLANCO}
-                      strokeWidth="3"
+                    <Rect
+                      key={`barra-${index}`}
+                      x={x}
+                      y={y}
+                      width={barWidth}
+                      height={Math.max(barHeight, 4)}
+                      fill={colorBarra}
+                      rx={4}
+                      ry={4}
                     />
                   );
                 })}
@@ -703,7 +528,7 @@ const HistorialMedico = () => {
         <View style={styles.referenciasContainer}>
           <Text style={styles.referenciasTitle}>💡 Cómo entender tu gráfico:</Text>
           <Text style={styles.referenciasText}>
-            La línea verde muestra tu evolución de salud general. Cuando sube, significa que tus signos vitales están mejorando.
+            Las barras muestran tu evolución de salud por fecha. Cuanto más alta sea la barra, mejor está tu estado general ese día.
           </Text>
           <Text style={styles.referenciasText}>
             🟢 Verde = Bien • 🟡 Naranja = Atención • 🔴 Rojo = Crítico
@@ -794,34 +619,6 @@ const HistorialMedico = () => {
           >
             <Text style={styles.listenButtonText}>🔊</Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Botones de Exportación */}
-        <View style={styles.exportContainer}>
-          <Text style={styles.exportTitle}>📥 Exportar Datos</Text>
-          <View style={styles.exportButtonsContainer}>
-            <TouchableOpacity
-              style={styles.exportButton}
-              onPress={handleExportarSignosVitales}
-            >
-              <Text style={styles.exportButtonIcon}>💓</Text>
-              <Text style={styles.exportButtonText}>Signos</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.exportButton}
-              onPress={handleExportarCitas}
-            >
-              <Text style={styles.exportButtonIcon}>📅</Text>
-              <Text style={styles.exportButtonText}>Citas</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.exportButton}
-              onPress={handleExportarDiagnosticos}
-            >
-              <Text style={styles.exportButtonIcon}>📋</Text>
-              <Text style={styles.exportButtonText}>Diag.</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* Tabs de navegación */}
@@ -1823,54 +1620,6 @@ const styles = StyleSheet.create({
     color: COLORES.TEXTO_SECUNDARIO,
     fontStyle: 'italic',
     marginTop: 4,
-  },
-  exportContainer: {
-    backgroundColor: COLORES.FONDO,
-    padding: 16,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORES.BORDE_CLARO,
-  },
-  exportTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORES.TEXTO_PRIMARIO,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  exportButtonsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  exportButton: {
-    flex: 1,
-    minWidth: '30%',
-    backgroundColor: COLORES.FONDO_CARD,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: COLORES.BORDE_CLARO,
-    elevation: 2,
-    shadowColor: COLORES.NEGRO,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  exportButtonIcon: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  exportButtonText: {
-    fontSize: 12,
-    color: COLORES.TEXTO_PRIMARIO,
-    fontWeight: '600',
-    textAlign: 'center',
   },
 });
 

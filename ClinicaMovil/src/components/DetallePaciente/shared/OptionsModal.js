@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Animated } from 'react-native';
-import { Title } from 'react-native-paper';
 import { COLORES } from '../../../utils/constantes';
 
 /**
@@ -14,15 +13,16 @@ import { COLORES } from '../../../utils/constantes';
  * @param {Function} props.onClose - Función para cerrar
  * @param {string} props.title - Título del modal
  * @param {Array} props.options - Array de opciones { icon, label, onPress, color }
- * 
+ * @param {boolean} [props.showCancelButton] - Si true, muestra botón "Cancelar" al pie
+ *
  * @example
  * <OptionsModal
  *   visible={showOptions}
  *   onClose={() => setShowOptions(false)}
  *   title="Opciones de Citas"
  *   options={[
- *     { icon: 'plus', label: 'Agregar Cita', onPress: handleAdd, color: '#2196F3' },
- *     { icon: 'magnify', label: 'Ver Todas', onPress: handleViewAll, color: '#666' }
+ *     { icon: 'plus', label: 'Agregar Cita', onPress: handleAdd, color: COLORES.NAV_PRIMARIO },
+ *     { icon: 'magnify', label: 'Ver Todas', onPress: handleViewAll, color: COLORES.TEXTO_SECUNDARIO }
  *   ]}
  * />
  */
@@ -30,7 +30,8 @@ const OptionsModal = ({
   visible,
   onClose,
   title = 'Opciones',
-  options = []
+  options = [],
+  showCancelButton = false,
 }) => {
   // Animación para el contenido del modal y el overlay
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -122,8 +123,8 @@ const OptionsModal = ({
             onStartShouldSetResponder={() => true}
           >
             <View style={styles.modalHeader}>
-              <Title style={styles.modalTitle}>{title}</Title>
-              <TouchableOpacity onPress={handleClose}>
+              <Text style={styles.modalTitle} numberOfLines={1} ellipsizeMode="tail">{title}</Text>
+              <TouchableOpacity onPress={handleClose} style={styles.modalCloseButton}>
                 <Text style={styles.closeButtonX}>X</Text>
               </TouchableOpacity>
             </View>
@@ -187,6 +188,15 @@ const OptionsModal = ({
                 })
               )}
             </View>
+            {showCancelButton && (
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleClose}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            )}
           </Animated.View>
         </View>
       </Animated.View>
@@ -237,6 +247,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
+    minWidth: 0,
+  },
+  modalCloseButton: {
+    flexShrink: 0,
   },
   closeButtonX: {
     fontSize: 20,
@@ -311,6 +325,21 @@ const styles = StyleSheet.create({
   },
   optionTextOnColor: {
     color: COLORES.TEXTO_EN_PRIMARIO,
+  },
+  cancelButton: {
+    marginTop: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORES.NAV_PRIMARIO,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORES.NAV_PRIMARIO,
   },
 });
 

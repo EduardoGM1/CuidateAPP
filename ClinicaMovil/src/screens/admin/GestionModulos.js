@@ -356,6 +356,7 @@ const GestionModulos = ({ navigation }) => {
           value={searchQuery}
           style={styles.searchBar}
           showClearIcon={false}
+          icon={() => null}
         />
       </View>
 
@@ -455,12 +456,10 @@ const GestionModulos = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.optionsModalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                Opciones - {selectedModulo?.nombre_modulo || 'Módulo'}
+              <Text style={styles.modalTitleOptions} numberOfLines={1} ellipsizeMode="tail">
+                {selectedModulo?.nombre_modulo || 'Módulo'}
               </Text>
-              <TouchableOpacity
-                onPress={handleCloseOptions}
-              >
+              <TouchableOpacity onPress={handleCloseOptions} style={styles.modalCloseButton}>
                 <Text style={styles.closeButtonX}>X</Text>
               </TouchableOpacity>
             </View>
@@ -507,12 +506,13 @@ const GestionModulos = ({ navigation }) => {
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
+              <Text style={styles.modalTitleOptions} numberOfLines={1} ellipsizeMode="tail">
                 {editingModulo ? 'Editar Módulo' : 'Nuevo Módulo'}
               </Text>
               <TouchableOpacity
                 onPress={() => !saving && (setShowModal(false), resetForm())}
                 disabled={saving}
+                style={styles.modalCloseButton}
               >
                 <Text style={styles.closeButtonX}>X</Text>
               </TouchableOpacity>
@@ -677,6 +677,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   optionsModalContent: {
+    width: '100%',
+    alignSelf: 'stretch',
     backgroundColor: COLORES.BLANCO,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -790,6 +792,16 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: COLORES.PRIMARIO,
+  },
+  modalTitleOptions: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORES.PRIMARIO,
+    flex: 1,
+    minWidth: 0,
+  },
+  modalCloseButton: {
+    flexShrink: 0,
   },
   modalBody: {
     paddingHorizontal: 20,
