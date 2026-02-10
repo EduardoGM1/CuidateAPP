@@ -118,6 +118,7 @@ if [ "$USE_DOMAIN" = true ]; then
 else
   set_env "ALLOWED_ORIGINS" "http://${VPS_IP}"
   set_env "FRONTEND_URL" "http://${VPS_IP}"
+  set_env "FORCE_HTTPS" "false"
 fi
 
 log_warn "Revisa api-clinica/.env: JWT_SECRET, ENCRYPTION_KEY, Firebase, Resend, etc."

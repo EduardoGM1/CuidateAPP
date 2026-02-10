@@ -65,25 +65,26 @@ export const createSSLServer = (app, port) => {
   return null;
 };
 
-// Middleware para forzar HTTPS - MEJORADO: Siempre activo en producción
+// Middleware para forzar HTTPS en producción cuando SSL está disponible.
+// Si FORCE_HTTPS=false o se accede por IP sin certificado, no redirigir (evita 301 que rompe login por HTTP).
 export const forceHTTPS = (req, res, next) => {
-  // En producción, SIEMPRE forzar HTTPS
-  if (process.env.NODE_ENV === 'production') {
-    const isSecure = req.secure || 
-                     req.get('x-forwarded-proto') === 'https' ||
-                     req.get('x-forwarded-ssl') === 'on';
-    
-    if (!isSecure) {
-      // Log de intento de acceso HTTP en producción
-      logger.warn('Intento de acceso HTTP en producción, redirigiendo a HTTPS', {
-        ip: req.ip,
-        host: req.get('host'),
-        url: req.url,
-        userAgent: req.get('User-Agent')
-      });
-      
-      return res.redirect(301, `https://${req.get('host')}${req.url}`);
-    }
+  if (process.env.NODE_ENV !== 'production') {
+    return next();
+  }
+  // Permitir desactivar redirección cuando se usa solo IP o aún no hay SSL (ej. VPS sin dominio)
+  if (process.env.FORCE_HTTPS === 'false' || process.env.FORCE_HTTPS === '0') {
+    return next();
+  }
+  const isSecure = req.secure ||
+                   req.get('x-forwarded-proto') === 'https' ||
+                   req.get('x-forwarded-ssl') === 'on';
+  if (!isSecure) {
+    logger.warn('Intento de acceso HTTP en producción, redirigiendo a HTTPS', {
+      ip: req.ip,
+      host: req.get('host'),
+      url: req.url
+    });
+    return res.redirect(301, `https://${req.get('host')}${req.url}`);
   }
   next();
 };
