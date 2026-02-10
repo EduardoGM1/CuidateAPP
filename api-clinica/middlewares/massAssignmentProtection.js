@@ -16,6 +16,13 @@ class MassAssignmentProtection {
         'password',
         'rol'
       ],
+
+      // Campos permitidos para cambio de contraseña (change-password)
+      passwordUpdate: [
+        'currentPassword',
+        'newPassword',
+        'userId'
+      ],
       
       // Campos permitidos para actualización de perfil de usuario
       userUpdate: [
