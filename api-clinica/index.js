@@ -110,7 +110,7 @@ app.use(securityEventLogger); // Logging de eventos de seguridad
 // Middlewares de monitoreo - DESHABILITADOS EN DESARROLLO PARA POSTMAN
 if (NODE_ENV === 'production') {
   app.use(requestMonitoring); // Monitoreo de solicitudes
-  app.use(memoryMonitoring); // Monitoreo de memoria
+  app.use(memoryMonitoring()); // Monitoreo de memoria (debe devolver middleware que llame a next())
 }
 
 // Configuración de CORS - MEJORADO: Whitelist más estricta
@@ -131,13 +131,9 @@ const allAllowedOrigins = [...allowedOrigins, ...productionOrigins];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Permitir solicitudes sin origen solo en desarrollo (Postman, curl, etc.)
+    // Permitir solicitudes sin origen (curl, scripts, health checks, Postman)
     if (!origin) {
-      if (NODE_ENV === 'development') {
-        return callback(null, true);
-      }
-      // En producción, rechazar solicitudes sin origen
-      return callback(new Error('CORS: Origin header required in production'));
+      return callback(null, true);
     }
 
     // Validar origen contra whitelist
@@ -224,8 +220,8 @@ app.use(securityValidation); // Validación de profundidad, tamaño y tipos
 
 // Protecciones avanzadas según entorno
 if (NODE_ENV === 'production') {
-  app.use(XSSProtection.xssProtection); // Protección XSS avanzada
-  app.use(ReDoSProtection.preventReDoS); // Prevención ReDoS
+  app.use((req, res, next) => XSSProtection.xssProtection.call(XSSProtection, req, res, next)); // Protección XSS (contexto explícito)
+  app.use((req, res, next) => ReDoSProtection.preventReDoS.call(ReDoSProtection, req, res, next)); // Prevención ReDoS (contexto explícito)
   app.use(sanitizeStrings); // Sanitización básica
   app.use(AdvancedRateLimiting.generalLimiter()); // Rate limiting general
   app.use(AdvancedRateLimiting.ddosLimiter()); // Protección DDoS

@@ -31,12 +31,13 @@ export const globalErrorHandler = (err, req, res, next) => {
     console.error('Error completo:', err);
   }
 
-  // Log seguro para producción
+  // Log seguro para producción (incluye mensaje para depuración)
   console.log(`Error en ${req.method} ${req.path}:`, {
     timestamp: new Date().toISOString(),
     ip: req.ip,
     userAgent: req.get('User-Agent'),
     errorType: err.name,
+    errorMessage: err.message,
     userId: req.user?.id || 'anonymous'
   });
 

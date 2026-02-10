@@ -231,22 +231,12 @@ class XSSProtection {
   }
 
   /**
-   * Middleware completo de sanitización XSS
+   * Middleware completo de sanitización XSS.
+   * Solo se sanitiza req.body (req.query y req.params son de solo lectura en Express y no pueden reasignarse).
    */
   static xssProtection(req, res, next) {
-    // Sanitizar body
     if (req.body) {
       req.body = this.sanitizeObject(req.body);
-    }
-
-    // Sanitizar query
-    if (req.query) {
-      req.query = this.sanitizeObject(req.query);
-    }
-
-    // Sanitizar params
-    if (req.params) {
-      req.params = this.sanitizeObject(req.params);
     }
 
     // Agregar headers de seguridad

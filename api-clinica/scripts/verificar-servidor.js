@@ -57,20 +57,22 @@ async function main() {
   }
 
   // 2. Tabla usuarios
+  let usuariosRows = [];
   console.log('2. Tabla usuarios...');
   try {
     const [rows] = await sequelize.query(
       "SELECT id_usuario, email, rol, activo FROM usuarios LIMIT 10"
     );
+    usuariosRows = rows;
     const [countRows] = await sequelize.query("SELECT COUNT(*) as total FROM usuarios");
     const total = countRows[0]?.total ?? 0;
     console.log(`   Total de usuarios: ${total}`);
-    if (rows.length === 0) {
+    if (usuariosRows.length === 0) {
       console.log('   ⚠️ No hay usuarios en la tabla. Crea al menos uno (Admin) para poder hacer login.');
       console.log('   Puedes usar un script de seed o INSERT manual en MySQL.\n');
     } else {
       console.log('   Primeros usuarios (email, rol, activo):');
-      rows.forEach((u) => {
+      usuariosRows.forEach((u) => {
         console.log(`      - ${u.email} | rol: ${u.rol} | activo: ${u.activo}`);
       });
       console.log('');
@@ -85,7 +87,7 @@ async function main() {
 
   // 3. Test login vía HTTP (localhost)
   console.log('3. Prueba de login (POST /api/auth/login)...');
-  const testEmail = process.argv[2] || rows?.[0]?.email;
+  const testEmail = process.argv[2] || usuariosRows?.[0]?.email;
   const testPassword = process.argv[3] || 'test';
   if (!testEmail) {
     console.log('   ⚠️ No hay usuarios para probar. Uso: node scripts/verificar-servidor.js [email] [password]\n');
@@ -96,14 +98,15 @@ async function main() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: testEmail, password: testPassword }),
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(15000),
       });
       const status = res.status;
+      const text = await res.text();
       let body;
       try {
-        body = await res.json();
+        body = text ? JSON.parse(text) : null;
       } catch {
-        body = await res.text();
+        body = text;
       }
       if (status === 200 && body?.token) {
         console.log(`   ✅ Login OK (${testEmail}). Token recibido.`);

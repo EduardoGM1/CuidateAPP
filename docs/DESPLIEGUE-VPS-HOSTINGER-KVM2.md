@@ -6,6 +6,22 @@ Guía para tener **activo** en una VPS de Hostinger (KVM 2) el **backend** (api-
 
 ---
 
+## ¿Sin dominio? Puedes empezar por IP y añadir el dominio después
+
+Sí. Puedes tener todo funcionando **solo con la IP** de la VPS y, cuando tengas dominio, configurarlo y activar SSL.
+
+| Fase | Web | API |
+|------|-----|-----|
+| **Sin dominio** | `http://TU_IP_VPS` | `http://TU_IP_VPS/api` (o `http://TU_IP_VPS:3000`) |
+| **Con dominio** | `https://tudominio.com` | `https://api.tudominio.com` o `https://tudominio.com/api` |
+
+- En **Nginx** usas `server_name` con la IP (o `_` para “cualquier nombre”) para servir la web y el proxy de la API.
+- En **api-clinica** `.env` pones `ALLOWED_ORIGINS=http://TU_IP_VPS` y `FRONTEND_URL=http://TU_IP_VPS`.
+- En **cuidate-web** el build puede usar `VITE_API_BASE_URL=http://TU_IP_VPS` (o `http://TU_IP_VPS/api` si la API va bajo `/api`).
+- Cuando tengas dominio: apuntas el DNS a la misma IP, añades el dominio en Nginx, ejecutas Certbot y actualizas `ALLOWED_ORIGINS`, `FRONTEND_URL` y `VITE_API_BASE_URL` con las URLs HTTPS del dominio.
+
+---
+
 ## 1. Acceso a la VPS
 
 1. En el panel de Hostinger (hPanel), abre tu VPS y anota:
@@ -88,7 +104,7 @@ apt install -y git
 # Crear directorio (ej. /var/www)
 mkdir -p /var/www
 cd /var/www
-git clone https://github.com/TU_USUARIO/TU_REPO.git CuidateAPP
+git clone git@github.com:EduardoGM1/CuidateAPP.git CuidateAPP
 cd CuidateAPP
 ```
 
@@ -104,6 +120,30 @@ scp -r "C:\Users\eduar\OneDrive\Escritorio\CuidateApp\CuidateAPP\cuidate-web" ro
 ```
 
 Ajusta la ruta local y la IP. Si solo subes código (sin `node_modules`), en la VPS tendrás que ejecutar `npm install` en cada proyecto.
+
+### Opción C: Script de configuración total (todo en uno)
+
+En una VPS **nueva**, puedes usar un solo script que crea carpetas, clona el repositorio y ejecuta todo el setup (Node, MySQL, Nginx, PM2, build de la web, etc.):
+
+Repositorio: **git@github.com:EduardoGM1/CuidateAPP.git**
+
+```bash
+# Descargar el script
+curl -sL https://raw.githubusercontent.com/EduardoGM1/CuidateAPP/main/deploy/configuracion-total-vps.sh -o configuracion-total-vps.sh
+
+# Solo IP
+export VPS_IP=123.45.67.89
+export DB_PASSWORD='tu_password_seguro'
+sudo bash configuracion-total-vps.sh
+
+# O con dominio
+export WEB_DOMAIN=tudominio.com
+export API_DOMAIN=api.tudominio.com
+export DB_PASSWORD='tu_password_seguro'
+sudo bash configuracion-total-vps.sh
+```
+
+El script clona el repo en `/var/www/CuidateAPP` y luego ejecuta `deploy/setup-vps.sh`. Ver **deploy/README.md** para más detalles.
 
 ---
 
@@ -205,6 +245,49 @@ Se genera la carpeta `dist/`. Esa carpeta es la que Nginx servirá como sitio we
 ---
 
 ## 7. Nginx: dominio, SSL y proxy
+
+### 7.0 Sin dominio (solo IP)
+
+Si aún no tienes dominio, usa un solo `server` que escuche en la IP (o en el puerto 80 por defecto). Sustituye `TU_IP_VPS` por la IP real:
+
+**Un solo archivo** `/etc/nginx/sites-available/cuidate-app-ip`:
+
+```nginx
+server {
+    listen 80 default_server;
+    server_name _;   # acepta cualquier Host, incluye la IP
+
+    root /var/www/CuidateAPP/cuidate-web/dist;
+    index index.html;
+
+    location /api {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+Activa el sitio: `ln -sf /etc/nginx/sites-available/cuidate-app-ip /etc/nginx/sites-enabled/` y quita el default si hace falta: `rm -f /etc/nginx/sites-enabled/default`. Luego `nginx -t` y `systemctl reload nginx`.
+
+- **Web:** `http://TU_IP_VPS`
+- **API:** `http://TU_IP_VPS/api`
+
+En **api-clinica** `.env`: `ALLOWED_ORIGINS=http://TU_IP_VPS` y `FRONTEND_URL=http://TU_IP_VPS`.  
+En **cuidate-web** build con `VITE_API_BASE_URL=` (vacío) para que use la misma origen y las peticiones vayan a `/api`.
+
+Cuando tengas dominio, añades otro `server` (o cambias este) con `server_name tudominio.com` y ejecutas Certbot.
+
+---
 
 Supón que tu dominio es `tudominio.com` y la API la quieres en `https://api.tudominio.com` (o en `https://tudominio.com/api`).
 

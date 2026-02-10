@@ -103,9 +103,17 @@ class ReDoSProtection {
   }
 
   /**
-   * Middleware para prevenir ReDoS en todos los inputs
+   * Middleware para prevenir ReDoS en todos los inputs.
+   * Se omite en rutas de autenticación para evitar falsos positivos con emails.
    */
   static preventReDoS(req, res, next) {
+    const path = (req.path || '').toLowerCase();
+    const authPaths = ['/login', '/register', '/forgot-password', '/reset-password', 'login-doctor-admin', 'login-paciente', 'auth-unified'];
+    const isAuthRoute = authPaths.some((p) => path.includes(p) || path.endsWith(p));
+    if (isAuthRoute) {
+      return next();
+    }
+
     const patterns = this.getSafeRegexPatterns();
     const maxExecutionTime = 50; // 50ms máximo por validación
     

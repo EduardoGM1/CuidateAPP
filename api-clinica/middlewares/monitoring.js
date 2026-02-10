@@ -87,12 +87,13 @@ export const healthCheck = (req, res, next) => {
   next();
 };
 
-// Monitoreo de memoria (simplificado)
+// Monitoreo de memoria (simplificado). Devuelve un middleware que llama a next()
+// para no bloquear la cadena de middlewares (solo arranca el setInterval).
 export const memoryMonitoring = () => {
   setInterval(() => {
     const memUsage = process.memoryUsage();
     metrics.performance.memoryUsage = memUsage.heapUsed;
-    
+
     // Alerta solo si el uso de memoria es crítico
     const memoryMB = memUsage.heapUsed / 1024 / 1024;
     if (memoryMB > 1000) { // Aumentado de 500MB a 1000MB
@@ -102,6 +103,7 @@ export const memoryMonitoring = () => {
       });
     }
   }, parseInt(process.env.HEALTH_CHECK_INTERVAL) || 60000); // Aumentado de 30s a 60s
+  return (req, res, next) => next();
 };
 
 // Log de métricas
