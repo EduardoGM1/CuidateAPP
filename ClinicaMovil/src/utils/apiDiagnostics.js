@@ -40,8 +40,8 @@ export const runApiDiagnostics = async () => {
       errorType: connectivityTest.errorType
     });
 
-    // 3. Si falla, probar otras configuraciones
-    if (!connectivityTest.success) {
+    // 3. Si falla, probar otras configuraciones (solo en desarrollo)
+    if (!connectivityTest.success && __DEV__) {
       console.log('❌ Conexión fallida, probando otras configuraciones...');
       
       // Probar localhost
@@ -74,6 +74,19 @@ export const runApiDiagnostics = async () => {
           error: emulatorTest.error
         });
       }
+    }
+    
+    // En producción, también probar la VPS directamente si falla la configuración actual
+    if (!connectivityTest.success && !__DEV__) {
+      console.log('❌ Conexión fallida en producción, probando VPS directamente...');
+      const { PRODUCTION_API_BASE_URL } = await import('../config/apiEndpoints');
+      const vpsTest = await testApiConnectivity(PRODUCTION_API_BASE_URL);
+      results.connectivityTests.push({
+        url: PRODUCTION_API_BASE_URL,
+        success: vpsTest.success,
+        status: vpsTest.status,
+        error: vpsTest.error
+      });
     }
 
     // 4. Generar recomendaciones
