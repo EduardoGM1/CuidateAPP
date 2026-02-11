@@ -1,18 +1,23 @@
 /**
- * Override de la URL de la API.
+ * Override de la URL de la API (SOLO para desarrollo / pruebas).
  *
- * TELÉFONO FÍSICO NO CONECTA:
- * 1. PC y teléfono en el mismo WiFi.
- * 2. En la PC ejecuta: ipconfig → anota "Dirección IPv4" (ej. 192.168.1.68).
- * 3. Pon aquí: 'http://TU_IP:3000' (ej. 'http://192.168.1.68:3000').
- * 4. Firewall Windows: permitir conexiones entrantes en el puerto 3000 (red privada).
+ * CASOS TÍPICOS:
+ * - Teléfono físico no conecta a la PC:
+ *   1. PC y teléfono en el mismo WiFi.
+ *   2. En la PC ejecuta: ipconfig → anota "Dirección IPv4" (ej. 192.168.1.68).
+ *   3. Pon aquí: 'http://TU_IP:3000' (ej. 'http://192.168.1.68:3000').
+ *   4. Firewall Windows: permitir conexiones entrantes en el puerto 3000 (red privada).
  *
- * - Probar contra Railway desde dev:
+ * - Probar contra Railway desde dev (ya NO se usa en producción):
  *   'https://cuidateappbackend-production.up.railway.app'
  *
- * - null = detección automática (usa localhost + adb reverse en dev,
- *   y la lógica de apiConfig para emulador / red local).
+ * - null = detección automática:
+ *   - En desarrollo: usa localhost + adb reverse, o IP local (apiConfig.js).
+ *   - En release: usa PRODUCTION_API_BASE_URL (VPS / dominio) de apiEndpoints.js.
+ *
+ * IMPORTANTE:
+ * - En compilaciones release de la app móvil, DEJA ESTO EN null para que
+ *   se use la URL de producción configurada en apiEndpoints.js.
  */
-// Dejamos null para usar localhost:3000 en desarrollo con adb reverse
-// y evitar problemas de firewall / red WiFi entre PC y teléfono físico.
-export const API_BASE_URL_OVERRIDE = null; // null = detección automática
+// Desarrollo: null → detección automática (localhost / red local / VPS según apiConfig)
+export const API_BASE_URL_OVERRIDE = null;

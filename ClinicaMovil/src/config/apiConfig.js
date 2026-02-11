@@ -1,10 +1,14 @@
 /**
- * Configuración inteligente de API para diferentes entornos
- * Detecta automáticamente el entorno y usa la IP correcta
+ * Configuración inteligente de API para diferentes entornos.
+ * Detecta automáticamente el entorno y usa la IP correcta.
+ *
+ * En producción (release) usa como fuente de verdad PRODUCTION_API_BASE_URL
+ * definido en `apiEndpoints.js`, que actualmente apunta a la VPS.
  */
 
 import { Platform } from 'react-native';
 import { API_BASE_URL_OVERRIDE } from './apiUrlOverride';
+import { PRODUCTION_API_BASE_URL } from './apiEndpoints';
 
 // Función para obtener la IP local (actualizado con ipconfig - Wi-Fi 2 y Wi-Fi 3).
 const getLocalIP = () => {
@@ -39,11 +43,12 @@ const API_CONFIG = {
     description: 'Emulador Android'
   },
   production: {
-    // API en Railway (usada al compilar en release: npx react-native run-android --mode=release)
-    baseURL: 'https://cuidateappbackend-production.up.railway.app',
+    // API en VPS Hostinger (usada al compilar en release: npx react-native run-android --mode=release)
+    // ÚNICA fuente de verdad: PRODUCTION_API_BASE_URL en apiEndpoints.js
+    baseURL: PRODUCTION_API_BASE_URL,
     timeout: 60000,
-    description: 'Servidor de producción (Railway)',
-    forceHttps: true
+    description: 'Servidor de producción (VPS Hostinger)',
+    forceHttps: false // cambiar a true cuando PRODUCTION_API_BASE_URL use https://
   }
 };
 
@@ -111,10 +116,10 @@ const detectEnvironment = () => {
     }
     return 'development';
   } else {
-    // En producción, forzar HTTPS
+    // En producción, usar siempre la configuración de VPS / dominio
     const productionConfig = API_CONFIG.production;
     if (productionConfig.forceHttps && !productionConfig.baseURL.startsWith('https://')) {
-      console.warn('⚠️ ADVERTENCIA: Producción debe usar HTTPS');
+      console.warn('⚠️ ADVERTENCIA: Producción debería usar HTTPS (ajusta PRODUCTION_API_BASE_URL)');
     }
     return 'production';
   }
