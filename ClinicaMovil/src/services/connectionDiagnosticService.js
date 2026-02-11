@@ -5,15 +5,15 @@ import Logger from './logger';
 export const connectionDiagnosticService = {
   // Probar diferentes URLs de conexión
   async testConnections() {
-    let urls;
+    const { PRODUCTION_API_BASE_URL } = await import('../config/apiEndpoints');
     
-    // En producción, solo probar la VPS
-    if (!__DEV__) {
-      const { PRODUCTION_API_BASE_URL } = await import('../config/apiEndpoints');
-      urls = [PRODUCTION_API_BASE_URL];
-    } else {
-      // En desarrollo, probar configuraciones locales
+    // Siempre incluir la VPS primero (tanto en desarrollo como producción)
+    let urls = [PRODUCTION_API_BASE_URL];
+    
+    // En desarrollo, también probar configuraciones locales
+    if (__DEV__) {
       urls = [
+        PRODUCTION_API_BASE_URL, // VPS primero
         'http://localhost:3000', // Con adb reverse (PRINCIPAL para dispositivos físicos)
         'http://192.168.1.65:3000', // IP real (requiere firewall configurado)
         'http://10.0.2.2:3000', // IP del host desde emulador Android

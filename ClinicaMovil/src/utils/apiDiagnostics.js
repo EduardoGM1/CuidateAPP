@@ -40,46 +40,13 @@ export const runApiDiagnostics = async () => {
       errorType: connectivityTest.errorType
     });
 
-    // 3. Si falla, probar otras configuraciones (solo en desarrollo)
-    if (!connectivityTest.success && __DEV__) {
+    // 3. Si falla, probar otras configuraciones
+    if (!connectivityTest.success) {
       console.log('❌ Conexión fallida, probando otras configuraciones...');
       
-      // Probar localhost
-      if (Platform.OS === 'android') {
-        const localhostTest = await testApiConnectivity('http://localhost:3000');
-        results.connectivityTests.push({
-          url: 'http://localhost:3000',
-          success: localhostTest.success,
-          status: localhostTest.status,
-          error: localhostTest.error
-        });
-      }
-
-      // Probar IP de red local
-      const localNetworkTest = await testApiConnectivity('http://192.168.1.74:3000');
-      results.connectivityTests.push({
-        url: 'http://192.168.1.74:3000',
-        success: localNetworkTest.success,
-        status: localNetworkTest.status,
-        error: localNetworkTest.error
-      });
-
-      // Probar emulador (solo Android)
-      if (Platform.OS === 'android') {
-        const emulatorTest = await testApiConnectivity('http://10.0.2.2:3000');
-        results.connectivityTests.push({
-          url: 'http://10.0.2.2:3000',
-          success: emulatorTest.success,
-          status: emulatorTest.status,
-          error: emulatorTest.error
-        });
-      }
-    }
-    
-    // En producción, también probar la VPS directamente si falla la configuración actual
-    if (!connectivityTest.success && !__DEV__) {
-      console.log('❌ Conexión fallida en producción, probando VPS directamente...');
+      // Probar VPS (tanto en desarrollo como producción)
       const { PRODUCTION_API_BASE_URL } = await import('../config/apiEndpoints');
+      console.log(`🔄 Probando VPS: ${PRODUCTION_API_BASE_URL}`);
       const vpsTest = await testApiConnectivity(PRODUCTION_API_BASE_URL);
       results.connectivityTests.push({
         url: PRODUCTION_API_BASE_URL,
@@ -87,6 +54,40 @@ export const runApiDiagnostics = async () => {
         status: vpsTest.status,
         error: vpsTest.error
       });
+      
+      // En desarrollo, también probar configuraciones locales
+      if (__DEV__) {
+        // Probar localhost
+        if (Platform.OS === 'android') {
+          const localhostTest = await testApiConnectivity('http://localhost:3000');
+          results.connectivityTests.push({
+            url: 'http://localhost:3000',
+            success: localhostTest.success,
+            status: localhostTest.status,
+            error: localhostTest.error
+          });
+        }
+
+        // Probar IP de red local
+        const localNetworkTest = await testApiConnectivity('http://192.168.1.74:3000');
+        results.connectivityTests.push({
+          url: 'http://192.168.1.74:3000',
+          success: localNetworkTest.success,
+          status: localNetworkTest.status,
+          error: localNetworkTest.error
+        });
+
+        // Probar emulador (solo Android)
+        if (Platform.OS === 'android') {
+          const emulatorTest = await testApiConnectivity('http://10.0.2.2:3000');
+          results.connectivityTests.push({
+            url: 'http://10.0.2.2:3000',
+            success: emulatorTest.success,
+            status: emulatorTest.status,
+            error: emulatorTest.error
+          });
+        }
+      }
     }
 
     // 4. Generar recomendaciones
