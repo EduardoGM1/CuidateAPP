@@ -79,6 +79,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
+// Detrás de Nginx (o otro proxy): confiar en X-Forwarded-* para IP real y rate-limit correcto
+app.set('trust proxy', 1);
+
 // Force HTTPS in production - SIEMPRE activo
 if (NODE_ENV === 'production') {
   app.use(forceHTTPS);
