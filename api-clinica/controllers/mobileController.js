@@ -175,10 +175,29 @@ export const mobileLogin = async (req, res) => {
       });
     }
 
-    const bcrypt = await import('bcryptjs');
-    const isValidPassword = await bcrypt.compare(password, usuario.password_hash);
+    // Misma lógica que auth.js (login web): 1) sistema unificado (auth_credentials), 2) fallback password_hash
+    const UnifiedAuthService = (await import('../services/unifiedAuthService.js')).default;
+    let passwordValid = false;
+    try {
+      await UnifiedAuthService.authenticate(
+        usuario.rol,
+        usuario.id_usuario,
+        { method: 'password', credential: password }
+      );
+      passwordValid = true;
+    } catch (authError) {
+      logger.debug('Mobile login: auth unificado falló, intentando password_hash', { email: usuario.email, error: authError.message });
+      if (usuario.password_hash) {
+        const bcrypt = await import('bcryptjs');
+        try {
+          passwordValid = await bcrypt.compare(password, usuario.password_hash);
+        } catch (_) {
+          passwordValid = false;
+        }
+      }
+    }
 
-    if (!isValidPassword) {
+    if (!passwordValid) {
       return res.status(401).json({
         success: false,
         error: 'Credenciales inválidas',

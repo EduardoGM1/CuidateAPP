@@ -251,6 +251,15 @@ export const testApiConnectivity = async (urlToTest = null) => {
 
 // Función para obtener configuración con fallback inteligente
 export const getApiConfigWithFallback = async () => {
+  // Si hay override (VPS forzado), usarlo siempre y no probar localhost/local
+  if (API_BASE_URL_OVERRIDE) {
+    cachedEnvironment = 'localNetwork';
+    const config = { ...API_CONFIG.localNetwork, baseURL: API_BASE_URL_OVERRIDE };
+    if (__DEV__) {
+      console.log(`🌐 API Config (override VPS): ${config.baseURL}`);
+    }
+    return config;
+  }
   // Si ya tenemos un entorno cacheado y funcionando, usarlo
   if (cachedEnvironment && !environmentCheckInProgress) {
     return API_CONFIG[cachedEnvironment];

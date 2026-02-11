@@ -128,26 +128,24 @@ const VoicePlayer = ({ audioUrl, duration, onPlayComplete, isOwnMessage = false 
       Logger.info('VoicePlayer: Normalizando URL', { original: url, decoded: decodedUrl });
 
       // Importar configuración
-      const { getApiConfigWithFallback, API_CONFIG } = await import('../../config/apiConfig');
+      const { getApiConfigWithFallback } = await import('../../config/apiConfig');
+      const { PRODUCTION_API_BASE_URL } = await import('../../config/apiEndpoints');
       const apiConfig = await getApiConfigWithFallback();
       
-      // Determinar baseURL: SIEMPRE usar IP de red local en Android para evitar localhost
+      // Determinar baseURL: usar la configuración de API actualizada
       let baseURL = null;
-      if (API_CONFIG?.localNetwork?.baseURL) {
-        baseURL = API_CONFIG.localNetwork.baseURL.replace(/\/$/, '');
-        Logger.info('VoicePlayer: Usando IP de red local', { baseURL });
-      } else if (apiConfig?.baseURL) {
+      if (apiConfig?.baseURL) {
         baseURL = apiConfig.baseURL.replace(/\/$/, '');
-        // Si el baseURL es localhost, reemplazarlo con IP de red
-        if (baseURL.includes('localhost') || baseURL.includes('127.0.0.1')) {
-          baseURL = baseURL.replace(/localhost|127\.0\.0\.1/, '192.168.1.79');
-          Logger.warn('VoicePlayer: Reemplazando localhost en baseURL', { newBaseURL: baseURL });
+        // Si el baseURL es localhost, reemplazarlo con VPS
+        if (baseURL.includes('localhost') || baseURL.includes('127.0.0.1') || baseURL.includes('10.0.2.2')) {
+          baseURL = PRODUCTION_API_BASE_URL.replace(/\/$/, '');
+          Logger.warn('VoicePlayer: Reemplazando localhost con VPS', { newBaseURL: baseURL });
         }
-        Logger.info('VoicePlayer: Usando baseURL normal', { baseURL });
+        Logger.info('VoicePlayer: Usando baseURL de configuración', { baseURL });
       } else {
-        // Fallback: usar IP de red directamente
-        baseURL = 'http://192.168.1.79:3000';
-        Logger.warn('VoicePlayer: Usando IP de red por defecto', { baseURL });
+        // Fallback: usar VPS directamente
+        baseURL = PRODUCTION_API_BASE_URL.replace(/\/$/, '');
+        Logger.warn('VoicePlayer: Usando VPS por defecto', { baseURL });
       }
 
       // Si ya es URL absoluta HTTP/HTTPS
@@ -193,10 +191,11 @@ const VoicePlayer = ({ audioUrl, duration, onPlayComplete, isOwnMessage = false 
         .replace(/&#x2F;/g, '/')
         .replace(/&#x3A;/g, ':');
       
-      // Reemplazar localhost con IP de red
-      if (fallbackUrl.includes('localhost') || fallbackUrl.includes('127.0.0.1')) {
-        fallbackUrl = fallbackUrl.replace(/localhost|127\.0\.0\.1/i, '192.168.1.79');
-        Logger.warn('VoicePlayer: Usando fallback manual', { original: url, fallback: fallbackUrl });
+      // Reemplazar localhost con VPS
+      if (fallbackUrl.includes('localhost') || fallbackUrl.includes('127.0.0.1') || fallbackUrl.includes('10.0.2.2')) {
+        const { PRODUCTION_API_BASE_URL } = await import('../../config/apiEndpoints');
+        fallbackUrl = fallbackUrl.replace(/https?:\/\/[^\/]+/i, PRODUCTION_API_BASE_URL.replace(/\/$/, ''));
+        Logger.warn('VoicePlayer: Usando fallback manual con VPS', { original: url, fallback: fallbackUrl });
       }
       return fallbackUrl;
     }
@@ -228,9 +227,10 @@ const VoicePlayer = ({ audioUrl, duration, onPlayComplete, isOwnMessage = false 
       // Extraer path
       const pathMatch = normalizedUrl.match(/https?:\/\/[^\/]+(\/.*)?$/);
       const path = pathMatch ? (pathMatch[1] || '') : '';
-      // Forzar IP de red
-      normalizedUrl = `http://192.168.1.79:3000${path}`;
-      Logger.info('VoicePlayer: URL corregida forzadamente', { newUrl: normalizedUrl });
+      // Forzar VPS
+      const { PRODUCTION_API_BASE_URL } = await import('../../config/apiEndpoints');
+      normalizedUrl = `${PRODUCTION_API_BASE_URL.replace(/\/$/, '')}${path}`;
+      Logger.info('VoicePlayer: URL corregida forzadamente con VPS', { newUrl: normalizedUrl });
     }
 
     Logger.info('VoicePlayer: URL normalizada para reproducción', { 
@@ -268,11 +268,12 @@ const VoicePlayer = ({ audioUrl, duration, onPlayComplete, isOwnMessage = false 
           originalUrl: audioUrl,
           playbackUrl 
         });
-        // Forzar corrección de emergencia
+        // Forzar corrección de emergencia con VPS
         const pathMatch = playbackUrl.match(/https?:\/\/[^\/]+(\/.*)?$/);
         const path = pathMatch ? (pathMatch[1] || '') : '';
-        playbackUrl = `http://192.168.1.79:3000${path}`;
-        Logger.warn('VoicePlayer: Corrección de emergencia aplicada', { newPlaybackUrl: playbackUrl });
+        const { PRODUCTION_API_BASE_URL } = await import('../../config/apiEndpoints');
+        playbackUrl = `${PRODUCTION_API_BASE_URL.replace(/\/$/, '')}${path}`;
+        Logger.warn('VoicePlayer: Corrección de emergencia aplicada con VPS', { newPlaybackUrl: playbackUrl });
       }
 
       Logger.info('VoicePlayer: Iniciando reproducción', { 
