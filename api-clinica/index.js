@@ -131,7 +131,7 @@ const allAllowedOrigins = [...allowedOrigins, ...productionOrigins];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Permitir solicitudes sin origen (curl, scripts, health checks, Postman)
+    // Permitir solicitudes sin origen (curl, scripts, health checks, Postman, mismo servidor)
     if (!origin) {
       return callback(null, true);
     }

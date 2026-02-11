@@ -1,24 +1,15 @@
 /**
- * Puntos de entrada de la API para la app móvil.
+ * URLs base de la API por entorno.
+ * Única fuente de verdad: cambiar aquí al pasar a dominio/HTTPS.
  *
- * ÚNICA fuente de verdad para la URL de producción de la API.
- * Actualmente apunta a la VPS (Hostinger) por IP.
- *
- * Cuando tengas dominio + HTTPS, cambia SOLO esta constante:
- *   export const PRODUCTION_API_BASE_URL = 'https://api.tudominio.com';
+ * - Producción (release): API en VPS Hostinger.
+ * - Desarrollo: ver apiConfig.js (localhost, IP local, emulador).
  */
 
-// API de producción actual (VPS Hostinger)
+// API en producción (VPS). Sin /api al final; el cliente lo añade.
+// Cuando tengas dominio: 'https://api.tudominio.com' (sin /api).
 export const PRODUCTION_API_BASE_URL = 'http://187.77.14.148';
 
-// Endpoints comunes usados en la app (útil para reutilizar)
-export const API_ENDPOINTS = {
-  BASE_URL: PRODUCTION_API_BASE_URL,
-  AUTH_LOGIN: `${PRODUCTION_API_BASE_URL}/api/auth/login`,
-  AUTH_UNIFIED_LOGIN_DOCTOR_ADMIN: `${PRODUCTION_API_BASE_URL}/api/auth-unified/login-doctor-admin`,
-  AUTH_UNIFIED_LOGIN_PACIENTE: `${PRODUCTION_API_BASE_URL}/api/auth-unified/login-paciente`,
-  PACIENTES: `${PRODUCTION_API_BASE_URL}/api/pacientes`,
-  DOCTORES: `${PRODUCTION_API_BASE_URL}/api/doctores`,
-  DASHBOARD: `${PRODUCTION_API_BASE_URL}/api/dashboard`,
-};
+// Para forzar siempre la API online en desarrollo, usar en apiUrlOverride.js:
+// export const API_BASE_URL_OVERRIDE = PRODUCTION_API_BASE_URL;
 

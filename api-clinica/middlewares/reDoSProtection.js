@@ -103,17 +103,16 @@ class ReDoSProtection {
   }
 
   /**
-   * Middleware para prevenir ReDoS en todos los inputs.
-   * Se omite en rutas de autenticación para evitar falsos positivos con emails.
+   * Middleware para prevenir ReDoS en todos los inputs
    */
   static preventReDoS(req, res, next) {
-    const path = (req.path || '').toLowerCase();
-    const authPaths = ['/login', '/register', '/forgot-password', '/reset-password', 'login-doctor-admin', 'login-paciente', 'auth-unified'];
-    const isAuthRoute = authPaths.some((p) => path.includes(p) || path.endsWith(p));
-    if (isAuthRoute) {
+    // Saltar validación en login/register (email/password no son regex de usuario)
+    const authPath = req.path === '/login' || req.path === '/register' || req.path === '/forgot-password' || req.path === '/reset-password'
+      || req.path.endsWith('/login') || req.path.endsWith('/register')
+      || req.path.includes('login-doctor-admin') || req.path.includes('login-paciente') || req.path.includes('auth-unified');
+    if (authPath) {
       return next();
     }
-
     const patterns = this.getSafeRegexPatterns();
     const maxExecutionTime = 50; // 50ms máximo por validación
     
@@ -128,34 +127,10 @@ class ReDoSProtection {
         throw new Error(`Campo ${fieldName} excede longitud máxima permitida`);
       }
 
-      // Validar caracteres peligrosos que pueden causar ReDoS
-      const dangerousPatterns = [
-        /(.)\1{10,}/, // Caracteres repetidos
-        /(a+)+$/, // Patrones de backtracking
-        /(a|a)*$/, // Patrones alternativos problemáticos
-        /(a*)*$/, // Patrones anidados problemáticos
-        /(a+)*$/, // Patrones de repetición problemáticos
-        /(a|aa)*$/, // Patrones alternativos con repetición
-        /(a|a+)*$/, // Patrones alternativos con repetición
-        /(a+)+$/, // Patrones de repetición anidados
-        /(a*)+$/, // Patrones de repetición anidados
-        /(a+)*$/, // Patrones de repetición anidados
-        /(a|a)*$/, // Patrones alternativos
-        /(a*)*$/, // Patrones anidados
-        /(a+)+$/, // Patrones de repetición
-        /(a|aa)*$/, // Patrones alternativos
-        /(a|a+)*$/, // Patrones alternativos
-        /(a+)+$/, // Patrones de repetición
-        /(a*)+$/, // Patrones de repetición
-        /(a+)*$/, // Patrones de repetición
-        /(a|a)*$/, // Patrones alternativos
-        /(a*)*$/ // Patrones anidados
-      ];
-
-      for (const dangerousPattern of dangerousPatterns) {
-        if (dangerousPattern.test(value)) {
-          throw new Error(`Campo ${fieldName} contiene patrones peligrosos`);
-        }
+      // Solo rechazar cadenas que claramente pueden causar ReDoS: repetición excesiva del mismo carácter.
+      // No usar patrones como (a+)+$ o (a|a)*$: en JS hacen match con casi cualquier string (falsos positivos).
+      if (/(.)\1{15,}/.test(value)) {
+        throw new Error(`Campo ${fieldName} contiene patrones peligrosos`);
       }
 
       return true;

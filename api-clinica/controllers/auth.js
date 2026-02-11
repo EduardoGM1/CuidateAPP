@@ -547,7 +547,7 @@ export const login = async (req, res) => {
         }
       });
     } catch (err) {
-      logger.error('Error generando token en login', { error: err.message });
+      logger.error('Error generando token en login', { error: err.message, stack: err.stack });
       return res.status(500).json({ success: false, error: 'Error en el servidor' });
     }
 
