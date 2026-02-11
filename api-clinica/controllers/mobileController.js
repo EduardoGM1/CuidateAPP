@@ -154,11 +154,15 @@ export const mobileLogin = async (req, res) => {
     const { email, password } = req.body;
     const deviceInfo = req.device || { platform: 'unknown', clientType: 'app', deviceId: 'unknown' };
 
+    const emailNorm = (email || '').trim().toLowerCase();
+    const passwordStr = typeof password === 'string' ? password : (password != null ? String(password) : '');
+
     const usuario = await Usuario.findOne({
-      where: { email: (email || '').trim().toLowerCase(), activo: true }
+      where: { email: emailNorm, activo: true }
     });
 
     if (!usuario) {
+      logger.info('Mobile login 401: usuario no encontrado', { email: emailNorm });
       return res.status(401).json({
         success: false,
         error: 'Credenciales inválidas',
@@ -175,29 +179,50 @@ export const mobileLogin = async (req, res) => {
       });
     }
 
-    // Misma lógica que auth.js (login web): 1) sistema unificado (auth_credentials), 2) fallback password_hash
+    // Misma lógica que auth.js: 1) auth_credentials (rol o Usuario), 2) fallback usuarios.password_hash
     const UnifiedAuthService = (await import('../services/unifiedAuthService.js')).default;
     let passwordValid = false;
-    try {
+    let authAttempts = [];
+
+    const tryUnified = async (userType) => {
       await UnifiedAuthService.authenticate(
-        usuario.rol,
+        userType,
         usuario.id_usuario,
-        { method: 'password', credential: password }
+        { method: 'password', credential: passwordStr }
       );
+    };
+
+    try {
+      await tryUnified(usuario.rol);
       passwordValid = true;
-    } catch (authError) {
-      logger.debug('Mobile login: auth unificado falló, intentando password_hash', { email: usuario.email, error: authError.message });
-      if (usuario.password_hash) {
-        const bcrypt = await import('bcryptjs');
+      authAttempts.push(`unified:${usuario.rol}:ok`);
+    } catch (authError1) {
+      authAttempts.push(`unified:${usuario.rol}:${authError1.message}`);
+      if (authError1.message && authError1.message.includes('Credencial no encontrada') && (usuario.rol === 'Doctor' || usuario.rol === 'Admin')) {
         try {
-          passwordValid = await bcrypt.compare(password, usuario.password_hash);
-        } catch (_) {
-          passwordValid = false;
+          await tryUnified('Usuario');
+          passwordValid = true;
+          authAttempts.push('unified:Usuario:ok');
+        } catch (authError2) {
+          authAttempts.push(`unified:Usuario:${authError2.message}`);
         }
       }
     }
 
+    if (!passwordValid && usuario.password_hash) {
+      const bcrypt = await import('bcryptjs');
+      try {
+        passwordValid = await bcrypt.compare(passwordStr, usuario.password_hash);
+        authAttempts.push(passwordValid ? 'password_hash:ok' : 'password_hash:no_match');
+      } catch (_) {
+        authAttempts.push('password_hash:error');
+      }
+    } else if (!passwordValid) {
+      authAttempts.push('password_hash:empty');
+    }
+
     if (!passwordValid) {
+      logger.info('Mobile login 401: contraseña inválida', { email: usuario.email, attempts: authAttempts.join(', ') });
       return res.status(401).json({
         success: false,
         error: 'Credenciales inválidas',
