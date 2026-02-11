@@ -77,7 +77,6 @@ Esta carpeta contiene toda la documentación técnica del proyecto Clínica Móv
 
 ### 🛠️ Desarrollo
 
-- **CONFIGURACION-API-RAILWAY.md** - Configurar la app para compilar y usar la API en Railway
 - **GUIA-MODO-DESARROLLO.md** - Guía de modo desarrollo
 - **performanceGuide.md** - Guía de rendimiento
 

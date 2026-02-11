@@ -20,12 +20,6 @@ Resumen de qué necesitas contratar para que **API + base de datos + app móvil*
 
 Un solo proveedor para API + base de datos. Menos configuración.
 
-### Railway
-- **Qué contratar:** Plan con **Web Service** (API Node.js) + **MySQL** (add-on).
-- **Ventajas:** Despliegue desde Git, WebSockets, variables de entorno, SSL incluido.
-- **Precio orientativo:** ~5–20 USD/mes según uso.
-- **Web:** https://railway.app
-
 ### Render
 - **Qué contratar:** **Web Service** (Node) + **PostgreSQL** o MySQL (add-on; revisar si tienen MySQL).
 - **Ventajas:** SSL automático, cron jobs con “Background Workers” si hace falta.
@@ -67,7 +61,7 @@ Con VPS usas la guía que ya tienes en `api-clinica/docs/DEPLOYMENT-GUIDE.md` (N
 
 Separar “donde corre la API” y “donde está la base de datos”.
 
-- **API:** Railway, Render o Fly.io (Node.js).
+- **API:** Render o Fly.io (Node.js).
 - **Base de datos:** 
   - **PlanetScale** (MySQL compatible) — https://planetscale.com  
   - **DigitalOcean Managed MySQL** — https://www.digitalocean.com/products/managed-databases-mysql  
@@ -102,7 +96,7 @@ Ventaja: backups, parches y alta disponibilidad los gestiona el proveedor de la 
 ## Recomendación práctica
 
 - **Para lanzar rápido y con poco mantenimiento:**  
-  **Railway** (API + MySQL en el mismo proyecto) o **DigitalOcean App Platform** (App + MySQL managed).
+  **Render** (API + MySQL en el mismo proyecto) o **DigitalOcean App Platform** (App + MySQL managed).
 
 - **Si quieres control total y ya sabes administrar servidores:**  
   **DigitalOcean Droplet** (o Linode/Vultr) + seguir `api-clinica/docs/DEPLOYMENT-GUIDE.md`.
@@ -113,7 +107,7 @@ Ventaja: backups, parches y alta disponibilidad los gestiona el proveedor de la 
 
 ## Checklist mínimo para producción
 
-- [ ] Hosting para API (Railway / Render / DO App Platform / VPS).
+- [ ] Hosting para API (Render / DO App Platform / VPS).
 - [ ] Base de datos MySQL (incluida en el mismo plan o gestionada).
 - [ ] Dominio y SSL para la API (ej. `https://api.tuclinica.com`).
 - [ ] Variables de entorno de producción (`.env` o panel del proveedor): `JWT_SECRET`, `DB_*`, `ENCRYPTION_KEY`, etc.

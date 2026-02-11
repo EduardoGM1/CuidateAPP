@@ -189,7 +189,6 @@ export const testApiConnectivity = async (urlToTest = null) => {
   
   // Probar primero con el endpoint raíz (más simple)
   const endpointsToTest = [
-    `${config.baseURL}/Health`,   // Railway usa /Health
     `${config.baseURL}/health`,
     `${config.baseURL}/`,
     `${config.baseURL}/api/mobile/config`,

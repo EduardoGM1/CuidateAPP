@@ -49,7 +49,7 @@ Este documento resume los requisitos técnicos del sistema (API + app móvil) y 
   - Recordatorios de medicamentos: cada 5 minutos.
   - Recordatorios de citas: cada 5, 10, 15 y 60 minutos.
 - **Zona horaria**: `America/Mexico_City`.
-- Implicación: el proceso debe estar **siempre activo** (no un “serverless” que solo corre al recibir HTTP). Un **VPS**, **Railway**, **Render** (plan de pago), **Fly.io**, etc., son adecuados.
+- Implicación: el proceso debe estar **siempre activo** (no un “serverless” que solo corre al recibir HTTP). Un **VPS**, **Render** (plan de pago), **Fly.io**, etc., son adecuados.
 
 ### 2.5 Almacenamiento de archivos
 
@@ -89,16 +89,7 @@ Este documento resume los requisitos técnicos del sistema (API + app móvil) y 
 
 Todas asumen: **Node.js**, **proceso siempre activo**, **HTTPS** (directo o por proxy) y **MySQL** (incluido o externo).
 
-### 3.1 Railway (recomendado para empezar)
-
-- **Qué ofrece**: Despliegue desde Git, Node.js, MySQL como add-on, variables de entorno, volumen persistente para `uploads`, cron dentro del mismo proceso.
-- **WebSocket**: Soportado.
-- **Ventajas**: Configuración rápida, buena relación facilidad/precio, México/LATAM suelen tener buena latencia a sus servidores (USA).
-- **Consideraciones**: MySQL y volumen se facturan aparte; revisar límites del plan.
-- **Precio orientativo**: desde ~5–10 USD/mes (plan de pago según uso).
-- **Web**: [railway.app](https://railway.app)
-
-### 3.2 Render
+### 3.1 Render
 
 - **Qué ofrece**: Web Service para Node, MySQL (o DB externa), disco persistente, env vars, SSL incluido.
 - **WebSocket**: Soportado.
@@ -107,7 +98,7 @@ Todas asumen: **Node.js**, **proceso siempre activo**, **HTTPS** (directo o por 
 - **Precio orientativo**: desde ~7 USD/mes (Web Service) + DB si la contratas en Render.
 - **Web**: [render.com](https://render.com)
 
-### 3.3 Fly.io
+### 3.2 Fly.io
 
 - **Qué ofrece**: Máquinas (VMs) donde corres Node, MySQL en el mismo Fly o DB externa (p. ej. PlanetScale, Aiven), volúmenes persistentes.
 - **WebSocket**: Soportado.
@@ -116,7 +107,7 @@ Todas asumen: **Node.js**, **proceso siempre activo**, **HTTPS** (directo o por 
 - **Precio orientativo**: desde ~5 USD/mes según máquina y volumen.
 - **Web**: [fly.io](https://fly.io)
 
-### 3.4 VPS (DigitalOcean, Vultr, Linode, Contabo, etc.)
+### 3.3 VPS (DigitalOcean, Vultr, Linode, Contabo, Hostinger, etc.)
 
 - **Qué ofrece**: Servidor Linux (Ubuntu) donde instalas Node, MySQL, Nginx, PM2, Certbot (Let’s Encrypt).
 - **Ventajas**: Control total, un solo servidor puede albergar API + MySQL + cron + uploads; útil si ya tienes experiencia en servidores.
@@ -125,7 +116,7 @@ Todas asumen: **Node.js**, **proceso siempre activo**, **HTTPS** (directo o por 
 - **Precio orientativo**: 5–12 USD/mes según proveedor y región.
 - **Recomendación**: Si eliges VPS, usar **PM2** para mantener la API viva (`npm run production:pm2` en el proyecto).
 
-### 3.5 AWS / Google Cloud / Azure
+### 3.4 AWS / Google Cloud / Azure
 
 - **Qué ofrecen**: EC2 / App Engine / App Service + RDS o Cloud SQL o Azure Database for MySQL + S3/Storage para archivos.
 - **Ventajas**: Escalabilidad, opciones de cumplimiento (ej. HIPAA en AWS/GCP con configuración adecuada), backups gestionados.
@@ -136,7 +127,7 @@ Todas asumen: **Node.js**, **proceso siempre activo**, **HTTPS** (directo o por 
 
 ## 4. Comparativa rápida
 
-| Criterio              | Railway | Render | Fly.io | VPS   | AWS/GCP/Azure |
+| Criterio              | Render | Fly.io | VPS   | AWS/GCP/Azure |
 |-----------------------|--------|--------|--------|-------|----------------|
 | Facilidad             | Alta   | Alta   | Media  | Baja  | Baja           |
 | Node + MySQL          | Sí     | Sí     | Sí*    | Sí    | Sí             |
@@ -153,7 +144,7 @@ Todas asumen: **Node.js**, **proceso siempre activo**, **HTTPS** (directo o por 
 
 ## 5. Recomendación según perfil
 
-- **Quieres desplegar rápido y no tocar servidor**: **Railway** o **Render** (plan de pago).
+- **Quieres desplegar rápido y no tocar servidor**: **Render** (plan de pago) o **VPS con scripts automatizados**.
 - **Quieres control total y tienes experiencia en Linux**: **VPS** (DigitalOcean, Vultr, Linode) + Nginx + PM2 + Let’s Encrypt.
 - **Piensas en escalar mucho o cumplimiento HIPAA estricto**: **AWS** o **Google Cloud** (con RDS/Cloud SQL y buena configuración de seguridad).
 
