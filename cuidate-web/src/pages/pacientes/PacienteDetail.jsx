@@ -46,6 +46,9 @@ import { LoadingSpinner, Button, Card, Badge, EmptyState, Input, Select, TextAre
 import RedApoyoCard from '../../components/pacientes/RedApoyoCard';
 import MedicalSummaryCard from '../../components/pacientes/MedicalSummaryCard';
 import ProximaCitaCard from '../../components/pacientes/ProximaCitaCard';
+import SectionCard from '../../components/pacientes/SectionCard';
+import PatientSectionModal from '../../components/pacientes/PatientSectionModal';
+import { PATIENT_DETAIL_SECTIONS } from '../../constants/patientDetailSections';
 import { getVacunas } from '../../api/vacunas';
 import { getComorbilidades } from '../../api/comorbilidades';
 import { parsePositiveInt } from '../../utils/params';
@@ -64,39 +67,6 @@ import {
   Line,
 } from 'recharts';
 
-const GRID_MODE_BREAKPOINT = 1024;
-
-function useGridMode() {
-  const [isGridMode, setIsGridMode] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth >= GRID_MODE_BREAKPOINT : false
-  );
-  useEffect(() => {
-    const mq = window.matchMedia(`(min-width: ${GRID_MODE_BREAKPOINT}px)`);
-    const handler = () => setIsGridMode(mq.matches);
-    handler();
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-  return isGridMode;
-}
-
-const TABS = [
-  { id: 'datos', label: 'Datos', icon: '📋' },
-  { id: 'citas', label: 'Citas', icon: '📅' },
-  { id: 'signos', label: 'Signos vitales', icon: '❤️' },
-  { id: 'diagnosticos', label: 'Diagnósticos', icon: '🩺' },
-  { id: 'medicacion', label: 'Medicación', icon: '💊' },
-  { id: 'red-apoyo', label: 'Red de apoyo', icon: '👥' },
-  { id: 'vacunacion', label: 'Vacunación', icon: '💉' },
-  { id: 'comorbilidades', label: 'Comorbilidades', icon: '📊' },
-  { id: 'detecciones', label: 'Detecciones complicaciones', icon: '⚠️' },
-  { id: 'sesiones-educativas', label: 'Sesiones educativas', icon: '📚' },
-  { id: 'salud-bucal', label: 'Salud bucal', icon: '🦷' },
-  { id: 'detecciones-tb', label: 'Detección tuberculosis', icon: '🫁' },
-  { id: 'doctores', label: 'Doctores', icon: '👨‍⚕️' },
-  { id: 'graficos', label: 'Gráficos', icon: '📈' },
-];
-
 const ESTADO_CITA = {
   pendiente: 'Pendiente',
   atendida: 'Atendida',
@@ -114,7 +84,7 @@ export default function PacienteDetail() {
   const [paciente, setPaciente] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('datos');
+  const [modalSection, setModalSection] = useState(null);
   const [expedienteLoading, setExpedienteLoading] = useState(false);
   const [expedienteError, setExpedienteError] = useState(null);
 
@@ -194,7 +164,6 @@ export default function PacienteDetail() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const isDoctor = useAuthStore((s) => s.isDoctor);
   const canEditMedical = isDoctor() || isAdmin();
-  const isGridMode = useGridMode();
 
   const [signosForm, setSignosForm] = useState({
     peso_kg: '', talla_m: '', medida_cintura_cm: '', presion_sistolica: '', presion_diastolica: '',
@@ -499,41 +468,23 @@ export default function PacienteDetail() {
   }, [parsedId]);
 
   useEffect(() => {
-    if (isGridMode) {
-      loadCitas();
-      loadSignos();
-      loadDiagnosticos();
-      loadMedicamentos();
-      loadRedApoyo();
-      loadVacunacion();
-      loadComorbilidades();
-      loadDeteccionesComplicaciones();
-      loadSesionesEducativas();
-      loadSaludBucal();
-      loadDeteccionesTuberculosis();
-      loadDoctoresAsignados();
-      loadResumenMedico();
-      if (isAdmin()) getDoctores({ limit: 200 }).then((l) => setListaDoctores(Array.isArray(l) ? l : [])).catch(() => setListaDoctores([]));
-      return;
-    }
-    if (activeTab === 'citas' || activeTab === 'diagnosticos') loadCitas();
-    else if (activeTab === 'signos' || activeTab === 'graficos') loadSignos();
-    else if (activeTab === 'medicacion') loadMedicamentos();
-    else if (activeTab === 'red-apoyo') loadRedApoyo();
-    else if (activeTab === 'vacunacion') loadVacunacion();
-    else if (activeTab === 'comorbilidades') loadComorbilidades();
-    else if (activeTab === 'detecciones') loadDeteccionesComplicaciones();
-    else if (activeTab === 'sesiones-educativas') loadSesionesEducativas();
-    else if (activeTab === 'salud-bucal') loadSaludBucal();
-    else if (activeTab === 'detecciones-tb') loadDeteccionesTuberculosis();
-    else if (activeTab === 'doctores') {
+    if (!modalSection) return;
+    if (modalSection === 'citas' || modalSection === 'diagnosticos') loadCitas();
+    else if (modalSection === 'signos' || modalSection === 'graficos') loadSignos();
+    else if (modalSection === 'medicacion') loadMedicamentos();
+    else if (modalSection === 'red-apoyo') loadRedApoyo();
+    else if (modalSection === 'vacunacion') loadVacunacion();
+    else if (modalSection === 'comorbilidades') loadComorbilidades();
+    else if (modalSection === 'detecciones') loadDeteccionesComplicaciones();
+    else if (modalSection === 'sesiones-educativas') loadSesionesEducativas();
+    else if (modalSection === 'salud-bucal') loadSaludBucal();
+    else if (modalSection === 'detecciones-tb') loadDeteccionesTuberculosis();
+    else if (modalSection === 'doctores') {
       loadDoctoresAsignados();
       if (isAdmin()) getDoctores({ limit: 200 }).then((l) => setListaDoctores(Array.isArray(l) ? l : [])).catch(() => setListaDoctores([]));
     }
-    if (activeTab === 'datos') {
-      loadResumenMedico();
-    }
-  }, [isGridMode, activeTab, loadCitas, loadSignos, loadDiagnosticos, loadMedicamentos, loadRedApoyo, loadVacunacion, loadComorbilidades, loadDeteccionesComplicaciones, loadSesionesEducativas, loadSaludBucal, loadDeteccionesTuberculosis, loadDoctoresAsignados, loadResumenMedico, isAdmin]);
+    if (modalSection === 'datos') loadResumenMedico();
+  }, [modalSection, loadCitas, loadSignos, loadDiagnosticos, loadMedicamentos, loadRedApoyo, loadVacunacion, loadComorbilidades, loadDeteccionesComplicaciones, loadSesionesEducativas, loadSaludBucal, loadDeteccionesTuberculosis, loadDoctoresAsignados, loadResumenMedico, isAdmin]);
 
   const handleVerExpediente = useCallback(async () => {
     if (parsedId === 0) return;
@@ -587,8 +538,8 @@ export default function PacienteDetail() {
   const nombreCompleto = [p.nombre, p.apellido_paterno, p.apellido_materno].filter(Boolean).join(' ') || '—';
 
   const renderTabContent = (tabId) => {
-    const t = tabId ?? activeTab;
-    switch (t) {
+    if (!tabId) return null;
+    switch (tabId) {
       case 'datos': {
         const comorbilidadesList = Array.isArray(p.comorbilidades)
           ? p.comorbilidades
@@ -2646,71 +2597,24 @@ export default function PacienteDetail() {
         </div>
       </header>
 
-      {!isGridMode && (
-        <div className="patient-accordion-nav">
-          <span className="patient-accordion-nav-label">Ir a:</span>
-          <div className="patient-accordion-nav-links">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                className={`patient-accordion-nav-link ${activeTab === tab.id ? 'is-active' : ''}`}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  setTimeout(() => document.getElementById(`section-${tab.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
-                }}
-              >
-                {tab.icon && <span className="patient-accordion-nav-icon" aria-hidden>{tab.icon}</span>}
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className={`patient-accordion patient-cards-grid ${isGridMode ? 'patient-cards-grid--all-visible' : ''}`}>
-        {TABS.map((tab) => (
-          <section key={tab.id} id={`section-${tab.id}`} className={`patient-section-card-outer ${!isGridMode && activeTab === tab.id ? 'is-open' : ''}`}>
-            {isGridMode ? (
-              <>
-                <div className="patient-section-card-head patient-section-card-head--static">
-                  <span className="patient-section-card-title">
-                    {tab.icon && <span className="patient-section-card-icon" aria-hidden>{tab.icon}</span>}
-                    <span>{tab.label}</span>
-                  </span>
-                </div>
-                <div className="patient-section-card-body">
-                  {renderTabContent(tab.id)}
-                </div>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className={`patient-section-card-head ${activeTab === tab.id ? 'is-open' : ''}`}
-                  onClick={() => setActiveTab(activeTab === tab.id ? activeTab : tab.id)}
-                  aria-expanded={activeTab === tab.id}
-                >
-                  <span className="patient-section-card-title">
-                    {tab.icon && <span className="patient-section-card-icon" aria-hidden>{tab.icon}</span>}
-                    <span>{tab.label}</span>
-                  </span>
-                  <span className="patient-section-card-chevron" aria-hidden>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      {activeTab === tab.id ? <path d="M18 15l-6-6-6 6" /> : <path d="M6 9l6 6 6-6" />}
-                    </svg>
-                  </span>
-                </button>
-                {activeTab === tab.id && (
-                  <div className="patient-section-card-body">
-                    {renderTabContent(tab.id)}
-                  </div>
-                )}
-              </>
-            )}
-          </section>
+      <div className="patient-detail-cards-grid">
+        {PATIENT_DETAIL_SECTIONS.map((section) => (
+          <SectionCard
+            key={section.id}
+            icon={section.icon}
+            label={section.label}
+            onClick={() => setModalSection(section.id)}
+          />
         ))}
       </div>
+
+      <PatientSectionModal
+        open={!!modalSection}
+        sectionId={modalSection}
+        onClose={() => setModalSection(null)}
+      >
+        {modalSection && renderTabContent(modalSection)}
+      </PatientSectionModal>
 
       {/* Modales "Ver todo" / historial completo */}
       <Modal open={showAllSignosOpen} onClose={() => setShowAllSignosOpen(false)} title="Historial de signos vitales" footer={null} width={720}>

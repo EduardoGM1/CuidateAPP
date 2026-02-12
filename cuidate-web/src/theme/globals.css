@@ -913,6 +913,54 @@ select:focus-visible {
 }
 .patient-back:hover { opacity: 0.85; }
 .patient-back:focus-visible { outline: 2px solid var(--color-primario); outline-offset: 2px; }
+
+/* Grid de cards clicables (detalle paciente: cada card abre modal) */
+.patient-detail-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+@media (min-width: 768px) {
+  .patient-detail-cards-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+}
+@media (min-width: 1200px) {
+  .patient-detail-cards-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+}
+
+.patient-section-card-clickable {
+  cursor: pointer;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+.patient-section-card-clickable:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+.patient-section-card-clickable-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 80px;
+  text-align: center;
+}
+.patient-section-card-clickable-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+.patient-section-card-clickable-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-texto-primario);
+}
+
+.patient-section-modal-body {
+  max-height: 75vh;
+  overflow-y: auto;
+  padding-top: var(--space-2);
+}
+
 .patient-section-card {
   background: var(--color-fondo-card);
   border-radius: var(--radius-xl);
