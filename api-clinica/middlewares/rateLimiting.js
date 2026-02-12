@@ -98,10 +98,10 @@ export const pinLoginRateLimit = rateLimit({
 });
 
 // Rate limiting para búsquedas (prevenir scraping) - MEJORADO PARA DESARROLLO
-// En producción: 60/min permite cargar detalle de paciente (varios cards en paralelo) sin 429
+// 100 búsquedas/minuto por usuario (detalle paciente = muchas GET en paralelo)
 export const searchRateLimit = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minuto
-  max: process.env.NODE_ENV === 'development' ? 100 : 60, // 60 en prod: detalle paciente = muchas GET en paralelo
+  max: process.env.NODE_ENV === 'test' ? 1000 : 100,
   message: {
     error: 'Demasiadas búsquedas, espera un momento',
     retryAfter: '1 minuto'
