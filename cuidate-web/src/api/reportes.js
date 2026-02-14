@@ -5,6 +5,7 @@ import { toDateString } from '../utils/reportUtils';
 
 const REPORTES = API_PATHS.REPORTES;
 const ESTADISTICAS_HTML = API_PATHS.REPORTES_ESTADISTICAS_HTML;
+const REPORTES_FORMA = API_PATHS.REPORTES_FORMA;
 
 /**
  * Obtiene el reporte de estadísticas en HTML (Admin/Doctor).
@@ -55,4 +56,20 @@ export async function downloadExpedientePDF(idPaciente) {
   const url = `${REPORTES}/expediente/${id}/pdf`;
   const response = await client.get(url, { responseType: 'blob' });
   return response.data;
+}
+
+/**
+ * Obtiene datos para el FORMA (Formato de Registro Mensual GAM - SIC).
+ * Solo uso en web app; la app móvil no usa este endpoint.
+ * @param {{ mes: number, anio: number, id_modulo?: number }} params
+ * @returns {Promise<{ cabecera: object, filas: object[] }>}
+ */
+export async function getFormaData(params) {
+  const q = new URLSearchParams();
+  if (params.mes != null) q.set('mes', String(params.mes));
+  if (params.anio != null) q.set('anio', String(params.anio));
+  if (params.id_modulo != null && params.id_modulo > 0) q.set('id_modulo', String(params.id_modulo));
+  const url = `${REPORTES_FORMA}?${q.toString()}`;
+  const { data } = await client.get(url);
+  return data;
 }

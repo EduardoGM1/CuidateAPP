@@ -548,14 +548,16 @@ export const login = async (req, res) => {
       });
     } catch (err) {
       logger.error('Error generando token en login', { error: err.message, stack: err.stack });
-      return res.status(500).json({ success: false, error: 'Error en el servidor' });
+      const message = process.env.NODE_ENV === 'development' ? err.message : 'Error en el servidor';
+      return res.status(500).json({ success: false, error: message });
     }
 
   } catch (error) {
     logger.error('Error en login', { error: error.message, stack: error.stack });
-    res.status(500).json({ 
+    const message = process.env.NODE_ENV === 'development' ? error.message : 'Error en el servidor';
+    res.status(500).json({
       success: false,
-      error: error.message 
+      error: message
     });
   }
 };

@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getReporteEstadisticasHTML } from '../../api/reportes';
+import { getReporteEstadisticasHTML, getFormaData } from '../../api/reportes';
 import { getModulos } from '../../api/modulos';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, Input, Select } from '../../components/ui';
 import { openHTMLInNewWindow, downloadAsFile } from '../../utils/reportUtils';
+import { downloadFormaExcel } from '../../utils/formaExcelUtils';
 import { useAuthStore } from '../../stores/authStore';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 
@@ -246,6 +247,121 @@ function ReporteCitasPorEstadoCard() {
   );
 }
 
+/** Exportar FORMA (Formato de Registro Mensual GAM - SIC) en Excel. Solo web, no app móvil. */
+function ReporteFormaCard() {
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const [modulos, setModulos] = useState([]);
+  const [mes, setMes] = useState(new Date().getMonth() + 1);
+  const [anio, setAnio] = useState(new Date().getFullYear());
+  const [idModulo, setIdModulo] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (isAdmin()) {
+      getModulos()
+        .then((list) => setModulos(Array.isArray(list) ? list : []))
+        .catch(() => setModulos([]));
+    }
+  }, [isAdmin]);
+
+  const handleDescargarExcel = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getFormaData({
+        mes,
+        anio,
+        id_modulo: idModulo ? parseInt(idModulo, 10) : undefined,
+      });
+      downloadFormaExcel(
+        data,
+        `forma-registro-mensual-${anio}-${String(mes).padStart(2, '0')}.xlsx`
+      );
+    } catch (err) {
+      setError(
+        err?.response?.data?.error || err?.message || 'Error al generar el archivo FORMA'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [mes, anio, idModulo]);
+
+  const meses = [
+    '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  ];
+
+  return (
+    <ReporteCardWrapper
+      title="Registro mensual FORMA (GAM EC)"
+      description="Formato de Registro Mensual de Actividades GAM (FORMA) - SIC. Descarga en Excel para reporte oficial. Solo disponible en la app web."
+    >
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          marginBottom: '1rem',
+          alignItems: 'flex-end',
+        }}
+      >
+        <Select
+          label="Mes"
+          value={String(mes)}
+          onChange={(v) => setMes(parseInt(v, 10) || 1)}
+          options={meses.slice(1).map((nombre, i) => ({ value: String(i + 1), label: nombre }))}
+          style={{ marginBottom: 0, minWidth: 140 }}
+        />
+        <Input
+          label="Año"
+          type="number"
+          min={2000}
+          max={2100}
+          value={anio}
+          onChange={(e) => setAnio(parseInt(e.target.value, 10) || new Date().getFullYear())}
+          style={{ marginBottom: 0, width: 100 }}
+        />
+        {isAdmin() && modulos.length > 0 && (
+          <Select
+            label="Módulo"
+            placeholder="Todos"
+            value={idModulo || undefined}
+            onChange={(v) => setIdModulo(v ?? '')}
+            options={[
+              { value: '', label: 'Todos' },
+              ...modulos.map((m) => ({
+                value: String(m.id_modulo ?? m.id),
+                label: sanitizeForDisplay(m.nombre_modulo ?? m.nombre) || '—',
+              })),
+            ]}
+            style={{ marginBottom: 0, minWidth: 160 }}
+          />
+        )}
+      </div>
+      {error && (
+        <p
+          style={{
+            margin: '0 0 0.75rem',
+            color: 'var(--color-error)',
+            fontSize: '0.875rem',
+          }}
+        >
+          {error}
+        </p>
+      )}
+      <Button
+        variant="primary"
+        type="button"
+        disabled={loading}
+        onClick={handleDescargarExcel}
+      >
+        {loading ? 'Generando…' : 'Descargar Excel (FORMA)'}
+      </Button>
+    </ReporteCardWrapper>
+  );
+}
+
 export default function ReportesPage() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const isDoctor = useAuthStore((s) => s.isDoctor);
@@ -262,6 +378,7 @@ export default function ReportesPage() {
         }}
       >
         {(isAdmin() || isDoctor()) && <ReporteEstadisticasCard />}
+        {(isAdmin() || isDoctor()) && <ReporteFormaCard />}
         {isAdmin() && <ReportePacientesActivosCard />}
         {(isAdmin() || isDoctor()) && <ReporteCitasPorEstadoCard />}
       </div>
