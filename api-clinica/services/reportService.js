@@ -769,21 +769,16 @@ class ReportService {
 
   /**
    * Datos para el FORMA (Formato de Registro Mensual de Actividades GAM - SIC).
-   * GET /api/reportes/forma?mes=8&anio=2025&id_modulo=1
+   * GET /api/reportes/forma/:idPaciente?mes=8&anio=2025
+   * Solo para un paciente en la fecha seleccionada. Uso exclusivo en app web.
+   * @param {number} idPaciente - ID del paciente
    * @param {number} mes - Mes (1-12)
    * @param {number} anio - Año (ej. 2025)
-   * @param {number|null} idModulo - Opcional: filtrar por módulo
    * @returns {Promise<{ cabecera: object, filas: object[] }>}
    */
-  async getFormaData(mes, anio, idModulo = null) {
+  async getFormaData(idPaciente, mes, anio) {
     try {
-      const where = { activo: true };
-      if (idModulo != null && idModulo > 0) {
-        where.id_modulo = idModulo;
-      }
-
-      const pacientes = await Paciente.findAll({
-        where,
+      const paciente = await Paciente.findByPk(idPaciente, {
         include: [
           { model: Modulo, attributes: ['id_modulo', 'nombre_modulo'], required: false },
           {
@@ -793,147 +788,107 @@ class ReportService {
             attributes: ['id_comorbilidad', 'nombre_comorbilidad'],
             required: false
           }
-        ],
-        order: [['numero_gam', 'ASC'], ['apellido_paterno', 'ASC'], ['nombre', 'ASC']]
+        ]
       });
 
-      const ids = pacientes.map(p => p.id_paciente);
-      if (ids.length === 0) {
-        const meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-        return {
-          cabecera: {
-            institucion: process.env.FORMA_INSTITUCION || 'Institución',
-            entidad: process.env.FORMA_ENTIDAD || 'Entidad Federativa',
-            municipio: process.env.FORMA_MUNICIPIO || 'Municipio',
-            unidadMedica: process.env.FORMA_UNIDAD_MEDICA || 'Unidad Médica',
-            nombreGAM: process.env.FORMA_NOMBRE_GAM || 'Nombre del Grupo de Ayuda Mutua EC',
-            etapa: process.env.FORMA_ETAPA || 'Etapa',
-            mes: mes,
-            anio: anio,
-            mesNombre: meses[mes] || '',
-            coordinador: process.env.FORMA_COORDINADOR || 'Nombre Coordinador del GAM EC'
-          },
-          filas: []
-        };
+      const meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      const cabecera = {
+        institucion: process.env.FORMA_INSTITUCION || 'Institución',
+        entidad: process.env.FORMA_ENTIDAD || 'Entidad Federativa',
+        municipio: process.env.FORMA_MUNICIPIO || 'Municipio',
+        unidadMedica: process.env.FORMA_UNIDAD_MEDICA || 'Unidad Médica',
+        nombreGAM: process.env.FORMA_NOMBRE_GAM || 'Nombre del Grupo de Ayuda Mutua EC',
+        etapa: process.env.FORMA_ETAPA || 'Etapa',
+        mes,
+        anio,
+        mesNombre: meses[mes] || '',
+        coordinador: process.env.FORMA_COORDINADOR || 'Nombre Coordinador del GAM EC'
+      };
+
+      if (!paciente || !paciente.activo) {
+        return { cabecera, filas: [] };
       }
 
-      const inicioMes = new Date(anio, mes - 1, 1);
-      const finMes = new Date(anio, mes, 0, 23, 59, 59);
+      const inicioMesStr = `${anio}-${String(mes).padStart(2, '0')}-01`;
+      const ultimoDia = new Date(anio, mes, 0).getDate();
+      const finMesStr = `${anio}-${String(mes).padStart(2, '0')}-${String(ultimoDia).padStart(2, '0')}`;
 
       const [signosVitales, deteccionesComplicaciones, saludBucal, deteccionesTb, sesionesEducativas, planesMedicacion] = await Promise.all([
         SignoVital.findAll({
-          where: { id_paciente: ids },
-          order: [['id_paciente', 'ASC'], ['fecha_medicion', 'DESC']],
+          where: { id_paciente: idPaciente, fecha_medicion: { [Op.between]: [inicioMesStr, finMesStr] } },
+          order: [['fecha_medicion', 'DESC']],
+          limit: 1,
           attributes: ['id_paciente', 'peso_kg', 'talla_m', 'imc', 'presion_sistolica', 'presion_diastolica', 'glucosa_mg_dl', 'colesterol_mg_dl', 'trigliceridos_mg_dl', 'fecha_medicion']
         }),
         DeteccionComplicacion.findAll({
-          where: { id_paciente: ids, fecha_deteccion: { [Op.between]: [inicioMes, finMes] } },
-          attributes: ['id_paciente', 'tipo_deteccion', 'resultado']
+          where: { id_paciente: idPaciente, fecha_deteccion: { [Op.between]: [inicioMesStr, finMesStr] } },
+          attributes: ['id_paciente']
         }),
         SaludBucal.findAll({
-          where: { id_paciente: ids },
-          order: [['fecha_consulta', 'DESC']],
-          attributes: ['id_paciente', 'fecha_consulta']
+          where: { id_paciente: idPaciente, fecha_registro: { [Op.between]: [inicioMesStr, finMesStr] } },
+          order: [['fecha_registro', 'DESC']],
+          attributes: ['id_paciente', 'fecha_registro']
         }),
         DeteccionTuberculosis.findAll({
-          where: { id_paciente: ids },
+          where: { id_paciente: idPaciente, fecha_deteccion: { [Op.between]: [inicioMesStr, finMesStr] } },
           order: [['fecha_deteccion', 'DESC']],
-          attributes: ['id_paciente', 'fecha_deteccion', 'resultado']
+          attributes: ['id_paciente', 'fecha_deteccion', 'baciloscopia_resultado']
         }),
         SesionEducativa.findAll({
-          where: { id_paciente: ids, fecha_sesion: { [Op.between]: [inicioMes, finMes] } },
+          where: { id_paciente: idPaciente, fecha_sesion: { [Op.between]: [inicioMesStr, finMesStr] } },
           attributes: ['id_paciente', 'tipo_sesion']
         }),
         PlanMedicacion.findAll({
-          where: { id_paciente: ids, activo: true },
+          where: { id_paciente: idPaciente, activo: true },
+          limit: 1,
           attributes: ['id_paciente']
         })
       ]);
 
-      const signosPorPaciente = new Map();
-      signosVitales.forEach(s => {
-        if (!signosPorPaciente.has(s.id_paciente)) signosPorPaciente.set(s.id_paciente, s);
-      });
-      const deteccionesPorPaciente = new Map();
-      deteccionesComplicaciones.forEach(d => {
-        const key = d.id_paciente;
-        if (!deteccionesPorPaciente.has(key)) deteccionesPorPaciente.set(key, []);
-        deteccionesPorPaciente.get(key).push(d);
-      });
-      const saludBucalPorPaciente = new Map();
-      saludBucal.forEach(s => {
-        if (!saludBucalPorPaciente.has(s.id_paciente)) saludBucalPorPaciente.set(s.id_paciente, s);
-      });
-      const tbPorPaciente = new Map();
-      deteccionesTb.forEach(d => {
-        if (!tbPorPaciente.has(d.id_paciente)) tbPorPaciente.set(d.id_paciente, d);
-      });
-      const sesionesPorPaciente = new Map();
-      sesionesEducativas.forEach(s => {
-        const key = s.id_paciente;
-        if (!sesionesPorPaciente.has(key)) sesionesPorPaciente.set(key, []);
-        sesionesPorPaciente.get(key).push(s);
-      });
-      const tienePlanMedicacion = new Set(planesMedicacion.map(p => p.id_paciente));
+      const signo = signosVitales[0] || null;
+      const detecciones = deteccionesComplicaciones || [];
+      const tieneSaludBucal = saludBucal.length > 0;
+      const tieneTb = deteccionesTb.length > 0;
+      const sesiones = sesionesEducativas || [];
+      const tiposSesion = new Set(sesiones.map(s => (s.tipo_sesion || '').toLowerCase()));
+      const tienePlanMedicacion = planesMedicacion.length > 0;
 
-      const meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-      const filas = pacientes.map((p, idx) => {
-        const fechaNac = p.fecha_nacimiento ? new Date(p.fecha_nacimiento) : null;
-        const edad = fechaNac ? Math.floor((new Date() - fechaNac) / (365.25 * 24 * 60 * 60 * 1000)) : '';
-        const sexo = p.sexo === 'Mujer' ? 'F' : p.sexo === 'Hombre' ? 'M' : '';
-        const nombreCompleto = [p.nombre, p.apellido_paterno, p.apellido_materno].filter(Boolean).join(' ').trim();
-        const signo = signosPorPaciente.get(p.id_paciente);
-        const detecciones = deteccionesPorPaciente.get(p.id_paciente) || [];
-        const tieneSaludBucal = saludBucalPorPaciente.has(p.id_paciente);
-        const tieneTb = tbPorPaciente.has(p.id_paciente);
-        const sesiones = sesionesPorPaciente.get(p.id_paciente) || [];
-        const tiposSesion = new Set(sesiones.map(s => (s.tipo_sesion || '').toLowerCase()));
+      const p = paciente;
+      const fechaNac = p.fecha_nacimiento ? new Date(p.fecha_nacimiento) : null;
+      const edad = fechaNac ? Math.floor((new Date() - fechaNac) / (365.25 * 24 * 60 * 60 * 1000)) : '';
+      const sexo = p.sexo === 'Mujer' ? 'F' : p.sexo === 'Hombre' ? 'M' : '';
+      const nombreCompleto = [p.nombre, p.apellido_paterno, p.apellido_materno].filter(Boolean).join(' ').trim();
 
-        return {
-          n: idx + 1,
-          nombre: nombreCompleto,
-          edad,
-          sexo,
-          recibeTratamiento: tienePlanMedicacion.has(p.id_paciente) ? 1 : '',
-          saludBucal: tieneSaludBucal ? 1 : '',
-          tuberculosis: tieneTb ? 1 : '',
-          basal: (p.Comorbilidades && p.Comorbilidades.length) ? 1 : '',
-          anoDx: '',
-          dxAgregados: '',
-          noFarmacologico: tiposSesion.has('nutricional') ? 1 : '',
-          farmacologico: tienePlanMedicacion.has(p.id_paciente) ? 1 : '',
-          nutricional: tiposSesion.has('nutricional') ? 1 : '',
-          actividadFisica: tiposSesion.has('actividad_fisica') ? 1 : '',
-          medicoPreventiva: tiposSesion.has('medico_preventiva') || detecciones.length > 0 ? 1 : '',
-          psicologica: tiposSesion.has('psicologica') ? 1 : '',
-          odontologica: tiposSesion.has('odontologica') || tieneSaludBucal ? 1 : '',
-          talla: signo && signo.talla_m != null ? Number(signo.talla_m) : '',
-          imc: signo && signo.imc != null ? Number(signo.imc) : '',
-          colesterol: signo && signo.colesterol_mg_dl != null ? Number(signo.colesterol_mg_dl) : '',
-          trigliceridos: signo && signo.trigliceridos_mg_dl != null ? Number(signo.trigliceridos_mg_dl) : '',
-          glucosa: signo && signo.glucosa_mg_dl != null ? Number(signo.glucosa_mg_dl) : '',
-          presionSistolica: signo && signo.presion_sistolica != null ? Number(signo.presion_sistolica) : '',
-          presionDiastolica: signo && signo.presion_diastolica != null ? Number(signo.presion_diastolica) : '',
-          microalbuminuria: '',
-          fondoOjo: ''
-        };
-      });
+      const filas = [{
+        n: 1,
+        nombre: nombreCompleto,
+        edad,
+        sexo,
+        recibeTratamiento: tienePlanMedicacion ? 1 : '',
+        saludBucal: tieneSaludBucal ? 1 : '',
+        tuberculosis: tieneTb ? 1 : '',
+        basal: (p.Comorbilidades && p.Comorbilidades.length) ? 1 : '',
+        anoDx: '',
+        dxAgregados: '',
+        noFarmacologico: tiposSesion.has('nutricional') ? 1 : '',
+        farmacologico: tienePlanMedicacion ? 1 : '',
+        nutricional: tiposSesion.has('nutricional') ? 1 : '',
+        actividadFisica: tiposSesion.has('actividad_fisica') ? 1 : '',
+        medicoPreventiva: tiposSesion.has('medico_preventiva') || detecciones.length > 0 ? 1 : '',
+        psicologica: tiposSesion.has('psicologica') ? 1 : '',
+        odontologica: tiposSesion.has('odontologica') || tieneSaludBucal ? 1 : '',
+        talla: signo && signo.talla_m != null ? Number(signo.talla_m) : '',
+        imc: signo && signo.imc != null ? Number(signo.imc) : '',
+        colesterol: signo && signo.colesterol_mg_dl != null ? Number(signo.colesterol_mg_dl) : '',
+        trigliceridos: signo && signo.trigliceridos_mg_dl != null ? Number(signo.trigliceridos_mg_dl) : '',
+        glucosa: signo && signo.glucosa_mg_dl != null ? Number(signo.glucosa_mg_dl) : '',
+        presionSistolica: signo && signo.presion_sistolica != null ? Number(signo.presion_sistolica) : '',
+        presionDiastolica: signo && signo.presion_diastolica != null ? Number(signo.presion_diastolica) : '',
+        microalbuminuria: '',
+        fondoOjo: ''
+      }];
 
-      return {
-        cabecera: {
-          institucion: process.env.FORMA_INSTITUCION || 'Institución',
-          entidad: process.env.FORMA_ENTIDAD || 'Entidad Federativa',
-          municipio: process.env.FORMA_MUNICIPIO || 'Municipio',
-          unidadMedica: process.env.FORMA_UNIDAD_MEDICA || 'Unidad Médica',
-          nombreGAM: process.env.FORMA_NOMBRE_GAM || 'Nombre del Grupo de Ayuda Mutua EC',
-          etapa: process.env.FORMA_ETAPA || 'Etapa',
-          mes,
-          anio,
-          mesNombre: meses[mes] || '',
-          coordinador: process.env.FORMA_COORDINADOR || 'Nombre Coordinador del GAM EC'
-        },
-        filas
-      };
+      return { cabecera, filas };
     } catch (error) {
       logger.error('Error getFormaData', { error: error.message, stack: error.stack });
       throw error;

@@ -7,7 +7,8 @@ import { getDoctores } from '../../api/doctores';
 import { createCita } from '../../api/citas';
 import { getMedicamentos } from '../../api/medicamentos';
 import { useAuthStore } from '../../stores/authStore';
-import { getExpedienteHTML, downloadExpedientePDF } from '../../api/reportes';
+import { getExpedienteHTML, getFormaData } from '../../api/reportes';
+import { downloadFormaExcel } from '../../utils/formaExcelUtils';
 import {
   getPacienteCitas,
   getPacienteSignosVitales,
@@ -87,6 +88,10 @@ export default function PacienteDetail() {
   const [modalSection, setModalSection] = useState(null);
   const [expedienteLoading, setExpedienteLoading] = useState(false);
   const [expedienteError, setExpedienteError] = useState(null);
+  const [formaLoading, setFormaLoading] = useState(false);
+  const [formaError, setFormaError] = useState(null);
+  const [formaMes, setFormaMes] = useState(new Date().getMonth() + 1);
+  const [formaAnio, setFormaAnio] = useState(new Date().getFullYear());
 
   const [citas, setCitas] = useState({ data: [], total: 0 });
   const [citasLoading, setCitasLoading] = useState(false);
@@ -2589,7 +2594,51 @@ export default function PacienteDetail() {
               {p.activo ? 'Activo' : 'Inactivo'}
             </span>
           </div>
-          <div className="patient-header-actions">
+          <div className="patient-header-actions" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Select
+                aria-label="Mes FORMA"
+                value={String(formaMes)}
+                onChange={(v) => setFormaMes(parseInt(v, 10) || 1)}
+                options={[
+                  { value: '1', label: 'Ene' }, { value: '2', label: 'Feb' }, { value: '3', label: 'Mar' },
+                  { value: '4', label: 'Abr' }, { value: '5', label: 'May' }, { value: '6', label: 'Jun' },
+                  { value: '7', label: 'Jul' }, { value: '8', label: 'Ago' }, { value: '9', label: 'Sep' },
+                  { value: '10', label: 'Oct' }, { value: '11', label: 'Nov' }, { value: '12', label: 'Dic' },
+                ]}
+                style={{ marginBottom: 0, minWidth: 56 }}
+              />
+              <Input
+                aria-label="Año FORMA"
+                type="number"
+                min={2000}
+                max={2100}
+                value={formaAnio}
+                onChange={(e) => setFormaAnio(parseInt(e.target.value, 10) || new Date().getFullYear())}
+                style={{ marginBottom: 0, width: 64, padding: '0.35rem 0.5rem' }}
+              />
+            </div>
+            <Button
+              variant="outline"
+              type="button"
+              disabled={formaLoading}
+              onClick={async () => {
+                setFormaLoading(true);
+                setFormaError(null);
+                try {
+                  const data = await getFormaData({ idPaciente: parsedId, mes: formaMes, anio: formaAnio });
+                  downloadFormaExcel(data, `forma-paciente-${parsedId}-${formaAnio}-${String(formaMes).padStart(2, '0')}.xlsx`);
+                } catch (err) {
+                  const msg = err?.response?.data?.error || err?.message || 'Error al descargar';
+                  setFormaError(msg);
+                  message.error(msg);
+                } finally {
+                  setFormaLoading(false);
+                }
+              }}
+            >
+              {formaLoading ? 'Generando…' : 'Descargar FORMA en Excel'}
+            </Button>
             <Button variant="outline" onClick={() => navigate(`/pacientes/${parsedId}/editar`)}>
               Editar paciente
             </Button>

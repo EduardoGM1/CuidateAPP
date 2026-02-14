@@ -23,7 +23,7 @@ export const API_PATHS = {
   MODULOS: '/api/modulos',
   REPORTES: '/api/reportes',
   REPORTES_ESTADISTICAS_HTML: '/api/reportes/estadisticas/html',
-  REPORTES_FORMA: '/api/reportes/forma',
+  REPORTES_FORMA: (id) => `/api/reportes/forma/${id}`,
   REPORTES_EXPEDIENTE_HTML: (id) => `/api/reportes/expediente/${id}/html`,
   DASHBOARD_ADMIN_SUMMARY: '/api/dashboard/admin/summary',
   DASHBOARD_DOCTOR_SUMMARY: '/api/dashboard/doctor/summary',

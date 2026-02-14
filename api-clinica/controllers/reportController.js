@@ -211,15 +211,18 @@ export const getReporteEstadisticasHTML = async (req, res) => {
 
 /**
  * Datos para exportar FORMA (Formato de Registro Mensual GAM - SIC).
- * GET /api/reportes/forma?mes=8&anio=2025&id_modulo=1
- * Solo web: la app móvil no usa este endpoint.
+ * GET /api/reportes/forma/:idPaciente?mes=8&anio=2025
+ * Solo web: la app móvil no usa este endpoint. Datos de un solo paciente para la fecha.
  */
 export const getFormaData = async (req, res) => {
   try {
+    const idPaciente = parseInt(req.params.idPaciente, 10);
     const mes = parseInt(req.query.mes, 10);
     const anio = parseInt(req.query.anio, 10);
-    const idModulo = req.query.id_modulo != null ? parseInt(req.query.id_modulo, 10) : null;
 
+    if (!Number.isInteger(idPaciente) || idPaciente <= 0) {
+      return res.status(400).json({ success: false, error: 'ID de paciente inválido' });
+    }
     if (!Number.isInteger(mes) || mes < 1 || mes > 12) {
       return res.status(400).json({ success: false, error: 'Parámetro mes requerido (1-12)' });
     }
@@ -227,7 +230,7 @@ export const getFormaData = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Parámetro anio requerido (2000-2100)' });
     }
 
-    const data = await reportService.getFormaData(mes, anio, idModulo);
+    const data = await reportService.getFormaData(idPaciente, mes, anio);
     res.json(data);
   } catch (error) {
     logger.error('Error getFormaData:', error);

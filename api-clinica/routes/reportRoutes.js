@@ -19,8 +19,8 @@ router.get('/diagnosticos/:idPaciente/csv', searchRateLimit, reportController.ge
 // Reporte de estadísticas en HTML (Admin/Doctor - para convertir a PDF en app)
 router.get('/estadisticas/html', searchRateLimit, reportController.getReporteEstadisticasHTML);
 
-// Datos para FORMA (Registro Mensual GAM - SIC) - solo web
-router.get('/forma', searchRateLimit, reportController.getFormaData);
+// Datos para FORMA (Registro Mensual GAM - SIC) - solo web, por paciente
+router.get('/forma/:idPaciente', searchRateLimit, reportController.getFormaData);
 
 // Expediente médico completo en HTML (NUEVO - para react-native-html-to-pdf)
 router.get('/expediente/:idPaciente/html', searchRateLimit, reportController.getExpedienteCompletoHTML);
