@@ -14,6 +14,8 @@
     "test:citas-estados": "node scripts/test-citas-estados-reprogramacion.js",
     "test:citas-estados:auto": "node scripts/verificar-y-ejecutar-pruebas-citas.js",
     "test:endpoints": "node scripts/test-endpoints.js",
+    "test:forma": "node scripts/test-forma-web.js",
+    "seed:forma": "node scripts/seed-forma-solo-bd.js",
     "test:email": "node scripts/test-resend-email.js",
     "test:email:reset": "node scripts/test-email-password-reset.js",
     "test:performance": "set NODE_OPTIONS=--experimental-vm-modules && jest tests/performance/",

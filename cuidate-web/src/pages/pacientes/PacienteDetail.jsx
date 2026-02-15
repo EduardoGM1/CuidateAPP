@@ -7,7 +7,7 @@ import { getDoctores } from '../../api/doctores';
 import { createCita } from '../../api/citas';
 import { getMedicamentos } from '../../api/medicamentos';
 import { useAuthStore } from '../../stores/authStore';
-import { getExpedienteHTML, getFormaData } from '../../api/reportes';
+import { getExpedienteHTML, getFormaData, getFormaMesesDisponibles } from '../../api/reportes';
 import { downloadFormaExcel } from '../../utils/formaExcelUtils';
 import {
   getPacienteCitas,
@@ -88,10 +88,12 @@ export default function PacienteDetail() {
   const [modalSection, setModalSection] = useState(null);
   const [expedienteLoading, setExpedienteLoading] = useState(false);
   const [expedienteError, setExpedienteError] = useState(null);
+  const [formaModalOpen, setFormaModalOpen] = useState(false);
   const [formaLoading, setFormaLoading] = useState(false);
   const [formaError, setFormaError] = useState(null);
-  const [formaMes, setFormaMes] = useState(new Date().getMonth() + 1);
-  const [formaAnio, setFormaAnio] = useState(new Date().getFullYear());
+  const [periodosDisponibles, setPeriodosDisponibles] = useState([]);
+  const [periodosLoading, setPeriodosLoading] = useState(false);
+  const [periodoSeleccionado, setPeriodoSeleccionado] = useState('');
 
   const [citas, setCitas] = useState({ data: [], total: 0 });
   const [citasLoading, setCitasLoading] = useState(false);
@@ -490,6 +492,16 @@ export default function PacienteDetail() {
     }
     if (modalSection === 'datos') loadResumenMedico();
   }, [modalSection, loadCitas, loadSignos, loadDiagnosticos, loadMedicamentos, loadRedApoyo, loadVacunacion, loadComorbilidades, loadDeteccionesComplicaciones, loadSesionesEducativas, loadSaludBucal, loadDeteccionesTuberculosis, loadDoctoresAsignados, loadResumenMedico, isAdmin]);
+
+  useEffect(() => {
+    if (!formaModalOpen || parsedId === 0) return;
+    setPeriodosLoading(true);
+    setPeriodoSeleccionado('');
+    getFormaMesesDisponibles(parsedId)
+      .then((res) => setPeriodosDisponibles(Array.isArray(res?.periodos) ? res.periodos : []))
+      .catch(() => setPeriodosDisponibles([]))
+      .finally(() => setPeriodosLoading(false));
+  }, [formaModalOpen, parsedId]);
 
   const handleVerExpediente = useCallback(async () => {
     if (parsedId === 0) return;
@@ -2595,49 +2607,8 @@ export default function PacienteDetail() {
             </span>
           </div>
           <div className="patient-header-actions" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Select
-                aria-label="Mes FORMA"
-                value={String(formaMes)}
-                onChange={(v) => setFormaMes(parseInt(v, 10) || 1)}
-                options={[
-                  { value: '1', label: 'Ene' }, { value: '2', label: 'Feb' }, { value: '3', label: 'Mar' },
-                  { value: '4', label: 'Abr' }, { value: '5', label: 'May' }, { value: '6', label: 'Jun' },
-                  { value: '7', label: 'Jul' }, { value: '8', label: 'Ago' }, { value: '9', label: 'Sep' },
-                  { value: '10', label: 'Oct' }, { value: '11', label: 'Nov' }, { value: '12', label: 'Dic' },
-                ]}
-                style={{ marginBottom: 0, minWidth: 56 }}
-              />
-              <Input
-                aria-label="Año FORMA"
-                type="number"
-                min={2000}
-                max={2100}
-                value={formaAnio}
-                onChange={(e) => setFormaAnio(parseInt(e.target.value, 10) || new Date().getFullYear())}
-                style={{ marginBottom: 0, width: 64, padding: '0.35rem 0.5rem' }}
-              />
-            </div>
-            <Button
-              variant="outline"
-              type="button"
-              disabled={formaLoading}
-              onClick={async () => {
-                setFormaLoading(true);
-                setFormaError(null);
-                try {
-                  const data = await getFormaData({ idPaciente: parsedId, mes: formaMes, anio: formaAnio });
-                  downloadFormaExcel(data, `forma-paciente-${parsedId}-${formaAnio}-${String(formaMes).padStart(2, '0')}.xlsx`);
-                } catch (err) {
-                  const msg = err?.response?.data?.error || err?.message || 'Error al descargar';
-                  setFormaError(msg);
-                  message.error(msg);
-                } finally {
-                  setFormaLoading(false);
-                }
-              }}
-            >
-              {formaLoading ? 'Generando…' : 'Descargar FORMA en Excel'}
+            <Button variant="outline" type="button" onClick={() => setFormaModalOpen(true)}>
+              Descargar FORMA en Excel
             </Button>
             <Button variant="outline" onClick={() => navigate(`/pacientes/${parsedId}/editar`)}>
               Editar paciente
@@ -2727,6 +2698,60 @@ export default function PacienteDetail() {
               </li>
             ))}
           </ul>
+        )}
+      </Modal>
+
+      {/* Modal FORMA (solo web): periodos con registros del paciente */}
+      <Modal
+        open={formaModalOpen}
+        onClose={() => { setFormaModalOpen(false); setPeriodoSeleccionado(''); }}
+        title="Descargar FORMA (Registro Mensual GAM)"
+        cancelText="Cancelar"
+        okText="Descargar Excel"
+        confirmLoading={formaLoading}
+        onOk={async () => {
+          if (!periodoSeleccionado) return;
+          const [anioStr, mesStr] = periodoSeleccionado.split('-');
+          const mes = parseInt(mesStr, 10);
+          const anio = parseInt(anioStr, 10);
+          setFormaLoading(true);
+          setFormaError(null);
+          try {
+            const data = await getFormaData({ idPaciente: parsedId, mes, anio });
+            downloadFormaExcel(data, `forma-paciente-${parsedId}-${anio}-${String(mes).padStart(2, '0')}.xlsx`);
+            message.success('Descarga iniciada');
+            setFormaModalOpen(false);
+            setPeriodoSeleccionado('');
+          } catch (err) {
+            const msg = err?.response?.data?.error || err?.message || 'Error al descargar';
+            setFormaError(msg);
+            message.error(msg);
+          } finally {
+            setFormaLoading(false);
+          }
+        }}
+        okButtonProps={{ disabled: !periodoSeleccionado }}
+        width={440}
+      >
+        <p style={{ margin: '0 0 1rem', color: 'var(--color-texto-secundario)', fontSize: 'var(--text-sm)' }}>
+          Elige el periodo según los registros del paciente (signos vitales, citas, detecciones, etc.).
+        </p>
+        {formaError && (
+          <p style={{ margin: '0 0 0.5rem', color: 'var(--color-error)', fontSize: 'var(--text-sm)' }}>{formaError}</p>
+        )}
+        {periodosLoading ? (
+          <LoadingSpinner />
+        ) : periodosDisponibles.length === 0 ? (
+          <EmptyState message="No hay periodos con registros para este paciente" />
+        ) : (
+          <Select
+            label="Periodo"
+            placeholder="Selecciona mes y año"
+            value={periodoSeleccionado || undefined}
+            onChange={(v) => setPeriodoSeleccionado(v ?? '')}
+            options={periodosDisponibles.map((p) => ({ value: p.value, label: p.label }))}
+            style={{ marginBottom: 0 }}
+          />
         )}
       </Modal>
     </div>

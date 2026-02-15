@@ -5,6 +5,7 @@
  */
 
 import { Op } from 'sequelize';
+import sequelize from '../config/db.js';
 import { 
   Paciente, 
   SignoVital, 
@@ -25,6 +26,8 @@ import {
   SesionEducativa
 } from '../models/associations.js';
 import logger from '../utils/logger.js';
+
+const MESES_NOMBRE = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 import DashboardService from './dashboardService.js';
 
 class ReportService {
@@ -891,6 +894,74 @@ class ReportService {
       return { cabecera, filas };
     } catch (error) {
       logger.error('Error getFormaData', { error: error.message, stack: error.stack });
+      throw error;
+    }
+  }
+
+  /**
+   * Periodos (mes/año) con registros del paciente para FORMA. Solo web.
+   * GET /api/reportes/forma/:idPaciente/meses-disponibles
+   */
+  async getFormaMesesDisponibles(idPaciente) {
+    try {
+      const where = { id_paciente: idPaciente };
+      const [signos, citas, detecciones, saludBucal, tb, sesiones] = await Promise.all([
+        SignoVital.findAll({
+          where,
+          attributes: [[sequelize.fn('YEAR', sequelize.col('fecha_medicion')), 'anio'], [sequelize.fn('MONTH', sequelize.col('fecha_medicion')), 'mes']],
+          raw: true
+        }),
+        Cita.findAll({
+          where,
+          attributes: [[sequelize.fn('YEAR', sequelize.col('fecha_cita')), 'anio'], [sequelize.fn('MONTH', sequelize.col('fecha_cita')), 'mes']],
+          raw: true
+        }),
+        DeteccionComplicacion.findAll({
+          where,
+          attributes: [[sequelize.fn('YEAR', sequelize.col('fecha_deteccion')), 'anio'], [sequelize.fn('MONTH', sequelize.col('fecha_deteccion')), 'mes']],
+          raw: true
+        }),
+        SaludBucal.findAll({
+          where,
+          attributes: [[sequelize.fn('YEAR', sequelize.col('fecha_registro')), 'anio'], [sequelize.fn('MONTH', sequelize.col('fecha_registro')), 'mes']],
+          raw: true
+        }),
+        DeteccionTuberculosis.findAll({
+          where,
+          attributes: [[sequelize.fn('YEAR', sequelize.col('fecha_deteccion')), 'anio'], [sequelize.fn('MONTH', sequelize.col('fecha_deteccion')), 'mes']],
+          raw: true
+        }),
+        SesionEducativa.findAll({
+          where,
+          attributes: [[sequelize.fn('YEAR', sequelize.col('fecha_sesion')), 'anio'], [sequelize.fn('MONTH', sequelize.col('fecha_sesion')), 'mes']],
+          raw: true
+        })
+      ]);
+
+      const set = new Set();
+      [...signos, ...citas, ...detecciones, ...saludBucal, ...tb, ...sesiones].forEach((row) => {
+        const anio = row.anio != null ? Number(row.anio) : null;
+        const mes = row.mes != null ? Number(row.mes) : null;
+        if (anio != null && mes != null && mes >= 1 && mes <= 12) set.add(`${anio}-${String(mes).padStart(2, '0')}`);
+      });
+
+      const periodos = Array.from(set)
+        .sort((a, b) => b.localeCompare(a))
+        .map((key) => {
+          const [anioStr, mesStr] = key.split('-');
+          const anio = parseInt(anioStr, 10);
+          const mes = parseInt(mesStr, 10);
+          return {
+            mes,
+            anio,
+            value: key,
+            label: `${MESES_NOMBRE[mes]} ${anio}`
+          };
+        });
+
+      return { periodos };
+    } catch (error) {
+      logger.error('Error getFormaMesesDisponibles', { error: error.message, stack: error.stack });
       throw error;
     }
   }

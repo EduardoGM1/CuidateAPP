@@ -210,6 +210,26 @@ export const getReporteEstadisticasHTML = async (req, res) => {
 };
 
 /**
+ * Periodos (mes/año) con registros del paciente para elegir en FORMA. Solo web.
+ * GET /api/reportes/forma/:idPaciente/meses-disponibles
+ */
+export const getFormaMesesDisponibles = async (req, res) => {
+  try {
+    const idPaciente = parseInt(req.params.idPaciente, 10);
+    if (!Number.isInteger(idPaciente) || idPaciente <= 0) {
+      return res.status(400).json({ success: false, error: 'ID de paciente inválido' });
+    }
+    const data = await reportService.getFormaMesesDisponibles(idPaciente);
+    res.json(data);
+  } catch (error) {
+    logger.error('Error getFormaMesesDisponibles:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+};
+
+/**
  * Datos para exportar FORMA (Formato de Registro Mensual GAM - SIC).
  * GET /api/reportes/forma/:idPaciente?mes=8&anio=2025
  * Solo web: la app móvil no usa este endpoint. Datos de un solo paciente para la fecha.

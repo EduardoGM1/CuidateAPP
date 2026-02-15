@@ -441,7 +441,7 @@ export const createPaciente = async (req, res) => {
       nombre: String(req.body.nombre).trim(),
       apellido_paterno: String(req.body.apellido_paterno).trim(),
       apellido_materno: req.body.apellido_materno ? String(req.body.apellido_materno).trim() : null,
-      fecha_nacimiento: fechaNac,
+      fecha_nacimiento: fechaNac.toISOString().slice(0, 10),
       curp: req.body.curp ? String(req.body.curp).trim().toUpperCase() : null,
       institucion_salud: req.body.institucion_salud ? String(req.body.institucion_salud).trim() : null,
       sexo: req.body.sexo ? String(req.body.sexo).trim() : null,

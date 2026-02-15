@@ -6,6 +6,7 @@ import { toDateString } from '../utils/reportUtils';
 const REPORTES = API_PATHS.REPORTES;
 const ESTADISTICAS_HTML = API_PATHS.REPORTES_ESTADISTICAS_HTML;
 const REPORTES_FORMA = API_PATHS.REPORTES_FORMA;
+const REPORTES_FORMA_MESES_DISPONIBLES = API_PATHS.REPORTES_FORMA_MESES_DISPONIBLES;
 
 /**
  * Obtiene el reporte de estadísticas en HTML (Admin/Doctor).
@@ -73,5 +74,17 @@ export async function getFormaData(params) {
   if (params.anio != null) q.set('anio', String(params.anio));
   const url = `${REPORTES_FORMA(id)}?${q.toString()}`;
   const { data } = await client.get(url, { timeout: 60000 });
+  return data;
+}
+
+/**
+ * Obtiene los periodos (mes/año) con registros del paciente para FORMA. Solo web.
+ * @param {number} idPaciente
+ * @returns {Promise<{ periodos: Array<{ mes, anio, value, label }> }>}
+ */
+export async function getFormaMesesDisponibles(idPaciente) {
+  const id = parsePositiveInt(idPaciente, 0);
+  if (id === 0) throw new Error('ID de paciente inválido');
+  const { data } = await client.get(REPORTES_FORMA_MESES_DISPONIBLES(id));
   return data;
 }

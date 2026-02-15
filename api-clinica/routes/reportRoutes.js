@@ -19,6 +19,8 @@ router.get('/diagnosticos/:idPaciente/csv', searchRateLimit, reportController.ge
 // Reporte de estadísticas en HTML (Admin/Doctor - para convertir a PDF en app)
 router.get('/estadisticas/html', searchRateLimit, reportController.getReporteEstadisticasHTML);
 
+// Periodos con registros del paciente para FORMA (solo web)
+router.get('/forma/:idPaciente/meses-disponibles', searchRateLimit, reportController.getFormaMesesDisponibles);
 // Datos para FORMA (Registro Mensual GAM - SIC) - solo web, por paciente
 router.get('/forma/:idPaciente', searchRateLimit, reportController.getFormaData);
 
