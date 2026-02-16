@@ -470,6 +470,19 @@ export const createPaciente = async (req, res) => {
       });
     }
 
+    // Validar institución de salud contra catálogo dinámico (si se proporciona)
+    if (pacienteData.institucion_salud) {
+      const { InstitucionSalud } = await import('../models/associations.js');
+      const instituciones = await InstitucionSalud.findAll({ where: { activo: true }, attributes: ['nombre'] });
+      const nombresValidos = instituciones.map(i => i.nombre);
+      if (nombresValidos.length > 0 && !nombresValidos.includes(pacienteData.institucion_salud)) {
+        return res.status(400).json({
+          success: false,
+          error: `La institución de salud debe ser una del catálogo. Valores válidos: ${nombresValidos.join(', ')}`
+        });
+      }
+    }
+
     logger.info('PacienteController: Creando nuevo paciente', { 
       nombre: pacienteData.nombre,
       apellido_paterno: pacienteData.apellido_paterno,
@@ -772,14 +785,19 @@ export const createPacienteCompleto = async (req, res) => {
       }
     }
 
-    // Validar institución de salud contra ENUM (solo si se proporciona)
+    // Validar institución de salud contra catálogo dinámico (solo si se proporciona)
     if (normalizedFields.institucion_salud) {
-      const institucionesValidas = ['IMSS', 'Bienestar', 'ISSSTE', 'Particular', 'Otro', 'SEMAR', 'INSABI', 'PEMEX', 'SEDENA', 'Secretaría de Salud', 'Ninguna'];
-      if (!institucionesValidas.includes(normalizedFields.institucion_salud)) {
+      const { InstitucionSalud } = await import('../models/associations.js');
+      const instituciones = await InstitucionSalud.findAll({
+        where: { activo: true },
+        attributes: ['nombre']
+      });
+      const nombresValidos = instituciones.map(i => i.nombre);
+      if (nombresValidos.length > 0 && !nombresValidos.includes(normalizedFields.institucion_salud)) {
         await transaction.rollback();
         return res.status(400).json({
           success: false,
-          error: `La institución de salud debe ser una de: ${institucionesValidas.join(', ')}`
+          error: `La institución de salud debe ser una del catálogo. Valores válidos: ${nombresValidos.join(', ')}`
         });
       }
     }
@@ -1078,6 +1096,23 @@ export const updatePaciente = async (req, res) => {
           });
         }
         updateData.numero_gam = numeroGam;
+      }
+    }
+
+    // Validar institución de salud contra catálogo dinámico (si se actualiza)
+    if (updateData.institucion_salud !== undefined) {
+      const valor = updateData.institucion_salud === null || updateData.institucion_salud === '' ? null : String(updateData.institucion_salud).trim();
+      updateData.institucion_salud = valor || null;
+      if (valor) {
+        const { InstitucionSalud } = await import('../models/associations.js');
+        const instituciones = await InstitucionSalud.findAll({ where: { activo: true }, attributes: ['nombre'] });
+        const nombresValidos = instituciones.map(i => i.nombre);
+        if (nombresValidos.length > 0 && !nombresValidos.includes(valor)) {
+          return res.status(400).json({
+            success: false,
+            error: `La institución de salud debe ser una del catálogo. Valores válidos: ${nombresValidos.join(', ')}`
+          });
+        }
       }
     }
 

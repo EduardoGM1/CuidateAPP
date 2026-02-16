@@ -9,6 +9,7 @@ import { createPacienteRedApoyo } from '../../api/pacienteMedicalData';
 import { createCita } from '../../api/citas';
 import { createSignosVitales, createDiagnostico } from '../../api/pacienteMedicalData';
 import { getModulos } from '../../api/modulos';
+import { getInstitucionesSalud } from '../../api/institucionesSalud';
 import { estadosMexico } from '../../data/estadosMexico';
 import { getMunicipiosByEstado } from '../../data/municipiosMexico';
 import { PageHeader } from '../../components/shared';
@@ -18,11 +19,11 @@ import { getComorbilidades } from '../../api/comorbilidades';
 import { registerInitialMedicalData } from '../../utils/registerInitialMedicalData';
 
 const OPCIONES_SEXO = [{ value: '', label: '—' }, { value: 'Hombre', label: 'Hombre' }, { value: 'Mujer', label: 'Mujer' }, { value: 'Otro', label: 'Otro' }];
-const OPCIONES_INSTITUCION = ['IMSS', 'Bienestar', 'ISSSTE', 'Particular', 'Otro'];
 
 export default function AgregarPaciente() {
   const navigate = useNavigate();
   const [modulos, setModulos] = useState([]);
+  const [institucionesSalud, setInstitucionesSalud] = useState([]);
   const [submitError, setSubmitError] = useState('');
   const [doctores, setDoctores] = useState([]);
   const [loadingDoctores, setLoadingDoctores] = useState(false);
@@ -90,6 +91,9 @@ export default function AgregarPaciente() {
     getModulos()
       .then((data) => setModulos(Array.isArray(data) ? data : []))
       .catch(() => setModulos([]));
+    getInstitucionesSalud()
+      .then((data) => setInstitucionesSalud(Array.isArray(data) ? data : []))
+      .catch(() => setInstitucionesSalud([]));
     setLoadingDoctores(true);
     getDoctores({ estado: 'activos', limit: 200 })
       .then((data) => setDoctores(Array.isArray(data) ? data : []))
@@ -288,8 +292,8 @@ export default function AgregarPaciente() {
               style={{ width: '100%', padding: '0.6rem 0.75rem', border: '1px solid var(--color-borde-claro)', borderRadius: 'var(--radius)', backgroundColor: 'var(--color-fondo-card)' }}
             >
               <option value="">— Seleccionar —</option>
-              {OPCIONES_INSTITUCION.map((inst) => (
-                <option key={inst} value={inst}>{inst}</option>
+              {institucionesSalud.map((inst) => (
+                <option key={inst.id_institucion_salud ?? inst.nombre} value={inst.nombre}>{sanitizeForDisplay(inst.nombre) || inst.nombre}</option>
               ))}
             </select>
           </div>

@@ -3683,6 +3683,46 @@ gestionService.createModulo = modulosCrud.create;
 gestionService.updateModulo = modulosCrud.update;
 gestionService.deleteModulo = modulosCrud.delete;
 
+// Métodos CRUD para instituciones de salud (catálogo)
+const institucionesSaludCrud = createCrudMethods({
+  resourceName: 'instituciones_salud',
+  resourcePath: '/instituciones-salud',
+  getApiClient: ensureApiClient,
+  handleError: (error) => gestionService.handleError(error)
+});
+gestionService.getInstitucionesSalud = async (params = {}) => {
+  const list = await institucionesSaludCrud.getAll(params);
+  return Array.isArray(list) ? list : (list?.instituciones_salud || []);
+};
+
+/**
+ * Catálogo de instituciones de salud para formularios (solo activas).
+ * @returns {Promise<Array<{ id_institucion_salud: number, nombre: string }>>}
+ */
+gestionService.getInstitucionesSaludCatalogForFilter = async () => {
+  try {
+    const apiClient = await ensureApiClient();
+    const response = await apiClient.get('/instituciones-salud');
+    const raw = response?.data?.data?.instituciones_salud ?? response?.data?.instituciones_salud ?? [];
+    const list = Array.isArray(raw) ? raw : [];
+    return list
+      .filter((i) => i.activo !== false)
+      .map((i) => ({
+        id_institucion_salud: i.id_institucion_salud ?? i.id,
+        nombre: i.nombre ?? ''
+      }))
+      .filter((i) => i.nombre !== '');
+  } catch (error) {
+    Logger.error('Error obteniendo catálogo de instituciones de salud', error);
+    throw gestionService.handleError(error);
+  }
+};
+
+gestionService.getInstitucionSaludById = institucionesSaludCrud.getById;
+gestionService.createInstitucionSalud = institucionesSaludCrud.create;
+gestionService.updateInstitucionSalud = institucionesSaludCrud.update;
+gestionService.deleteInstitucionSalud = institucionesSaludCrud.delete;
+
 // Métodos CRUD para comorbilidades (catálogo)
 const comorbilidadesCrud = createCrudMethods({
   resourceName: 'comorbilidades',

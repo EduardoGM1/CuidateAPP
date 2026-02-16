@@ -40,9 +40,10 @@ const Paciente = sequelize.define('Paciente', {
     comment: 'CURP encriptado con AES-256-GCM'
   },
   institucion_salud: {
-    type: DataTypes.ENUM('IMSS', 'Bienestar', 'ISSSTE', 'Particular', 'Otro', 'SEMAR', 'INSABI', 'PEMEX', 'SEDENA', 'Secretaría de Salud', 'Ninguna'),
+    type: DataTypes.STRING(100),
     allowNull: true,
-    defaultValue: null
+    defaultValue: null,
+    comment: 'Nombre de institución de salud; debe coincidir con catálogo instituciones_salud'
   },
   sexo: {
     type: DataTypes.ENUM('Hombre', 'Mujer'),

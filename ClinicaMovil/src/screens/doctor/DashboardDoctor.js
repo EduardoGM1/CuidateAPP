@@ -830,6 +830,7 @@ const DashboardDoctor = ({ navigation }) => {
               <Text style={styles.quickAccessText}>Nuevo Paciente</Text>
             </TouchableOpacity>
             
+            {/* Historial Médico: oculto de momento
             <TouchableOpacity 
               style={[styles.quickAccessButton, styles.primaryButton]}
               onPress={() => {
@@ -840,6 +841,7 @@ const DashboardDoctor = ({ navigation }) => {
               <Text style={styles.quickAccessIcon}>📋</Text>
               <Text style={styles.quickAccessText}>Historial Médico</Text>
             </TouchableOpacity>
+            */}
           </View>
         </View>
       </ScrollView>

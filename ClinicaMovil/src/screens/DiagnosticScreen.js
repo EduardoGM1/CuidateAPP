@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Title, Paragraph } from 'react-native-paper';
 import axios from 'axios';
 import { getApiConfigSync, getApiConfigWithFallback } from '../config/apiConfig';
+import { PRODUCTION_API_BASE_URL } from '../config/apiEndpoints';
 import { COLORES } from '../utils/constantes';
 
 const MAX_DETAILS_LENGTH = 2000; // Evitar mostrar 200KB+ en pantalla (truncar JSON)
@@ -31,11 +32,14 @@ const DiagnosticScreen = ({ navigation }) => {
       const API_BASE_URL = config.baseURL;
       const timeoutMs = Math.min(config.timeout || 60000, 15000); // 15s máx por test individual
 
-      // Test 1: Conectividad básica
+      // Test 1: Conectividad básica (en VPS Nginx solo hace proxy de /api; usar endpoint bajo /api)
       results.push({ test: 'Conectividad Básica', status: 'running' });
       setDiagnosticResults([...results]);
 
-      const healthResponse = await axios.get(`${API_BASE_URL}/health`, { timeout: timeoutMs });
+      const connectivityUrl = API_BASE_URL === PRODUCTION_API_BASE_URL
+        ? `${API_BASE_URL}/api/mobile/config`
+        : `${API_BASE_URL}/health`;
+      const healthResponse = await axios.get(connectivityUrl, { timeout: timeoutMs });
       results[0] = {
         test: 'Conectividad Básica',
         status: 'success',

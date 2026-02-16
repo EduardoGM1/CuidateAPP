@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, Input, Table, Tabs, LoadingSpinner, EmptyState } from '../../components/ui';
 import { getModulos, createModulo, updateModulo, deleteModulo } from '../../api/modulos';
+import { getInstitucionesSalud, createInstitucionSalud, updateInstitucionSalud, deleteInstitucionSalud } from '../../api/institucionesSalud';
 import { getComorbilidades, createComorbilidad, updateComorbilidad, deleteComorbilidad } from '../../api/comorbilidades';
 import { getMedicamentos, createMedicamento, updateMedicamento, deleteMedicamento } from '../../api/medicamentos';
 import { getVacunas, createVacuna, updateVacuna, deleteVacuna } from '../../api/vacunas';
@@ -9,6 +10,7 @@ import { sanitizeForDisplay } from '../../utils/sanitize';
 
 const TABS = [
   { id: 'modulos', label: 'Módulos' },
+  { id: 'instituciones', label: 'Instituciones de salud' },
   { id: 'comorbilidades', label: 'Comorbilidades' },
   { id: 'medicamentos', label: 'Medicamentos' },
   { id: 'vacunas', label: 'Vacunas' },
@@ -31,6 +33,7 @@ export default function CatalogosPage() {
     setError(null);
     try {
       if (activeTab === 'modulos') setList(await getModulos());
+      else if (activeTab === 'instituciones') setList(await getInstitucionesSalud({ activo: 'false' }));
       else if (activeTab === 'comorbilidades') setList(await getComorbilidades());
       else if (activeTab === 'medicamentos') setList(await getMedicamentos());
       else if (activeTab === 'vacunas') setList(await getVacunas());
@@ -56,6 +59,7 @@ export default function CatalogosPage() {
 
   const getNombreKey = () => {
     if (activeTab === 'modulos') return 'nombre_modulo';
+    if (activeTab === 'instituciones') return 'nombre';
     if (activeTab === 'comorbilidades') return 'nombre_comorbilidad';
     if (activeTab === 'medicamentos') return 'nombre_medicamento';
     if (activeTab === 'vacunas') return 'nombre_vacuna';
@@ -64,6 +68,7 @@ export default function CatalogosPage() {
 
   const getIdKey = () => {
     if (activeTab === 'modulos') return 'id_modulo';
+    if (activeTab === 'instituciones') return 'id_institucion_salud';
     if (activeTab === 'comorbilidades') return 'id_comorbilidad';
     if (activeTab === 'medicamentos') return 'id_medicamento';
     if (activeTab === 'vacunas') return 'id_vacuna';
@@ -73,7 +78,7 @@ export default function CatalogosPage() {
   const handleNew = () => {
     setEditingId('new');
     setFormNombre('');
-    setFormExtra('');
+    setFormExtra(activeTab === 'instituciones' ? '1' : '');
     setSubmitError('');
   };
 
@@ -82,7 +87,7 @@ export default function CatalogosPage() {
     const nomKey = getNombreKey();
     setEditingId(row[idKey] ?? row.id);
     setFormNombre(row[nomKey] ?? row.nombre ?? '');
-    setFormExtra(row.descripcion ?? row.tipo ?? '');
+    setFormExtra(activeTab === 'instituciones' ? (row.activo ? '1' : '0') : (row.descripcion ?? row.tipo ?? ''));
     setSubmitError('');
   };
 
@@ -98,12 +103,14 @@ export default function CatalogosPage() {
     try {
       if (editingId === 'new') {
         if (activeTab === 'modulos') await createModulo({ nombre_modulo: nombre });
+        else if (activeTab === 'instituciones') await createInstitucionSalud({ nombre, activo: true });
         else if (activeTab === 'comorbilidades') await createComorbilidad({ nombre_comorbilidad: nombre, descripcion: formExtra?.trim() || null });
         else if (activeTab === 'medicamentos') await createMedicamento({ nombre_medicamento: nombre, descripcion: formExtra?.trim() || null });
         else if (activeTab === 'vacunas') await createVacuna({ nombre_vacuna: nombre, descripcion: formExtra?.trim() || null, tipo: formExtra?.trim() || null });
       } else {
         const id = Number(editingId);
         if (activeTab === 'modulos') await updateModulo(id, { nombre_modulo: nombre });
+        else if (activeTab === 'instituciones') await updateInstitucionSalud(id, { nombre, activo: formExtra === '1' });
         else if (activeTab === 'comorbilidades') await updateComorbilidad(id, { nombre_comorbilidad: nombre, descripcion: formExtra?.trim() || null });
         else if (activeTab === 'medicamentos') await updateMedicamento(id, { nombre_medicamento: nombre, descripcion: formExtra?.trim() || null });
         else if (activeTab === 'vacunas') await updateVacuna(id, { nombre_vacuna: nombre, descripcion: formExtra?.trim() || null, tipo: formExtra?.trim() || null });
@@ -127,6 +134,7 @@ export default function CatalogosPage() {
     setDeletingId(id);
     try {
       if (activeTab === 'modulos') await deleteModulo(id);
+      else if (activeTab === 'instituciones') await deleteInstitucionSalud(id);
       else if (activeTab === 'comorbilidades') await deleteComorbilidad(id);
       else if (activeTab === 'medicamentos') await deleteMedicamento(id);
       else if (activeTab === 'vacunas') await deleteVacuna(id);
@@ -143,7 +151,8 @@ export default function CatalogosPage() {
   const idKey = getIdKey();
   const columns = [
     { key: nomKey, label: 'Nombre', render: (row) => sanitizeForDisplay(row[nomKey] ?? row.nombre) || '—' },
-    ...(activeTab !== 'modulos' ? [{ key: 'descripcion', label: 'Descripción', render: (row) => sanitizeForDisplay(row.descripcion) || '—' }] : []),
+    ...(activeTab === 'instituciones' ? [{ key: 'activo', label: 'Activo', render: (row) => row.activo ? 'Sí' : 'No' }] : []),
+    ...(activeTab !== 'modulos' && activeTab !== 'instituciones' ? [{ key: 'descripcion', label: 'Descripción', render: (row) => sanitizeForDisplay(row.descripcion) || '—' }] : []),
     {
       key: '_actions',
       label: 'Acciones',
@@ -156,8 +165,9 @@ export default function CatalogosPage() {
     },
   ];
 
-  const formLabel = activeTab === 'modulos' ? 'Nombre del módulo' : activeTab === 'comorbilidades' ? 'Nombre de la comorbilidad' : activeTab === 'medicamentos' ? 'Nombre del medicamento' : 'Nombre de la vacuna';
-  const showExtraField = activeTab !== 'modulos';
+  const formLabel = activeTab === 'modulos' ? 'Nombre del módulo' : activeTab === 'instituciones' ? 'Nombre de la institución' : activeTab === 'comorbilidades' ? 'Nombre de la comorbilidad' : activeTab === 'medicamentos' ? 'Nombre del medicamento' : 'Nombre de la vacuna';
+  const showExtraField = activeTab !== 'modulos' && activeTab !== 'instituciones';
+  const showActivoField = activeTab === 'instituciones';
 
   return (
     <div>
@@ -168,7 +178,15 @@ export default function CatalogosPage() {
           <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>{editingId === 'new' ? 'Nuevo' : 'Editar'}</h3>
           <form onSubmit={handleSubmit}>
             {submitError && <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{submitError}</p>}
-            <Input label={formLabel} value={formNombre} onChange={(e) => setFormNombre(e.target.value)} required maxLength={activeTab === 'modulos' ? 50 : 150} />
+            <Input label={formLabel} value={formNombre} onChange={(e) => setFormNombre(e.target.value)} required maxLength={activeTab === 'modulos' ? 50 : activeTab === 'instituciones' ? 100 : 150} />
+            {showActivoField && (
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={formExtra === '1'} onChange={(e) => setFormExtra(e.target.checked ? '1' : '0')} />
+                  <span>Activa (visible en formularios de pacientes)</span>
+                </label>
+              </div>
+            )}
             {showExtraField && <Input label="Descripción (opcional)" value={formExtra} onChange={(e) => setFormExtra(e.target.value)} />}
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
               <Button type="submit" variant="primary" disabled={submitting}>{submitting ? 'Guardando…' : 'Guardar'}</Button>

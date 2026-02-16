@@ -21,6 +21,7 @@ export const API_PATHS = {
   AUTH_USUARIOS: '/api/auth/usuarios',
   ADMIN_AUDITORIA: '/api/admin/auditoria',
   MODULOS: '/api/modulos',
+  INSTITUCIONES_SALUD: '/api/instituciones-salud',
   REPORTES: '/api/reportes',
   REPORTES_ESTADISTICAS_HTML: '/api/reportes/estadisticas/html',
   REPORTES_FORMA: (id) => `/api/reportes/forma/${id}`,

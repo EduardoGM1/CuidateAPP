@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { pacienteEditSchema } from '../../lib/validations/pacienteSchema';
 import { getPacienteById, updatePaciente } from '../../api/pacientes';
 import { getModulos } from '../../api/modulos';
+import { getInstitucionesSalud } from '../../api/institucionesSalud';
 import { getDoctores } from '../../api/doctores';
 import { createPacienteRedApoyo } from '../../api/pacienteMedicalData';
 import { getComorbilidades } from '../../api/comorbilidades';
@@ -18,7 +19,6 @@ import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 
 const OPCIONES_SEXO = [{ value: '', label: '—' }, { value: 'Hombre', label: 'Hombre' }, { value: 'Mujer', label: 'Mujer' }, { value: 'Otro', label: 'Otro' }];
-const OPCIONES_INSTITUCION = ['IMSS', 'Bienestar', 'ISSSTE', 'Particular', 'Otro'];
 
 /** Convierte fecha del backend a YYYY-MM-DD para input type="date" */
 function toInputDate(value) {
@@ -35,6 +35,7 @@ export default function EditarPaciente() {
   const parsedId = parsePositiveInt(id, 0);
   const [paciente, setPaciente] = useState(null);
   const [modulos, setModulos] = useState([]);
+  const [institucionesSalud, setInstitucionesSalud] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitError, setSubmitError] = useState('');
   const [doctores, setDoctores] = useState([]);
@@ -104,9 +105,10 @@ export default function EditarPaciente() {
     if (parsedId === 0) return;
     setLoading(true);
     try {
-      const [p, mods] = await Promise.all([getPacienteById(parsedId), getModulos()]);
+      const [p, mods, insts] = await Promise.all([getPacienteById(parsedId), getModulos(), getInstitucionesSalud()]);
       setPaciente(p);
       setModulos(Array.isArray(mods) ? mods : []);
+      setInstitucionesSalud(Array.isArray(insts) ? insts : []);
       const tel = p.numero_celular ?? p.telefono ?? '';
       reset({
         nombre: p.nombre ?? '',
@@ -371,9 +373,9 @@ export default function EditarPaciente() {
                 onChange={(v) => field.onChange(v || '')}
                 options={[
                   { value: '', label: '— Seleccionar —' },
-                  ...OPCIONES_INSTITUCION.map((inst) => ({
-                    value: inst,
-                    label: inst,
+                  ...institucionesSalud.map((inst) => ({
+                    value: inst.nombre,
+                    label: sanitizeForDisplay(inst.nombre) || inst.nombre,
                   })),
                 ]}
               />

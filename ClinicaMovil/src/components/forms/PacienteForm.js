@@ -27,6 +27,7 @@ const PacienteForm = ({
   mode = 'create', // 'create' o 'edit'
   showCredentials = false, // Los pacientes no necesitan credenciales por defecto
   modulos = [], // Lista de módulos disponibles desde la base de datos
+  institucionesSalud = [], // Catálogo de instituciones de salud (desde API)
 }) => {
   // Estado del formulario
   const [formData, setFormData] = useState({
@@ -447,11 +448,14 @@ const PacienteForm = ({
           {/* Datos Médicos */}
           <Title style={styles.sectionTitle}>Datos Médicos</Title>
           
-          {/* Selector de Institución de Salud */}
+          {/* Selector de Institución de Salud (catálogo dinámico) */}
           <View style={styles.fieldContainer}>
             <Text style={styles.fieldLabel}>Institución de Salud *</Text>
             <View style={styles.moduleSelector}>
-              {['IMSS', 'Bienestar', 'ISSSTE', 'Particular', 'Otro'].map((institucion) => (
+              {(institucionesSalud && institucionesSalud.length > 0
+                ? institucionesSalud.map((i) => i.nombre)
+                : ['IMSS', 'Bienestar', 'ISSSTE', 'Particular', 'Otro']
+              ).map((institucion) => (
                 <TouchableOpacity
                   key={institucion}
                   style={[

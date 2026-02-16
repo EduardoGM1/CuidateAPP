@@ -64,6 +64,13 @@ const AgregarPaciente = () => {
   } = useGestion.useModulos();
 
   const { 
+    institucionesSalud, 
+    loading: institucionesLoading, 
+    error: institucionesError, 
+    fetchInstitucionesSalud 
+  } = useGestion.useInstitucionesSalud();
+
+  const { 
     doctores: doctoresActivos, 
     loading: doctoresLoading, 
     error: doctoresError 
@@ -208,9 +215,10 @@ const AgregarPaciente = () => {
     const t = setTimeout(() => {
       Logger.info('AgregarPaciente: Cargando módulos');
       fetchModulos();
+      fetchInstitucionesSalud();
     }, NETWORK_STAGGER.MODULOS_FORM_MS);
     return () => clearTimeout(t);
-  }, [fetchModulos]);
+  }, [fetchModulos, fetchInstitucionesSalud]);
 
   /**
    * Calcular edad automáticamente cuando cambia la fecha de nacimiento
@@ -1130,11 +1138,14 @@ const AgregarPaciente = () => {
                 error={errors.curp}
               />
 
-              {/* Selector de Institución de Salud */}
+              {/* Selector de Institución de Salud (catálogo dinámico) */}
               <View style={styles.fieldContainer}>
                 <Text style={styles.fieldLabel}>Institución de Salud *</Text>
                 <View style={styles.moduleSelector}>
-                  {['IMSS', 'Bienestar', 'ISSSTE', 'Particular', 'Otro'].map((institucion) => (
+                  {(institucionesSalud && institucionesSalud.length > 0
+                    ? institucionesSalud.map((inst) => inst.nombre)
+                    : ['IMSS', 'Bienestar', 'ISSSTE', 'Particular', 'Otro']
+                  ).map((institucion) => (
                     <TouchableOpacity
                       key={institucion}
                       style={[

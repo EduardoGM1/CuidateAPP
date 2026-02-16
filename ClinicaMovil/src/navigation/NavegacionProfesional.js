@@ -21,6 +21,7 @@ import AgregarPaciente from '../screens/admin/AgregarPaciente';
 import EditarPaciente from '../screens/admin/EditarPaciente';
 import GestionMedicamentos from '../screens/admin/GestionMedicamentos';
 import GestionModulos from '../screens/admin/GestionModulos';
+import GestionInstituciones from '../screens/admin/GestionInstituciones';
 import GestionComorbilidades from '../screens/admin/GestionComorbilidades';
 import GestionVacunas from '../screens/admin/GestionVacunas';
 import VerTodasCitas from '../screens/admin/VerTodasCitas';
@@ -330,6 +331,13 @@ const NavegacionProfesional = () => {
         component={GestionModulos}
         options={{
           headerShown: false, // Usa header personalizado
+        }}
+      />
+      <Stack.Screen 
+        name="GestionInstituciones" 
+        component={GestionInstituciones}
+        options={{
+          headerShown: false,
         }}
       />
       <Stack.Screen 

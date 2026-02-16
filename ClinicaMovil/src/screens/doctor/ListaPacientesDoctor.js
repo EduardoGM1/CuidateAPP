@@ -303,19 +303,20 @@ const ListaPacientesDoctor = ({ navigation }) => {
       {/* Barra de búsqueda y botón de filtros */}
       <View style={listActionButtonStyles.buttonsContainer}>
         <Searchbar
-          placeholder="Buscar por nombre, CURP o teléfono..."
+          placeholder="Nombre, CURP o teléfono"
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchbar}
+          inputStyle={styles.searchbarInput}
           icon={() => null}
         />
         <TouchableOpacity
-          style={listActionButtonStyles.filtersButton}
+          style={[listActionButtonStyles.filtersButton, styles.filtersButtonIconOnly]}
           onPress={() => setShowFiltersModal(true)}
           activeOpacity={0.7}
+          accessibilityLabel="Filtros"
         >
-          <Text style={listActionButtonStyles.filtersButtonIcon}>🔍</Text>
-          <Text style={listActionButtonStyles.filtersButtonText}>Filtros</Text>
+          <Text style={[listActionButtonStyles.filtersButtonIcon, styles.filtersButtonIconOnlyIcon]}>🔍</Text>
         </TouchableOpacity>
       </View>
 
@@ -607,6 +608,19 @@ const styles = StyleSheet.create({
   searchbar: {
     elevation: 2,
     flex: 1,
+    minWidth: 0,
+    marginRight: 0,
+  },
+  searchbarInput: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  filtersButtonIconOnly: {
+    flex: 0,
+    minWidth: 48,
+    paddingHorizontal: 12,
+  },
+  filtersButtonIconOnlyIcon: {
     marginRight: 0,
   },
   modalOverlay: {

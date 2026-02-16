@@ -14,6 +14,7 @@ import DoctorPaciente from './DoctorPaciente.js';
 import EsquemaVacunacion from './EsquemaVacunacion.js';
 import PacienteComorbilidad from './PacienteComorbilidad.js';
 import Vacuna from './Vacuna.js';
+import InstitucionSalud from './InstitucionSalud.js';
 import PlanDetalle from './PlanDetalle.js';
 import PuntoChequeo from './PuntoChequeo.js';
 import SolicitudReprogramacion from './SolicitudReprogramacion.js';
@@ -276,6 +277,7 @@ export {
   // PacienteAuthPIN,
   // PacienteAuthBiometric,
   Vacuna,
+  InstitucionSalud,
   AuthCredential,
   PasswordResetToken
 };

@@ -53,6 +53,8 @@ const EditarPaciente = () => {
     fetchModulos 
   } = useGestion.useModulos();
 
+  const { institucionesSalud = [], fetchInstitucionesSalud } = useGestion.useInstitucionesSalud();
+
   // Estados locales
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -70,11 +72,12 @@ const EditarPaciente = () => {
   /** Cargar módulos con retraso para no saturar conexiones (Android limita ~5 por host). */
   useEffect(() => {
     const t = setTimeout(() => {
-      Logger.info('EditarPaciente: Cargando módulos');
+      Logger.info('EditarPaciente: Cargando módulos e instituciones');
       fetchModulos();
+      fetchInstitucionesSalud();
     }, NETWORK_STAGGER.MODULOS_FORM_MS);
     return () => clearTimeout(t);
-  }, [fetchModulos]);
+  }, [fetchModulos, fetchInstitucionesSalud]);
 
   /**
    * Validar que se recibieron los datos del paciente
@@ -287,6 +290,7 @@ const EditarPaciente = () => {
               onCancel={handleCancel}
               loading={formLoading || isSubmitting}
               modulos={modulosFiltrados || []}
+              institucionesSalud={institucionesSalud || []}
               mode="edit"
               initialData={paciente}
             />

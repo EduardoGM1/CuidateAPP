@@ -38,6 +38,7 @@ import auditoriaRoutes from "./routes/auditoriaRoutes.js";
 import notificacionRoutes from "./routes/notificacionRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import medicamentoTomaRoutes from "./routes/medicamentoToma.js";
+import institucionSaludRoutes from "./routes/institucionSalud.js";
 
 // Middlewares
 import { globalErrorHandler, generateRequestId } from './middlewares/errorHandler.js';
@@ -112,6 +113,7 @@ app.use('/api/auditoria', auditoriaRoutes);
 app.use('/api/notificaciones', notificacionRoutes);
 app.use('/api/reportes', reportRoutes);
 app.use('/api/medicamento-toma', medicamentoTomaRoutes);
+app.use('/api/instituciones-salud', institucionSaludRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

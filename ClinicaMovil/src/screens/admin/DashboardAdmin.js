@@ -115,6 +115,15 @@ const DashboardAdmin = ({ navigation }) => {
     }
   };
 
+  const handleViewInstituciones = () => {
+    try {
+      Logger.navigation('DashboardAdmin', 'GestionInstituciones');
+      navigation.navigate('GestionInstituciones');
+    } catch (error) {
+      Logger.error('Error navegando a GestionInstituciones', error);
+    }
+  };
+
   const handleViewMedicamentos = () => {
     try {
       Logger.navigation('DashboardAdmin', 'GestionMedicamentos');
@@ -558,6 +567,11 @@ const DashboardAdmin = ({ navigation }) => {
             <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton]} onPress={handleViewModulos}>
               <Text style={styles.quickAccessIcon}>🏢</Text>
               <Text style={styles.secondaryButtonText}>Módulos</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton]} onPress={handleViewInstituciones}>
+              <Text style={styles.quickAccessIcon}>🏥</Text>
+              <Text style={styles.secondaryButtonText}>Instituciones</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton]} onPress={handleViewMedicamentos}>

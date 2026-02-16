@@ -187,12 +187,19 @@ export const setApiEnvironment = (environment) => {
 export const testApiConnectivity = async (urlToTest = null) => {
   const config = urlToTest ? { baseURL: urlToTest, timeout: 8000 } : getApiConfigSync();
   
-  // Probar primero con el endpoint raíz (más simple)
-  const endpointsToTest = [
-    `${config.baseURL}/health`,
-    `${config.baseURL}/`,
-    `${config.baseURL}/api/mobile/config`,
-  ];
+  // En VPS, Nginx solo hace proxy de /api; priorizar /api/mobile/config para que el test no dependa de /health
+  const isProductionUrl = config.baseURL === PRODUCTION_API_BASE_URL;
+  const endpointsToTest = isProductionUrl
+    ? [
+        `${config.baseURL}/api/mobile/config`,
+        `${config.baseURL}/health`,
+        `${config.baseURL}/`,
+      ]
+    : [
+        `${config.baseURL}/health`,
+        `${config.baseURL}/`,
+        `${config.baseURL}/api/mobile/config`,
+      ];
   
   for (const testUrl of endpointsToTest) {
     try {

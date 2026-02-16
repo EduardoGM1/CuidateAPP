@@ -62,6 +62,7 @@ import dashboardRoutes from "./routes/dashboardRoutes.js";
 import testRoutes from "./routes/test.js";
 import mobileRoutes from "./routes/mobile.js"; // ✅ Rutas móviles
 import moduloRoutes from "./routes/modulo.js"; // ✅ Rutas de módulos
+import institucionSaludRoutes from "./routes/institucionSalud.js"; // ✅ Catálogo instituciones de salud
 import pacienteMedicalDataRoutes from "./routes/pacienteMedicalData.js"; // ✅ Datos médicos de pacientes
 import vacunaRoutes from "./routes/vacuna.js"; // ✅ Rutas de vacunas (catálogo)
 import auditoriaRoutes from "./routes/auditoriaRoutes.js"; // ✅ Rutas de auditoría (admin)
@@ -272,6 +273,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/test", testRoutes);
 app.use("/api/mobile", mobileRoutes); // ✅ Rutas móviles
 app.use("/api/modulos", moduloRoutes); // ✅ Rutas de módulos
+app.use("/api/instituciones-salud", institucionSaludRoutes); // ✅ Catálogo instituciones de salud
 app.use("/api/pacientes", pacienteMedicalDataRoutes); // ✅ Datos médicos de pacientes
 app.use("/api/vacunas", vacunaRoutes); // ✅ Rutas de vacunas (catálogo)
 app.use("/api/admin/auditoria", auditoriaRoutes); // ✅ Auditoría del sistema (admin)

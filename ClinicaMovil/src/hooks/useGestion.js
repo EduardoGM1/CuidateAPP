@@ -63,6 +63,38 @@ export const useModulos = () => {
 };
 
 // =====================================================
+// HOOKS PARA INSTITUCIONES DE SALUD (catálogo)
+// =====================================================
+
+export const useInstitucionesSalud = () => {
+  const [institucionesSalud, setInstitucionesSalud] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchInstitucionesSalud = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await gestionService.getInstitucionesSaludCatalogForFilter();
+      setInstitucionesSalud(Array.isArray(result) ? result : []);
+    } catch (err) {
+      Logger.error('useInstitucionesSalud: Error', err);
+      setError(err?.message || 'Error al cargar instituciones');
+      setInstitucionesSalud([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return {
+    institucionesSalud,
+    loading,
+    error,
+    fetchInstitucionesSalud
+  };
+};
+
+// =====================================================
 // HOOKS PARA DOCTORES
 // =====================================================
 
@@ -947,6 +979,7 @@ const useGestion = {
   useDoctores,
   usePacientes,
   useModulos,
+  useInstitucionesSalud,
   useDoctorDetails,
   usePacienteDetails,
   useDoctorPatientData,
