@@ -1,4 +1,4 @@
-import { InstitucionSalud } from '../models/associations.js';
+import { InstitucionSalud, Paciente } from '../models/associations.js';
 import { sendSuccess, sendError, sendNotFound, sendServerError } from '../utils/responseHelpers.js';
 import logger from '../utils/logger.js';
 import { Op } from 'sequelize';
@@ -84,6 +84,7 @@ export const createInstitucionSalud = async (req, res) => {
 
 /**
  * Actualizar institución (solo Admin).
+ * Si se cambia el nombre, se actualiza en todos los pacientes que tenían el nombre anterior.
  * PUT /api/instituciones-salud/:id
  */
 export const updateInstitucionSalud = async (req, res) => {
@@ -95,6 +96,9 @@ export const updateInstitucionSalud = async (req, res) => {
     const inst = await InstitucionSalud.findByPk(id);
     if (!inst) return sendNotFound(res, 'Institución de salud no encontrada');
 
+    const nombreAnterior = inst.nombre;
+    let nombreNuevo = nombreAnterior;
+
     if (typeof nombre === 'string' && nombre.trim()) {
       const nombreTrim = nombre.trim();
       if (nombreTrim.length > 100) return sendError(res, 'El nombre no puede exceder 100 caracteres', 400);
@@ -103,10 +107,28 @@ export const updateInstitucionSalud = async (req, res) => {
       });
       if (existente) return sendError(res, 'Ya existe otra institución con ese nombre', 409);
       inst.nombre = nombreTrim;
+      nombreNuevo = nombreTrim;
     }
     if (activo !== undefined) inst.activo = !!activo;
     if (orden !== undefined) inst.orden = parseInt(orden, 10) || 0;
     await inst.save();
+
+    // Sincronizar con pacientes: todos los que tenían el nombre anterior pasan al nuevo
+    if (nombreAnterior !== nombreNuevo) {
+      const [numActualizados] = await Paciente.update(
+        { institucion_salud: nombreNuevo },
+        { where: { institucion_salud: nombreAnterior } }
+      );
+      if (numActualizados > 0) {
+        logger.info('InstitucionSaludController: Pacientes actualizados con nuevo nombre de institución', {
+          id_institucion_salud: id,
+          nombreAnterior,
+          nombreNuevo,
+          pacientesActualizados: numActualizados
+        });
+      }
+    }
+
     logger.info('InstitucionSaludController: Institución actualizada', { id: inst.id_institucion_salud });
     return sendSuccess(res, { institucion_salud: inst });
   } catch (error) {
@@ -127,7 +149,6 @@ export const deleteInstitucionSalud = async (req, res) => {
     const inst = await InstitucionSalud.findByPk(id);
     if (!inst) return sendNotFound(res, 'Institución de salud no encontrada');
 
-    const { Paciente } = await import('../models/associations.js');
     const count = await Paciente.count({
       where: { institucion_salud: inst.nombre }
     });
