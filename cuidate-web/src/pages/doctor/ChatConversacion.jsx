@@ -1,18 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useCurrentDoctorId } from '../../hooks/useCurrentDoctorId';
+import { useAuthStore } from '../../stores/authStore';
 import { getPacienteById } from '../../api/pacientes';
 import { getConversacion, createMensaje, marcarConversacionLeida } from '../../api/mensajesChat';
+import { connect, on, off } from '../../api/socket';
 import { PageHeader } from '../../components/shared';
 import { Button, Input, LoadingSpinner, EmptyState } from '../../components/ui';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { parsePositiveInt } from '../../utils/params';
+import { STORAGE_KEYS } from '../../utils/constants';
 
 export default function ChatConversacion() {
   const { id: pacienteIdParam } = useParams();
-  const navigate = useNavigate();
   const pacienteId = parsePositiveInt(pacienteIdParam, 0);
+  const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
   const { idDoctor, loading: loadingDoctor, error: errorDoctor } = useCurrentDoctorId();
 
   const [paciente, setPaciente] = useState(null);
@@ -54,6 +57,25 @@ export default function ChatConversacion() {
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [mensajes]);
+
+  // Tiempo real: escuchar nuevo_mensaje para esta conversación
+  useEffect(() => {
+    if (!token || !idDoctor || pacienteId === 0) return;
+    connect(token);
+    const handler = (data) => {
+      const pid = Number(data?.id_paciente);
+      const did = Number(data?.id_doctor);
+      if (pid !== pacienteId || did !== idDoctor || !data?.mensaje) return;
+      const msg = data.mensaje;
+      setMensajes((prev) => {
+        const exists = prev.some((m) => (m.id_mensaje ?? m.id) === (msg.id_mensaje ?? msg.id));
+        if (exists) return prev;
+        return [...prev, msg].sort((a, b) => new Date(a.fecha_envio || 0) - new Date(b.fecha_envio || 0));
+      });
+    };
+    on('nuevo_mensaje', handler);
+    return () => off('nuevo_mensaje', handler);
+  }, [token, idDoctor, pacienteId]);
 
   const handleSend = async (e) => {
     e.preventDefault();

@@ -4,6 +4,7 @@ import { Op } from 'sequelize';
 import sequelize from '../config/db.js';
 import logger from '../utils/logger.js';
 import pushNotificationService from '../services/pushNotificationService.js';
+import realtimeService from '../services/realtimeService.js';
 import { crearNotificacionDoctor } from './cita.js';
 import multer from 'multer';
 import path from 'path';
@@ -315,16 +316,38 @@ export const createMensaje = async (req, res) => {
     });
     
     logger.info('Mensaje creado exitosamente', { mensajeId: mensaje.id_mensaje });
-    
-    // Emitir evento WebSocket si está disponible
-    if (req.app.get('io')) {
-      req.app.get('io').emit('nuevo_mensaje', {
-        id_paciente: mensaje.id_paciente,
-        id_doctor: mensaje.id_doctor,
-        mensaje: mensaje.toJSON(),
-      });
+
+    // Emitir evento en tiempo real al destinatario (web y app móvil)
+    const payload = {
+      id_paciente: mensaje.id_paciente,
+      id_doctor: mensaje.id_doctor,
+      mensaje: mensaje.toJSON(),
+    };
+    if (remitente === 'Paciente' && doctorId) {
+      try {
+        const doctor = await Doctor.findByPk(doctorId, {
+          include: [{ model: Usuario, attributes: ['id_usuario'] }],
+        });
+        if (doctor?.Usuario?.id_usuario) {
+          realtimeService.sendToUser(doctor.Usuario.id_usuario, 'nuevo_mensaje', payload);
+        }
+      } catch (err) {
+        logger.error('Error enviando evento tiempo real nuevo_mensaje (no crítico):', err?.message);
+      }
     }
-    
+    if (remitente === 'Doctor') {
+      try {
+        const paciente = await Paciente.findByPk(parseInt(id_paciente), { attributes: ['id_usuario'] });
+        if (paciente?.id_usuario) {
+          realtimeService.sendToUser(paciente.id_usuario, 'nuevo_mensaje', payload);
+        } else {
+          realtimeService.sendToPaciente(parseInt(id_paciente), 'nuevo_mensaje', payload);
+        }
+      } catch (err) {
+        logger.error('Error enviando evento tiempo real nuevo_mensaje a paciente (no crítico):', err?.message);
+      }
+    }
+
     // Enviar notificación push al destinatario (en background, no bloquea la respuesta)
     setImmediate(async () => {
       try {

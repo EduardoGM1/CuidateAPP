@@ -31,6 +31,7 @@ import hapticService from '../../services/hapticService';
 import audioFeedbackService from '../../services/audioFeedbackService';
 import Logger from '../../services/logger';
 import { COLORES } from '../../utils/constantes';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import VoiceRecorder from '../../components/chat/VoiceRecorder';
 import ConnectionBanner from '../../components/chat/ConnectionBanner';
 import MessageBubble from '../../components/chat/MessageBubble';
@@ -376,7 +377,7 @@ const ChatDoctor = () => {
                 setMostrarModalFontSize(true);
               }}
             >
-              <Text style={styles.settingsButtonText}>⚙️</Text>
+              <Icon name="accessibility" size={24} color={COLORES.TEXTO_SECUNDARIO || '#666'} />
             </TouchableOpacity>
             
             <TouchableOpacity
@@ -777,9 +778,6 @@ const styles = StyleSheet.create({
   },
   settingsButton: {
     padding: 8,
-  },
-  settingsButtonText: {
-    fontSize: 20,
   },
   typingIndicator: {
     paddingHorizontal: 16,

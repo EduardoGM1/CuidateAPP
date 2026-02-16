@@ -138,5 +138,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics'
 }
 
+// Fuentes para react-native-vector-icons (Icon de accesibilidad en Chat, etc.)
+apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
+
 // Firebase/Google Services Plugin - DEBE estar al final del archivo
 apply plugin: 'com.google.gms.google-services'

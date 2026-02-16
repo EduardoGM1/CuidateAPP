@@ -1,14 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentDoctorId } from '../../hooks/useCurrentDoctorId';
+import { useAuthStore } from '../../stores/authStore';
 import { getConversacionesDoctor } from '../../api/mensajesChat';
+import { connect, on, off } from '../../api/socket';
 import { PageHeader } from '../../components/shared';
+import { STORAGE_KEYS } from '../../utils/constants';
 import { Card, LoadingSpinner, EmptyState, Badge } from '../../components/ui';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 
 export default function ChatList() {
   const navigate = useNavigate();
+  const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
   const { idDoctor, loading: loadingDoctor, error: errorDoctor } = useCurrentDoctorId();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +36,15 @@ export default function ChatList() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Tiempo real: al recibir nuevo_mensaje (paciente escribió), actualizar lista
+  useEffect(() => {
+    if (!token || !idDoctor) return;
+    connect(token);
+    const handler = () => load();
+    on('nuevo_mensaje', handler);
+    return () => off('nuevo_mensaje', handler);
+  }, [token, idDoctor, load]);
 
   const handleSelect = (conv) => {
     const pid = conv.id_paciente ?? conv.paciente_id;

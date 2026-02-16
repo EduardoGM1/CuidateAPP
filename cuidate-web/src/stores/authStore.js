@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { STORAGE_KEYS, ROLES } from '../utils/constants';
 import * as authApi from '../api/auth';
+import { disconnect } from '../api/socket';
 
 function getStoredUser() {
   try {
@@ -38,6 +39,7 @@ export const useAuthStore = create(
       },
 
       logout: () => {
+        disconnect();
         authApi.logout();
         set({ token: null, user: null });
       },
