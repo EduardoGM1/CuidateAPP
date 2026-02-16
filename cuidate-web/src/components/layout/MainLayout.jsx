@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Layout, Menu, Drawer, Button } from 'antd';
 import { useAuthStore } from '../../stores/authStore';
+import { connect } from '../../api/socket';
+import { STORAGE_KEYS } from '../../utils/constants';
 import ButtonUI from '../ui/Button';
 
 function IconDashboard() {
@@ -156,9 +158,15 @@ export default function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const pageTitle = getPageTitle(location.pathname);
+  const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const getDisplayName = useAuthStore((s) => s.getDisplayName);
   const logout = useAuthStore((s) => s.logout);
+
+  // Conexión WebSocket para tiempo real (chat, notificaciones, citas, pacientes, etc.)
+  useEffect(() => {
+    if (token) connect(token);
+  }, [token]);
 
   const navLinks = [
     ...navLinksBase,

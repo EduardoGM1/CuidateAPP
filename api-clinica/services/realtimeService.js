@@ -118,6 +118,7 @@ class RealtimeService {
       this.setupMobileEvents(socket);
       this.setupPatientEvents(socket);
       this.setupDoctorEvents(socket);
+      this.setupAdminEvents(socket);
       this.setupGeneralEvents(socket);
 
       // Manejar desconexión
@@ -206,6 +207,15 @@ class RealtimeService {
         
         socket.emit('medication_reminders', reminders);
       });
+    }
+  }
+
+  // Eventos para administradores (web y móvil)
+  setupAdminEvents(socket) {
+    const role = (socket.userRole || '').toString();
+    if (role === 'Admin' || role === 'Administrador') {
+      socket.join('admins_notifications');
+      console.log(`📱 [WS] Admin ${socket.userId} unido a sala admins_notifications (socket: ${socket.id})`);
     }
   }
 

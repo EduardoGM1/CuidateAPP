@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { getPacientes } from '../../api/pacientes';
 import { getComorbilidades } from '../../api/comorbilidades';
 import { getModulos } from '../../api/modulos';
+import { connect, on, off } from '../../api/socket';
+import { useAuthStore } from '../../stores/authStore';
+import { STORAGE_KEYS, PAGE_SIZE_DEFAULT } from '../../utils/constants';
 import { Table, Button } from '../../components/ui';
 import { PageHeader, SearchFilterBar, Pagination } from '../../components/shared';
 import { Badge } from '../../components/ui';
 import { sanitizeForDisplay } from '../../utils/sanitize';
-import { PAGE_SIZE_DEFAULT } from '../../utils/constants';
 
 const COLUMNS = [
   { key: 'nombre_completo', label: 'Nombre', render: (row) => sanitizeForDisplay(row.nombre_completo) },
@@ -93,6 +95,24 @@ export default function PacientesList() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Tiempo real: actualizar lista al crear/asignar/desasignar pacientes
+  const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
+  useEffect(() => {
+    if (!token) return;
+    connect(token);
+    const refresh = () => load();
+    on('patient_created', refresh);
+    on('patient_assigned', refresh);
+    on('patient_unassigned', refresh);
+    on('doctor_replaced', refresh);
+    return () => {
+      off('patient_created', refresh);
+      off('patient_assigned', refresh);
+      off('patient_unassigned', refresh);
+      off('doctor_replaced', refresh);
+    };
+  }, [token, load]);
 
   const handleSearch = (searchParams) => {
     setParams((prev) => ({

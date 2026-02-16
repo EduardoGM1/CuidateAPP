@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCitaById, updateCitaEstado, completarCitaWizard } from '../../api/citas';
 import { message } from 'antd';
+import { connect, on, off } from '../../api/socket';
 import { PageHeader, DataCard } from '../../components/shared';
 import { LoadingSpinner, Button, Card, Badge, Input, Select, TextArea } from '../../components/ui';
 import { useAuthStore } from '../../stores/authStore';
+import { STORAGE_KEYS } from '../../utils/constants';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatDateTime } from '../../utils/format';
@@ -77,6 +79,25 @@ export default function CitaDetail() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Tiempo real: actualizar detalle si esta cita fue actualizada o reprogramada
+  const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
+  useEffect(() => {
+    if (!token || parsedId === 0) return;
+    connect(token);
+    const refreshIfThisCita = (data) => {
+      const idCita = data?.id_cita ?? data?.cita?.id_cita ?? data?.cita?.id;
+      if (idCita == null || Number(idCita) === parsedId) load();
+    };
+    on('cita_actualizada', refreshIfThisCita);
+    on('cita_reprogramada', refreshIfThisCita);
+    on('solicitud_reprogramacion_procesada', refreshIfThisCita);
+    return () => {
+      off('cita_actualizada', refreshIfThisCita);
+      off('cita_reprogramada', refreshIfThisCita);
+      off('solicitud_reprogramacion_procesada', refreshIfThisCita);
+    };
+  }, [token, parsedId, load]);
 
   const handleCambiarEstado = async () => {
     if (!estadoSelected || estadoSelected === (cita?.estado ?? '')) return;

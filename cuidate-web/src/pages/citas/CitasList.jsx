@@ -3,12 +3,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCitas, updateCitaEstado } from '../../api/citas';
 import { getDoctores } from '../../api/doctores';
+import { connect, on, off } from '../../api/socket';
 import { Table, Button, Badge } from '../../components/ui';
 import { PageHeader, SearchFilterBar, Pagination } from '../../components/shared';
 import { useAuthStore } from '../../stores/authStore';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatDateTime } from '../../utils/format';
-import { PAGE_SIZE_DEFAULT } from '../../utils/constants';
+import { STORAGE_KEYS, PAGE_SIZE_DEFAULT } from '../../utils/constants';
 
 const ESTADO_LABELS = {
   pendiente: 'Pendiente',
@@ -151,6 +152,27 @@ export default function CitasList() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Tiempo real: actualizar lista al crear/actualizar/reprogramar citas o nueva solicitud
+  const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
+  useEffect(() => {
+    if (!token) return;
+    connect(token);
+    const refresh = () => {
+      queryClient.invalidateQueries({ queryKey: ['citas'] });
+      load();
+    };
+    on('cita_creada', refresh);
+    on('cita_actualizada', refresh);
+    on('cita_reprogramada', refresh);
+    on('solicitud_reprogramacion', refresh);
+    return () => {
+      off('cita_creada', refresh);
+      off('cita_actualizada', refresh);
+      off('cita_reprogramada', refresh);
+      off('solicitud_reprogramacion', refresh);
+    };
+  }, [token, load, queryClient]);
 
   const handleRowClick = (row) => {
     const id = row.id_cita ?? row.id;

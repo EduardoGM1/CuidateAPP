@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import { getAdminSummary, getDoctorSummary } from '../api/dashboard';
+import { connect, on, off } from '../api/socket';
+import { STORAGE_KEYS } from '../utils/constants';
 import { Card, Button } from '../components/ui';
 import { LoadingSpinner } from '../components/ui';
 import { sanitizeForDisplay } from '../utils/sanitize';
@@ -137,6 +139,27 @@ export default function Dashboard() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Tiempo real: actualizar resumen al crear/actualizar pacientes, citas o doctores
+  const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
+  useEffect(() => {
+    if (!token) return;
+    connect(token);
+    on('patient_created', load);
+    on('patient_assigned', load);
+    on('cita_creada', load);
+    on('cita_actualizada', load);
+    on('cita_reprogramada', load);
+    on('doctor_created', load);
+    return () => {
+      off('patient_created', load);
+      off('patient_assigned', load);
+      off('cita_creada', load);
+      off('cita_actualizada', load);
+      off('cita_reprogramada', load);
+      off('doctor_created', load);
+    };
+  }, [token, load]);
 
   if (loading) {
     return (
