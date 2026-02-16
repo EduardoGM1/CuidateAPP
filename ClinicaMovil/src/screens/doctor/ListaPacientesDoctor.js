@@ -23,6 +23,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import BackHeader from '../../components/common/BackHeader';
 import { Card, Title, Searchbar } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -278,6 +279,7 @@ const ListaPacientesDoctor = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <BackHeader navigation={navigation} title="👥 Mis Pacientes" variant="professional" />
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.headerTextContainer}>
@@ -287,15 +289,15 @@ const ListaPacientesDoctor = ({ navigation }) => {
             </Text>
           </View>
           <TouchableOpacity
-            style={listActionButtonStyles.filtersButton}
+            style={styles.nuevoButton}
             onPress={() => {
               Logger.navigation('ListaPacientesDoctor', 'AgregarPaciente');
               navigation.navigate('AgregarPaciente');
             }}
             activeOpacity={0.7}
           >
-            <Text style={listActionButtonStyles.filtersButtonIcon}>➕</Text>
-            <Text style={listActionButtonStyles.filtersButtonText}>Nuevo</Text>
+            <Text style={styles.nuevoButtonIcon}>➕</Text>
+            <Text style={styles.nuevoButtonText}>Nuevo</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -622,6 +624,32 @@ const styles = StyleSheet.create({
   },
   filtersButtonIconOnlyIcon: {
     marginRight: 0,
+  },
+  nuevoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 36,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: COLORES.FONDO_CARD,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: COLORES.NAV_PRIMARIO,
+    elevation: 2,
+    shadowColor: COLORES.NEGRO,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+  },
+  nuevoButtonIcon: {
+    fontSize: 14,
+    marginRight: 4,
+  },
+  nuevoButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORES.NAV_PRIMARIO,
   },
   modalOverlay: {
     flex: 1,

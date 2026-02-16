@@ -19,6 +19,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import BackHeader from '../../components/common/BackHeader';
 import { Card, Title, Button } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
 import Logger from '../../services/logger';
@@ -475,8 +476,9 @@ const ReportesDoctor = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView} 
+      <BackHeader navigation={navigation} title="📊 Reportes" variant="professional" />
+      <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

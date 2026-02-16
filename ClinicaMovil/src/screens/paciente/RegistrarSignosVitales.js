@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import BackHeader from '../../components/common/BackHeader';
 import { useNavigation } from '@react-navigation/native';
 import SimpleForm from '../../components/paciente/SimpleForm';
 import usePacienteData from '../../hooks/usePacienteData';
@@ -617,6 +618,7 @@ const RegistrarSignosVitales = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <BackHeader navigation={navigation} title="📊 Signos Vitales" variant="patient" />
       <SimpleForm
         title="📊 Registrar Signos Vitales"
         fields={formFields}

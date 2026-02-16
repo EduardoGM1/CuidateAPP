@@ -14,6 +14,7 @@ import {
   Text,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import BackHeader from '../../components/common/BackHeader';
 import { useAuth } from '../../context/AuthContext';
 import Logger from '../../services/logger';
 import { COLORES } from '../../utils/constantes';
@@ -45,6 +46,7 @@ const HistorialMedicoDoctor = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <BackHeader navigation={navigation} title="📋 Historial Médico" variant="professional" />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>📋 Historial Médico Consolidado</Text>
         <Text style={styles.headerSubtitle}>

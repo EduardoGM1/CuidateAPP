@@ -124,9 +124,9 @@ export const pacienteAuthService = {
       
       const apiClient = await createApiClient();
       
-      // Construir body según si hay pacienteId o no
+      // Construir body según si hay pacienteId o no (PIN siempre como string para el backend)
       const requestBody = {
-        pin: pin,
+        pin: typeof pin === 'string' ? pin : String(pin),
         device_id: deviceId, // Opcional ahora
       };
       

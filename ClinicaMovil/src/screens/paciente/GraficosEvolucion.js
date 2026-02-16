@@ -18,6 +18,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
+import BackHeader from '../../components/common/BackHeader';
 import { usePacienteSignosVitales } from '../../hooks/usePacienteMedicalData';
 import { useAuth } from '../../context/AuthContext';
 import useTTS from '../../hooks/useTTS';
@@ -105,6 +106,7 @@ const GraficosEvolucion = () => {
   if (loading && (!signosVitales || signosVitales.length === 0)) {
     return (
       <SafeAreaView style={styles.container}>
+        <BackHeader navigation={navigation} title="📈 Gráficos" variant="patient" />
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.content}
@@ -124,6 +126,7 @@ const GraficosEvolucion = () => {
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
+        <BackHeader navigation={navigation} title="📈 Gráficos" variant="patient" />
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.content}
@@ -155,6 +158,7 @@ const GraficosEvolucion = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <BackHeader navigation={navigation} title="📈 Gráficos" variant="patient" />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}

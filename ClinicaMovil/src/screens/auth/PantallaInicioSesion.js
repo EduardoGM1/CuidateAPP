@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Image } from 'react-native';
 import { Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import BotonAudio from '../../components/common/BotonAudio';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import useTTS from '../../hooks/useTTS';
 import { COLORES } from '../../utils/constantes';
+
+const TEXTO_INSTRUCCIONES = 'Bienvenido a la aplicación de la clínica. Para continuar, selecciona si eres paciente o doctor o administrador. Si eres paciente, presiona el botón con el icono de persona. Si eres doctor o administrador, presiona el botón con el icono médico.';
 
 const PantallaInicioSesion = ({ navigation }) => {
   const [isZoomed, setIsZoomed] = useState(false);
+  const { speak } = useTTS();
 
   const handlePaciente = () => {
     navigation.navigate('LoginPaciente');
@@ -20,12 +24,12 @@ const PantallaInicioSesion = ({ navigation }) => {
     setIsZoomed(!isZoomed);
   };
 
-  const textoInstrucciones = "Bienvenido a la aplicación de la clínica. Para continuar, selecciona si eres paciente o doctor/administrador. Si eres paciente, presiona el botón con el icono de persona. Si eres doctor o administrador, presiona el botón con el icono médico.";
+  const reproducirInstrucciones = useCallback(async () => {
+    await speak(TEXTO_INSTRUCCIONES);
+  }, [speak]);
 
   return (
     <SafeAreaView style={styles.container}>
-      <BotonAudio texto={textoInstrucciones} />
-      
       {/* Logo */}
       <View style={styles.logoContainer}>
         <Image 
@@ -35,24 +39,24 @@ const PantallaInicioSesion = ({ navigation }) => {
         />
       </View>
       
-      {/* Header con botones arriba */}
+      {/* Header con botones arriba: audio (TTS) e icono de accesibilidad (zoom) */}
       <View style={styles.header}>
         <View style={styles.headerButtons}>
           <TouchableOpacity 
             style={styles.audioButton} 
-            onPress={() => {}}
-            accessibilityLabel="Reproducir audio de instrucciones"
+            onPress={reproducirInstrucciones}
+            accessibilityLabel="Reproducir instrucciones con voz"
             accessibilityHint="Toca para escuchar las instrucciones"
           >
-            <Text style={styles.audioIcon}>🔊</Text>
+            <Icon name="volume-up" size={24} color={COLORES.TEXTO_PRIMARIO || '#333'} />
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.zoomButton} 
             onPress={toggleZoom}
-            accessibilityLabel="Activar zoom para mejor visibilidad"
+            accessibilityLabel="Accesibilidad: activar zoom para mejor visibilidad"
             accessibilityHint="Toca para hacer zoom en el texto"
           >
-            <Text style={styles.zoomIcon}>🔍</Text>
+            <Icon name="accessibility" size={24} color={COLORES.TEXTO_PRIMARIO || '#333'} />
           </TouchableOpacity>
         </View>
         <View style={styles.headerContent}>
@@ -136,9 +140,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  audioIcon: {
-    fontSize: 20,
-  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -177,9 +178,6 @@ const styles = StyleSheet.create({
     borderColor: COLORES.NAV_PRIMARIO,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  zoomIcon: {
-    fontSize: 20,
   },
   diagnosticButton: {
     borderColor: COLORES.ADVERTENCIA_LIGHT,

@@ -116,6 +116,38 @@ class TTSService {
   }
 
   /**
+   * Establecer velocidad por defecto (para toda la app)
+   * @param {number} rate - Velocidad (ej. 0.5-2.0; típico 0.7 lenta, 0.9 normal, 1.1 rápida)
+   */
+  async setDefaultRate(rate) {
+    const r = typeof rate === 'number' ? rate : parseFloat(rate);
+    if (!Number.isNaN(r)) {
+      const clampedRate = Math.max(0.5, Math.min(2, r));
+      this.defaultRate = clampedRate;
+      
+      // Aplicar inmediatamente al motor TTS nativo si está inicializado
+      if (this.isInitialized) {
+        try {
+          await Tts.setDefaultRate(clampedRate);
+          Logger.debug('TTS: Velocidad aplicada al motor nativo', { rate: clampedRate });
+        } catch (error) {
+          Logger.warn('TTS: Error aplicando velocidad al motor nativo', { error: error.message, rate: clampedRate });
+        }
+      }
+      
+      Logger.debug('TTS: Velocidad por defecto actualizada', { rate: this.defaultRate });
+    }
+  }
+
+  /**
+   * Obtener velocidad por defecto
+   * @returns {number}
+   */
+  getDefaultRate() {
+    return this.defaultRate;
+  }
+
+  /**
    * Establecer volumen por defecto
    * @param {number} volume - Volumen (0.0-1.0)
    */
@@ -417,15 +449,22 @@ class TTSService {
     // Determinar prioridad
     const priority = this._determinePriority(text, options);
 
-    // Aplicar velocidad adaptativa según variant
-    // Ajustar velocidad según dispositivo y variante
-    if (!options.rate && options.variant) {
-      // Usar velocidades adaptativas según si es emulador o no
+    // Aplicar velocidad: priorizar velocidad del usuario configurada sobre detección de emulador
+    // Si el usuario configuró una velocidad (defaultRate != 0.9 inicial), usarla siempre
+    // Solo usar velocidades adaptativas/emulador si el usuario no ha configurado velocidad personalizada
+    const userHasCustomRate = this.defaultRate !== 0.9; // 0.9 es el valor inicial por defecto
+    
+    if (!options.rate && options.variant && !userHasCustomRate) {
+      // Usar velocidades adaptativas solo si el usuario no configuró velocidad personalizada
       const adaptiveRates = this.isEmulator ? this.emulatorAdaptiveRates : this.adaptiveRates;
       options.rate = adaptiveRates[options.variant] || (this.isEmulator ? this.emulatorRate : this.defaultRate);
     } else if (!options.rate) {
-      // Usar velocidad por defecto según dispositivo
-      options.rate = this.isEmulator ? this.emulatorRate : this.defaultRate;
+      // Priorizar velocidad del usuario si está configurada, sino usar detección de emulador
+      if (userHasCustomRate) {
+        options.rate = this.defaultRate; // Usar velocidad del usuario
+      } else {
+        options.rate = this.isEmulator ? this.emulatorRate : this.defaultRate;
+      }
     }
 
     // Aplicar volumen por defecto si no se especifica
@@ -506,14 +545,21 @@ class TTSService {
         Logger.debug('TTS: Error al detener habla anterior (puede estar bien)', stopError);
       }
 
-      // Aplicar opciones - pero solo si no causan problemas
+      // Aplicar opciones - asegurar que siempre se aplique la velocidad (del usuario o la calculada)
       try {
-        if (options.rate) {
-          await Tts.setDefaultRate(options.rate);
-        }
+        // Siempre aplicar rate (ya sea del usuario o calculada)
+        const rateToApply = options.rate || this.defaultRate;
+        await Tts.setDefaultRate(rateToApply);
+        
         if (options.pitch) {
           await Tts.setDefaultPitch(options.pitch);
         }
+        
+        Logger.debug('TTS: Velocidad aplicada antes de hablar', { 
+          rate: rateToApply, 
+          source: options.rate ? 'explicit' : 'default',
+          userCustomRate: this.defaultRate !== 0.9
+        });
       } catch (optionsError) {
         Logger.warn('TTS: Error configurando rate/pitch, continuando con valores por defecto', optionsError);
       }

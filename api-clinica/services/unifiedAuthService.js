@@ -678,8 +678,9 @@ class UnifiedAuthService {
    * @returns {Object} { token, user, credential }
    */
   static async authenticateByPINOnly(pin, deviceId) {
+    const pinStr = pin != null ? String(pin) : '';
     logger.info('Buscando PIN en todas las credenciales activas', {
-      pinLength: pin?.length,
+      pinLength: pinStr.length,
       hasDeviceId: !!deviceId
     });
 
@@ -733,7 +734,7 @@ class UnifiedAuthService {
         continue;
       }
       
-      const isMatch = await bcrypt.compare(pin, cred.credential_value);
+      const isMatch = await bcrypt.compare(pinStr, cred.credential_value);
       if (isMatch) {
         matchedCredential = cred;
         logger.info('PIN encontrado en credencial', {

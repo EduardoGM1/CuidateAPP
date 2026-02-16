@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import BackHeader from '../../components/common/BackHeader';
 import gestionService from '../../api/gestionService';
 import Logger from '../../services/logger';
 import MonthlyVitalSignsBarChart from '../../components/charts/MonthlyVitalSignsBarChart';
@@ -107,6 +108,7 @@ const GraficosEvolucion = () => {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
+        <BackHeader navigation={navigation} title="Gráficos de Evolución" variant="professional" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORES.NAV_PRIMARIO} />
           <Text style={styles.loadingText}>Cargando gráficos...</Text>
@@ -118,6 +120,7 @@ const GraficosEvolucion = () => {
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
+        <BackHeader navigation={navigation} title="Gráficos de Evolución" variant="professional" />
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
           <View style={styles.header}>
             <Text style={styles.title}>Gráficos de Evolución</Text>
@@ -137,6 +140,7 @@ const GraficosEvolucion = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <BackHeader navigation={navigation} title="Gráficos de Evolución" variant="professional" />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Gráficos de Evolución</Text>

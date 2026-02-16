@@ -40,6 +40,7 @@ if (__DEV__) {
   } catch (_) {}
 }
 import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { Provider as PaperProvider } from 'react-native-paper';
@@ -244,10 +245,12 @@ const App = () => {
         <PersistGate loading={<LoadingScreen />} persistor={persistor}>
           <PaperProvider>
             <AuthProvider>
-              <NavigationContainer>
-                <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
-                <AppNavigator />
-              </NavigationContainer>
+              <SafeAreaProvider>
+                <NavigationContainer>
+                  <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
+                  <AppNavigator />
+                </NavigationContainer>
+              </SafeAreaProvider>
             </AuthProvider>
           </PaperProvider>
         </PersistGate>

@@ -16,6 +16,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import BackHeader from '../../components/common/BackHeader';
 import { Searchbar } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -171,6 +172,7 @@ const ListaChats = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <BackHeader navigation={navigation} title="💬 Mensajes" variant="professional" />
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>💬 Mensajes</Text>

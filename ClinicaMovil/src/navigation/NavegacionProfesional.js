@@ -2,7 +2,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import Logger from '../services/logger';
@@ -143,8 +143,13 @@ const DashboardSelector = ({ navigation }) => {
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
+  const insets = useSafeAreaInsets();
   const { userData, userRole } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
+  
+  // Reservar espacio inferior para la barra del sistema (evitar solapamiento con tabs)
+  const tabBarBottomPadding = Math.max(8, insets.bottom || 0);
+  const tabBarHeight = 60 + tabBarBottomPadding;
   
   // Obtener conversaciones solo para doctores
   const esDoctor = userRole === 'Doctor' || userRole === 'doctor';
@@ -187,8 +192,8 @@ const TabNavigator = () => {
         tabBarStyle: {
           backgroundColor: COLORES.NAV_PRIMARIO,
           borderTopColor: COLORES.NAV_PRIMARIO,
-          height: 60,
-          paddingBottom: 8,
+          height: tabBarHeight,
+          paddingBottom: tabBarBottomPadding,
           paddingTop: 8,
         },
         tabBarActiveTintColor: COLORES.TEXTO_EN_PRIMARIO,
@@ -258,7 +263,13 @@ const NavegacionProfesional = () => {
   
   return (
     <>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          headerBackVisible: true,
+          gestureEnabled: true,
+        }}
+      >
       <Stack.Screen name="MainTabs" component={TabNavigator} />
       <Stack.Screen 
         name="DetalleDoctor" 

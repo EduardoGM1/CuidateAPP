@@ -26,6 +26,7 @@ import Logger from '../../services/logger';
 import { COLORES } from '../../utils/constantes';
 import ttsService from '../../services/ttsService';
 import OfflineDebugButton from '../../components/common/OfflineDebugButton';
+import BackHeader from '../../components/common/BackHeader';
 
 const Configuracion = () => {
   const navigation = useNavigation();
@@ -54,9 +55,15 @@ const Configuracion = () => {
         setTamanoFuente(config.tamanoFuente || 'normal');
         setNotificaciones(config.notificaciones !== false);
         
-        // Aplicar volumen al servicio TTS después de cargar
-        if (ttsService && ttsService.setDefaultVolume) {
-          ttsService.setDefaultVolume(volumeToSet);
+        // Aplicar volumen y velocidad al servicio TTS después de cargar
+        if (ttsService) {
+          if (ttsService.setDefaultVolume) ttsService.setDefaultVolume(volumeToSet);
+          if (ttsService.setDefaultRate) {
+            // Aplicar velocidad del usuario (await porque ahora es async)
+            const userRate = config.ttsRate ?? 0.9;
+            await ttsService.setDefaultRate(userRate);
+            Logger.debug('Configuracion: Velocidad TTS aplicada al cargar', { rate: userRate });
+          }
         }
       }
     } catch (error) {
@@ -79,9 +86,14 @@ const Configuracion = () => {
       };
       await storageService.setItem('configuracion_paciente', config);
       
-      // Aplicar volumen al servicio TTS
-      if (ttsService && ttsService.setDefaultVolume) {
-        ttsService.setDefaultVolume(ttsVolume);
+      // Aplicar volumen y velocidad al servicio TTS
+      if (ttsService) {
+        if (ttsService.setDefaultVolume) ttsService.setDefaultVolume(ttsVolume);
+        if (ttsService.setDefaultRate) {
+          // Aplicar velocidad del usuario inmediatamente (await porque ahora es async)
+          await ttsService.setDefaultRate(ttsRate);
+          Logger.debug('Configuracion: Velocidad TTS aplicada al guardar', { rate: ttsRate });
+        }
       }
       
       Logger.info('Configuración guardada:', config);
@@ -120,6 +132,13 @@ const Configuracion = () => {
   const handleTtsRateChange = async (nuevoRate) => {
     hapticService.selection();
     setTtsRate(nuevoRate);
+    
+    // Aplicar velocidad inmediatamente al servicio TTS
+    if (ttsService && ttsService.setDefaultRate) {
+      await ttsService.setDefaultRate(nuevoRate);
+      Logger.debug('Configuracion: Velocidad TTS cambiada y aplicada', { rate: nuevoRate });
+    }
+    
     await speak(`Velocidad de voz: ${nuevoRate === 0.7 ? 'lenta' : nuevoRate === 0.9 ? 'normal' : 'rápida'}`);
   };
 
@@ -157,29 +176,22 @@ const Configuracion = () => {
     <SafeAreaView style={[styles.container, altoContraste && styles.containerAltoContraste]}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => {
-              hapticService.light();
-              navigation.goBack();
-            }}
-          >
-            <Text style={styles.backButtonText}>← Atrás</Text>
-          </TouchableOpacity>
-          
-          <Text style={[styles.title, tamanoFuenteStyles[tamanoFuente]]}>⚙️ Configuración</Text>
-          
-          <TouchableOpacity
-            style={styles.listenButton}
-            onPress={async () => {
-              hapticService.light();
-              await speak('Configuración. Ajusta las preferencias de la aplicación.');
-            }}
-          >
-            <Text style={styles.listenButtonText}>🔊</Text>
-          </TouchableOpacity>
-        </View>
+        <BackHeader
+          navigation={navigation}
+          title="⚙️ Configuración"
+          variant="patient"
+          rightElement={
+            <TouchableOpacity
+              style={styles.listenButton}
+              onPress={async () => {
+                hapticService.light();
+                await speak('Configuración. Ajusta las preferencias de la aplicación.');
+              }}
+            >
+              <Text style={styles.listenButtonText}>🔊</Text>
+            </TouchableOpacity>
+          }
+        />
 
         {/* Sección: Texto a Voz */}
         <View style={styles.section}>
@@ -286,6 +298,37 @@ const Configuracion = () => {
               trackColor={{ false: COLORES.SWITCH_TRACK_OFF, true: COLORES.NAV_PACIENTE }}
               thumbColor={COLORES.TEXTO_EN_PRIMARIO}
             />
+          </View>
+
+          <View style={styles.settingItem}>
+            <Text style={[styles.settingLabel, tamanoFuenteStyles[tamanoFuente]]}>Velocidad de voz (TTS)</Text>
+            <Text style={styles.settingDescription}>Más lenta para escuchar mejor, más rápida para avanzar</Text>
+            <View style={styles.rateButtons}>
+              <TouchableOpacity
+                style={[styles.rateButton, ttsRate === 0.7 && styles.rateButtonActive]}
+                onPress={() => handleTtsRateChange(0.7)}
+              >
+                <Text style={[styles.rateButtonText, ttsRate === 0.7 && styles.rateButtonTextActive]}>
+                  Lenta
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.rateButton, ttsRate === 0.9 && styles.rateButtonActive]}
+                onPress={() => handleTtsRateChange(0.9)}
+              >
+                <Text style={[styles.rateButtonText, ttsRate === 0.9 && styles.rateButtonTextActive]}>
+                  Normal
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.rateButton, ttsRate === 1.1 && styles.rateButtonActive]}
+                onPress={() => handleTtsRateChange(1.1)}
+              >
+                <Text style={[styles.rateButtonText, ttsRate === 1.1 && styles.rateButtonTextActive]}>
+                  Rápida
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.settingItem}>

@@ -8,6 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import BackHeader from '../components/common/BackHeader';
 import { Card, Title, Paragraph } from 'react-native-paper';
 import axios from 'axios';
 import { getApiConfigSync, getApiConfigWithFallback } from '../config/apiConfig';
@@ -184,6 +185,7 @@ const DiagnosticScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <BackHeader navigation={navigation} title="🔧 Diagnóstico" variant="professional" />
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <Text style={styles.title}>🔧 Diagnóstico de Conectividad</Text>

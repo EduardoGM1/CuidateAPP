@@ -116,11 +116,28 @@ const LoginPIN = ({ navigation, route }) => {
         deviceId
       );
 
-      // Manejar respuesta del servicio (response.data contiene la respuesta del API)
+      // Manejar respuesta del servicio (el servicio devuelve el objeto normalizado, no axios response)
       const responseData = response.data || response;
       
       // El servicio mapea 'user' a 'paciente' para compatibilidad, pero también puede venir como 'user'
       const pacienteInfo = responseData.paciente || responseData.user;
+      
+      if (!responseData.token) {
+        Alert.alert('Error de sesión', 'No se recibió token. Intenta de nuevo.');
+        return;
+      }
+      if (!pacienteInfo || (pacienteInfo && !pacienteInfo.id_paciente && !pacienteInfo.id)) {
+        Logger.warn('Login PIN: respuesta sin datos de usuario', {
+          hasPaciente: !!responseData.paciente,
+          hasUser: !!responseData.user,
+          keys: responseData.paciente ? Object.keys(responseData.paciente) : (responseData.user ? Object.keys(responseData.user) : [])
+        });
+        Alert.alert(
+          'Datos incompletos',
+          'El servidor no devolvió la información del usuario. Comprueba que el paciente con este PIN exista y esté activo, o intenta de nuevo.'
+        );
+        return;
+      }
       
       if (responseData.token && pacienteInfo) {
         Logger.success('Login PIN exitoso', { 

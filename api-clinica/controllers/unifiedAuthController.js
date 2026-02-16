@@ -133,11 +133,13 @@ export const loginPaciente = async (req, res) => {
     // Determinar método de autenticación
     if (pin) {
       method = 'pin';
-      credential = pin;
+      // Normalizar a string por si el cliente envía número (ej. 2020)
+      const pinStr = String(pin).trim();
+      credential = pinStr;
       deviceId = device_id; // Opcional ahora
 
       // Validar formato de PIN
-      if (!/^\d{4}$/.test(pin)) {
+      if (!/^\d{4}$/.test(pinStr)) {
         return res.status(400).json({
           success: false,
           error: 'El PIN debe tener exactamente 4 dígitos'

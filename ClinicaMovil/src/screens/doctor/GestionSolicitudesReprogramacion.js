@@ -22,6 +22,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import BackHeader from '../../components/common/BackHeader';
 import { Card, Title, Chip } from 'react-native-paper';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -433,6 +434,7 @@ const GestionSolicitudesReprogramacion = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <BackHeader navigation={navigation} title="📋 Solicitudes" variant="professional" />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>📋 Solicitudes de Reprogramación</Text>
         <Text style={styles.headerSubtitle}>

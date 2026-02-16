@@ -20,7 +20,7 @@ class PermissionsService {
           PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
           {
             title: 'Permiso de Micrófono',
-            message: 'CuidateApp necesita acceso al micrófono para grabar mensajes de voz en el chat.',
+            message: 'CuidaTeApp necesita acceso al micrófono para grabar mensajes de voz en el chat.',
             buttonNeutral: 'Preguntar después',
             buttonNegative: 'Cancelar',
             buttonPositive: 'Permitir',
