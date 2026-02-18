@@ -19,8 +19,10 @@ export const authenticateToken = async (req, res, next) => {
     
     // Verificar según el tipo de usuario
     if (userType === 'Paciente' || decoded.rol === 'Paciente' || decoded.rol === 'paciente') {
-      // Para pacientes, buscar en la tabla Paciente
-      const paciente = await Paciente.findByPk(userId || decoded.id_paciente);
+      // Para pacientes, buscar siempre por id_paciente (PK de la tabla Paciente).
+      // El token puede traer id = id_usuario; usar id_paciente evita Paciente.findByPk(id_usuario) → null.
+      const pacienteId = decoded.id_paciente != null ? decoded.id_paciente : userId;
+      const paciente = await Paciente.findByPk(pacienteId);
       
       if (!paciente || !paciente.activo) {
         logger.warn('Token de paciente inválido o inactivo', { 

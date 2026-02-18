@@ -31,15 +31,26 @@ function parseModuloFilter(modulo) {
   return id;
 }
 
+/** Normaliza query.estado a 'activos' | 'inactivos' | 'todos' para evitar fallos con valores inesperados */
+function normalizeEstadoParam(value) {
+  if (value == null || value === '') return 'activos';
+  const v = String(value).toLowerCase().trim();
+  if (v === 'todos' || v === 'inactivos') return v;
+  return 'activos';
+}
+
 export const getPacientes = async (req, res) => {
   try {
     const { comorbilidad = null, modulo: moduloQuery = null } = req.query;
+    const estadoParam = normalizeEstadoParam(req.query.estado);
+    const sortParam = req.query.sort == null || req.query.sort === '' ? 'recent' : String(req.query.sort).toLowerCase().trim();
+    const queryForBuild = { ...req.query, estado: estadoParam, sort: sortParam === 'oldest' ? 'oldest' : 'recent' };
 
     const idModuloFilter = parseModuloFilter(moduloQuery);
 
     // Usar utility functions para construir opciones de paginación
     const { order, where: estadoWhere, limit, offset } = buildPaginationOptions(
-      req.query,
+      queryForBuild,
       {
         defaultField: 'fecha_registro',
         maxLimit: PAGINATION.MAX_LIMIT,

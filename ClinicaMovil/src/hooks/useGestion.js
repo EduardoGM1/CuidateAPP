@@ -272,26 +272,21 @@ export const usePacientes = (estado = 'activos', sort = 'recent', comorbilidad =
       Logger.info('usePacientes: Obteniendo lista de pacientes', { estado, sort, comorbilidad });
       const response = await gestionService.getAllPacientes(estado, sort, comorbilidad);
       
-      // Extraer array de pacientes de la respuesta del backend
-      // El backend devuelve: { success: true, data: { pacientes: [...], total, limit, offset } }
+      // Extraer array de pacientes de la respuesta del backend (una sola fuente de verdad)
+      // Backend: sendSuccess(res, { pacientes, total, limit, offset }) → body: { success: true, data: { pacientes, total, limit, offset } }
+      // getAllPacientes devuelve response.data → { success: true, data: { pacientes, total, limit, offset } }
       let pacientesData = [];
-      if (response && response.data) {
-        // Si response.data es un objeto con propiedad pacientes
-        if (response.data.pacientes && Array.isArray(response.data.pacientes)) {
-          pacientesData = response.data.pacientes;
-        } 
-        // Si response.data es directamente un array (estructura antigua)
-        else if (Array.isArray(response.data)) {
+      if (response && typeof response === 'object') {
+        const inner = response.data;
+        if (inner && inner.pacientes && Array.isArray(inner.pacientes)) {
+          pacientesData = inner.pacientes;
+        } else if (response.pacientes && Array.isArray(response.pacientes)) {
+          pacientesData = response.pacientes;
+        } else if (Array.isArray(response.data)) {
           pacientesData = response.data;
+        } else if (Array.isArray(response)) {
+          pacientesData = response;
         }
-        // Si response.data.data existe y es un array (estructura anidada)
-        else if (response.data.data && Array.isArray(response.data.data)) {
-          pacientesData = response.data.data;
-        }
-      } 
-      // Fallback: si response es directamente un array
-      else if (Array.isArray(response)) {
-        pacientesData = response;
       }
       
       // Validar que pacientesData sea un array antes de usar map

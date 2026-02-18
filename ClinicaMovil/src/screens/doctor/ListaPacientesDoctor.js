@@ -125,15 +125,8 @@ const ListaPacientesDoctor = ({ navigation }) => {
     });
   }, [pacientes, debouncedSearchQuery]);
 
-  // Forzar actualización cuando cambien los filtros
-  useEffect(() => {
-    Logger.info('Filtros cambiados, forzando actualización', { 
-      pacienteFilter,
-      comorbilidadFilterId,
-      dateFilter 
-    });
-    refreshPacientes();
-  }, [pacienteFilter, comorbilidadFilterId, dateFilter, refreshPacientes]);
+  // El hook usePacientes ya refetch automáticamente cuando cambian pacienteFilter, dateFilter o comorbilidadFilterId
+  // (sus dependencias). No hacer refresh extra aquí para evitar doble petición y posibles "network error".
 
   // Función para refrescar datos
   const handleRefresh = useCallback(async () => {
@@ -148,9 +141,14 @@ const ListaPacientesDoctor = ({ navigation }) => {
     }
   }, [refreshPacientes]);
 
-  // Refrescar datos cuando el usuario regrese a la pantalla
+  // Refrescar datos al volver a la pantalla (no en el primer montaje para evitar doble fetch con "activos")
+  const isFirstFocus = React.useRef(true);
   useFocusEffect(
     useCallback(() => {
+      if (isFirstFocus.current) {
+        isFirstFocus.current = false;
+        return;
+      }
       Logger.info('ListaPacientesDoctor: Pantalla enfocada, refrescando datos');
       refreshPacientes();
     }, [refreshPacientes])

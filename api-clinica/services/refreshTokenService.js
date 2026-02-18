@@ -209,12 +209,18 @@ class RefreshTokenService {
       const userType = tokenRecord?.user_type || decoded.user_type || decoded.rol || 'Usuario';
       
       // Generar nuevo par de tokens con userType para mantener tiempos correctos
-      const newPayload = {
+const newPayload = {
         id: decoded.id,
         email: decoded.email,
         rol: decoded.rol || userType
       };
-      
+      if (decoded.id_paciente != null) {
+        newPayload.id_paciente = decoded.id_paciente;
+      }
+      if (decoded.user_type) {
+        newPayload.user_type = decoded.user_type;
+      }
+
       logger.info('🔄 [REFRESH TOKEN] Generando nuevo par de tokens', {
         userId: decoded.id,
         email: decoded.email,

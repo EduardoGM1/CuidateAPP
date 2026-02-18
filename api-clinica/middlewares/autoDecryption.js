@@ -141,22 +141,26 @@ export const autoDecryptResponse = (modelName) => {
             }
           }
         } catch (error) {
-          // Si hay un error crítico, loguear pero continuar con la respuesta original
+          // Si hay un error crítico, loguear y enviar respuesta original para no dejar al cliente sin respuesta
           logger.error(`Error crítico en autoDecryptResponse para ${modelName}:`, {
             error: error.message,
             stack: error.stack
           });
         }
         
-        // Enviar respuesta después de desencriptar
+        // Enviar respuesta después de desencriptar (o la original si hubo error)
         originalJson.call(this, data);
       }).catch(error => {
         logger.error(`Error en Promise de autoDecryptResponse para ${modelName}:`, {
           error: error.message,
           stack: error.stack
         });
-        // En caso de error, enviar respuesta original
-        originalJson.call(this, data);
+        // En caso de error, enviar respuesta original para evitar timeout/network error en el cliente
+        try {
+          originalJson.call(this, data);
+        } catch (e) {
+          logger.error(`Error enviando respuesta de fallback: ${e.message}`);
+        }
       });
     };
     
