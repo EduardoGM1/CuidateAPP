@@ -4,3 +4,17 @@ extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autoli
 rootProject.name = 'ClinicaMovil'
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')
+
+// Evitar build desde ruta larga (>260 chars) que rompe CMake/ninja en Windows
+def projectRoot = file("..").absolutePath
+if (projectRoot.length() > 200) {
+  throw new GradleException(
+    "RUTA DEL PROYECTO DEMASIADO LARGA (" + projectRoot.length() + " caracteres).\n" +
+    "En Windows esto provoca: 'Filename longer than 260 characters'.\n\n" +
+    "SOLUCION: Compila desde la ruta corta:\n" +
+    "  .\\compilar-desde-copia-ruta-corta.bat\n" +
+    "  o  .\\iniciar-app.ps1\n" +
+    "  o  npm run run-android\n\n" +
+    "O habilita rutas largas: ejecuta como Admin scripts\\habilitar-rutas-largas-windows.ps1 y reinicia el PC."
+  )
+}

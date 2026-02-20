@@ -10,9 +10,28 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import Logger from '../../services/logger';
 import hapticService from '../../services/hapticService';
+import audioCacheService from '../../services/audioCacheService';
 
 // Lazy import de AudioRecorderPlayer (puede reproducir desde URLs HTTP directamente)
 let AudioRecorderPlayerModule = null;
+
+/**
+ * Decodificar entidades HTML en la URL (incluye doble codificación: &amp;#x2F; -> /).
+ * Orden: primero &amp; -> &, luego entidades numéricas, hasta que no cambie.
+ */
+function decodeHtmlEntitiesInUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  let s = url;
+  let prev;
+  do {
+    prev = s;
+    s = s.replace(/&amp;/g, '&');
+    s = s.replace(/&#x2F;/gi, '/').replace(/&#x2F/gi, '/');
+    s = s.replace(/&#x3A;/gi, ':').replace(/&#x3A/gi, ':');
+    s = s.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+  } while (s !== prev);
+  return s;
+}
 
 const VoicePlayer = ({ audioUrl, duration, onPlayComplete, isOwnMessage = false }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -103,27 +122,8 @@ const VoicePlayer = ({ audioUrl, duration, onPlayComplete, isOwnMessage = false 
     if (!url) return null;
 
     try {
-      // Decodificar HTML entities si están presentes (ej: &#x2F; -> /)
-      let decodedUrl = url;
-      try {
-        // Crear un elemento temporal para decodificar HTML entities
-        if (typeof document !== 'undefined') {
-          const txt = document.createElement('textarea');
-          txt.innerHTML = url;
-          decodedUrl = txt.value;
-        } else {
-          // Fallback para React Native: reemplazar entidades comunes
-          decodedUrl = url
-            .replace(/&#x2F;/g, '/')
-            .replace(/&#x3A;/g, ':')
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>');
-        }
-      } catch (e) {
-        // Si falla la decodificación, usar la URL original
-        decodedUrl = url;
-      }
+      // Decodificar HTML entities (ej: &#x2F; -> /, &amp;#x2F; doble codificado)
+      let decodedUrl = decodeHtmlEntitiesInUrl(url);
 
       Logger.info('VoicePlayer: Normalizando URL', { original: url, decoded: decodedUrl });
 
@@ -282,23 +282,58 @@ const VoicePlayer = ({ audioUrl, duration, onPlayComplete, isOwnMessage = false 
         hasLocalhost: localhostPattern.test(playbackUrl)
       });
 
+      // Asegurar que la URL no tenga entidades HTML
+      playbackUrl = decodeHtmlEntitiesInUrl(playbackUrl);
+
+      // SOLUCIÓN: Reproducir desde archivo local para evitar "Prepare failed.: status=0x1"
+      // con streaming HTTP. Descargar a caché (o usar caché existente) y reproducir desde ruta local.
+      let pathToPlay = playbackUrl;
+      const isHttp = /^https?:\/\//i.test(playbackUrl);
+      if (isHttp) {
+        try {
+          let localPath = await audioCacheService.getCachedPath(playbackUrl);
+          if (!localPath) {
+            Logger.info('VoicePlayer: Descargando audio a caché', { url: playbackUrl });
+            localPath = await audioCacheService.downloadAndCache(playbackUrl);
+          }
+          pathToPlay = Platform.OS === 'android' && !localPath.startsWith('file://')
+            ? `file://${localPath}`
+            : localPath;
+          Logger.info('VoicePlayer: Reproduciendo desde archivo local', { pathToPlay });
+        } catch (downloadError) {
+          Logger.error('VoicePlayer: Error descargando audio a caché', { error: downloadError, url: playbackUrl });
+          throw new Error('No se pudo descargar el audio. Comprueba la conexión.');
+        }
+      }
+
       // Obtener instancia del player
       const player = getPlayer();
 
-      // Reproducir directamente desde la URL (HTTP o local)
-      Logger.info('VoicePlayer: Llamando startPlayer', { playbackUrl, playerType: typeof player });
+      // CRÍTICO: El reproductor nativo (compartido) debe estar parado antes de startPlayer.
+      try {
+        if (typeof player.stopPlayer === 'function') {
+          await player.stopPlayer();
+        }
+        if (typeof player.removePlayBackListener === 'function') {
+          player.removePlayBackListener();
+        }
+        await new Promise(r => setTimeout(r, 100));
+      } catch (stopErr) {
+        // Ignorar si ya estaba parado
+      }
+
+      Logger.info('VoicePlayer: Llamando startPlayer', { pathToPlay, playerType: typeof player });
       
       let msg;
       try {
-        msg = await player.startPlayer(playbackUrl);
+        msg = await player.startPlayer(pathToPlay);
         Logger.info('VoicePlayer: startPlayer exitoso', { msg });
       } catch (startError) {
         Logger.error('VoicePlayer: Error en startPlayer', { 
           error: startError?.message || String(startError),
           stack: startError?.stack,
-          playbackUrl,
+          pathToPlay,
           originalUrl: audioUrl,
-          hasLocalhost: localhostPattern.test(playbackUrl)
         });
         throw new Error(`Error iniciando reproducción: ${startError?.message || String(startError)}`);
       }
