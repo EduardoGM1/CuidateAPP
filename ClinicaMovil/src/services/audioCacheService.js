@@ -10,41 +10,49 @@ import RNFS from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Logger from './logger';
 
-const CACHE_KEY_PREFIX = '@audio_cache:';
 const CACHE_METADATA_KEY = '@audio_cache_metadata';
 const MAX_CACHE_SIZE = 100 * 1024 * 1024; // 100 MB
 
-// Obtener directorio de cache
-const getCacheDirectory = () => {
-  if (Platform.OS === 'ios') {
-    return `${RNFS.CachesDirectoryPath}/audio_cache`;
-  } else {
-    return `${RNFS.CacheDirectoryPath}/audio_cache`;
+/**
+ * Obtener directorio de cache en tiempo de ejecución (lazy).
+ * CRÍTICO: No calcular al cargar el módulo; RNFS puede no estar listo y
+ * CacheDirectoryPath/CachesDirectoryPath ser undefined → "undefined/audio_cache".
+ * Ver docs/markdown/SOLUCION-ERROR-AUDIOSERVICE.md (mismo patrón de inicialización).
+ */
+function getCacheDirectoryPath() {
+  const base = Platform.OS === 'ios'
+    ? (RNFS.CachesDirectoryPath ?? RNFS.CacheDirectoryPath)
+    : (RNFS.CacheDirectoryPath ?? RNFS.DocumentDirectoryPath);
+  if (!base || typeof base !== 'string') {
+    throw new Error('AudioCacheService: RNFS no tiene ruta de cache disponible (módulo nativo puede no estar listo)');
   }
-};
-
-const CACHE_DIR = getCacheDirectory();
+  return `${base.replace(/\/$/, '')}/audio_cache`;
+}
 
 class AudioCacheService {
   constructor() {
     this.initialized = false;
+    this._cacheDir = null;
     this.cacheMetadata = { entries: {}, totalSize: 0 };
   }
 
   /**
-   * Inicializar directorio de cache
+   * Inicializar directorio de cache (lazy: ruta obtenida al usar, no al cargar módulo).
    */
   async initialize() {
     if (this.initialized) return;
 
     try {
-      // Crear directorio si no existe
-      const exists = await RNFS.exists(CACHE_DIR);
-      if (!exists) {
-        await RNFS.mkdir(CACHE_DIR);
+      this._cacheDir = getCacheDirectoryPath();
+      if (!this._cacheDir || this._cacheDir.includes('undefined')) {
+        throw new Error('AudioCacheService: ruta de cache inválida: ' + this._cacheDir);
       }
 
-      // Cargar metadata
+      const exists = await RNFS.exists(this._cacheDir);
+      if (!exists) {
+        await RNFS.mkdir(this._cacheDir);
+      }
+
       try {
         const metadataStr = await AsyncStorage.getItem(CACHE_METADATA_KEY);
         if (metadataStr) {
@@ -56,9 +64,9 @@ class AudioCacheService {
       }
 
       this.initialized = true;
-      Logger.info('AudioCacheService: Inicializado', { cacheDir: CACHE_DIR });
+      Logger.info('AudioCacheService: Inicializado', { cacheDir: this._cacheDir });
     } catch (error) {
-      Logger.error('AudioCacheService: Error inicializando', error);
+      Logger.error('AudioCacheService: Error inicializando', { error, cause: error?.cause });
       throw error;
     }
   }
@@ -92,7 +100,8 @@ class AudioCacheService {
    * Obtener ruta de cache para una URL
    */
   _getCachePath(cacheKey) {
-    return `${CACHE_DIR}/${cacheKey}`;
+    if (!this._cacheDir) throw new Error('AudioCacheService: no inicializado');
+    return `${this._cacheDir}/${cacheKey}`;
   }
 
   /**
