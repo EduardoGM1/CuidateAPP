@@ -576,7 +576,7 @@ export default function PacienteDetail() {
 
   useEffect(() => {
     if (!modalSection) return;
-    if (modalSection === 'datos' || modalSection === 'citas' || modalSection === 'diagnosticos') loadCitas();
+    if (modalSection === 'datos' || modalSection === 'citas' || modalSection === 'diagnosticos' || modalSection === 'historial-consultas') loadCitas();
     if (modalSection === 'diagnosticos') loadDiagnosticos();
     else if (modalSection === 'signos' || modalSection === 'graficos' || modalSection === 'monitoreo') loadSignos();
     else if (modalSection === 'medicacion') loadMedicamentos();
@@ -658,62 +658,8 @@ export default function PacienteDetail() {
     if (!tabId) return null;
     switch (tabId) {
       case 'datos': {
-        const citasOrdenadas = [...(citas.data || [])].sort(
-          (a, b) => new Date(b.fecha_cita) - new Date(a.fecha_cita)
-        );
-        const timelineCitas = citasOrdenadas.slice(0, 5);
-
         return (
           <>
-            <Card className="patient-section-card">
-              <h2 className="patient-section-title">Historial reciente de consultas</h2>
-              {citasLoading ? (
-                <LoadingSpinner />
-              ) : timelineCitas.length === 0 ? (
-                <EmptyState message="No hay citas registradas" />
-              ) : (
-                <ul className="tracking-list">
-                  {timelineCitas.map((cita, index) => (
-                    <li
-                      key={`${cita.id_cita ?? cita.id}-${index}`}
-                      className="tracking-item"
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => navigate(`/citas/${cita.id_cita ?? cita.id}`)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          navigate(`/citas/${cita.id_cita ?? cita.id}`);
-                        }
-                      }}
-                    >
-                      <span className="tracking-item-date">
-                        {formatDateTime(cita.fecha_cita)}
-                      </span>
-                      <span className="tracking-item-body">
-                        {sanitizeForDisplay(cita.motivo_consulta) ||
-                          sanitizeForDisplay(cita.doctor_nombre) ||
-                          '—'}{' '}
-                        <Badge
-                          variant={
-                            cita.estado === 'atendida'
-                              ? 'success'
-                              : cita.estado === 'cancelada' ||
-                                cita.estado === 'no_asistida'
-                              ? 'error'
-                              : 'neutral'
-                          }
-                        >
-                          {ESTADO_CITA[cita.estado] || cita.estado}
-                        </Badge>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
-
             <Card className="patient-section-card">
               <h2 className="patient-section-title">Expediente médico</h2>
               <p
@@ -748,6 +694,68 @@ export default function PacienteDetail() {
               </div>
             </Card>
           </>
+        );
+      }
+      case 'historial-consultas': {
+        const citasOrdenadas = [...(citas.data || [])].sort(
+          (a, b) => new Date(b.fecha_cita) - new Date(a.fecha_cita)
+        );
+        return (
+          <Card className="patient-section-card">
+            <h2 className="patient-section-title">Historial de consultas</h2>
+            {citasLoading ? (
+              <LoadingSpinner />
+            ) : citasOrdenadas.length === 0 ? (
+              <EmptyState message="No hay citas registradas" />
+            ) : (
+              <>
+                <ul className="tracking-list">
+                  {citasOrdenadas.map((cita, index) => (
+                    <li
+                      key={`${cita.id_cita ?? cita.id}-${index}`}
+                      className="tracking-item"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => openDetalleCita(cita.id_cita ?? cita.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          openDetalleCita(cita.id_cita ?? cita.id);
+                        }
+                      }}
+                    >
+                      <span className="tracking-item-date">
+                        {formatDateTime(cita.fecha_cita)}
+                      </span>
+                      <span className="tracking-item-body">
+                        {sanitizeForDisplay(cita.motivo_consulta) ||
+                          sanitizeForDisplay(cita.doctor_nombre) ||
+                          '—'}{' '}
+                        <Badge
+                          variant={
+                            cita.estado === 'atendida'
+                              ? 'success'
+                              : cita.estado === 'cancelada' ||
+                                cita.estado === 'no_asistida'
+                              ? 'error'
+                              : 'neutral'
+                          }
+                        >
+                          {ESTADO_CITA[cita.estado] || cita.estado}
+                        </Badge>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <div style={{ marginTop: '0.75rem' }}>
+                  <Button type="button" variant="secondary" size="small" onClick={() => navigate(`/citas?paciente=${parsedId}`)}>
+                    Ver todas las citas
+                  </Button>
+                </div>
+              </>
+            )}
+          </Card>
         );
       }
       case 'monitoreo': {
