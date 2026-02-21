@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import Button from '../ui/Button';
+import Logo from '../common/Logo';
 
 const navLinksBase = [
   { path: '/', label: 'Inicio' },
@@ -163,7 +164,7 @@ export default function Sidebar({ isOpen, onClose }) {
       <aside className={`sidebar ${isOpen ? 'is-open' : ''}`}>
         <div className="sidebar-inner">
           <div className="sidebar-brand" onClick={() => handleNav('/')} onKeyDown={(e) => e.key === 'Enter' && handleNav('/')} role="button" tabIndex={0}>
-            <span className="sidebar-logo-text">Cuidate</span>
+            <Logo variant="inline" size="small" className="sidebar-logo-text" style={{ justifyContent: 'flex-start' }} />
           </div>
           <nav className="sidebar-nav" aria-label="Navegación principal">
             {navLinks.map(({ path, label }) => {

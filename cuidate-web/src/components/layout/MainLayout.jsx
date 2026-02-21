@@ -5,6 +5,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { connect } from '../../api/socket';
 import { STORAGE_KEYS } from '../../utils/constants';
 import ButtonUI from '../ui/Button';
+import Logo from '../common/Logo';
 
 function IconDashboard() {
   return (
@@ -215,19 +216,13 @@ export default function MainLayout() {
         className="main-layout-sider"
       >
         <div
-          style={{
-            padding: '1.25rem 1.25rem 2rem',
-            fontSize: '1.25rem',
-            fontWeight: 700,
-            color: 'var(--color-primario)',
-            cursor: 'pointer',
-          }}
+          style={{ padding: '1.25rem 1.25rem 2rem', cursor: 'pointer' }}
           onClick={() => { navigate('/'); setDrawerOpen(false); }}
           role="button"
           tabIndex={0}
           onKeyDown={(e) => e.key === 'Enter' && navigate('/')}
         >
-          Cuidate
+          <Logo variant="inline" size="small" />
         </div>
         <Menu
           mode="inline"
@@ -251,7 +246,7 @@ export default function MainLayout() {
 
       {/* En móvil: drawer con el mismo menú */}
       <Drawer
-        title="Cuidate"
+        title={<Logo variant="inline" size="small" />}
         placement="left"
         onClose={() => setDrawerOpen(false)}
         open={drawerOpen}

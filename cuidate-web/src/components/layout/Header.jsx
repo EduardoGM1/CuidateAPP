@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import Button from '../ui/Button';
+import Logo from '../common/Logo';
 
 const navLinksBase = [
   { path: '/', label: 'Dashboard' },
@@ -49,8 +50,9 @@ export default function Header() {
           onKeyDown={(e) => e.key === 'Enter' && navigate('/')}
           role="button"
           tabIndex={0}
+          style={{ display: 'flex', alignItems: 'center' }}
         >
-          Cuidate
+          <Logo variant="inline" size="small" onPrimary />
         </span>
         <nav>
           {navLinks.map(({ path, label }) => {

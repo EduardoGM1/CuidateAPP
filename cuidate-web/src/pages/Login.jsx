@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '../lib/validations/loginSchema';
 import { useAuthStore } from '../stores/authStore';
 import { Button, Input, Card } from '../components/ui';
+import Logo from '../components/common/Logo';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -41,7 +42,9 @@ export default function Login() {
   return (
     <div className="login-page">
       <Card className="login-card">
-        <h1>Cuidate</h1>
+        <h1 style={{ margin: 0, display: 'flex', justifyContent: 'center' }}>
+          <Logo size="large" variant="stack" />
+        </h1>
         <p className="login-subtitle">Área de Doctores y Administradores</p>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
