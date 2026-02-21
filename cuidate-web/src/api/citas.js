@@ -107,7 +107,7 @@ export async function createCita(body) {
 const WIZARD_PASOS = ['asistencia', 'signos_vitales', 'observaciones', 'diagnostico', 'plan_medicacion', 'finalizar'];
 
 /**
- * Completar cita con wizard (paso a paso o finalizar).
+ * Completar cita (paso a paso o finalizar).
  * @param {number|string} idCita
  * @param {{ paso: string, asistencia?: boolean, motivo_no_asistencia?: string, signos_vitales?: object, observaciones?: string, diagnostico?: { descripcion: string }, plan_medicacion?: { observaciones?: string, medicamentos?: array }, marcar_como_atendida?: boolean }} body
  */

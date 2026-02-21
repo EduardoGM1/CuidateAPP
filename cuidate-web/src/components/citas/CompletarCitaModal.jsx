@@ -25,7 +25,7 @@ const initialSignos = {
 };
 
 /**
- * Modal wizard para completar una cita (paridad con app móvil).
+ * Modal para completar una cita (flujo paso a paso).
  * Pasos: asistencia → signos vitales → observaciones → diagnóstico → plan medicación → finalizar.
  *
  * @param {boolean} open
@@ -33,7 +33,7 @@ const initialSignos = {
  * @param {number|string} citaId - ID de la cita a completar
  * @param {() => void} [onSuccess] - Llamado al completar correctamente el último paso
  */
-export default function CompletarCitaWizardModal({ open, onClose, citaId, onSuccess }) {
+export default function CompletarCitaModal({ open, onClose, citaId, onSuccess }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [asistencia, setAsistencia] = useState(true);
   const [motivoNoAsistencia, setMotivoNoAsistencia] = useState('');
@@ -132,7 +132,7 @@ export default function CompletarCitaWizardModal({ open, onClose, citaId, onSucc
     <Modal
       open={open}
       onClose={canClose ? onClose : undefined}
-      title="Completar cita (Wizard)"
+      title="Registrar datos de la cita"
       footer={null}
       width={560}
       destroyOnClose

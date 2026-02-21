@@ -61,7 +61,7 @@ import ProximaCitaCard from '../../components/pacientes/ProximaCitaCard';
 import SectionCard from '../../components/pacientes/SectionCard';
 import PatientSectionModal from '../../components/pacientes/PatientSectionModal';
 import DetalleCitaModal from '../../components/pacientes/DetalleCitaModal';
-import CompletarCitaWizardModal from '../../components/citas/CompletarCitaWizardModal';
+import CompletarCitaModal from '../../components/citas/CompletarCitaModal';
 import DetalleSignoVitalModal from '../../components/pacientes/DetalleSignoVitalModal';
 import ComparativaEvolucionSignos from '../../components/pacientes/ComparativaEvolucionSignos';
 import { PATIENT_DETAIL_SECTIONS } from '../../constants/patientDetailSections';
@@ -3296,7 +3296,7 @@ export default function PacienteDetail() {
         onCompletarWizard={(idCita) => { closeDetalleCita(); setWizardCitaId(idCita); setWizardCitaModalOpen(true); }}
         onSoloSignosVitales={(idCita) => { closeDetalleCita(); setSignosCitaId(idCita); setSignosForm({ peso_kg: '', talla_m: '', medida_cintura_cm: '', presion_sistolica: '', presion_diastolica: '', glucosa_mg_dl: '', colesterol_mg_dl: '', colesterol_ldl: '', colesterol_hdl: '', trigliceridos_mg_dl: '', hba1c_porcentaje: '', observaciones: '' }); setSignosModalOpen(true); }}
       />
-      <CompletarCitaWizardModal
+      <CompletarCitaModal
         open={wizardCitaModalOpen}
         onClose={() => { setWizardCitaModalOpen(false); setWizardCitaId(null); }}
         citaId={wizardCitaId}

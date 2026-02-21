@@ -5,7 +5,7 @@ import { message } from 'antd';
 import { connect, on, off } from '../../api/socket';
 import { PageHeader, DataCard } from '../../components/shared';
 import { LoadingSpinner, Button, Card, Badge, Input, Select } from '../../components/ui';
-import CompletarCitaWizardModal from '../../components/citas/CompletarCitaWizardModal';
+import CompletarCitaModal from '../../components/citas/CompletarCitaModal';
 import { useAuthStore } from '../../stores/authStore';
 import { STORAGE_KEYS } from '../../utils/constants';
 import { parsePositiveInt } from '../../utils/params';
@@ -238,18 +238,18 @@ export default function CitaDetail() {
       {canEditCita && (c.estado === 'pendiente' || c.estado === 'no_asistida') && (
         <Card style={{ marginTop: '1.5rem' }}>
           <h2 style={{ margin: '0 0 1rem', fontSize: '1.15rem', color: 'var(--color-primario)' }}>
-            Completar cita (wizard)
+            Registrar datos de la cita
           </h2>
           <p style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
             Flujo guiado paso a paso con guardado progresivo.
           </p>
           <Button variant="primary" type="button" onClick={() => setWizardModalOpen(true)}>
-            Abrir wizard
+            Registrar datos de la cita
           </Button>
         </Card>
       )}
 
-      <CompletarCitaWizardModal
+      <CompletarCitaModal
         open={wizardModalOpen}
         onClose={() => setWizardModalOpen(false)}
         citaId={parsedId}

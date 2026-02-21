@@ -30,7 +30,7 @@ function calcularIMC(pesoKg, tallaM) {
 /**
  * Modal de detalle de cita (versión web), paridad con la app móvil.
  * Muestra: fecha, estado, doctor, motivo, observaciones, signos vitales y diagnósticos.
- * Incluye acciones: Completar Cita (Wizard) y Solo Agregar Signos Vitales cuando la cita es editable.
+ * Incluye acciones: Registrar datos de la cita y Solo Agregar Signos Vitales cuando la cita es editable.
  */
 export default function DetalleCitaModal({
   open,
@@ -103,7 +103,7 @@ export default function DetalleCitaModal({
             )}
           </div>
 
-          {/* Acciones: Completar Cita (Wizard) y Solo Agregar Signos Vitales (paridad con app móvil) */}
+          {/* Acciones: Registrar datos de la cita y Solo Agregar Signos Vitales */}
           {puedeCompletar && (onCompletarWizard || onSoloSignosVitales) && (
             <div style={{ marginBottom: '1rem' }}>
               {onCompletarWizard && (
@@ -114,7 +114,7 @@ export default function DetalleCitaModal({
                     onClick={() => { onClose(); onCompletarWizard(idCita); }}
                     style={{ width: '100%', marginBottom: '0.25rem' }}
                   >
-                    Completar Cita (Wizard)
+                    Registrar datos de la cita
                   </Button>
                   <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-texto-secundario)' }}>
                     Recomendado: Flujo guiado paso a paso con guardado progresivo.
