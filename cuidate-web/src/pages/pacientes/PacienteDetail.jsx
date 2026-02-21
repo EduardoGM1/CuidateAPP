@@ -25,6 +25,7 @@ import {
   createSignosVitales as apiCreateSignosVitales,
   deleteSignosVitales as apiDeleteSignosVitales,
   createDiagnostico as apiCreateDiagnostico,
+  updateDiagnostico as apiUpdateDiagnostico,
   deleteDiagnostico as apiDeleteDiagnostico,
   createPacienteRedApoyo as apiCreateRedApoyo,
   updatePacienteRedApoyo as apiUpdateRedApoyo,
@@ -184,6 +185,8 @@ export default function PacienteDetail() {
   const [newDiagnosticoCitaId, setNewDiagnosticoCitaId] = useState('');
   const [diagnosticoSubmitError, setDiagnosticoSubmitError] = useState('');
   const [diagnosticoSubmitting, setDiagnosticoSubmitting] = useState(false);
+  const [editingDiagnostico, setEditingDiagnostico] = useState(null);
+  const [detalleDiagnosticoSeleccionado, setDetalleDiagnosticoSeleccionado] = useState(null);
   const [signosModalOpen, setSignosModalOpen] = useState(false);
   const [diagnosticoModalOpen, setDiagnosticoModalOpen] = useState(false);
   const [vacunaModalOpen, setVacunaModalOpen] = useState(false);
@@ -1204,7 +1207,7 @@ export default function PacienteDetail() {
         );
       }
       case 'diagnosticos': {
-        const handleCreateDiagnostico = async () => {
+        const handleSaveDiagnostico = async () => {
           const desc = newDiagnosticoDescripcion.trim();
           if (desc.length < 10) {
             setDiagnosticoSubmitError('La descripción debe tener al menos 10 caracteres.');
@@ -1212,16 +1215,26 @@ export default function PacienteDetail() {
           }
           setDiagnosticoSubmitError('');
           setDiagnosticoSubmitting(true);
+          const idCita = newDiagnosticoCitaId ? parseInt(newDiagnosticoCitaId, 10) : undefined;
           try {
-            await apiCreateDiagnostico(parsedId, {
-              descripcion: desc,
-              id_cita: newDiagnosticoCitaId ? parseInt(newDiagnosticoCitaId, 10) : undefined,
-            });
+            if (editingDiagnostico) {
+              await apiUpdateDiagnostico(parsedId, editingDiagnostico.id_diagnostico ?? editingDiagnostico.id, {
+                descripcion: desc,
+                id_cita: idCita,
+              });
+              message.success('Diagnóstico actualizado');
+            } else {
+              await apiCreateDiagnostico(parsedId, {
+                descripcion: desc,
+                id_cita: idCita,
+              });
+              message.success('Diagnóstico guardado');
+            }
             setNewDiagnosticoDescripcion('');
             setNewDiagnosticoCitaId('');
+            setEditingDiagnostico(null);
             loadDiagnosticos();
             setDiagnosticoModalOpen(false);
-            message.success('Diagnóstico guardado');
           } catch (e) {
             const errMsg = e?.response?.data?.error || e?.message || 'Error al guardar';
             setDiagnosticoSubmitError(errMsg);
@@ -1251,11 +1264,31 @@ export default function PacienteDetail() {
               <ul className="tracking-list">
                 {diagList.map((d, i) => (
                   <li key={d.id_diagnostico ?? d.id ?? i} className="tracking-item">
-                    <span className="tracking-item-date">{formatDate(d.fecha_registro ?? d.fecha_diagnostico)}</span>
-                    <span className="tracking-item-body">{sanitizeForDisplay(d.descripcion ?? d.diagnostico) || '—'}</span>
+                    <button
+                      type="button"
+                      className="tracking-item-clickable"
+                      onClick={() => setDetalleDiagnosticoSeleccionado(d)}
+                      style={{
+                        flex: '1 1 auto',
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        color: 'inherit',
+                        font: 'inherit',
+                      }}
+                    >
+                      <span className="tracking-item-date">{formatDate(d.fecha_registro ?? d.fecha_diagnostico)}</span>
+                      <span className="tracking-item-body">{sanitizeForDisplay(d.descripcion ?? d.diagnostico) || '—'}</span>
+                    </button>
                     {canEditMedical && (
                       <span className="tracking-item-actions">
-                        <Button variant="secondary" size="small" onClick={() => handleDeleteDiagnostico(d.id_diagnostico ?? d.id)}>Eliminar</Button>
+                        <Button variant="secondary" size="small" onClick={(e) => { e.stopPropagation(); handleDeleteDiagnostico(d.id_diagnostico ?? d.id); }}>Eliminar</Button>
                       </span>
                     )}
                   </li>
@@ -1269,6 +1302,7 @@ export default function PacienteDetail() {
                   variant="primary"
                   onClick={() => {
                     setDiagnosticoSubmitError('');
+                    setEditingDiagnostico(null);
                     setNewDiagnosticoDescripcion('');
                     setNewDiagnosticoCitaId('');
                     setDiagnosticoModalOpen(true);
@@ -1281,12 +1315,13 @@ export default function PacienteDetail() {
                   onClose={() => {
                     if (!diagnosticoSubmitting) {
                       setDiagnosticoModalOpen(false);
+                      setEditingDiagnostico(null);
                     }
                   }}
-                  title="Nuevo diagnóstico"
-                  okText={diagnosticoSubmitting ? 'Guardando…' : 'Guardar diagnóstico'}
+                  title={editingDiagnostico ? 'Editar diagnóstico' : 'Nuevo diagnóstico'}
+                  okText={diagnosticoSubmitting ? 'Guardando…' : (editingDiagnostico ? 'Guardar cambios' : 'Guardar diagnóstico')}
                   confirmLoading={diagnosticoSubmitting}
-                  onOk={handleCreateDiagnostico}
+                  onOk={handleSaveDiagnostico}
                 >
                   {diagnosticoSubmitError && (
                     <p
@@ -1320,6 +1355,77 @@ export default function PacienteDetail() {
                         })),
                       ]}
                     />
+                  )}
+                </Modal>
+                <Modal
+                  open={!!detalleDiagnosticoSeleccionado}
+                  onClose={() => setDetalleDiagnosticoSeleccionado(null)}
+                  title="Detalle de diagnóstico"
+                  footer={null}
+                  width={520}
+                >
+                  {detalleDiagnosticoSeleccionado && (
+                    <div className="patient-section-modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                      <div style={{ background: 'var(--color-fondo-card)', borderRadius: 'var(--radius)', padding: '1rem', marginBottom: '1rem', border: '1px solid var(--color-borde-claro)' }}>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--color-texto-primario)', marginBottom: '0.5rem' }}>📅 Fecha</div>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
+                          {formatDate(detalleDiagnosticoSeleccionado.fecha_registro ?? detalleDiagnosticoSeleccionado.fecha_diagnostico)}
+                        </div>
+                      </div>
+                      {(detalleDiagnosticoSeleccionado.doctor_nombre != null && detalleDiagnosticoSeleccionado.doctor_nombre !== '') && (
+                        <div style={{ background: 'var(--color-fondo-card)', borderRadius: 'var(--radius)', padding: '1rem', marginBottom: '1rem', border: '1px solid var(--color-borde-claro)' }}>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--color-texto-primario)', marginBottom: '0.5rem' }}>👤 Doctor</div>
+                          <div style={{ fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>{detalleDiagnosticoSeleccionado.doctor_nombre}</div>
+                        </div>
+                      )}
+                      <div style={{ background: 'var(--color-fondo-card)', borderRadius: 'var(--radius)', padding: '1rem', marginBottom: '1rem', border: '1px solid var(--color-borde-claro)' }}>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--color-texto-primario)', marginBottom: '0.5rem' }}>Descripción</div>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--color-texto-secundario)', whiteSpace: 'pre-wrap' }}>
+                          {sanitizeForDisplay(detalleDiagnosticoSeleccionado.descripcion ?? detalleDiagnosticoSeleccionado.diagnostico) || '—'}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                        {canEditMedical && (
+                          <>
+                            <Button
+                              variant="primary"
+                              size="small"
+                              onClick={() => {
+                                const d = detalleDiagnosticoSeleccionado;
+                                setNewDiagnosticoDescripcion(d.descripcion ?? d.diagnostico ?? '');
+                                setNewDiagnosticoCitaId(d.id_cita != null ? String(d.id_cita) : '');
+                                setEditingDiagnostico(d);
+                                setDetalleDiagnosticoSeleccionado(null);
+                                setDiagnosticoSubmitError('');
+                                setDiagnosticoModalOpen(true);
+                              }}
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="small"
+                              onClick={async () => {
+                                if (!window.confirm('¿Eliminar este diagnóstico?')) return;
+                                try {
+                                  await apiDeleteDiagnostico(parsedId, detalleDiagnosticoSeleccionado.id_diagnostico ?? detalleDiagnosticoSeleccionado.id);
+                                  loadDiagnosticos();
+                                  setDetalleDiagnosticoSeleccionado(null);
+                                  message.success('Diagnóstico eliminado');
+                                } catch (e) {
+                                  message.error(e?.response?.data?.error || e?.message || 'Error al eliminar');
+                                }
+                              }}
+                            >
+                              Eliminar
+                            </Button>
+                          </>
+                        )}
+                        <Button variant="secondary" size="small" onClick={() => setDetalleDiagnosticoSeleccionado(null)}>
+                          Cerrar
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </Modal>
               </div>
