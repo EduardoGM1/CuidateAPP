@@ -653,16 +653,6 @@ export default function PacienteDetail() {
     if (!tabId) return null;
     switch (tabId) {
       case 'datos': {
-        const comorbilidadesList = Array.isArray(p.comorbilidades)
-          ? p.comorbilidades
-              .map((c) =>
-                typeof c === 'object' && (c?.nombre || c?.nombre_comorbilidad)
-                  ? c.nombre || c.nombre_comorbilidad
-                  : String(c)
-              )
-              .filter(Boolean)
-          : [];
-
         const citasOrdenadas = [...(citas.data || [])].sort(
           (a, b) => new Date(b.fecha_cita) - new Date(a.fecha_cita)
         );
@@ -726,21 +716,6 @@ export default function PacienteDetail() {
                 </ul>
               )}
             </Card>
-
-            {comorbilidadesList.length > 0 && (
-              <Card className="patient-section-card">
-                <h2 className="patient-section-title">Comorbilidades</h2>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 'var(--text-sm)',
-                    color: 'var(--color-texto-primario)',
-                  }}
-                >
-                  {comorbilidadesList.join(', ')}
-                </p>
-              </Card>
-            )}
 
             <Card className="patient-section-card">
               <h2 className="patient-section-title">Expediente médico</h2>
@@ -3176,6 +3151,18 @@ export default function PacienteDetail() {
               {(p.numero_celular || p.telefono) && <span>Tel: {sanitizeForDisplay(p.numero_celular ?? p.telefono)}</span>}
               {p.curp && <span>CURP: {sanitizeForDisplay(p.curp)}</span>}
             </div>
+            {(() => {
+              const comorbHeader = Array.isArray(p.comorbilidades)
+                ? p.comorbilidades
+                    .map((c) => (typeof c === 'object' && (c?.nombre || c?.nombre_comorbilidad) ? c.nombre || c.nombre_comorbilidad : String(c)))
+                    .filter(Boolean)
+                : [];
+              return comorbHeader.length > 0 ? (
+                <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-texto-secundario)', marginTop: '0.25rem', marginBottom: '0.25rem' }}>
+                  Comorbilidades: {comorbHeader.map((n) => sanitizeForDisplay(n)).join(', ')}
+                </div>
+              ) : null;
+            })()}
             <span className={`patient-badge-status ${p.activo ? 'is-active' : 'is-inactive'}`}>
               {p.activo ? 'Activo' : 'Inactivo'}
             </span>
