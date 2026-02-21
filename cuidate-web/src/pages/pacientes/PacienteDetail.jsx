@@ -426,6 +426,10 @@ export default function PacienteDetail() {
     }
   }, [parsedId, queryClient]);
 
+  useEffect(() => {
+    if (parsedId > 0) loadCitas();
+  }, [parsedId, loadCitas]);
+
   const loadSignos = useCallback(async () => {
     if (parsedId === 0) return;
     setSignosLoading(true);
@@ -660,14 +664,6 @@ export default function PacienteDetail() {
 
         return (
           <>
-            {citas.data?.length > 0 && (
-              <ProximaCitaCard
-                citas={citas.data}
-                onVerCita={(idCita) => navigate(`/citas/${idCita}`)}
-                onVerTodas={() => navigate(`/citas?paciente=${parsedId}`)}
-              />
-            )}
-
             <Card className="patient-section-card">
               <h2 className="patient-section-title">Historial reciente de consultas</h2>
               {citasLoading ? (
@@ -3178,17 +3174,34 @@ export default function PacienteDetail() {
         </div>
       </header>
 
-      {resumenMedicoLoading && !resumenMedico && (
-        <Card className="patient-section-card" style={{ marginBottom: 'var(--space-4)' }}>
-          <h2 className="patient-section-title">Resumen médico</h2>
-          <LoadingSpinner />
-        </Card>
-      )}
-      {resumenMedico && (
-        <div style={{ marginBottom: 'var(--space-4)' }}>
-          <MedicalSummaryCard resumen={resumenMedico} />
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 'var(--space-4)',
+          marginBottom: 'var(--space-4)',
+          alignItems: 'flex-start',
+        }}
+      >
+        <div style={{ flex: '1 1 280px', minWidth: 0 }}>
+          {resumenMedicoLoading && !resumenMedico && (
+            <Card className="patient-section-card">
+              <h2 className="patient-section-title">Resumen médico</h2>
+              <LoadingSpinner />
+            </Card>
+          )}
+          {resumenMedico && <MedicalSummaryCard resumen={resumenMedico} />}
         </div>
-      )}
+        <div style={{ flex: '1 1 280px', minWidth: 0 }}>
+          {citas.data?.length > 0 && (
+            <ProximaCitaCard
+              citas={citas.data}
+              onVerCita={(idCita) => navigate(`/citas/${idCita}`)}
+              onVerTodas={() => navigate(`/citas?paciente=${parsedId}`)}
+            />
+          )}
+        </div>
+      </div>
 
       <div className="patient-detail-cards-grid">
         {PATIENT_DETAIL_SECTIONS.map((section) => (
