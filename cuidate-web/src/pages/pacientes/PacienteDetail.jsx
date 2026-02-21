@@ -209,6 +209,7 @@ export default function PacienteDetail() {
   const [editingDiagnostico, setEditingDiagnostico] = useState(null);
   const [detalleDiagnosticoSeleccionado, setDetalleDiagnosticoSeleccionado] = useState(null);
   const [signosModalOpen, setSignosModalOpen] = useState(false);
+  const [signosCitaId, setSignosCitaId] = useState(null);
   const [diagnosticoModalOpen, setDiagnosticoModalOpen] = useState(false);
   const [vacunaModalOpen, setVacunaModalOpen] = useState(false);
   const [editingVacuna, setEditingVacuna] = useState(null);
@@ -972,6 +973,7 @@ export default function PacienteDetail() {
             hba1c_porcentaje: hba1c ?? undefined,
             observaciones: signosForm.observaciones.trim() || undefined,
           };
+          if (!editingSignoId && signosCitaId) body.id_cita = signosCitaId;
           try {
             if (editingSignoId) {
               await apiUpdateSignosVitales(parsedId, editingSignoId, body);
@@ -982,6 +984,7 @@ export default function PacienteDetail() {
             }
             setSignosForm(emptySignosForm);
             setEditingSignoId(null);
+            setSignosCitaId(null);
             loadSignos();
             setSignosModalOpen(false);
           } catch (e) {
@@ -1055,6 +1058,7 @@ export default function PacienteDetail() {
                   onClick={() => {
                     setSignosSubmitError('');
                     setEditingSignoId(null);
+                    setSignosCitaId(null);
                     setSignosForm(emptySignosForm);
                     setSignosModalOpen(true);
                   }}
@@ -1067,6 +1071,7 @@ export default function PacienteDetail() {
                     if (!signosSubmitting) {
                       setSignosModalOpen(false);
                       setEditingSignoId(null);
+                      setSignosCitaId(null);
                     }
                   }}
                   title={editingSignoId ? 'Editar registro de signos vitales' : 'Nuevo registro de signos vitales'}
@@ -3277,6 +3282,8 @@ export default function PacienteDetail() {
         loading={citaDetalleLoading}
         onVerEnPagina={(idCita) => navigate(`/citas/${idCita}`)}
         canEditMedical={canEditMedical}
+        onCompletarWizard={(idCita) => { closeDetalleCita(); navigate(`/citas/${idCita}`); }}
+        onSoloSignosVitales={(idCita) => { closeDetalleCita(); setSignosCitaId(idCita); setSignosForm({ peso_kg: '', talla_m: '', medida_cintura_cm: '', presion_sistolica: '', presion_diastolica: '', glucosa_mg_dl: '', colesterol_mg_dl: '', colesterol_ldl: '', colesterol_hdl: '', trigliceridos_mg_dl: '', hba1c_porcentaje: '', observaciones: '' }); setSignosModalOpen(true); }}
       />
       <Modal open={showAllComorbilidadesOpen} onClose={() => setShowAllComorbilidadesOpen(false)} title="Comorbilidades registradas" footer={null} width={560}>
         {allComorbilidadesLoading ? <LoadingSpinner /> : allComorbilidadesData.length === 0 ? <EmptyState message="No hay comorbilidades" /> : (

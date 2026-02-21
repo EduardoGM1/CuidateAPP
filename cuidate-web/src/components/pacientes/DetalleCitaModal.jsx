@@ -28,8 +28,9 @@ function calcularIMC(pesoKg, tallaM) {
 }
 
 /**
- * Modal de detalle de cita (versión web), similar a la app móvil.
- * Muestra: fecha, estado, doctor, motivo, observaciones, signos vitales y diagnósticos de la cita.
+ * Modal de detalle de cita (versión web), paridad con la app móvil.
+ * Muestra: fecha, estado, doctor, motivo, observaciones, signos vitales y diagnósticos.
+ * Incluye acciones: Completar Cita (Wizard) y Solo Agregar Signos Vitales cuando la cita es editable.
  */
 export default function DetalleCitaModal({
   open,
@@ -38,8 +39,12 @@ export default function DetalleCitaModal({
   loading = false,
   onVerEnPagina,
   canEditMedical = false,
+  onCompletarWizard,
+  onSoloSignosVitales,
 }) {
   const formatearFecha = formatDateTime;
+  const idCita = citaDetalle?.id_cita ?? citaDetalle?.id;
+  const puedeCompletar = canEditMedical && idCita && (citaDetalle?.estado === 'pendiente' || citaDetalle?.estado === 'no_asistida');
 
   return (
     <Modal open={open} onClose={onClose} title="Detalle de cita" footer={null} width={560} destroyOnClose>
@@ -97,6 +102,37 @@ export default function DetalleCitaModal({
               </span>
             )}
           </div>
+
+          {/* Acciones: Completar Cita (Wizard) y Solo Agregar Signos Vitales (paridad con app móvil) */}
+          {puedeCompletar && (onCompletarWizard || onSoloSignosVitales) && (
+            <div style={{ marginBottom: '1rem' }}>
+              {onCompletarWizard && (
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    onClick={() => { onClose(); onCompletarWizard(idCita); }}
+                    style={{ width: '100%', marginBottom: '0.25rem' }}
+                  >
+                    Completar Cita (Wizard)
+                  </Button>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-texto-secundario)' }}>
+                    Recomendado: Flujo guiado paso a paso con guardado progresivo.
+                  </p>
+                </div>
+              )}
+              {onSoloSignosVitales && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => { onClose(); onSoloSignosVitales(idCita); }}
+                  style={{ width: '100%' }}
+                >
+                  Solo Agregar Signos Vitales
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Signos vitales en esta cita */}
           <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}>Signos vitales en esta cita</h4>
