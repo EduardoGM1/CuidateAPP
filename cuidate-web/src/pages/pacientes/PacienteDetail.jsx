@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getPacienteById, getPacienteDoctores, assignDoctorToPaciente, unassignDoctorFromPaciente } from '../../api/pacientes';
 import { getDoctores } from '../../api/doctores';
-import { createCita } from '../../api/citas';
+import { createCita, getCitaById } from '../../api/citas';
 import { getMedicamentos } from '../../api/medicamentos';
 import { useAuthStore } from '../../stores/authStore';
 import { getExpedienteHTML, getFormaData, getFormaMesesDisponibles } from '../../api/reportes';
@@ -49,6 +49,7 @@ import MedicalSummaryCard from '../../components/pacientes/MedicalSummaryCard';
 import ProximaCitaCard from '../../components/pacientes/ProximaCitaCard';
 import SectionCard from '../../components/pacientes/SectionCard';
 import PatientSectionModal from '../../components/pacientes/PatientSectionModal';
+import DetalleCitaModal from '../../components/pacientes/DetalleCitaModal';
 import { PATIENT_DETAIL_SECTIONS } from '../../constants/patientDetailSections';
 import { getVacunas } from '../../api/vacunas';
 import { getComorbilidades } from '../../api/comorbilidades';
@@ -214,6 +215,9 @@ export default function PacienteDetail() {
   const [allSignosLoading, setAllSignosLoading] = useState(false);
   const [allCitasData, setAllCitasData] = useState([]);
   const [allCitasLoading, setAllCitasLoading] = useState(false);
+  const [detalleCitaId, setDetalleCitaId] = useState(null);
+  const [citaDetalle, setCitaDetalle] = useState(null);
+  const [citaDetalleLoading, setCitaDetalleLoading] = useState(false);
   const [allComorbilidadesData, setAllComorbilidadesData] = useState([]);
   const [allComorbilidadesLoading, setAllComorbilidadesLoading] = useState(false);
 
@@ -283,6 +287,23 @@ export default function PacienteDetail() {
         .finally(() => setAllCitasLoading(false));
     }
   }, [showAllCitasOpen, parsedId]);
+
+  const openDetalleCita = useCallback((idCita) => {
+    const id = idCita ?? null;
+    if (!id) return;
+    setDetalleCitaId(id);
+    setCitaDetalle(null);
+    setCitaDetalleLoading(true);
+    getCitaById(id)
+      .then((data) => setCitaDetalle(data))
+      .catch(() => setCitaDetalle(null))
+      .finally(() => setCitaDetalleLoading(false));
+  }, []);
+
+  const closeDetalleCita = useCallback(() => {
+    setDetalleCitaId(null);
+    setCitaDetalle(null);
+  }, []);
 
   useEffect(() => {
     if (showAllComorbilidadesOpen && parsedId > 0) {
@@ -842,10 +863,10 @@ export default function PacienteDetail() {
                     key={`${c.id_cita ?? c.id}-${index}`}
                     className="tracking-item"
                     style={{ cursor: 'pointer' }}
-                    onClick={() => navigate(`/citas/${c.id_cita ?? c.id}`)}
+                    onClick={() => openDetalleCita(c.id_cita ?? c.id)}
                     role="button"
                     tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/citas/${c.id_cita ?? c.id}`); } }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetalleCita(c.id_cita ?? c.id); } }}
                   >
                     <span className="tracking-item-date">{formatDateTime(c.fecha_cita)}</span>
                     <span className="tracking-item-body">
@@ -2656,7 +2677,7 @@ export default function PacienteDetail() {
         {allCitasLoading ? <LoadingSpinner /> : allCitasData.length === 0 ? <EmptyState message="No hay citas" /> : (
           <ul className="tracking-list" style={{ maxHeight: '70vh', overflow: 'auto' }}>
             {allCitasData.map((c, i) => (
-              <li key={c.id_cita ?? c.id ?? i} className="tracking-item" style={{ cursor: 'pointer' }} onClick={() => { setShowAllCitasOpen(false); navigate(`/citas/${c.id_cita ?? c.id}`); }}>
+              <li key={c.id_cita ?? c.id ?? i} className="tracking-item" style={{ cursor: 'pointer' }} onClick={() => { setShowAllCitasOpen(false); openDetalleCita(c.id_cita ?? c.id); }}>
                 <span className="tracking-item-date">{formatDateTime(c.fecha_cita)}</span>
                 <span className="tracking-item-body">
                   {sanitizeForDisplay(c.doctor_nombre) || '—'}{' '}
@@ -2667,6 +2688,15 @@ export default function PacienteDetail() {
           </ul>
         )}
       </Modal>
+
+      <DetalleCitaModal
+        open={!!detalleCitaId}
+        onClose={closeDetalleCita}
+        citaDetalle={citaDetalle}
+        loading={citaDetalleLoading}
+        onVerEnPagina={(idCita) => navigate(`/citas/${idCita}`)}
+        canEditMedical={canEditMedical}
+      />
       <Modal open={showAllComorbilidadesOpen} onClose={() => setShowAllComorbilidadesOpen(false)} title="Comorbilidades registradas" footer={null} width={560}>
         {allComorbilidadesLoading ? <LoadingSpinner /> : allComorbilidadesData.length === 0 ? <EmptyState message="No hay comorbilidades" /> : (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: '70vh', overflow: 'auto' }}>
