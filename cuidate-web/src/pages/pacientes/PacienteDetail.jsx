@@ -23,6 +23,7 @@ import {
   getPacienteDeteccionesTuberculosis,
   getPacienteResumenMedico,
   createSignosVitales as apiCreateSignosVitales,
+  updateSignosVitales as apiUpdateSignosVitales,
   deleteSignosVitales as apiDeleteSignosVitales,
   createDiagnostico as apiCreateDiagnostico,
   updateDiagnostico as apiUpdateDiagnostico,
@@ -31,17 +32,25 @@ import {
   updatePacienteRedApoyo as apiUpdateRedApoyo,
   deletePacienteRedApoyo as apiDeleteRedApoyo,
   createPacienteEsquemaVacunacion as apiCreateEsquemaVacunacion,
+  updatePacienteEsquemaVacunacion as apiUpdateEsquemaVacunacion,
   deletePacienteEsquemaVacunacion as apiDeleteEsquemaVacunacion,
   addPacienteComorbilidad as apiAddComorbilidad,
+  updatePacienteComorbilidad as apiUpdateComorbilidad,
   deletePacienteComorbilidad as apiDeleteComorbilidad,
   createSesionEducativa as apiCreateSesionEducativa,
+  updateSesionEducativa as apiUpdateSesionEducativa,
   deleteSesionEducativa as apiDeleteSesionEducativa,
   createSaludBucal as apiCreateSaludBucal,
+  updateSaludBucal as apiUpdateSaludBucal,
   deleteSaludBucal as apiDeleteSaludBucal,
   createDeteccionTuberculosis as apiCreateDeteccionTb,
+  updateDeteccionTuberculosis as apiUpdateDeteccionTb,
   deleteDeteccionTuberculosis as apiDeleteDeteccionTb,
   createPacientePlanMedicacion as apiCreatePlanMedicacion,
+  updatePacientePlanMedicacion as apiUpdatePlanMedicacion,
   deletePacientePlanMedicacion as apiDeletePlanMedicacion,
+  updateDeteccionComplicacion as apiUpdateDeteccionComplicacion,
+  deleteDeteccionComplicacion as apiDeleteDeteccionComplicacion,
 } from '../../api/pacienteMedicalData';
 import { PageHeader, DataCard } from '../../components/shared';
 import { LoadingSpinner, Button, Card, Badge, EmptyState, Input, Select, TextArea, Modal } from '../../components/ui';
@@ -145,6 +154,7 @@ export default function PacienteDetail() {
     observaciones: '',
   });
   const [sesionModalOpen, setSesionModalOpen] = useState(false);
+  const [editingSesion, setEditingSesion] = useState(null);
   const [sesionSubmitting, setSesionSubmitting] = useState(false);
   const [sesionError, setSesionError] = useState('');
   const [saludForm, setSaludForm] = useState({
@@ -181,6 +191,7 @@ export default function PacienteDetail() {
   });
   const [signosSubmitError, setSignosSubmitError] = useState('');
   const [signosSubmitting, setSignosSubmitting] = useState(false);
+  const [editingSignoId, setEditingSignoId] = useState(null);
   const [newDiagnosticoDescripcion, setNewDiagnosticoDescripcion] = useState('');
   const [newDiagnosticoCitaId, setNewDiagnosticoCitaId] = useState('');
   const [diagnosticoSubmitError, setDiagnosticoSubmitError] = useState('');
@@ -190,9 +201,15 @@ export default function PacienteDetail() {
   const [signosModalOpen, setSignosModalOpen] = useState(false);
   const [diagnosticoModalOpen, setDiagnosticoModalOpen] = useState(false);
   const [vacunaModalOpen, setVacunaModalOpen] = useState(false);
+  const [editingVacuna, setEditingVacuna] = useState(null);
   const [comorbilidadModalOpen, setComorbilidadModalOpen] = useState(false);
+  const [editingComorbilidad, setEditingComorbilidad] = useState(null);
+  const [editingDeteccion, setEditingDeteccion] = useState(null);
+  const [deteccionEditForm, setDeteccionEditForm] = useState({ fecha_deteccion: '', fecha_diagnostico: '', observaciones: '' });
   const [saludModalOpen, setSaludModalOpen] = useState(false);
+  const [editingSalud, setEditingSalud] = useState(null);
   const [tbModalOpen, setTbModalOpen] = useState(false);
+  const [editingTb, setEditingTb] = useState(null);
   const [assignDoctorModalOpen, setAssignDoctorModalOpen] = useState(false);
 
   const [citaModalOpen, setCitaModalOpen] = useState(false);
@@ -202,6 +219,8 @@ export default function PacienteDetail() {
   const [citaError, setCitaError] = useState('');
 
   const [medicacionModalOpen, setMedicacionModalOpen] = useState(false);
+  const [planDetalleSeleccionado, setPlanDetalleSeleccionado] = useState(null);
+  const [editingPlanMedicacion, setEditingPlanMedicacion] = useState(null);
   const [medicacionForm, setMedicacionForm] = useState({
     fecha_inicio: '',
     observaciones: '',
@@ -316,6 +335,28 @@ export default function PacienteDetail() {
   const closeDetalleSigno = useCallback(() => {
     setSignoDetalleSeleccionado(null);
   }, []);
+
+  const openSignosFormForEdit = useCallback((signo) => {
+    if (!signo) return;
+    setSignosForm({
+      peso_kg: signo.peso_kg != null ? String(signo.peso_kg) : '',
+      talla_m: signo.talla_m != null ? String(signo.talla_m) : '',
+      medida_cintura_cm: signo.medida_cintura_cm != null ? String(signo.medida_cintura_cm) : '',
+      presion_sistolica: signo.presion_sistolica != null ? String(signo.presion_sistolica) : '',
+      presion_diastolica: signo.presion_diastolica != null ? String(signo.presion_diastolica) : '',
+      glucosa_mg_dl: signo.glucosa_mg_dl != null ? String(signo.glucosa_mg_dl) : '',
+      colesterol_mg_dl: signo.colesterol_mg_dl != null ? String(signo.colesterol_mg_dl) : '',
+      colesterol_ldl: signo.colesterol_ldl != null ? String(signo.colesterol_ldl) : '',
+      colesterol_hdl: signo.colesterol_hdl != null ? String(signo.colesterol_hdl) : '',
+      trigliceridos_mg_dl: signo.trigliceridos_mg_dl != null ? String(signo.trigliceridos_mg_dl) : '',
+      hba1c_porcentaje: signo.hba1c_porcentaje != null ? String(signo.hba1c_porcentaje) : '',
+      observaciones: signo.observaciones != null ? String(signo.observaciones) : '',
+    });
+    setEditingSignoId(signo.id_signo ?? signo.id_signo_vital ?? signo.id ?? null);
+    setSignosSubmitError('');
+    closeDetalleSigno();
+    setSignosModalOpen(true);
+  }, [closeDetalleSigno]);
 
   useEffect(() => {
     if (showAllComorbilidadesOpen && parsedId > 0) {
@@ -965,25 +1006,32 @@ export default function PacienteDetail() {
           }
           setSignosSubmitError('');
           setSignosSubmitting(true);
+          const body = {
+            peso_kg: peso,
+            talla_m: talla,
+            medida_cintura_cm: medidaCintura,
+            presion_sistolica: ps,
+            presion_diastolica: pd,
+            glucosa_mg_dl: glucosa,
+            colesterol_mg_dl: col,
+            colesterol_ldl: ldl || undefined,
+            colesterol_hdl: hdl || undefined,
+            trigliceridos_mg_dl: trig,
+            hba1c_porcentaje: hba1c ?? undefined,
+            observaciones: signosForm.observaciones.trim() || undefined,
+          };
           try {
-            await apiCreateSignosVitales(parsedId, {
-              peso_kg: peso,
-              talla_m: talla,
-              medida_cintura_cm: medidaCintura,
-              presion_sistolica: ps,
-              presion_diastolica: pd,
-              glucosa_mg_dl: glucosa,
-              colesterol_mg_dl: col,
-              colesterol_ldl: ldl || undefined,
-              colesterol_hdl: hdl || undefined,
-              trigliceridos_mg_dl: trig,
-              hba1c_porcentaje: hba1c ?? undefined,
-              observaciones: signosForm.observaciones.trim() || undefined,
-            });
+            if (editingSignoId) {
+              await apiUpdateSignosVitales(parsedId, editingSignoId, body);
+              message.success('Registro de signos vitales actualizado');
+            } else {
+              await apiCreateSignosVitales(parsedId, body);
+              message.success('Registro de signos vitales guardado');
+            }
             setSignosForm(emptySignosForm);
+            setEditingSignoId(null);
             loadSignos();
             setSignosModalOpen(false);
-            message.success('Registro de signos vitales guardado');
           } catch (e) {
             const errMsg = e?.response?.data?.error || e?.message || 'Error al guardar';
             setSignosSubmitError(errMsg);
@@ -1054,6 +1102,7 @@ export default function PacienteDetail() {
                   type="button"
                   onClick={() => {
                     setSignosSubmitError('');
+                    setEditingSignoId(null);
                     setSignosForm(emptySignosForm);
                     setSignosModalOpen(true);
                   }}
@@ -1065,10 +1114,11 @@ export default function PacienteDetail() {
                   onClose={() => {
                     if (!signosSubmitting) {
                       setSignosModalOpen(false);
+                      setEditingSignoId(null);
                     }
                   }}
-                  title="Nuevo registro de signos vitales"
-                  okText={signosSubmitting ? 'Guardando…' : 'Guardar registro'}
+                  title={editingSignoId ? 'Editar registro de signos vitales' : 'Nuevo registro de signos vitales'}
+                  okText={signosSubmitting ? 'Guardando…' : (editingSignoId ? 'Guardar cambios' : 'Guardar registro')}
                   confirmLoading={signosSubmitting}
                   onOk={handleCreateSignos}
                   width={720}
@@ -1447,24 +1497,31 @@ export default function PacienteDetail() {
           }
           setMedicacionError('');
           setMedicacionSubmitting(true);
+          const payload = {
+            fecha_inicio: fechaInicio,
+            observaciones: medicacionForm.observaciones?.trim() || undefined,
+            medicamentos: items.map((m) => ({
+              id_medicamento: parsePositiveInt(m.id_medicamento, 0),
+              dosis: (m.dosis || '').trim() || undefined,
+              frecuencia: (m.frecuencia || '').trim() || undefined,
+            })),
+          };
           try {
-            await apiCreatePlanMedicacion(parsedId, {
-              fecha_inicio: fechaInicio,
-              observaciones: medicacionForm.observaciones?.trim() || undefined,
-              medicamentos: items.map((m) => ({
-                id_medicamento: parsePositiveInt(m.id_medicamento, 0),
-                dosis: (m.dosis || '').trim() || undefined,
-                frecuencia: (m.frecuencia || '').trim() || undefined,
-              })),
-            });
+            if (editingPlanMedicacion) {
+              await apiUpdatePlanMedicacion(parsedId, editingPlanMedicacion.id_plan ?? editingPlanMedicacion.id, payload);
+              message.success('Plan de medicación actualizado');
+            } else {
+              await apiCreatePlanMedicacion(parsedId, payload);
+              message.success('Plan de medicación creado');
+            }
             setMedicacionForm({
               fecha_inicio: '',
               observaciones: '',
               medicamentos: [{ id_medicamento: '', dosis: '', frecuencia: '' }],
             });
+            setEditingPlanMedicacion(null);
             setMedicacionModalOpen(false);
             loadMedicamentos();
-            message.success('Plan de medicación creado');
           } catch (e) {
             setMedicacionError(e?.response?.data?.error || e?.message || 'Error al guardar');
             message.error(e?.response?.data?.error || e?.message);
@@ -1493,6 +1550,7 @@ export default function PacienteDetail() {
                   variant="primary"
                   onClick={() => {
                     setMedicacionError('');
+                    setEditingPlanMedicacion(null);
                     setMedicacionForm({
                       fecha_inicio: '',
                       observaciones: '',
@@ -1512,7 +1570,14 @@ export default function PacienteDetail() {
             ) : (
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                 {medicamentos.data.map((m, i) => (
-                  <li key={m.id_plan ?? m.id ?? i} style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--color-borde-claro)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <li
+                    key={m.id_plan ?? m.id ?? i}
+                    style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--color-borde-claro)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', cursor: 'pointer' }}
+                    onClick={() => setPlanDetalleSeleccionado(m)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPlanDetalleSeleccionado(m); } }}
+                  >
                     <div>
                       <strong>{sanitizeForDisplay(m.nombre_medicamento ?? m.medicamento) || '—'}</strong>
                       {(m.dosis || m.frecuencia) && (
@@ -1533,33 +1598,126 @@ export default function PacienteDetail() {
                       )}
                     </div>
                     {canEditMedical && (
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        onClick={async () => {
-                          if (!window.confirm('¿Eliminar este plan de medicación?')) return;
-                          try {
-                            await apiDeletePlanMedicacion(parsedId, m.id_plan ?? m.id);
-                            loadMedicamentos();
-                            message.success('Plan eliminado');
-                          } catch (e) {
-                            message.error(e?.response?.data?.error || e?.message || 'Error al eliminar');
-                          }
-                        }}
-                      >
-                        Eliminar
-                      </Button>
+                      <span style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }} onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          variant="primary"
+                          size="small"
+                          onClick={() => {
+                            const meds = Array.isArray(m.medicamentos) && m.medicamentos.length > 0
+                              ? m.medicamentos.map((med) => ({
+                                  id_medicamento: String(med.id_medicamento ?? med.id ?? ''),
+                                  dosis: med.dosis ?? '',
+                                  frecuencia: med.frecuencia ?? '',
+                                }))
+                              : [{ id_medicamento: '', dosis: '', frecuencia: '' }];
+                            setMedicacionError('');
+                            setMedicacionForm({
+                              fecha_inicio: m.fecha_inicio ? String(m.fecha_inicio).slice(0, 10) : '',
+                              observaciones: m.observaciones ?? '',
+                              medicamentos: meds,
+                            });
+                            setEditingPlanMedicacion(m);
+                            setPlanDetalleSeleccionado(null);
+                            setMedicacionModalOpen(true);
+                          }}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="small"
+                          onClick={async () => {
+                            if (!window.confirm('¿Eliminar este plan de medicación?')) return;
+                            try {
+                              await apiDeletePlanMedicacion(parsedId, m.id_plan ?? m.id);
+                              loadMedicamentos();
+                              setPlanDetalleSeleccionado(null);
+                              message.success('Plan eliminado');
+                            } catch (e) {
+                              message.error(e?.response?.data?.error || e?.message || 'Error al eliminar');
+                            }
+                          }}
+                        >
+                          Eliminar
+                        </Button>
+                      </span>
                     )}
                   </li>
                 ))}
               </ul>
             )}
+            {planDetalleSeleccionado && (
+              <Modal
+                open={!!planDetalleSeleccionado}
+                onClose={() => setPlanDetalleSeleccionado(null)}
+                title="Detalle del plan de medicación"
+                footer={null}
+                width={520}
+              >
+                {(() => {
+                  const p = planDetalleSeleccionado;
+                  return (
+                    <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                      <p><strong>Fecha de inicio:</strong> {formatDate(p.fecha_inicio)}</p>
+                      <p><strong>Estado:</strong> {p.activo ? 'Activo' : 'Finalizado'}</p>
+                      {p.observaciones && <p><strong>Observaciones:</strong> {sanitizeForDisplay(p.observaciones)}</p>}
+                      {Array.isArray(p.medicamentos) && p.medicamentos.length > 0 && (
+                        <>
+                          <p style={{ marginTop: '0.75rem' }}><strong>Medicamentos:</strong></p>
+                          <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                            {p.medicamentos.map((med, j) => (
+                              <li key={j}>
+                                {sanitizeForDisplay(med.nombre_medicamento ?? med.medicamento) || '—'}
+                                {(med.dosis || med.frecuencia) && ` — ${[med.dosis, med.frecuencia].filter(Boolean).join(' · ')}`}
+                              </li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                      <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        {canEditMedical && (
+                          <Button
+                            variant="primary"
+                            size="small"
+                            onClick={() => {
+                              const meds = Array.isArray(p.medicamentos) && p.medicamentos.length > 0
+                                ? p.medicamentos.map((med) => ({
+                                    id_medicamento: String(med.id_medicamento ?? med.id ?? ''),
+                                    dosis: med.dosis ?? '',
+                                    frecuencia: med.frecuencia ?? '',
+                                  }))
+                                : [{ id_medicamento: '', dosis: '', frecuencia: '' }];
+                              setMedicacionForm({
+                                fecha_inicio: p.fecha_inicio ? String(p.fecha_inicio).slice(0, 10) : '',
+                                observaciones: p.observaciones ?? '',
+                                medicamentos: meds,
+                              });
+                              setEditingPlanMedicacion(p);
+                              setPlanDetalleSeleccionado(null);
+                              setMedicacionModalOpen(true);
+                            }}
+                          >
+                            Editar plan
+                          </Button>
+                        )}
+                        <Button variant="secondary" size="small" onClick={() => setPlanDetalleSeleccionado(null)}>Cerrar</Button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </Modal>
+            )}
             {canEditMedical && (
               <Modal
                 open={medicacionModalOpen}
-                onClose={() => { if (!medicacionSubmitting) setMedicacionModalOpen(false); }}
-                title="Nuevo plan de medicación"
-                okText={medicacionSubmitting ? 'Guardando…' : 'Guardar plan'}
+                onClose={() => {
+                  if (!medicacionSubmitting) {
+                    setMedicacionModalOpen(false);
+                    setEditingPlanMedicacion(null);
+                  }
+                }}
+                title={editingPlanMedicacion ? 'Editar plan de medicación' : 'Nuevo plan de medicación'}
+                okText={medicacionSubmitting ? 'Guardando…' : (editingPlanMedicacion ? 'Guardar cambios' : 'Guardar plan')}
                 confirmLoading={medicacionSubmitting}
                 onOk={handleCreatePlanMedicacion}
                 width={560}
@@ -1676,26 +1834,44 @@ export default function PacienteDetail() {
                       </span>
                     </div>
                     {canEditMedical && (
-                      <Button
-                        type="button"
-                        size="small"
-                        variant="secondary"
-                        onClick={async () => {
-                          const idEsquema = v.id_esquema ?? v.id;
-                          if (!idEsquema) return;
-                          // eslint-disable-next-line no-alert
-                          if (!window.confirm('¿Eliminar este registro de vacunación?')) return;
-                          try {
-                            await apiDeleteEsquemaVacunacion(parsedId, idEsquema);
-                            loadVacunacion();
-                          } catch (e) {
-                            // eslint-disable-next-line no-console
-                            console.error('Error al eliminar esquema de vacunación', e);
-                          }
-                        }}
-                      >
-                        Eliminar
-                      </Button>
+                      <span style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <Button
+                          type="button"
+                          size="small"
+                          variant="primary"
+                          onClick={() => {
+                            setVacunaError('');
+                            setVacunaForm({
+                              id_vacuna: String(v.id_vacuna ?? v.id_vacuna_fk ?? v.id ?? ''),
+                              fecha_aplicacion: v.fecha_aplicacion ? String(v.fecha_aplicacion).slice(0, 10) : '',
+                              lote: v.lote ?? '',
+                              observaciones: v.observaciones ?? '',
+                            });
+                            setEditingVacuna(v);
+                            setVacunaModalOpen(true);
+                          }}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          type="button"
+                          size="small"
+                          variant="secondary"
+                          onClick={async () => {
+                            const idEsquema = v.id_esquema ?? v.id;
+                            if (!idEsquema) return;
+                            if (!window.confirm('¿Eliminar este registro de vacunación?')) return;
+                            try {
+                              await apiDeleteEsquemaVacunacion(parsedId, idEsquema);
+                              loadVacunacion();
+                            } catch (e) {
+                              console.error('Error al eliminar esquema de vacunación', e);
+                            }
+                          }}
+                        >
+                          Eliminar
+                        </Button>
+                      </span>
                     )}
                   </li>
                 ))}
@@ -1708,6 +1884,7 @@ export default function PacienteDetail() {
                   variant="primary"
                   onClick={() => {
                     setVacunaError('');
+                    setEditingVacuna(null);
                     setVacunaForm({
                       id_vacuna: '',
                       fecha_aplicacion: '',
@@ -1724,10 +1901,11 @@ export default function PacienteDetail() {
                   onClose={() => {
                     if (!vacunaSubmitting) {
                       setVacunaModalOpen(false);
+                      setEditingVacuna(null);
                     }
                   }}
-                  title="Agregar vacuna"
-                  okText={vacunaSubmitting ? 'Guardando…' : 'Guardar vacuna'}
+                  title={editingVacuna ? 'Editar vacuna' : 'Agregar vacuna'}
+                  okText={vacunaSubmitting ? 'Guardando…' : (editingVacuna ? 'Guardar cambios' : 'Guardar vacuna')}
                   confirmLoading={vacunaSubmitting}
                   onOk={async () => {
                     const idVac = vacunaForm.id_vacuna;
@@ -1739,19 +1917,25 @@ export default function PacienteDetail() {
                     setVacunaError('');
                     setVacunaSubmitting(true);
                     try {
-                      await apiCreateEsquemaVacunacion(parsedId, {
-                        id_vacuna: idVac,
-                        vacuna: undefined,
-                        fecha_aplicacion: fecha,
-                        lote: vacunaForm.lote?.trim() || undefined,
-                        observaciones: vacunaForm.observaciones?.trim() || undefined,
-                      });
-                      setVacunaForm({
-                        id_vacuna: '',
-                        fecha_aplicacion: '',
-                        lote: '',
-                        observaciones: '',
-                      });
+                      if (editingVacuna) {
+                        await apiUpdateEsquemaVacunacion(parsedId, editingVacuna.id_esquema ?? editingVacuna.id, {
+                          id_vacuna: idVac,
+                          fecha_aplicacion: fecha,
+                          lote: vacunaForm.lote?.trim() || undefined,
+                          observaciones: vacunaForm.observaciones?.trim() || undefined,
+                        });
+                        message.success('Vacuna actualizada');
+                      } else {
+                        await apiCreateEsquemaVacunacion(parsedId, {
+                          id_vacuna: idVac,
+                          vacuna: undefined,
+                          fecha_aplicacion: fecha,
+                          lote: vacunaForm.lote?.trim() || undefined,
+                          observaciones: vacunaForm.observaciones?.trim() || undefined,
+                        });
+                      }
+                      setVacunaForm({ id_vacuna: '', fecha_aplicacion: '', lote: '', observaciones: '' });
+                      setEditingVacuna(null);
                       setVacunaModalOpen(false);
                       loadVacunacion();
                     } catch (e) {
@@ -1858,26 +2042,43 @@ export default function PacienteDetail() {
                       )}
                     </div>
                     {canEditMedical && (
-                      <Button
-                        type="button"
-                        size="small"
-                        variant="secondary"
-                        onClick={async () => {
-                          const idCom = c.id_relacion ?? c.id_paciente_comorbilidad ?? c.id_comorbilidad ?? c.id;
-                          if (!idCom) return;
-                          // eslint-disable-next-line no-alert
-                          if (!window.confirm('¿Eliminar esta comorbilidad del paciente?')) return;
-                          try {
-                            await apiDeleteComorbilidad(parsedId, idCom);
-                            loadComorbilidades();
-                          } catch (e) {
-                            // eslint-disable-next-line no-console
-                            console.error('Error al eliminar comorbilidad', e);
-                          }
-                        }}
-                      >
-                        Eliminar
-                      </Button>
+                      <span style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <Button
+                          type="button"
+                          size="small"
+                          variant="primary"
+                          onClick={() => {
+                            setComorbilidadError('');
+                            setComorbilidadForm({
+                              id_comorbilidad: String(c.id_comorbilidad ?? c.id ?? ''),
+                              fecha_deteccion: c.fecha_deteccion ? String(c.fecha_deteccion).slice(0, 10) : '',
+                              observaciones: c.observaciones ?? '',
+                            });
+                            setEditingComorbilidad(c);
+                            setComorbilidadModalOpen(true);
+                          }}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          type="button"
+                          size="small"
+                          variant="secondary"
+                          onClick={async () => {
+                            const idRel = c.id ?? c.id_relacion ?? c.id_paciente_comorbilidad ?? c.id_comorbilidad;
+                            if (!idRel) return;
+                            if (!window.confirm('¿Eliminar esta comorbilidad del paciente?')) return;
+                            try {
+                              await apiDeleteComorbilidad(parsedId, idRel);
+                              loadComorbilidades();
+                            } catch (e) {
+                              console.error('Error al eliminar comorbilidad', e);
+                            }
+                          }}
+                        >
+                          Eliminar
+                        </Button>
+                      </span>
                     )}
                   </li>
                 ))}
@@ -1897,6 +2098,7 @@ export default function PacienteDetail() {
                   variant="primary"
                   onClick={() => {
                     setComorbilidadError('');
+                    setEditingComorbilidad(null);
                     setComorbilidadForm({
                       id_comorbilidad: '',
                       fecha_deteccion: '',
@@ -1912,10 +2114,11 @@ export default function PacienteDetail() {
                   onClose={() => {
                     if (!comorbilidadSubmitting) {
                       setComorbilidadModalOpen(false);
+                      setEditingComorbilidad(null);
                     }
                   }}
-                  title="Agregar comorbilidad"
-                  okText={comorbilidadSubmitting ? 'Guardando…' : 'Guardar comorbilidad'}
+                  title={editingComorbilidad ? 'Editar comorbilidad' : 'Agregar comorbilidad'}
+                  okText={comorbilidadSubmitting ? 'Guardando…' : (editingComorbilidad ? 'Guardar cambios' : 'Guardar comorbilidad')}
                   confirmLoading={comorbilidadSubmitting}
                   onOk={async () => {
                     const idCom = comorbilidadForm.id_comorbilidad;
@@ -1926,16 +2129,22 @@ export default function PacienteDetail() {
                     setComorbilidadError('');
                     setComorbilidadSubmitting(true);
                     try {
-                      await apiAddComorbilidad(parsedId, {
+                      const body = {
                         id_comorbilidad: idCom,
                         fecha_deteccion: comorbilidadForm.fecha_deteccion || undefined,
                         observaciones: comorbilidadForm.observaciones?.trim() || undefined,
-                      });
-                      setComorbilidadForm({
-                        id_comorbilidad: '',
-                        fecha_deteccion: '',
-                        observaciones: '',
-                      });
+                      };
+                      if (editingComorbilidad) {
+                        const idRel = editingComorbilidad.id ?? editingComorbilidad.id_relacion ?? editingComorbilidad.id_paciente_comorbilidad;
+                        if (idRel) {
+                          await apiUpdateComorbilidad(parsedId, idRel, body);
+                          message.success('Comorbilidad actualizada');
+                        }
+                      } else {
+                        await apiAddComorbilidad(parsedId, body);
+                      }
+                      setComorbilidadForm({ id_comorbilidad: '', fecha_deteccion: '', observaciones: '' });
+                      setEditingComorbilidad(null);
                       setComorbilidadModalOpen(false);
                       loadComorbilidades();
                     } catch (e) {
@@ -2011,7 +2220,8 @@ export default function PacienteDetail() {
             )}
           </Card>
         );
-      case 'detecciones':
+      case 'detecciones': {
+        const deteccionIdForApi = (d) => d.id_deteccion ?? d.id;
         return (
           <Card className="patient-section-card">
             <h2 className="patient-section-title">Detecciones de complicaciones</h2>
@@ -2022,10 +2232,52 @@ export default function PacienteDetail() {
             ) : (
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                 {(deteccionesComplicaciones.data || []).map((d, i) => (
-                  <li key={d.id_deteccion ?? d.id ?? i} style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--color-borde-claro)' }}>
-                    {formatDate(d.fecha_deteccion ?? d.fecha_creacion)} — {sanitizeForDisplay(d.tipo_complicacion ?? d.Comorbilidad?.nombre_comorbilidad) || 'Complicación'}
-                    {d.fecha_diagnostico && ` · Dx: ${formatDate(d.fecha_diagnostico)}`}
-                    {d.observaciones && ` — ${sanitizeForDisplay(d.observaciones)}`}
+                  <li
+                    key={d.id_deteccion ?? d.id ?? i}
+                    style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--color-borde-claro)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}
+                  >
+                    <div>
+                      {formatDate(d.fecha_deteccion ?? d.fecha_creacion)} — {sanitizeForDisplay(d.tipo_complicacion ?? d.Comorbilidad?.nombre_comorbilidad) || 'Complicación'}
+                      {d.fecha_diagnostico && ` · Dx: ${formatDate(d.fecha_diagnostico)}`}
+                      {d.observaciones && ` — ${sanitizeForDisplay(d.observaciones)}`}
+                    </div>
+                    {canEditMedical && (
+                      <span style={{ display: 'flex', gap: '0.5rem' }}>
+                        <Button
+                          type="button"
+                          size="small"
+                          variant="primary"
+                          onClick={() => {
+                            setEditingDeteccion(d);
+                            setDeteccionEditForm({
+                              fecha_deteccion: d.fecha_deteccion ? String(d.fecha_deteccion).slice(0, 10) : '',
+                              fecha_diagnostico: d.fecha_diagnostico ? String(d.fecha_diagnostico).slice(0, 10) : '',
+                              observaciones: d.observaciones ?? '',
+                            });
+                          }}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          type="button"
+                          size="small"
+                          variant="secondary"
+                          onClick={async () => {
+                            const idDet = deteccionIdForApi(d);
+                            if (!idDet) return;
+                            if (!window.confirm('¿Eliminar esta detección?')) return;
+                            try {
+                              await apiDeleteDeteccionComplicacion(parsedId, idDet);
+                              loadDeteccionesComplicaciones();
+                            } catch (e) {
+                              message.error(e?.response?.data?.error || e?.message || 'Error al eliminar');
+                            }
+                          }}
+                        >
+                          Eliminar
+                        </Button>
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -2033,8 +2285,51 @@ export default function PacienteDetail() {
             {deteccionesComplicaciones.total > (deteccionesComplicaciones.data?.length ?? 0) && (
               <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>Total: {deteccionesComplicaciones.total}</p>
             )}
+            {canEditMedical && editingDeteccion && (
+              <Modal
+                open={!!editingDeteccion}
+                onClose={() => { setEditingDeteccion(null); }}
+                title="Editar detección"
+                okText="Guardar cambios"
+                onOk={async () => {
+                  try {
+                    await apiUpdateDeteccionComplicacion(parsedId, deteccionIdForApi(editingDeteccion), {
+                      fecha_deteccion: deteccionEditForm.fecha_deteccion || undefined,
+                      fecha_diagnostico: deteccionEditForm.fecha_diagnostico || undefined,
+                      observaciones: deteccionEditForm.observaciones?.trim() || undefined,
+                    });
+                    message.success('Detección actualizada');
+                    setEditingDeteccion(null);
+                    loadDeteccionesComplicaciones();
+                  } catch (e) {
+                    message.error(e?.response?.data?.error || e?.message || 'Error al actualizar');
+                  }
+                }}
+              >
+                <div style={{ display: 'grid', gap: '0.75rem' }}>
+                  <Input
+                    label="Fecha detección"
+                    type="date"
+                    value={deteccionEditForm.fecha_deteccion}
+                    onChange={(e) => setDeteccionEditForm((f) => ({ ...f, fecha_deteccion: e.target.value }))}
+                  />
+                  <Input
+                    label="Fecha diagnóstico"
+                    type="date"
+                    value={deteccionEditForm.fecha_diagnostico}
+                    onChange={(e) => setDeteccionEditForm((f) => ({ ...f, fecha_diagnostico: e.target.value }))}
+                  />
+                  <Input
+                    label="Observaciones"
+                    value={deteccionEditForm.observaciones}
+                    onChange={(e) => setDeteccionEditForm((f) => ({ ...f, observaciones: e.target.value }))}
+                  />
+                </div>
+              </Modal>
+            )}
           </Card>
         );
+      }
       case 'sesiones-educativas':
         return (
           <Card className="patient-section-card">
@@ -2061,24 +2356,41 @@ export default function PacienteDetail() {
                         )}
                       </div>
                       {canEditMedical && (
-                        <Button
-                          type="button"
-                          size="small"
-                          variant="secondary"
-                          onClick={async () => {
-                            // eslint-disable-next-line no-alert
-                            if (!window.confirm('¿Eliminar esta sesión educativa?')) return;
-                            try {
-                              await apiDeleteSesionEducativa(parsedId, id);
-                              loadSesionesEducativas();
-                            } catch (e) {
-                              // eslint-disable-next-line no-console
-                              console.error('Error al eliminar sesión educativa', e);
-                            }
-                          }}
-                        >
-                          Eliminar
-                        </Button>
+                        <span style={{ display: 'flex', gap: '0.5rem' }}>
+                          <Button
+                            type="button"
+                            size="small"
+                            variant="primary"
+                            onClick={() => {
+                              setSesionError('');
+                              setSesionForm({
+                                fecha_sesion: s.fecha_sesion ? String(s.fecha_sesion).slice(0, 10) : '',
+                                tipo_sesion: s.tipo_sesion ?? '',
+                                observaciones: s.observaciones ?? '',
+                              });
+                              setEditingSesion(s);
+                              setSesionModalOpen(true);
+                            }}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            type="button"
+                            size="small"
+                            variant="secondary"
+                            onClick={async () => {
+                              if (!window.confirm('¿Eliminar esta sesión educativa?')) return;
+                              try {
+                                await apiDeleteSesionEducativa(parsedId, id);
+                                loadSesionesEducativas();
+                              } catch (e) {
+                                console.error('Error al eliminar sesión educativa', e);
+                              }
+                            }}
+                          >
+                            Eliminar
+                          </Button>
+                        </span>
                       )}
                     </li>
                   );
@@ -2095,6 +2407,7 @@ export default function PacienteDetail() {
                   variant="primary"
                   onClick={() => {
                     setSesionError('');
+                    setEditingSesion(null);
                     setSesionForm({ fecha_sesion: '', tipo_sesion: '', observaciones: '' });
                     setSesionModalOpen(true);
                   }}
@@ -2106,10 +2419,11 @@ export default function PacienteDetail() {
                   onClose={() => {
                     if (!sesionSubmitting) {
                       setSesionModalOpen(false);
+                      setEditingSesion(null);
                     }
                   }}
-                  title="Nueva sesión educativa"
-                  okText={sesionSubmitting ? 'Guardando…' : 'Guardar sesión'}
+                  title={editingSesion ? 'Editar sesión educativa' : 'Nueva sesión educativa'}
+                  okText={sesionSubmitting ? 'Guardando…' : (editingSesion ? 'Guardar cambios' : 'Guardar sesión')}
                   confirmLoading={sesionSubmitting}
                   onOk={async () => {
                     const fecha = (sesionForm.fecha_sesion || '').trim();
@@ -2121,12 +2435,19 @@ export default function PacienteDetail() {
                     setSesionError('');
                     setSesionSubmitting(true);
                     try {
-                      await apiCreateSesionEducativa(parsedId, {
+                      const body = {
                         fecha_sesion: fecha,
                         tipo_sesion: tipo,
                         observaciones: sesionForm.observaciones?.trim() || undefined,
-                      });
+                      };
+                      if (editingSesion) {
+                        await apiUpdateSesionEducativa(parsedId, editingSesion.id_sesion ?? editingSesion.id, body);
+                        message.success('Sesión actualizada');
+                      } else {
+                        await apiCreateSesionEducativa(parsedId, body);
+                      }
                       setSesionForm({ fecha_sesion: '', tipo_sesion: '', observaciones: '' });
+                      setEditingSesion(null);
                       setSesionModalOpen(false);
                       loadSesionesEducativas();
                     } catch (e) {
@@ -2198,24 +2519,42 @@ export default function PacienteDetail() {
                         )}
                       </div>
                       {canEditMedical && (
-                        <Button
-                          type="button"
-                          size="small"
-                          variant="secondary"
-                          onClick={async () => {
-                            // eslint-disable-next-line no-alert
-                            if (!window.confirm('¿Eliminar este registro de salud bucal?')) return;
-                            try {
-                              await apiDeleteSaludBucal(parsedId, id);
-                              loadSaludBucal();
-                            } catch (e) {
-                              // eslint-disable-next-line no-console
-                              console.error('Error al eliminar salud bucal', e);
-                            }
-                          }}
-                        >
-                          Eliminar
-                        </Button>
+                        <span style={{ display: 'flex', gap: '0.5rem' }}>
+                          <Button
+                            type="button"
+                            size="small"
+                            variant="primary"
+                            onClick={() => {
+                              setSaludError('');
+                              setSaludForm({
+                                fecha_registro: r.fecha_registro ? String(r.fecha_registro).slice(0, 10) : '',
+                                presenta_enfermedades_odontologicas: !!r.presenta_enfermedades_odontologicas,
+                                recibio_tratamiento_odontologico: !!r.recibio_tratamiento_odontologico,
+                                observaciones: r.observaciones ?? '',
+                              });
+                              setEditingSalud(r);
+                              setSaludModalOpen(true);
+                            }}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            type="button"
+                            size="small"
+                            variant="secondary"
+                            onClick={async () => {
+                              if (!window.confirm('¿Eliminar este registro de salud bucal?')) return;
+                              try {
+                                await apiDeleteSaludBucal(parsedId, id);
+                                loadSaludBucal();
+                              } catch (e) {
+                                console.error('Error al eliminar salud bucal', e);
+                              }
+                            }}
+                          >
+                            Eliminar
+                          </Button>
+                        </span>
                       )}
                     </li>
                   );
@@ -2232,6 +2571,7 @@ export default function PacienteDetail() {
                   variant="primary"
                   onClick={() => {
                     setSaludError('');
+                    setEditingSalud(null);
                     setSaludForm({
                       fecha_registro: '',
                       presenta_enfermedades_odontologicas: false,
@@ -2248,10 +2588,11 @@ export default function PacienteDetail() {
                   onClose={() => {
                     if (!saludSubmitting) {
                       setSaludModalOpen(false);
+                      setEditingSalud(null);
                     }
                   }}
-                  title="Nuevo registro de salud bucal"
-                  okText={saludSubmitting ? 'Guardando…' : 'Guardar registro'}
+                  title={editingSalud ? 'Editar registro de salud bucal' : 'Nuevo registro de salud bucal'}
+                  okText={saludSubmitting ? 'Guardando…' : (editingSalud ? 'Guardar cambios' : 'Guardar registro')}
                   confirmLoading={saludSubmitting}
                   onOk={async () => {
                     const fecha = (saludForm.fecha_registro || '').trim();
@@ -2262,20 +2603,25 @@ export default function PacienteDetail() {
                     setSaludError('');
                     setSaludSubmitting(true);
                     try {
-                      await apiCreateSaludBucal(parsedId, {
+                      const body = {
                         fecha_registro: fecha,
-                        presenta_enfermedades_odontologicas:
-                          !!saludForm.presenta_enfermedades_odontologicas,
-                        recibio_tratamiento_odontologico:
-                          !!saludForm.recibio_tratamiento_odontologico,
+                        presenta_enfermedades_odontologicas: !!saludForm.presenta_enfermedades_odontologicas,
+                        recibio_tratamiento_odontologico: !!saludForm.recibio_tratamiento_odontologico,
                         observaciones: saludForm.observaciones?.trim() || undefined,
-                      });
+                      };
+                      if (editingSalud) {
+                        await apiUpdateSaludBucal(parsedId, editingSalud.id_salud_bucal ?? editingSalud.id, body);
+                        message.success('Registro actualizado');
+                      } else {
+                        await apiCreateSaludBucal(parsedId, body);
+                      }
                       setSaludForm({
                         fecha_registro: '',
                         presenta_enfermedades_odontologicas: false,
                         recibio_tratamiento_odontologico: false,
                         observaciones: '',
                       });
+                      setEditingSalud(null);
                       setSaludModalOpen(false);
                       loadSaludBucal();
                     } catch (e) {
@@ -2395,24 +2741,44 @@ export default function PacienteDetail() {
                         )}
                       </div>
                       {canEditMedical && (
-                        <Button
-                          type="button"
-                          size="small"
-                          variant="secondary"
-                          onClick={async () => {
-                            // eslint-disable-next-line no-alert
-                            if (!window.confirm('¿Eliminar esta detección de tuberculosis?')) return;
-                            try {
-                              await apiDeleteDeteccionTb(parsedId, id);
-                              loadDeteccionesTuberculosis();
-                            } catch (e) {
-                              // eslint-disable-next-line no-console
-                              console.error('Error al eliminar detección de tuberculosis', e);
-                            }
-                          }}
-                        >
-                          Eliminar
-                        </Button>
+                        <span style={{ display: 'flex', gap: '0.5rem' }}>
+                          <Button
+                            type="button"
+                            size="small"
+                            variant="primary"
+                            onClick={() => {
+                              setTbError('');
+                              setTbForm({
+                                fecha_deteccion: d.fecha_deteccion ? String(d.fecha_deteccion).slice(0, 10) : '',
+                                aplicacion_encuesta: !!d.aplicacion_encuesta,
+                                baciloscopia_realizada: !!d.baciloscopia_realizada,
+                                baciloscopia_resultado: d.baciloscopia_resultado ?? '',
+                                ingreso_tratamiento: !!d.ingreso_tratamiento,
+                                observaciones: d.observaciones ?? '',
+                              });
+                              setEditingTb(d);
+                              setTbModalOpen(true);
+                            }}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            type="button"
+                            size="small"
+                            variant="secondary"
+                            onClick={async () => {
+                              if (!window.confirm('¿Eliminar esta detección de tuberculosis?')) return;
+                              try {
+                                await apiDeleteDeteccionTb(parsedId, id);
+                                loadDeteccionesTuberculosis();
+                              } catch (e) {
+                                console.error('Error al eliminar detección de tuberculosis', e);
+                              }
+                            }}
+                          >
+                            Eliminar
+                          </Button>
+                        </span>
                       )}
                     </li>
                   );
@@ -2429,6 +2795,7 @@ export default function PacienteDetail() {
                   variant="primary"
                   onClick={() => {
                     setTbError('');
+                    setEditingTb(null);
                     setTbForm({
                       fecha_deteccion: '',
                       aplicacion_encuesta: false,
@@ -2447,10 +2814,11 @@ export default function PacienteDetail() {
                   onClose={() => {
                     if (!tbSubmitting) {
                       setTbModalOpen(false);
+                      setEditingTb(null);
                     }
                   }}
-                  title="Nueva detección de tuberculosis"
-                  okText={tbSubmitting ? 'Guardando…' : 'Guardar detección'}
+                  title={editingTb ? 'Editar detección de tuberculosis' : 'Nueva detección de tuberculosis'}
+                  okText={tbSubmitting ? 'Guardando…' : (editingTb ? 'Guardar cambios' : 'Guardar detección')}
                   confirmLoading={tbSubmitting}
                   onOk={async () => {
                     const fecha = (tbForm.fecha_deteccion || '').trim();
@@ -2461,14 +2829,20 @@ export default function PacienteDetail() {
                     setTbError('');
                     setTbSubmitting(true);
                     try {
-                      await apiCreateDeteccionTb(parsedId, {
+                      const body = {
                         fecha_deteccion: fecha,
                         aplicacion_encuesta: !!tbForm.aplicacion_encuesta,
                         baciloscopia_realizada: !!tbForm.baciloscopia_realizada,
                         baciloscopia_resultado: tbForm.baciloscopia_resultado?.trim() || undefined,
                         ingreso_tratamiento: !!tbForm.ingreso_tratamiento,
                         observaciones: tbForm.observaciones?.trim() || undefined,
-                      });
+                      };
+                      if (editingTb) {
+                        await apiUpdateDeteccionTb(parsedId, editingTb.id_deteccion_tb ?? editingTb.id, body);
+                        message.success('Detección actualizada');
+                      } else {
+                        await apiCreateDeteccionTb(parsedId, body);
+                      }
                       setTbForm({
                         fecha_deteccion: '',
                         aplicacion_encuesta: false,
@@ -2477,6 +2851,7 @@ export default function PacienteDetail() {
                         ingreso_tratamiento: false,
                         observaciones: '',
                       });
+                      setEditingTb(null);
                       setTbModalOpen(false);
                       loadDeteccionesTuberculosis();
                     } catch (e) {
@@ -2810,6 +3185,8 @@ export default function PacienteDetail() {
         open={!!signoDetalleSeleccionado}
         onClose={closeDetalleSigno}
         signo={signoDetalleSeleccionado}
+        canEdit={canEditMedical}
+        onEdit={openSignosFormForEdit}
       />
       <Modal open={showAllCitasOpen} onClose={() => setShowAllCitasOpen(false)} title="Historial de citas" footer={null} width={640}>
         {allCitasLoading ? <LoadingSpinner /> : allCitasData.length === 0 ? <EmptyState message="No hay citas" /> : (

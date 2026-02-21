@@ -1,4 +1,5 @@
 import Modal from '../ui/Modal';
+import Button from '../ui/Button';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 
@@ -51,11 +52,15 @@ const valueStyle = {
 /**
  * Modal de detalle de un registro de signos vitales (versión web), similar a la app móvil.
  * Muestra: fecha, registrado por, antropométricos, presión arterial, laboratorio, observaciones.
+ * @param {boolean} [canEdit] - Si se muestra el botón Editar
+ * @param {function(object): void} [onEdit] - Al hacer clic en Editar, recibe el signo y cierra el modal
  */
 export default function DetalleSignoVitalModal({
   open,
   onClose,
   signo,
+  canEdit = false,
+  onEdit,
 }) {
   const formatearFecha = formatDateTime;
   const fechaMedicion = signo?.fecha_medicion || signo?.fecha_creacion;
@@ -186,6 +191,13 @@ export default function DetalleSignoVitalModal({
               <p style={{ margin: 0, fontSize: '0.9rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                 {sanitizeForDisplay(signo.observaciones)}
               </p>
+            </div>
+          )}
+
+          {canEdit && typeof onEdit === 'function' && (
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--color-borde-claro)' }}>
+              <Button variant="secondary" size="small" onClick={onClose}>Cerrar</Button>
+              <Button variant="primary" size="small" onClick={() => { onEdit(signo); onClose(); }}>Editar</Button>
             </div>
           )}
         </div>

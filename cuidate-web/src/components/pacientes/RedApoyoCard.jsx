@@ -159,16 +159,34 @@ export default function RedApoyoCard({ items = [], loading, onCreate, onUpdate, 
                     )}
                   </div>
                 </div>
-                {canEdit && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <Button variant="secondary" size="small" type="button" onClick={() => handleEdit(r)}>
-                      Editar
-                    </Button>
-                    <Button variant="danger" size="small" type="button" onClick={() => handleDelete(id)}>
-                      Eliminar
-                    </Button>
-                  </div>
-                )}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+                  {(r.numero_celular ?? r.telefono)?.trim() && (
+                    <a
+                      href={`tel:${String(r.numero_celular ?? r.telefono).trim()}`}
+                      style={{ fontSize: 'var(--text-sm)', color: 'var(--color-primario)', textDecoration: 'none' }}
+                    >
+                      📞 Llamar
+                    </a>
+                  )}
+                  {r.email?.trim() && (
+                    <a
+                      href={`mailto:${String(r.email).trim()}`}
+                      style={{ fontSize: 'var(--text-sm)', color: 'var(--color-primario)', textDecoration: 'none' }}
+                    >
+                      ✉️ Enviar email
+                    </a>
+                  )}
+                  {canEdit && (
+                    <>
+                      <Button variant="secondary" size="small" type="button" onClick={() => handleEdit(r)}>
+                        Editar
+                      </Button>
+                      <Button variant="danger" size="small" type="button" onClick={() => handleDelete(id)}>
+                        Eliminar
+                      </Button>
+                    </>
+                  )}
+                </div>
               </li>
             );
           })}
