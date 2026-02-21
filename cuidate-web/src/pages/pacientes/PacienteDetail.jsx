@@ -3196,7 +3196,7 @@ export default function PacienteDetail() {
           {citas.data?.length > 0 && (
             <ProximaCitaCard
               citas={citas.data}
-              onVerCita={(idCita) => navigate(`/citas/${idCita}`)}
+              onVerCita={openDetalleCita}
               onVerTodas={() => navigate(`/citas?paciente=${parsedId}`)}
             />
           )}
