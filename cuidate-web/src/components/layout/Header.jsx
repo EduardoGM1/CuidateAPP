@@ -52,7 +52,7 @@ export default function Header() {
           tabIndex={0}
           style={{ display: 'flex', alignItems: 'center' }}
         >
-          <Logo variant="inline" size="small" onPrimary />
+          <Logo variant="inline" size="small" onPrimary showText />
         </span>
         <nav>
           {navLinks.map(({ path, label }) => {

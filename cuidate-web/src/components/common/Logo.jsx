@@ -1,16 +1,24 @@
 /**
- * Logo CuidaTeApp - mismo aspecto que la app móvil (ClinicaMovil).
- * Emoji 🏥 + texto "CuidaTeApp" en color primario.
- * @param {string} variant - 'stack' (emoji arriba, texto abajo) | 'inline' (emoji + texto en línea, para sidebar/header)
+ * Logo CuidaTeApp - mismo logotipo que la app móvil (ClinicaMovil).
+ * Imagen: corazón verde con ECG, hoja, elementos tecnológicos y texto "CuidaTeApp".
+ * Ruta de la imagen: /logo.png (copiada desde ClinicaMovil/src/assets/images/logo.png).
+ *
+ * @param {string} size - 'small' | 'medium' | 'large'
+ * @param {string} variant - 'stack' (imagen centrada) | 'inline' (imagen + texto en línea para sidebar/header)
+ * @param {boolean} showText - si true, muestra además el texto "CuidaTeApp" (útil cuando la imagen es pequeña)
  * @param {boolean} onPrimary - si true, texto en blanco (para fondos verdes como header)
  */
-export default function Logo({ size = 'medium', showText = true, variant = 'stack', onPrimary = false, className = '', style = {} }) {
-  const sizes = {
-    small: { emoji: 28, text: 1.125 },
-    medium: { emoji: 40, text: 1.35 },
-    large: { emoji: 56, text: 1.75 },
-  };
-  const s = sizes[size] || sizes.medium;
+const SIZE_PX = { small: 100, medium: 180, large: 240 };
+
+export default function Logo({
+  size = 'medium',
+  showText = false,
+  variant = 'stack',
+  onPrimary = false,
+  className = '',
+  style = {},
+}) {
+  const px = SIZE_PX[size] || SIZE_PX.medium;
   const isInline = variant === 'inline';
 
   return (
@@ -21,17 +29,21 @@ export default function Logo({ size = 'medium', showText = true, variant = 'stac
         flexDirection: isInline ? 'row' : 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: isInline ? '0.5rem' : '0.35rem',
+        gap: isInline ? '0.5rem' : '0.5rem',
         ...style,
       }}
     >
-      <span style={{ fontSize: `${s.emoji}px`, lineHeight: 1, flexShrink: 0 }} aria-hidden="true">
-        🏥
-      </span>
+      <img
+        src="/logo.png"
+        alt="CuidaTeApp"
+        width={px}
+        height={px}
+        style={{ objectFit: 'contain', flexShrink: 0, display: 'block' }}
+      />
       {showText && (
         <span
           style={{
-            fontSize: `${s.text}rem`,
+            fontSize: size === 'small' ? '1.125rem' : size === 'large' ? '1.75rem' : '1.35rem',
             fontWeight: 700,
             color: onPrimary ? 'var(--color-texto-en-primario)' : 'var(--color-primario)',
             letterSpacing: '-0.02em',
