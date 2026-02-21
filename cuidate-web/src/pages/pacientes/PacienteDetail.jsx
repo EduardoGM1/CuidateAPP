@@ -507,6 +507,7 @@ export default function PacienteDetail() {
   useEffect(() => {
     if (!modalSection) return;
     if (modalSection === 'citas' || modalSection === 'diagnosticos') loadCitas();
+    if (modalSection === 'diagnosticos') loadDiagnosticos();
     else if (modalSection === 'signos' || modalSection === 'graficos') loadSignos();
     else if (modalSection === 'medicacion') loadMedicamentos();
     else if (modalSection === 'red-apoyo') loadRedApoyo();
