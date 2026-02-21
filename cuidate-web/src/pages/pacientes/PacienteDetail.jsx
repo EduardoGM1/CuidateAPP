@@ -56,6 +56,7 @@ import { PageHeader, DataCard } from '../../components/shared';
 import { LoadingSpinner, Button, Card, Badge, EmptyState, Input, Select, TextArea, Modal } from '../../components/ui';
 import RedApoyoCard from '../../components/pacientes/RedApoyoCard';
 import MedicalSummaryCard from '../../components/pacientes/MedicalSummaryCard';
+import MonitoreoContinuoSummary from '../../components/pacientes/MonitoreoContinuoSummary';
 import ProximaCitaCard from '../../components/pacientes/ProximaCitaCard';
 import SectionCard from '../../components/pacientes/SectionCard';
 import PatientSectionModal from '../../components/pacientes/PatientSectionModal';
@@ -409,6 +410,10 @@ export default function PacienteDetail() {
     loadPaciente();
   }, [loadPaciente]);
 
+  useEffect(() => {
+    if (parsedId > 0) loadResumenMedico();
+  }, [parsedId, loadResumenMedico]);
+
   const loadCitas = useCallback(async () => {
     if (parsedId === 0) return;
     setCitasLoading(true);
@@ -570,9 +575,9 @@ export default function PacienteDetail() {
 
   useEffect(() => {
     if (!modalSection) return;
-    if (modalSection === 'citas' || modalSection === 'diagnosticos') loadCitas();
+    if (modalSection === 'datos' || modalSection === 'citas' || modalSection === 'diagnosticos') loadCitas();
     if (modalSection === 'diagnosticos') loadDiagnosticos();
-    else if (modalSection === 'signos' || modalSection === 'graficos') loadSignos();
+    else if (modalSection === 'signos' || modalSection === 'graficos' || modalSection === 'monitoreo') loadSignos();
     else if (modalSection === 'medicacion') loadMedicamentos();
     else if (modalSection === 'red-apoyo') loadRedApoyo();
     else if (modalSection === 'vacunacion') loadVacunacion();
@@ -585,8 +590,7 @@ export default function PacienteDetail() {
       loadDoctoresAsignados();
       if (isAdmin()) getDoctores({ limit: 200 }).then((l) => setListaDoctores(Array.isArray(l) ? l : [])).catch(() => setListaDoctores([]));
     }
-    if (modalSection === 'datos') loadResumenMedico();
-  }, [modalSection, loadCitas, loadSignos, loadDiagnosticos, loadMedicamentos, loadRedApoyo, loadVacunacion, loadComorbilidades, loadDeteccionesComplicaciones, loadSesionesEducativas, loadSaludBucal, loadDeteccionesTuberculosis, loadDoctoresAsignados, loadResumenMedico, isAdmin]);
+  }, [modalSection, loadCitas, loadSignos, loadDiagnosticos, loadMedicamentos, loadRedApoyo, loadVacunacion, loadComorbilidades, loadDeteccionesComplicaciones, loadSesionesEducativas, loadSaludBucal, loadDeteccionesTuberculosis, loadDoctoresAsignados, isAdmin]);
 
   useEffect(() => {
     if (!formaModalOpen || parsedId === 0) return;
@@ -667,114 +671,9 @@ export default function PacienteDetail() {
           (a, b) => new Date(b.fecha_cita) - new Date(a.fecha_cita)
         );
         const timelineCitas = citasOrdenadas.slice(0, 5);
-        const ultimoSigno = (signos.data || [])[0];
 
         return (
           <>
-            {resumenMedicoLoading && !resumenMedico && (
-              <Card className="patient-section-card">
-                <h2 className="patient-section-title">Resumen médico</h2>
-                <LoadingSpinner />
-              </Card>
-            )}
-            {resumenMedico && <MedicalSummaryCard resumen={resumenMedico} />}
-
-            <Card className="patient-section-card">
-              <h2 className="patient-section-title">Monitoreo continuo</h2>
-              {signosLoading ? (
-                <LoadingSpinner />
-              ) : !ultimoSigno ? (
-                <EmptyState message="Aún no hay registros de signos vitales" />
-              ) : (
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))',
-                    gap: '0.75rem',
-                    fontSize: '0.95rem',
-                  }}
-                >
-                  <div>
-                    <div
-                      style={{
-                        fontSize: '0.8rem',
-                        color: 'var(--color-texto-secundario)',
-                        marginBottom: '0.25rem',
-                      }}
-                    >
-                      Fecha última medición
-                    </div>
-                    <div style={{ fontWeight: 600 }}>
-                      {formatDate(ultimoSigno.fecha_medicion)}
-                    </div>
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: '0.8rem',
-                        color: 'var(--color-texto-secundario)',
-                        marginBottom: '0.25rem',
-                      }}
-                    >
-                      Peso
-                    </div>
-                    <div style={{ fontWeight: 600 }}>
-                      {ultimoSigno.peso_kg != null ? `${ultimoSigno.peso_kg} kg` : '—'}
-                    </div>
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: '0.8rem',
-                        color: 'var(--color-texto-secundario)',
-                        marginBottom: '0.25rem',
-                      }}
-                    >
-                      PA
-                    </div>
-                    <div style={{ fontWeight: 600 }}>
-                      {ultimoSigno.presion_sistolica != null &&
-                      ultimoSigno.presion_diastolica != null
-                        ? `${ultimoSigno.presion_sistolica}/${ultimoSigno.presion_diastolica} mmHg`
-                        : '—'}
-                    </div>
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: '0.8rem',
-                        color: 'var(--color-texto-secundario)',
-                        marginBottom: '0.25rem',
-                      }}
-                    >
-                      Glucosa
-                    </div>
-                    <div style={{ fontWeight: 600 }}>
-                      {ultimoSigno.glucosa_mg_dl != null
-                        ? `${ultimoSigno.glucosa_mg_dl} mg/dL`
-                        : '—'}
-                    </div>
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: '0.8rem',
-                        color: 'var(--color-texto-secundario)',
-                        marginBottom: '0.25rem',
-                      }}
-                    >
-                      HbA1c
-                    </div>
-                    <div style={{ fontWeight: 600 }}>
-                      {ultimoSigno.hba1c_porcentaje != null
-                        ? `${ultimoSigno.hba1c_porcentaje}%`
-                        : '—'}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Card>
-
             {citas.data?.length > 0 && (
               <ProximaCitaCard
                 citas={citas.data}
@@ -881,6 +780,17 @@ export default function PacienteDetail() {
               </div>
             </Card>
           </>
+        );
+      }
+      case 'monitoreo': {
+        const ultimoSignoMonitoreo = (signos.data || [])[0];
+        return (
+          <MonitoreoContinuoSummary
+            loading={signosLoading}
+            ultimoSigno={ultimoSignoMonitoreo}
+            onVerHistorial={() => setModalSection('signos')}
+            hideTitle
+          />
         );
       }
       case 'citas': {
@@ -3229,6 +3139,18 @@ export default function PacienteDetail() {
           </div>
         </div>
       </header>
+
+      {resumenMedicoLoading && !resumenMedico && (
+        <Card className="patient-section-card" style={{ marginBottom: 'var(--space-4)' }}>
+          <h2 className="patient-section-title">Resumen médico</h2>
+          <LoadingSpinner />
+        </Card>
+      )}
+      {resumenMedico && (
+        <div style={{ marginBottom: 'var(--space-4)' }}>
+          <MedicalSummaryCard resumen={resumenMedico} />
+        </div>
+      )}
 
       <div className="patient-detail-cards-grid">
         {PATIENT_DETAIL_SECTIONS.map((section) => (

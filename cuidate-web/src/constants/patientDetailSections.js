@@ -8,6 +8,7 @@ export const DEFAULT_SECTION_MODAL_WIDTH = 900;
  */
 export const PATIENT_DETAIL_SECTIONS = [
   { id: 'datos', label: 'Datos', icon: '📋', modalWidth: 920 },
+  { id: 'monitoreo', label: 'Monitoreo continuo', icon: '📊' },
   { id: 'citas', label: 'Citas', icon: '📅' },
   { id: 'signos', label: 'Signos vitales', icon: '❤️' },
   { id: 'diagnosticos', label: 'Diagnósticos', icon: '🩺' },
