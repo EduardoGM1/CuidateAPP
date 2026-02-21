@@ -579,7 +579,7 @@ export default function PacienteDetail() {
 
   useEffect(() => {
     if (!modalSection) return;
-    if (modalSection === 'datos' || modalSection === 'citas' || modalSection === 'diagnosticos' || modalSection === 'historial-consultas') loadCitas();
+    if (modalSection === 'citas' || modalSection === 'diagnosticos' || modalSection === 'historial-consultas') loadCitas();
     if (modalSection === 'diagnosticos') loadDiagnosticos();
     else if (modalSection === 'signos' || modalSection === 'graficos' || modalSection === 'monitoreo') loadSignos();
     else if (modalSection === 'medicacion') loadMedicamentos();
@@ -660,45 +660,6 @@ export default function PacienteDetail() {
   const renderTabContent = (tabId) => {
     if (!tabId) return null;
     switch (tabId) {
-      case 'datos': {
-        return (
-          <>
-            <Card className="patient-section-card">
-              <h2 className="patient-section-title">Expediente médico</h2>
-              <p
-                style={{
-                  margin: '0 0 var(--space-4)',
-                  color: 'var(--color-texto-secundario)',
-                  fontSize: 'var(--text-sm)',
-                }}
-              >
-                Ver o descargar el expediente médico completo.
-              </p>
-              {expedienteError && (
-                <p
-                  style={{
-                    margin: '0 0 var(--space-2)',
-                    color: 'var(--color-error)',
-                    fontSize: 'var(--text-sm)',
-                  }}
-                >
-                  {expedienteError}
-                </p>
-              )}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                <Button
-                  variant="primary"
-                  type="button"
-                  disabled={expedienteLoading}
-                  onClick={handleVerExpediente}
-                >
-                  {expedienteLoading ? 'Cargando…' : 'Ver en nueva pestaña'}
-                </Button>
-              </div>
-            </Card>
-          </>
-        );
-      }
       case 'historial-consultas': {
         const citasOrdenadas = [...(citas.data || [])].sort(
           (a, b) => new Date(b.fecha_cita) - new Date(a.fecha_cita)

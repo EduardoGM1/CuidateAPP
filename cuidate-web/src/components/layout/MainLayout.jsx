@@ -194,7 +194,7 @@ export default function MainLayout() {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh', background: 'var(--saas-bg, #F5F7FA)' }}>
+    <Layout style={{ minHeight: '100vh', background: 'var(--saas-bg, var(--color-fondo))' }}>
       {/* Sider: visible solo en desktop (oculto en móvil con CSS) */}
       <Layout.Sider
         breakpoint="lg"

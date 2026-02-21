@@ -25,6 +25,8 @@
   --color-fondo-verde-suave: #E8F0EE;
   --color-fondo-error-claro: #FDF2F4;
   --color-nav-primario: #006657;
+  --color-nav-inactivo: #DDC9A3;
+  --color-texto-disabled: #BDBDBD;
   --color-fondo-advertencia-claro: #F8F4ED;
 
   /* --- Espaciado (8px base) --- */
@@ -94,8 +96,8 @@ body {
   min-height: 100vh;
 }
 
-/* Fondo tipo SaaS (gris muy suave) */
-.saas-layout { --saas-bg: #F5F7FA; }
+/* Fondo igual que app móvil (crema suave IMSS Bienestar) */
+.saas-layout { --saas-bg: #F5F2ED; }
 body:has(.saas-layout) { background-color: var(--saas-bg); }
 
 #root {
@@ -192,14 +194,14 @@ select:focus-visible {
 .saas-layout {
   min-height: 100vh;
   display: flex;
-  background: var(--saas-bg, #F5F7FA);
+  background: var(--saas-bg, #F5F2ED);
 }
 .saas-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background: var(--saas-bg, #F5F7FA);
+  background: var(--saas-bg, #F5F2ED);
 }
 .saas-topbar {
   height: 64px;
@@ -831,7 +833,7 @@ select:focus-visible {
   align-items: center;
   justify-content: center;
   padding: var(--space-6);
-  background: var(--saas-bg, #F5F7FA);
+  background: var(--color-fondo);
 }
 .login-card {
   width: 100%;

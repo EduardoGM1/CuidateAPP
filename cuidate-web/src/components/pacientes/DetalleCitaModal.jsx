@@ -93,7 +93,7 @@ export default function DetalleCitaModal({
                   display: 'inline-block',
                   marginTop: '0.5rem',
                   padding: '0.2rem 0.5rem',
-                  background: 'var(--color-primario-light, #E3F2FD)',
+                  background: 'var(--color-fondo-verde-suave)',
                   borderRadius: 'var(--radius)',
                   fontSize: '0.8rem',
                 }}
