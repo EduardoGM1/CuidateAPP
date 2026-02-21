@@ -255,6 +255,22 @@ export default function PacienteDetail() {
   const [allComorbilidadesData, setAllComorbilidadesData] = useState([]);
   const [allComorbilidadesLoading, setAllComorbilidadesLoading] = useState(false);
 
+  const loadResumenMedico = useCallback(async () => {
+    if (parsedId === 0) return;
+    setResumenMedicoLoading(true);
+    try {
+      const data = await queryClient.fetchQuery({
+        queryKey: ['pacienteResumenMedico', parsedId],
+        queryFn: () => getPacienteResumenMedico(parsedId),
+      });
+      setResumenMedico(data);
+    } catch (e) {
+      setResumenMedico(null);
+    } finally {
+      setResumenMedicoLoading(false);
+    }
+  }, [parsedId, queryClient]);
+
   const loadPaciente = useCallback(async () => {
     if (parsedId === 0) return;
     setLoading(true);
@@ -389,23 +405,6 @@ export default function PacienteDetail() {
         .finally(() => setAllComorbilidadesLoading(false));
     }
   }, [showAllComorbilidadesOpen, parsedId]);
-
-  const loadResumenMedico = useCallback(async () => {
-    if (parsedId === 0) return;
-    setResumenMedicoLoading(true);
-    try {
-      const data = await queryClient.fetchQuery({
-        queryKey: ['pacienteResumenMedico', parsedId],
-        queryFn: () => getPacienteResumenMedico(parsedId),
-      });
-      setResumenMedico(data);
-    } catch (e) {
-      // No mostramos error explícito aquí para no saturar la UI; el resto de secciones siguen funcionando.
-      setResumenMedico(null);
-    } finally {
-      setResumenMedicoLoading(false);
-    }
-  }, [parsedId, queryClient]);
 
   useEffect(() => {
     loadPaciente();
