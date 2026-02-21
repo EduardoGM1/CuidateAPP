@@ -6,6 +6,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { STORAGE_KEYS } from '../../utils/constants';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, LoadingSpinner, EmptyState, Badge } from '../../components/ui';
+import DetalleNotificacionModal from '../../components/doctor/DetalleNotificacionModal';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 
@@ -25,6 +26,7 @@ export default function NotificacionesDoctor() {
   const [error, setError] = useState(null);
   const [incluirTodos, setIncluirTodos] = useState(false);
   const [actingId, setActingId] = useState(null);
+  const [detalleNotificacion, setDetalleNotificacion] = useState(null);
 
   const load = useCallback(async () => {
     if (!idDoctor) return;
@@ -83,6 +85,16 @@ export default function NotificacionesDoctor() {
     }
   };
 
+  const handleMarcarLeidaYCerrarDetalle = async (notif) => {
+    await handleMarcarLeida(notif);
+    setDetalleNotificacion(null);
+  };
+
+  const handleArchivarYCerrarDetalle = async (notif) => {
+    await handleArchivar(notif);
+    setDetalleNotificacion(null);
+  };
+
   if (loadingDoctor || errorDoctor) {
     return (
       <div>
@@ -125,7 +137,11 @@ export default function NotificacionesDoctor() {
             const id = n.id_notificacion ?? n.id;
             const isLeida = (n.estado || '').toLowerCase() === 'leida';
             return (
-              <Card key={id} style={{ opacity: isLeida ? 0.9 : 1 }}>
+              <Card
+                key={id}
+                style={{ opacity: isLeida ? 0.9 : 1, cursor: 'pointer' }}
+                onClick={() => setDetalleNotificacion(n)}
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
@@ -136,7 +152,7 @@ export default function NotificacionesDoctor() {
                     <strong style={{ display: 'block', marginBottom: '0.25rem' }}>{sanitizeForDisplay(n.titulo) || 'Sin título'}</strong>
                     <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-texto-secundario)', whiteSpace: 'pre-wrap' }}>{sanitizeForDisplay(n.mensaje) || '—'}</p>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
                     {!isLeida && (
                       <Button variant="outline" disabled={actingId === id} onClick={() => handleMarcarLeida(n)}>
                         Marcar leída
@@ -155,6 +171,15 @@ export default function NotificacionesDoctor() {
       {!loading && list.length > 0 && total > list.length && (
         <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>Total: {total}</p>
       )}
+
+      <DetalleNotificacionModal
+        open={detalleNotificacion != null}
+        onClose={() => setDetalleNotificacion(null)}
+        notificacion={detalleNotificacion}
+        onMarcarLeida={handleMarcarLeidaYCerrarDetalle}
+        onArchivar={handleArchivarYCerrarDetalle}
+        actingId={actingId}
+      />
     </div>
   );
 }
