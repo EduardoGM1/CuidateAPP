@@ -35,7 +35,7 @@ export async function getPacienteResumenMedico(pacienteId) {
   const id = parsePositiveInt(pacienteId, 0);
   if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
   const { data } = await client.get(`${BASE}/${id}/resumen-medico`);
-  return data;
+  return data?.data ?? data;
 }
 
 /**

@@ -265,6 +265,7 @@ export default function PacienteDetail() {
         queryFn: () => getPacienteById(parsedId),
       });
       setPaciente(data);
+      loadResumenMedico();
     } catch (err) {
       setError(
         err?.response?.status === 404
@@ -274,7 +275,7 @@ export default function PacienteDetail() {
     } finally {
       setLoading(false);
     }
-  }, [parsedId, queryClient]);
+  }, [parsedId, queryClient, loadResumenMedico]);
 
   // Catálogos para formularios de vacunación y comorbilidades
   useEffect(() => {
@@ -409,10 +410,6 @@ export default function PacienteDetail() {
   useEffect(() => {
     loadPaciente();
   }, [loadPaciente]);
-
-  useEffect(() => {
-    if (parsedId > 0) loadResumenMedico();
-  }, [parsedId, loadResumenMedico]);
 
   const loadCitas = useCallback(async () => {
     if (parsedId === 0) return;
@@ -784,13 +781,68 @@ export default function PacienteDetail() {
       }
       case 'monitoreo': {
         const ultimoSignoMonitoreo = (signos.data || [])[0];
+        const signosListMonitoreo = signos.data || [];
         return (
-          <MonitoreoContinuoSummary
-            loading={signosLoading}
-            ultimoSigno={ultimoSignoMonitoreo}
-            onVerHistorial={() => setModalSection('signos')}
-            hideTitle
-          />
+          <>
+            <MonitoreoContinuoSummary
+              loading={signosLoading}
+              ultimoSigno={ultimoSignoMonitoreo}
+              onVerHistorial={() => setModalSection('signos')}
+              hideTitle
+            />
+            <Card className="patient-section-card" style={{ marginTop: 'var(--space-4)' }}>
+              <h2 className="patient-section-title">Registros</h2>
+              <p style={{ margin: '0 0 0.75rem', fontSize: 'var(--text-sm)', color: 'var(--color-texto-secundario)' }}>
+                Haz clic en un registro para ver toda la información.
+              </p>
+              {signosLoading ? (
+                <LoadingSpinner />
+              ) : signosListMonitoreo.length === 0 ? (
+                <EmptyState message="No hay registros de signos vitales" />
+              ) : (
+                <ul className="tracking-list">
+                  {signosListMonitoreo.map((s, i) => (
+                    <li
+                      key={s.id_signo ?? s.id_signo_vital ?? s.id ?? i}
+                      className="tracking-item"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => openDetalleSigno(s)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          openDetalleSigno(s);
+                        }
+                      }}
+                    >
+                      <span className="tracking-item-date">{formatDate(s.fecha_medicion)}</span>
+                      <span className="tracking-item-body">
+                        Peso: {s.peso_kg ?? '—'} kg · Talla: {s.talla_m ?? '—'} m · PA: {s.presion_sistolica ?? '—'}/{s.presion_diastolica ?? '—'} · Glucosa: {s.glucosa_mg_dl ?? '—'} mg/dL
+                        {(s.colesterol_mg_dl != null || s.colesterol_ldl != null || s.colesterol_hdl != null) && (
+                          <> · Col: {s.colesterol_mg_dl ?? '—'} (LDL: {s.colesterol_ldl ?? '—'} / HDL: {s.colesterol_hdl ?? '—'})</>
+                        )}
+                        {s.hba1c_porcentaje != null && <> · HbA1c: {s.hba1c_porcentaje}%</>}
+                        {s.observaciones && <> · {sanitizeForDisplay(s.observaciones)}</>}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {signos.total > signosListMonitoreo.length && signosListMonitoreo.length > 0 && (
+                <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
+                  Total: {signos.total}.{' '}
+                  <button
+                    type="button"
+                    onClick={() => setShowAllSignosOpen(true)}
+                    style={{ background: 'none', border: 'none', color: 'var(--color-primario)', cursor: 'pointer', textDecoration: 'underline', padding: 0, font: 'inherit' }}
+                  >
+                    Ver historial completo
+                  </button>
+                </p>
+              )}
+            </Card>
+          </>
         );
       }
       case 'citas': {

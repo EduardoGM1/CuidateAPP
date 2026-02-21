@@ -7,7 +7,7 @@ import { Card } from '../ui';
  * @param {{ resumen: { total_citas?: number, total_signos_vitales?: number, total_diagnosticos?: number, total_medicamentos?: number } }} props
  */
 export default function MedicalSummaryCard({ resumen }) {
-  const r = resumen?.resumen || resumen || {};
+  const r = resumen?.resumen ?? resumen?.data?.resumen ?? resumen?.data ?? resumen ?? {};
   const items = [
     { key: 'total_citas', label: 'Citas', value: r.total_citas ?? 0 },
     { key: 'total_signos_vitales', label: 'Signos vitales', value: r.total_signos_vitales ?? 0 },
