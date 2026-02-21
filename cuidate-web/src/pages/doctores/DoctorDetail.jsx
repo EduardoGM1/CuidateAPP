@@ -4,6 +4,7 @@ import { getDoctorById, deleteDoctor } from '../../api/doctores';
 import { PageHeader, DataCard } from '../../components/shared';
 import { LoadingSpinner, Button } from '../../components/ui';
 import { useAuthStore } from '../../stores/authStore';
+import { useCurrentDoctorId } from '../../hooks/useCurrentDoctorId';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 
@@ -18,6 +19,8 @@ export default function DoctorDetail() {
 
   const parsedId = parsePositiveInt(id, 0);
   const isAdmin = useAuthStore((s) => s.isAdmin());
+  const { idDoctor } = useCurrentDoctorId();
+  const canEdit = isAdmin() || (idDoctor != null && idDoctor === parsedId);
 
   const load = useCallback(async () => {
     if (parsedId === 0) return;
@@ -98,25 +101,29 @@ export default function DoctorDetail() {
     <div>
       <PageHeader title="Detalle de doctor" showBack backTo="/doctores" />
       <DataCard title="Datos del doctor" items={items} />
-      {isAdmin && (
+      {(canEdit || isAdmin()) && (
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '1rem' }}>
-        <Button variant="primary" type="button" onClick={() => navigate(`/doctores/${parsedId}/editar`)}>
-          Editar
-        </Button>
-        {!confirmDelete ? (
-          <Button variant="danger" type="button" onClick={() => setConfirmDelete(true)} disabled={deleting}>
-            Eliminar
+        {canEdit && (
+          <Button variant="primary" type="button" onClick={() => navigate(`/doctores/${parsedId}/editar`)}>
+            Editar
           </Button>
-        ) : (
-          <>
-            <span style={{ color: 'var(--color-texto-secundario)', fontSize: '0.9rem' }}>¿Eliminar este doctor?</span>
-            <Button variant="danger" type="button" onClick={handleDelete} disabled={deleting}>
-              {deleting ? 'Eliminando…' : 'Sí, eliminar'}
+        )}
+        {isAdmin() && (
+          !confirmDelete ? (
+            <Button variant="danger" type="button" onClick={() => setConfirmDelete(true)} disabled={deleting}>
+              Eliminar
             </Button>
-            <Button variant="outline" type="button" onClick={() => setConfirmDelete(false)} disabled={deleting}>
-              Cancelar
-            </Button>
-          </>
+          ) : (
+            <>
+              <span style={{ color: 'var(--color-texto-secundario)', fontSize: '0.9rem' }}>¿Eliminar este doctor?</span>
+              <Button variant="danger" type="button" onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'Eliminando…' : 'Sí, eliminar'}
+              </Button>
+              <Button variant="outline" type="button" onClick={() => setConfirmDelete(false)} disabled={deleting}>
+                Cancelar
+              </Button>
+            </>
+          )
         )}
       </div>
       )}
