@@ -61,6 +61,7 @@ import SectionCard from '../../components/pacientes/SectionCard';
 import PatientSectionModal from '../../components/pacientes/PatientSectionModal';
 import DetalleCitaModal from '../../components/pacientes/DetalleCitaModal';
 import DetalleSignoVitalModal from '../../components/pacientes/DetalleSignoVitalModal';
+import ComparativaEvolucionSignos from '../../components/pacientes/ComparativaEvolucionSignos';
 import { PATIENT_DETAIL_SECTIONS } from '../../constants/patientDetailSections';
 import { getVacunas } from '../../api/vacunas';
 import { getComorbilidades } from '../../api/comorbilidades';
@@ -3377,6 +3378,7 @@ function PacienteGraficosEvolucion({ pacienteId, signosData, loadSignos, signosL
           No hay datos de peso ni glucosa para mostrar. Registra mediciones en la pestaña Signos vitales.
         </p>
       )}
+      <ComparativaEvolucionSignos signosVitales={signosData} />
     </div>
   );
 }
