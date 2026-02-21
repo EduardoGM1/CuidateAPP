@@ -1,6 +1,24 @@
 import { useState } from 'react';
-import { Card, Button, LoadingSpinner, EmptyState, Input, Modal } from '../ui';
+import { Card, Button, LoadingSpinner, EmptyState, Input, Select, Modal } from '../ui';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+
+/** Opciones de parentesco (igual que en app móvil - DetallePaciente) */
+const PARENTESCO_OPTIONS = [
+  { label: 'Padre', value: 'Padre' },
+  { label: 'Madre', value: 'Madre' },
+  { label: 'Hijo(a)', value: 'Hijo' },
+  { label: 'Esposo(a)', value: 'Esposo' },
+  { label: 'Cónyuge', value: 'Cónyuge' },
+  { label: 'Hermano(a)', value: 'Hermano' },
+  { label: 'Abuelo(a)', value: 'Abuelo' },
+  { label: 'Tío(a)', value: 'Tio' },
+  { label: 'Primo(a)', value: 'Primo' },
+  { label: 'Suegro(a)', value: 'Suegro' },
+  { label: 'Cuñado(a)', value: 'Cunado' },
+  { label: 'Yerno/Nuera', value: 'Yerno' },
+  { label: 'Amigo(a)', value: 'Amigo' },
+  { label: 'Otro', value: 'Otro' },
+];
 
 /**
  * Card reutilizable para mostrar y gestionar la Red de apoyo de un paciente.
@@ -212,10 +230,15 @@ export default function RedApoyoCard({ items = [], loading, onCreate, onUpdate, 
               value={form.nombre_contacto}
               onChange={(e) => setForm((f) => ({ ...f, nombre_contacto: e.target.value }))}
             />
-            <Input
+            <Select
               label="Parentesco"
-              value={form.parentesco}
-              onChange={(e) => setForm((f) => ({ ...f, parentesco: e.target.value }))}
+              placeholder="Seleccionar parentesco"
+              value={form.parentesco || undefined}
+              onChange={(v) => setForm((f) => ({ ...f, parentesco: v ?? '' }))}
+              options={[
+                { value: '', label: '— Seleccionar parentesco —' },
+                ...PARENTESCO_OPTIONS,
+              ]}
             />
             <Input
               label="Teléfono"
