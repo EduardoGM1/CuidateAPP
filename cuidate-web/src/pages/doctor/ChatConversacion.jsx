@@ -11,6 +11,7 @@ import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { parsePositiveInt } from '../../utils/params';
 import { STORAGE_KEYS } from '../../utils/constants';
+import VoiceMessagePlayer from '../../components/chat/VoiceMessagePlayer';
 
 export default function ChatConversacion() {
   const { id: pacienteIdParam } = useParams();
@@ -165,9 +166,18 @@ export default function ChatConversacion() {
                       border: `1px solid ${esDoctor ? 'transparent' : 'var(--color-borde-claro)'}`,
                     }}
                   >
-                    <p style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                      {sanitizeForDisplay(m.mensaje_texto || m.mensaje_audio_transcripcion) || '[mensaje]'}
-                    </p>
+                    {m.mensaje_audio_url ? (
+                      <VoiceMessagePlayer
+                        audioUrl={m.mensaje_audio_url}
+                        durationSeconds={m.mensaje_audio_duracion ? Number(m.mensaje_audio_duracion) : 0}
+                        transcription={m.mensaje_audio_transcripcion ? sanitizeForDisplay(m.mensaje_audio_transcripcion) : ''}
+                        isOwnMessage={esDoctor}
+                      />
+                    ) : (
+                      <p style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                        {sanitizeForDisplay(m.mensaje_texto) || '[mensaje]'}
+                      </p>
+                    )}
                     <span style={{ fontSize: '0.75rem', opacity: 0.9, display: 'block', marginTop: '0.25rem' }}>
                       {formatDateTime(m.fecha_envio)}
                     </span>

@@ -1,9 +1,8 @@
 /**
  * Componente: VoicePlayer
- * 
- * Componente para reproducir mensajes de voz en el chat.
- * SOLUCIÓN ALTERNATIVA: Usa react-native-audio-recorder-player para reproducir
- * directamente desde URLs HTTP, eliminando la necesidad de descargar archivos.
+ *
+ * Reproduce mensajes de voz en el chat.
+ * Usa audioService (react-native-sound) para reproducción; descarga a caché si es URL HTTP.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -11,9 +10,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform }
 import Logger from '../../services/logger';
 import hapticService from '../../services/hapticService';
 import audioCacheService from '../../services/audioCacheService';
-
-// Lazy import de AudioRecorderPlayer (puede reproducir desde URLs HTTP directamente)
-let AudioRecorderPlayerModule = null;
+import audioService from '../../services/audioService';
 
 /**
  * Decodificar entidades HTML en la URL (incluye doble codificación: &amp;#x2F; -> /).
@@ -39,56 +36,14 @@ const VoicePlayer = ({ audioUrl, duration, onPlayComplete, isOwnMessage = false 
   const [currentDuration, setCurrentDuration] = useState(duration || 0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const playerRef = useRef(null);
   const intervalRef = useRef(null);
 
   /**
-   * Inicializar AudioRecorderPlayer (puede reproducir desde URLs HTTP)
-   */
-  const getPlayer = useCallback(() => {
-    if (playerRef.current) {
-      return playerRef.current;
-    }
-
-    try {
-      if (!AudioRecorderPlayerModule) {
-        AudioRecorderPlayerModule = require('react-native-audio-recorder-player');
-      }
-
-      // Intentar obtener la instancia
-      let player = null;
-      if (AudioRecorderPlayerModule && typeof AudioRecorderPlayerModule.startPlayer === 'function') {
-        player = AudioRecorderPlayerModule;
-      } else if (AudioRecorderPlayerModule?.default && typeof AudioRecorderPlayerModule.default.startPlayer === 'function') {
-        player = AudioRecorderPlayerModule.default;
-      } else if (AudioRecorderPlayerModule?.default && typeof AudioRecorderPlayerModule.default === 'function') {
-        player = new AudioRecorderPlayerModule.default();
-      } else if (AudioRecorderPlayerModule?.AudioRecorderPlayer && typeof AudioRecorderPlayerModule.AudioRecorderPlayer === 'function') {
-        player = new AudioRecorderPlayerModule.AudioRecorderPlayer();
-      }
-
-      if (!player) {
-        throw new Error('No se pudo inicializar AudioRecorderPlayer');
-      }
-
-      playerRef.current = player;
-      Logger.info('VoicePlayer: AudioRecorderPlayer inicializado para reproducción');
-      return player;
-    } catch (error) {
-      Logger.error('VoicePlayer: Error inicializando AudioRecorderPlayer', error);
-      throw error;
-    }
-  }, []);
-
-  /**
-   * Detener reproducción (definido antes para poder usarlo en useEffect)
+   * Detener reproducción (audioService = react-native-sound)
    */
   const stopPlayback = useCallback(async () => {
     try {
-      if (playerRef.current) {
-        await playerRef.current.stopPlayer();
-        playerRef.current.removePlayBackListener();
-      }
+      await audioService.stopPlayback();
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -103,7 +58,6 @@ const VoicePlayer = ({ audioUrl, duration, onPlayComplete, isOwnMessage = false 
     }
   }, []);
 
-  // Limpiar al desmontar
   useEffect(() => {
     return () => {
       stopPlayback();
@@ -253,6 +207,7 @@ const VoicePlayer = ({ audioUrl, duration, onPlayComplete, isOwnMessage = false 
       setLoading(true);
       setError(null);
       setIsPlaying(true);
+      if (duration) setCurrentDuration(duration);
       hapticService.light();
 
       // Detener reproducción anterior
@@ -306,85 +261,23 @@ const VoicePlayer = ({ audioUrl, duration, onPlayComplete, isOwnMessage = false 
         }
       }
 
-      // Obtener instancia del player
-      const player = getPlayer();
+      // Reproducir con audioService (react-native-sound) — alternativa estable a AudioRecorderPlayer
+      await audioService.stopPlayback();
+      Logger.info('VoicePlayer: Reproduciendo con audioService', { pathToPlay });
 
-      // CRÍTICO: El reproductor nativo (compartido) debe estar parado antes de startPlayer.
-      try {
-        if (typeof player.stopPlayer === 'function') {
-          await player.stopPlayer();
-        }
-        if (typeof player.removePlayBackListener === 'function') {
-          player.removePlayBackListener();
-        }
-        await new Promise(r => setTimeout(r, 100));
-      } catch (stopErr) {
-        // Ignorar si ya estaba parado
-      }
-
-      Logger.info('VoicePlayer: Llamando startPlayer', { pathToPlay, playerType: typeof player });
-      
-      let msg;
-      try {
-        msg = await player.startPlayer(pathToPlay);
-        Logger.info('VoicePlayer: startPlayer exitoso', { msg });
-      } catch (startError) {
-        Logger.error('VoicePlayer: Error en startPlayer', { 
-          error: startError?.message || String(startError),
-          stack: startError?.stack,
-          pathToPlay,
-          originalUrl: audioUrl,
-        });
-        throw new Error(`Error iniciando reproducción: ${startError?.message || String(startError)}`);
-      }
-
-      // Obtener duración si está disponible
-      if (msg && msg.duration) {
-        setCurrentDuration(Math.floor(msg.duration / 1000));
-      } else if (duration) {
-        setCurrentDuration(duration);
-      }
-
-      // Configurar listener para actualizar posición
-      const playbackListener = player.addPlayBackListener((e) => {
-        if (e.currentPosition !== undefined) {
-          const seconds = Math.floor(e.currentPosition / 1000);
-          setCurrentPosition(seconds);
-          
-          if (e.duration !== undefined && e.duration > 0) {
-            const durationSeconds = Math.floor(e.duration / 1000);
-            setCurrentDuration(durationSeconds);
-          }
-        }
-
-        // Verificar si terminó la reproducción
-        if (e.currentPosition >= e.duration && e.duration > 0) {
-          stopPlayback();
-          if (onPlayComplete) {
-            onPlayComplete();
-          }
-        }
+      await audioService.playAudio(pathToPlay, {
+        onProgress: ({ currentPosition: secs, duration: dur }) => {
+          setCurrentPosition(Math.floor(secs));
+          if (dur != null && dur > 0) setCurrentDuration(Math.floor(dur));
+          setLoading(false);
+        },
+        onComplete: () => {
+          setCurrentPosition(0);
+          setIsPlaying(false);
+          setLoading(false);
+          if (onPlayComplete) onPlayComplete();
+        },
       });
-
-      // Actualizar posición periódicamente
-      intervalRef.current = setInterval(() => {
-        if (playerRef.current && isPlaying) {
-          try {
-            player.getCurrentTime().then((time) => {
-              if (time && time.currentPosition !== undefined) {
-                setCurrentPosition(Math.floor(time.currentPosition / 1000));
-              }
-              if (time && time.duration !== undefined && time.duration > 0) {
-                setCurrentDuration(Math.floor(time.duration / 1000));
-              }
-            }).catch(() => {
-              // Ignorar errores de getCurrentTime
-            });
-          } catch (e) {
-            // Ignorar errores
-          }
-        }
-      }, 250);
 
       setLoading(false);
     } catch (error) {
@@ -393,7 +286,7 @@ const VoicePlayer = ({ audioUrl, duration, onPlayComplete, isOwnMessage = false 
       setLoading(false);
       setIsPlaying(false);
     }
-  }, [audioUrl, getPlaybackUrl, getPlayer, stopPlayback, onPlayComplete, isPlaying]);
+  }, [audioUrl, getPlaybackUrl, stopPlayback, onPlayComplete]);
 
 
   /**
