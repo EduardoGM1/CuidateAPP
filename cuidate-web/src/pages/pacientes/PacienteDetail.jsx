@@ -161,6 +161,8 @@ export default function PacienteDetail() {
     observaciones: '',
   });
   const [sesionModalOpen, setSesionModalOpen] = useState(false);
+  const [sesionCitasOpciones, setSesionCitasOpciones] = useState([]);
+  const [sesionCitasLoading, setSesionCitasLoading] = useState(false);
   const [editingSesion, setEditingSesion] = useState(null);
   const [sesionSubmitting, setSesionSubmitting] = useState(false);
   const [sesionError, setSesionError] = useState('');
@@ -318,6 +320,17 @@ export default function PacienteDetail() {
         .finally(() => setAllCitasLoading(false));
     }
   }, [showAllCitasOpen, parsedId]);
+
+  // Cargar citas del paciente al abrir el modal de sesión educativa (para "Vincular a cita")
+  useEffect(() => {
+    if (sesionModalOpen && parsedId > 0) {
+      setSesionCitasLoading(true);
+      getPacienteCitas(parsedId, { limit: 150, offset: 0 })
+        .then((res) => setSesionCitasOpciones(Array.isArray(res?.data) ? res.data : []))
+        .catch(() => setSesionCitasOpciones([]))
+        .finally(() => setSesionCitasLoading(false));
+    }
+  }, [sesionModalOpen, parsedId]);
 
   const openDetalleCita = useCallback((idCita) => {
     const id = idCita ?? null;
@@ -2536,12 +2549,19 @@ export default function PacienteDetail() {
                       value={sesionForm.numero_intervenciones}
                       onChange={(e) => setSesionForm((f) => ({ ...f, numero_intervenciones: e.target.value.replace(/[^0-9]/g, '') || '1' }))}
                     />
-                    <Input
-                      label="ID de cita (opcional)"
-                      type="number"
-                      placeholder="Vincular a una cita"
-                      value={sesionForm.id_cita}
-                      onChange={(e) => setSesionForm((f) => ({ ...f, id_cita: e.target.value.replace(/[^0-9]/g, '') }))}
+                    <Select
+                      label="Vincular a cita"
+                      placeholder={sesionCitasLoading ? 'Cargando citas…' : 'Seleccionar cita'}
+                      value={sesionForm.id_cita === '' ? '__ninguna__' : (sesionForm.id_cita || '__ninguna__')}
+                      onChange={(v) => setSesionForm((f) => ({ ...f, id_cita: v && v !== '__ninguna__' ? String(v) : '' }))}
+                      disabled={sesionCitasLoading}
+                      options={[
+                        { value: '__ninguna__', label: 'Ninguna' },
+                        ...(sesionCitasOpciones || []).map((c) => ({
+                          value: String(c.id_cita ?? c.id),
+                          label: `${formatDate(c.fecha_cita)} — ${sanitizeForDisplay(c.motivo_consulta || c.motivo || c.estado) || 'Cita'}`,
+                        })),
+                      ]}
                     />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                       <input
