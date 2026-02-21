@@ -155,6 +155,9 @@ export default function PacienteDetail() {
   const [sesionForm, setSesionForm] = useState({
     fecha_sesion: '',
     tipo_sesion: '',
+    asistio: false,
+    numero_intervenciones: '1',
+    id_cita: '',
     observaciones: '',
   });
   const [sesionModalOpen, setSesionModalOpen] = useState(false);
@@ -2353,6 +2356,13 @@ export default function PacienteDetail() {
                     >
                       <div>
                         {formatDate(s.fecha_sesion ?? s.fecha_registro ?? s.fecha)} — {sanitizeForDisplay(s.tipo_sesion) || '—'}
+                        {(s.asistio != null || s.numero_intervenciones != null) && (
+                          <span style={{ display: 'block', fontSize: 'var(--text-sm)', color: 'var(--color-texto-secundario)', marginTop: '0.25rem' }}>
+                            {s.asistio != null && (s.asistio ? 'Asistió' : 'No asistió')}
+                            {s.asistio != null && s.numero_intervenciones != null && ' · '}
+                            {s.numero_intervenciones != null && `${s.numero_intervenciones} intervención(es)`}
+                          </span>
+                        )}
                         {s.observaciones && (
                           <span style={{ display: 'block', fontSize: 'var(--text-sm)', color: 'var(--color-texto-secundario)', marginTop: '0.25rem' }}>
                             {sanitizeForDisplay(s.observaciones)}
@@ -2370,6 +2380,9 @@ export default function PacienteDetail() {
                               setSesionForm({
                                 fecha_sesion: s.fecha_sesion ? String(s.fecha_sesion).slice(0, 10) : '',
                                 tipo_sesion: s.tipo_sesion ?? '',
+                                asistio: !!s.asistio,
+                                numero_intervenciones: s.numero_intervenciones != null ? String(s.numero_intervenciones) : '1',
+                                id_cita: s.id_cita != null ? String(s.id_cita) : '',
                                 observaciones: s.observaciones ?? '',
                               });
                               setEditingSesion(s);
@@ -2412,7 +2425,14 @@ export default function PacienteDetail() {
                   onClick={() => {
                     setSesionError('');
                     setEditingSesion(null);
-                    setSesionForm({ fecha_sesion: '', tipo_sesion: '', observaciones: '' });
+                    setSesionForm({
+                      fecha_sesion: '',
+                      tipo_sesion: '',
+                      asistio: false,
+                      numero_intervenciones: '1',
+                      id_cita: '',
+                      observaciones: '',
+                    });
                     setSesionModalOpen(true);
                   }}
                 >
@@ -2439,18 +2459,33 @@ export default function PacienteDetail() {
                     setSesionError('');
                     setSesionSubmitting(true);
                     try {
+                      const numInterv = parseInt(sesionForm.numero_intervenciones, 10);
+                      const idCitaVal = (sesionForm.id_cita || '').trim();
                       const body = {
                         fecha_sesion: fecha,
                         tipo_sesion: tipo,
+                        asistio: !!sesionForm.asistio,
+                        numero_intervenciones: (Number.isNaN(numInterv) || numInterv < 1) ? 1 : numInterv,
                         observaciones: sesionForm.observaciones?.trim() || undefined,
                       };
+                      if (idCitaVal) {
+                        const citaId = parseInt(idCitaVal, 10);
+                        if (!Number.isNaN(citaId) && citaId > 0) body.id_cita = citaId;
+                      }
                       if (editingSesion) {
                         await apiUpdateSesionEducativa(parsedId, editingSesion.id_sesion ?? editingSesion.id, body);
                         message.success('Sesión actualizada');
                       } else {
                         await apiCreateSesionEducativa(parsedId, body);
                       }
-                      setSesionForm({ fecha_sesion: '', tipo_sesion: '', observaciones: '' });
+                      setSesionForm({
+                        fecha_sesion: '',
+                        tipo_sesion: '',
+                        asistio: false,
+                        numero_intervenciones: '1',
+                        id_cita: '',
+                        observaciones: '',
+                      });
                       setEditingSesion(null);
                       setSesionModalOpen(false);
                       loadSesionesEducativas();
@@ -2480,11 +2515,45 @@ export default function PacienteDetail() {
                       value={sesionForm.fecha_sesion}
                       onChange={(e) => setSesionForm((f) => ({ ...f, fecha_sesion: e.target.value }))}
                     />
-                    <Input
-                      label="Tipo de sesión (ej. nutricional)"
-                      value={sesionForm.tipo_sesion}
-                      onChange={(e) => setSesionForm((f) => ({ ...f, tipo_sesion: e.target.value }))}
+                    <Select
+                      label="Tipo de sesión"
+                      placeholder="Seleccionar tipo"
+                      value={sesionForm.tipo_sesion || undefined}
+                      onChange={(v) => setSesionForm((f) => ({ ...f, tipo_sesion: v ?? '' }))}
+                      options={[
+                        { value: 'nutricional', label: 'Nutricional' },
+                        { value: 'actividad_fisica', label: 'Actividad física' },
+                        { value: 'medico_preventiva', label: 'Médico preventiva' },
+                        { value: 'trabajo_social', label: 'Trabajo social' },
+                        { value: 'psicologica', label: 'Psicológica' },
+                        { value: 'odontologica', label: 'Odontológica' },
+                      ]}
                     />
+                    <Input
+                      label="Número de intervenciones"
+                      type="number"
+                      min={1}
+                      value={sesionForm.numero_intervenciones}
+                      onChange={(e) => setSesionForm((f) => ({ ...f, numero_intervenciones: e.target.value.replace(/[^0-9]/g, '') || '1' }))}
+                    />
+                    <Input
+                      label="ID de cita (opcional)"
+                      type="number"
+                      placeholder="Vincular a una cita"
+                      value={sesionForm.id_cita}
+                      onChange={(e) => setSesionForm((f) => ({ ...f, id_cita: e.target.value.replace(/[^0-9]/g, '') }))}
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                      <input
+                        type="checkbox"
+                        id="sesion-asistio"
+                        checked={!!sesionForm.asistio}
+                        onChange={(e) => setSesionForm((f) => ({ ...f, asistio: e.target.checked }))}
+                      />
+                      <label htmlFor="sesion-asistio" style={{ fontSize: '0.9rem', cursor: 'pointer' }}>
+                        Asistió a sesión educativa
+                      </label>
+                    </div>
                     <Input
                       label="Observaciones (opcional)"
                       value={sesionForm.observaciones}
