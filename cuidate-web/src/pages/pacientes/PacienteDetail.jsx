@@ -50,6 +50,7 @@ import ProximaCitaCard from '../../components/pacientes/ProximaCitaCard';
 import SectionCard from '../../components/pacientes/SectionCard';
 import PatientSectionModal from '../../components/pacientes/PatientSectionModal';
 import DetalleCitaModal from '../../components/pacientes/DetalleCitaModal';
+import DetalleSignoVitalModal from '../../components/pacientes/DetalleSignoVitalModal';
 import { PATIENT_DETAIL_SECTIONS } from '../../constants/patientDetailSections';
 import { getVacunas } from '../../api/vacunas';
 import { getComorbilidades } from '../../api/comorbilidades';
@@ -218,6 +219,7 @@ export default function PacienteDetail() {
   const [detalleCitaId, setDetalleCitaId] = useState(null);
   const [citaDetalle, setCitaDetalle] = useState(null);
   const [citaDetalleLoading, setCitaDetalleLoading] = useState(false);
+  const [signoDetalleSeleccionado, setSignoDetalleSeleccionado] = useState(null);
   const [allComorbilidadesData, setAllComorbilidadesData] = useState([]);
   const [allComorbilidadesLoading, setAllComorbilidadesLoading] = useState(false);
 
@@ -303,6 +305,13 @@ export default function PacienteDetail() {
   const closeDetalleCita = useCallback(() => {
     setDetalleCitaId(null);
     setCitaDetalle(null);
+  }, []);
+
+  const openDetalleSigno = useCallback((signo) => {
+    setSignoDetalleSeleccionado(signo || null);
+  }, []);
+  const closeDetalleSigno = useCallback(() => {
+    setSignoDetalleSeleccionado(null);
   }, []);
 
   useEffect(() => {
@@ -998,7 +1007,15 @@ export default function PacienteDetail() {
             ) : (
               <ul className="tracking-list">
                 {(signos.data || []).map((s, i) => (
-                  <li key={s.id_signo ?? s.id_signo_vital ?? s.id ?? i} className="tracking-item">
+                  <li
+                    key={s.id_signo ?? s.id_signo_vital ?? s.id ?? i}
+                    className="tracking-item"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => openDetalleSigno(s)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetalleSigno(s); } }}
+                  >
                     <span className="tracking-item-date">{formatDate(s.fecha_medicion)}</span>
                     <span className="tracking-item-body">
                       Peso: {s.peso_kg ?? '—'} kg · Talla: {s.talla_m ?? '—'} m · Cintura: {s.medida_cintura_cm ?? '—'} cm · PA: {s.presion_sistolica ?? '—'}/{s.presion_diastolica ?? '—'} · Glucosa: {s.glucosa_mg_dl ?? '—'} mg/dL
@@ -1010,7 +1027,7 @@ export default function PacienteDetail() {
                       {s.observaciones && <> · {sanitizeForDisplay(s.observaciones)}</>}
                     </span>
                     {canEditMedical && (
-                      <span className="tracking-item-actions">
+                      <span className="tracking-item-actions" onClick={(e) => e.stopPropagation()}>
                         <Button variant="secondary" size="small" onClick={() => handleDeleteSigno(s.id_signo ?? s.id_signo_vital ?? s.id)}>Eliminar</Button>
                       </span>
                     )}
@@ -2662,7 +2679,15 @@ export default function PacienteDetail() {
         {allSignosLoading ? <LoadingSpinner /> : allSignosData.length === 0 ? <EmptyState message="No hay registros" /> : (
           <ul className="tracking-list" style={{ maxHeight: '70vh', overflow: 'auto' }}>
             {allSignosData.map((s, i) => (
-              <li key={s.id_signo ?? s.id_signo_vital ?? s.id ?? i} className="tracking-item">
+              <li
+                key={s.id_signo ?? s.id_signo_vital ?? s.id ?? i}
+                className="tracking-item"
+                style={{ cursor: 'pointer' }}
+                onClick={() => { setShowAllSignosOpen(false); openDetalleSigno(s); }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowAllSignosOpen(false); openDetalleSigno(s); } }}
+              >
                 <span className="tracking-item-date">{formatDate(s.fecha_medicion)}</span>
                 <span className="tracking-item-body">
                   Peso: {s.peso_kg ?? '—'} kg · Talla: {s.talla_m ?? '—'} m · PA: {s.presion_sistolica ?? '—'}/{s.presion_diastolica ?? '—'} · Glucosa: {s.glucosa_mg_dl ?? '—'} mg/dL
@@ -2673,6 +2698,12 @@ export default function PacienteDetail() {
           </ul>
         )}
       </Modal>
+
+      <DetalleSignoVitalModal
+        open={!!signoDetalleSeleccionado}
+        onClose={closeDetalleSigno}
+        signo={signoDetalleSeleccionado}
+      />
       <Modal open={showAllCitasOpen} onClose={() => setShowAllCitasOpen(false)} title="Historial de citas" footer={null} width={640}>
         {allCitasLoading ? <LoadingSpinner /> : allCitasData.length === 0 ? <EmptyState message="No hay citas" /> : (
           <ul className="tracking-list" style={{ maxHeight: '70vh', overflow: 'auto' }}>
