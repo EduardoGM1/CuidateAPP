@@ -61,6 +61,7 @@ import ProximaCitaCard from '../../components/pacientes/ProximaCitaCard';
 import SectionCard from '../../components/pacientes/SectionCard';
 import PatientSectionModal from '../../components/pacientes/PatientSectionModal';
 import DetalleCitaModal from '../../components/pacientes/DetalleCitaModal';
+import CompletarCitaWizardModal from '../../components/citas/CompletarCitaWizardModal';
 import DetalleSignoVitalModal from '../../components/pacientes/DetalleSignoVitalModal';
 import ComparativaEvolucionSignos from '../../components/pacientes/ComparativaEvolucionSignos';
 import { PATIENT_DETAIL_SECTIONS } from '../../constants/patientDetailSections';
@@ -252,6 +253,8 @@ export default function PacienteDetail() {
   const [detalleCitaId, setDetalleCitaId] = useState(null);
   const [citaDetalle, setCitaDetalle] = useState(null);
   const [citaDetalleLoading, setCitaDetalleLoading] = useState(false);
+  const [wizardCitaId, setWizardCitaId] = useState(null);
+  const [wizardCitaModalOpen, setWizardCitaModalOpen] = useState(false);
   const [signoDetalleSeleccionado, setSignoDetalleSeleccionado] = useState(null);
   const [allComorbilidadesData, setAllComorbilidadesData] = useState([]);
   const [allComorbilidadesLoading, setAllComorbilidadesLoading] = useState(false);
@@ -3290,8 +3293,14 @@ export default function PacienteDetail() {
         loading={citaDetalleLoading}
         onVerEnPagina={(idCita) => navigate(`/citas/${idCita}`)}
         canEditMedical={canEditMedical}
-        onCompletarWizard={(idCita) => { closeDetalleCita(); navigate(`/citas/${idCita}`); }}
+        onCompletarWizard={(idCita) => { closeDetalleCita(); setWizardCitaId(idCita); setWizardCitaModalOpen(true); }}
         onSoloSignosVitales={(idCita) => { closeDetalleCita(); setSignosCitaId(idCita); setSignosForm({ peso_kg: '', talla_m: '', medida_cintura_cm: '', presion_sistolica: '', presion_diastolica: '', glucosa_mg_dl: '', colesterol_mg_dl: '', colesterol_ldl: '', colesterol_hdl: '', trigliceridos_mg_dl: '', hba1c_porcentaje: '', observaciones: '' }); setSignosModalOpen(true); }}
+      />
+      <CompletarCitaWizardModal
+        open={wizardCitaModalOpen}
+        onClose={() => { setWizardCitaModalOpen(false); setWizardCitaId(null); }}
+        citaId={wizardCitaId}
+        onSuccess={() => { loadCitas(); setWizardCitaModalOpen(false); setWizardCitaId(null); }}
       />
       <Modal open={showAllComorbilidadesOpen} onClose={() => setShowAllComorbilidadesOpen(false)} title="Comorbilidades registradas" footer={null} width={560}>
         {allComorbilidadesLoading ? <LoadingSpinner /> : allComorbilidadesData.length === 0 ? <EmptyState message="No hay comorbilidades" /> : (

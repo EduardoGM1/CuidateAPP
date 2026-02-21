@@ -1,24 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getCitaById, updateCitaEstado, completarCitaWizard } from '../../api/citas';
+import { getCitaById, updateCitaEstado } from '../../api/citas';
 import { message } from 'antd';
 import { connect, on, off } from '../../api/socket';
 import { PageHeader, DataCard } from '../../components/shared';
-import { LoadingSpinner, Button, Card, Badge, Input, Select, TextArea } from '../../components/ui';
+import { LoadingSpinner, Button, Card, Badge, Input, Select } from '../../components/ui';
+import CompletarCitaWizardModal from '../../components/citas/CompletarCitaWizardModal';
 import { useAuthStore } from '../../stores/authStore';
 import { STORAGE_KEYS } from '../../utils/constants';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatDateTime } from '../../utils/format';
-
-const WIZARD_STEPS = [
-  { id: 'asistencia', label: 'Asistencia' },
-  { id: 'signos_vitales', label: 'Signos vitales' },
-  { id: 'observaciones', label: 'Observaciones' },
-  { id: 'diagnostico', label: 'Diagnóstico' },
-  { id: 'plan_medicacion', label: 'Plan de medicación' },
-  { id: 'finalizar', label: 'Finalizar' },
-];
 
 const ESTADOS_OPCIONES = [
   { value: 'pendiente', label: 'Pendiente' },
@@ -41,17 +33,7 @@ export default function CitaDetail() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
-  const [wizardOpen, setWizardOpen] = useState(false);
-  const [wizardStepIndex, setWizardStepIndex] = useState(0);
-  const [wizardAsistencia, setWizardAsistencia] = useState(true);
-  const [wizardMotivoNoAsistencia, setWizardMotivoNoAsistencia] = useState('');
-  const [wizardSignos, setWizardSignos] = useState({ peso_kg: '', talla_m: '', presion_sistolica: '', presion_diastolica: '', glucosa_mg_dl: '', observaciones: '' });
-  const [wizardObservaciones, setWizardObservaciones] = useState('');
-  const [wizardDiagnostico, setWizardDiagnostico] = useState('');
-  const [wizardPlanObs, setWizardPlanObs] = useState('');
-  const [wizardSaving, setWizardSaving] = useState(false);
-  const [wizardError, setWizardError] = useState('');
-  const [wizardDone, setWizardDone] = useState(false);
+  const [wizardModalOpen, setWizardModalOpen] = useState(false);
 
   const parsedId = parsePositiveInt(id, 0);
   const canEditCita = isDoctor() || isAdmin();
@@ -116,70 +98,6 @@ export default function CitaDetail() {
       message.error(msg);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const pasoActual = WIZARD_STEPS[wizardStepIndex]?.id ?? 'asistencia';
-  const isLastStep = wizardStepIndex >= WIZARD_STEPS.length - 1;
-
-  const handleWizardNext = async (skipCurrent) => {
-    setWizardError('');
-    setWizardSaving(true);
-    try {
-      let body = { paso: pasoActual };
-      if (pasoActual === 'asistencia') {
-        body.asistencia = wizardAsistencia;
-        body.motivo_no_asistencia = wizardMotivoNoAsistencia.trim() || undefined;
-      } else if (pasoActual === 'signos_vitales' && !skipCurrent) {
-        const sv = wizardSignos;
-        const signos = {};
-        if (sv.peso_kg?.trim()) signos.peso_kg = parseFloat(sv.peso_kg);
-        if (sv.talla_m?.trim()) signos.talla_m = parseFloat(sv.talla_m);
-        if (sv.presion_sistolica?.trim()) signos.presion_sistolica = parseInt(sv.presion_sistolica, 10);
-        if (sv.presion_diastolica?.trim()) signos.presion_diastolica = parseInt(sv.presion_diastolica, 10);
-        if (sv.glucosa_mg_dl?.trim()) signos.glucosa_mg_dl = parseFloat(sv.glucosa_mg_dl);
-        if (sv.observaciones?.trim()) signos.observaciones = sv.observaciones;
-        if (Object.keys(signos).length) body.signos_vitales = signos;
-      } else if (pasoActual === 'observaciones') {
-        body.observaciones = wizardObservaciones.trim() || '';
-      } else if (pasoActual === 'diagnostico' && !skipCurrent && wizardDiagnostico.trim().length >= 10) {
-        body.diagnostico = { descripcion: wizardDiagnostico.trim() };
-      } else if (pasoActual === 'plan_medicacion' && !skipCurrent && wizardPlanObs.trim()) {
-        body.plan_medicacion = { observaciones: wizardPlanObs.trim(), medicamentos: [] };
-      } else if (pasoActual === 'finalizar') {
-        body = {
-          paso: 'finalizar',
-          asistencia: wizardAsistencia,
-          motivo_no_asistencia: wizardMotivoNoAsistencia.trim() || undefined,
-          observaciones: wizardObservaciones.trim() || undefined,
-          marcar_como_atendida: true,
-        };
-        const sv = wizardSignos;
-        const signos = {};
-        if (sv.peso_kg?.trim()) signos.peso_kg = parseFloat(sv.peso_kg);
-        if (sv.talla_m?.trim()) signos.talla_m = parseFloat(sv.talla_m);
-        if (sv.presion_sistolica?.trim()) signos.presion_sistolica = parseInt(sv.presion_sistolica, 10);
-        if (sv.presion_diastolica?.trim()) signos.presion_diastolica = parseInt(sv.presion_diastolica, 10);
-        if (sv.glucosa_mg_dl?.trim()) signos.glucosa_mg_dl = parseFloat(sv.glucosa_mg_dl);
-        if (sv.observaciones?.trim()) signos.observaciones = sv.observaciones;
-        if (Object.keys(signos).length) body.signos_vitales = signos;
-        if (wizardDiagnostico.trim().length >= 10) body.diagnostico = { descripcion: wizardDiagnostico.trim() };
-        if (wizardPlanObs.trim()) body.plan_medicacion = { observaciones: wizardPlanObs.trim(), medicamentos: [] };
-      }
-      await completarCitaWizard(parsedId, body);
-      if (isLastStep) {
-        setWizardDone(true);
-        load();
-        message.success('Cita completada correctamente');
-      } else {
-        setWizardStepIndex((i) => Math.min(i + 1, WIZARD_STEPS.length - 1));
-      }
-    } catch (err) {
-      const msg = err?.response?.data?.error || err?.message || 'Error al guardar';
-      setWizardError(msg);
-      message.error(msg);
-    } finally {
-      setWizardSaving(false);
     }
   };
 
@@ -322,77 +240,21 @@ export default function CitaDetail() {
           <h2 style={{ margin: '0 0 1rem', fontSize: '1.15rem', color: 'var(--color-primario)' }}>
             Completar cita (wizard)
           </h2>
-          {wizardDone ? (
-            <p style={{ color: 'var(--color-primario)' }}>Cita completada correctamente. Estado actualizado.</p>
-          ) : (
-            <>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                {WIZARD_STEPS.map((step, i) => (
-                  <span
-                    key={step.id}
-                    style={{
-                      padding: '0.35rem 0.6rem',
-                      borderRadius: 'var(--radius)',
-                      fontSize: '0.85rem',
-                      backgroundColor: i === wizardStepIndex ? 'var(--color-primario)' : 'var(--color-borde-claro)',
-                      color: i === wizardStepIndex ? '#fff' : 'var(--color-texto-secundario)',
-                    }}
-                  >
-                    {step.label}
-                  </span>
-                ))}
-              </div>
-              {wizardError && <p style={{ color: 'var(--color-error)', marginBottom: '0.75rem', fontSize: '0.9rem' }}>{wizardError}</p>}
-              {pasoActual === 'asistencia' && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                    <input type="radio" checked={wizardAsistencia} onChange={() => setWizardAsistencia(true)} /> Asistió
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                    <input type="radio" checked={!wizardAsistencia} onChange={() => setWizardAsistencia(false)} /> No asistió
-                  </label>
-                  {!wizardAsistencia && (
-                    <Input placeholder="Motivo de no asistencia" value={wizardMotivoNoAsistencia} onChange={(e) => setWizardMotivoNoAsistencia(e.target.value.slice(0, 500))} maxLength={500} style={{ marginTop: '0.25rem' }} />
-                  )}
-                </div>
-              )}
-              {pasoActual === 'signos_vitales' && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.5rem', marginBottom: '1rem' }}>
-                  <Input type="number" placeholder="Peso (kg)" value={wizardSignos.peso_kg} onChange={(e) => setWizardSignos((s) => ({ ...s, peso_kg: e.target.value }))} style={{ marginBottom: 0 }} />
-                  <Input type="number" placeholder="Talla (m)" value={wizardSignos.talla_m} onChange={(e) => setWizardSignos((s) => ({ ...s, talla_m: e.target.value }))} style={{ marginBottom: 0 }} />
-                  <Input type="number" placeholder="PA sist." value={wizardSignos.presion_sistolica} onChange={(e) => setWizardSignos((s) => ({ ...s, presion_sistolica: e.target.value }))} style={{ marginBottom: 0 }} />
-                  <Input type="number" placeholder="PA diast." value={wizardSignos.presion_diastolica} onChange={(e) => setWizardSignos((s) => ({ ...s, presion_diastolica: e.target.value }))} style={{ marginBottom: 0 }} />
-                  <Input type="number" placeholder="Glucosa" value={wizardSignos.glucosa_mg_dl} onChange={(e) => setWizardSignos((s) => ({ ...s, glucosa_mg_dl: e.target.value }))} style={{ marginBottom: 0 }} />
-                  <Input placeholder="Observaciones" value={wizardSignos.observaciones} onChange={(e) => setWizardSignos((s) => ({ ...s, observaciones: e.target.value }))} style={{ marginBottom: 0, gridColumn: '1 / -1' }} />
-                </div>
-              )}
-              {pasoActual === 'observaciones' && (
-                <TextArea placeholder="Observaciones de la consulta" value={wizardObservaciones} onChange={(e) => setWizardObservaciones(e.target.value.slice(0, 2000))} rows={3} maxLength={2000} style={{ marginBottom: '1rem' }} />
-              )}
-              {pasoActual === 'diagnostico' && (
-                <TextArea placeholder="Descripción del diagnóstico (mín. 10 caracteres)" value={wizardDiagnostico} onChange={(e) => setWizardDiagnostico(e.target.value)} rows={3} style={{ marginBottom: '1rem' }} />
-              )}
-              {pasoActual === 'plan_medicacion' && (
-                <TextArea placeholder="Observaciones del plan de medicación (opcional)" value={wizardPlanObs} onChange={(e) => setWizardPlanObs(e.target.value)} rows={2} style={{ marginBottom: '1rem' }} />
-              )}
-              {pasoActual === 'finalizar' && (
-                <p style={{ marginBottom: '1rem', color: 'var(--color-texto-secundario)' }}>Al guardar se marcará la cita como atendida con los datos ingresados.</p>
-              )}
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <Button variant="primary" onClick={() => handleWizardNext(false)} disabled={wizardSaving}>
-                  {wizardSaving ? 'Guardando…' : isLastStep ? 'Completar cita' : 'Siguiente'}
-                </Button>
-                {!isLastStep && pasoActual !== 'asistencia' && (
-                  <Button variant="secondary" onClick={() => handleWizardNext(true)} disabled={wizardSaving}>Omitir</Button>
-                )}
-                {wizardStepIndex > 0 && (
-                  <Button variant="secondary" onClick={() => setWizardStepIndex((i) => Math.max(0, i - 1))} disabled={wizardSaving}>Atrás</Button>
-                )}
-              </div>
-            </>
-          )}
+          <p style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
+            Flujo guiado paso a paso con guardado progresivo.
+          </p>
+          <Button variant="primary" type="button" onClick={() => setWizardModalOpen(true)}>
+            Abrir wizard
+          </Button>
         </Card>
       )}
+
+      <CompletarCitaWizardModal
+        open={wizardModalOpen}
+        onClose={() => setWizardModalOpen(false)}
+        citaId={parsedId}
+        onSuccess={() => { load(); setWizardModalOpen(false); }}
+      />
     </div>
   );
 }
