@@ -12,8 +12,19 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    include: ['exceljs'],
+  },
   build: {
     outDir: 'dist',
     sourcemap: false,
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
   },
 });
