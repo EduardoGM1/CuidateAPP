@@ -5,7 +5,6 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   RefreshControl,
   Image,
   Modal,
@@ -22,10 +21,10 @@ import { formatDateTime, formatDateWithWeekday } from '../../utils/dateUtils';
 import gestionService from '../../api/gestionService';
 import SeveridadBadge from '../../components/common/SeveridadBadge';
 import AlertBanner from '../../components/common/AlertBanner';
-
-const { width } = Dimensions.get('window');
+import { useResponsiveDimensions } from '../../utils/responsive';
 
 const DashboardAdmin = ({ navigation }) => {
+  const { cardWidthHalf } = useResponsiveDimensions();
   const { userData, userRole } = useAuth();
   const { 
     metrics, 
@@ -334,7 +333,7 @@ const DashboardAdmin = ({ navigation }) => {
   };
 
   const renderMetricCard = (title, value, subtitle, color = COLORES.NAV_PRIMARIO) => (
-    <Card style={[styles.metricCard, { borderLeftColor: color }]}>
+    <Card style={[styles.metricCard, { borderLeftColor: color, width: cardWidthHalf }]}>
       <Card.Content style={styles.metricContent}>
         <Text style={styles.metricValue}>{value}</Text>
         <Text style={styles.metricTitle}>{title}</Text>
@@ -533,23 +532,23 @@ const DashboardAdmin = ({ navigation }) => {
         <View style={styles.quickAccessContainer}>
           <Text style={styles.sectionTitle}>Accesos Rápidos</Text>
           <View style={styles.quickAccessGrid}>
-            <TouchableOpacity style={[styles.quickAccessButton, styles.primaryButton]} onPress={handleAddDoctor}>
+            <TouchableOpacity style={[styles.quickAccessButton, styles.primaryButton, { width: cardWidthHalf }]} onPress={handleAddDoctor}>
               <Text style={styles.quickAccessIcon}>👨‍⚕️</Text>
               <Text style={styles.quickAccessText}>Agregar Doctor</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={[styles.quickAccessButton, styles.primaryButton]} onPress={handleAddPatient}>
+            <TouchableOpacity style={[styles.quickAccessButton, styles.primaryButton, { width: cardWidthHalf }]} onPress={handleAddPatient}>
               <Text style={styles.quickAccessIcon}>👥</Text>
               <Text style={styles.quickAccessText}>Registrar Paciente</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={[styles.quickAccessButton, styles.primaryButton]} onPress={handleViewTodasCitas}>
+            <TouchableOpacity style={[styles.quickAccessButton, styles.primaryButton, { width: cardWidthHalf }]} onPress={handleViewTodasCitas}>
               <Text style={styles.quickAccessIcon}>📅</Text>
               <Text style={styles.quickAccessText}>Todas las Citas</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.quickAccessButton, styles.primaryButton]} 
+              style={[styles.quickAccessButton, styles.primaryButton, { width: cardWidthHalf }]} 
               onPress={() => {
                 Logger.navigation('DashboardAdmin', 'ReportesAdmin');
                 navigation.navigate('ReportesAdmin');
@@ -559,32 +558,32 @@ const DashboardAdmin = ({ navigation }) => {
               <Text style={styles.quickAccessText}>Reportes</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton]} onPress={handleViewAuditoria}>
+            <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton, { width: cardWidthHalf }]} onPress={handleViewAuditoria}>
               <Text style={styles.quickAccessIcon}>📜</Text>
               <Text style={styles.secondaryButtonText}>Historial de Auditoría</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton]} onPress={handleViewModulos}>
+            <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton, { width: cardWidthHalf }]} onPress={handleViewModulos}>
               <Text style={styles.quickAccessIcon}>🏢</Text>
               <Text style={styles.secondaryButtonText}>Módulos</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton]} onPress={handleViewInstituciones}>
+            <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton, { width: cardWidthHalf }]} onPress={handleViewInstituciones}>
               <Text style={styles.quickAccessIcon}>🏥</Text>
               <Text style={styles.secondaryButtonText}>Instituciones</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton]} onPress={handleViewMedicamentos}>
+            <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton, { width: cardWidthHalf }]} onPress={handleViewMedicamentos}>
               <Text style={styles.quickAccessIcon}>💊</Text>
               <Text style={styles.secondaryButtonText}>Medicamentos</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton]} onPress={handleViewComorbilidades}>
+            <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton, { width: cardWidthHalf }]} onPress={handleViewComorbilidades}>
               <Text style={styles.quickAccessIcon}>🏥</Text>
               <Text style={styles.secondaryButtonText}>Comorbilidades</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton]} onPress={handleViewVacunas}>
+            <TouchableOpacity style={[styles.quickAccessButton, styles.secondaryButton, { width: cardWidthHalf }]} onPress={handleViewVacunas}>
               <Text style={styles.quickAccessIcon}>💉</Text>
               <Text style={styles.secondaryButtonText}>Vacunas</Text>
             </TouchableOpacity>
@@ -850,7 +849,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   metricCard: {
-    width: (width - 50) / 2,
     marginBottom: 15,
     elevation: 3,
     borderLeftWidth: 4,
@@ -987,7 +985,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   quickAccessButton: {
-    width: (width - 50) / 2,
     height: 80,
     borderRadius: 12,
     justifyContent: 'center',

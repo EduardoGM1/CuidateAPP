@@ -26,7 +26,7 @@ import ListChatItem from '../../components/chat/ListChatItem';
 import { emptyStateStyles } from '../../utils/sharedStyles';
 import { COLORES } from '../../utils/constantes';
 
-const ListaChats = ({ navigation }) => {
+const ListaChats = ({ navigation, onBackFromSection }) => {
   const { userData, userRole } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -172,14 +172,7 @@ const ListaChats = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <BackHeader navigation={navigation} title="💬 Mensajes" variant="professional" />
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>💬 Mensajes</Text>
-        <Text style={styles.headerSubtitle}>
-          {conversaciones.length} {conversaciones.length === 1 ? 'conversación' : 'conversaciones'}
-        </Text>
-      </View>
+      <BackHeader navigation={navigation} title="💬 Mensajes" variant="professional" onBack={onBackFromSection} />
 
       {/* Lista de conversaciones */}
       <FlatList
@@ -209,22 +202,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORES.FONDO_CARD,
-  },
-  header: {
-    padding: 16,
-    backgroundColor: COLORES.FONDO_CARD,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORES.BORDE_CLARO,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORES.TEXTO_PRIMARIO,
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: COLORES.TEXTO_SECUNDARIO,
   },
   searchContainer: {
     padding: 12,

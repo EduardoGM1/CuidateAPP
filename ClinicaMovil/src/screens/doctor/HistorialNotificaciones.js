@@ -346,7 +346,7 @@ const HistorialNotificaciones = ({ navigation }) => {
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>🔔 Mis Notificaciones</Text>
           {contadorNoLeidas > 0 && (
-            <Chip style={styles.badgeChip} textStyle={styles.badgeText}>
+            <Chip style={[styles.badgeChip, styles.headerBadgeChip]} textStyle={styles.badgeText}>
               {contadorNoLeidas} no leídas
             </Chip>
           )}
@@ -539,11 +539,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
+    flexWrap: 'wrap',
+    minWidth: 0,
+    paddingHorizontal: 4,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: COLORES.TEXTO_PRIMARIO,
+  },
+  headerBadgeChip: {
+    height: 28,
+    minWidth: 96,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
   },
   searchContainer: {
     padding: 12,
@@ -632,8 +641,10 @@ const styles = StyleSheet.create({
   },
   badgeChip: {
     height: 26,
-    minWidth: 70,
+    minWidth: 80,
     justifyContent: 'center',
+    paddingHorizontal: 10,
+    flexShrink: 0,
   },
   badgeText: {
     fontSize: 11,

@@ -1,14 +1,12 @@
-import React, { useMemo, useEffect, useState } from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import React, { useMemo, useState } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import Logger from '../services/logger';
 import { COLORES } from '../utils/constantes';
 import useConversacionesDoctor from '../hooks/useConversacionesDoctor';
-import TabIconWithBadge from '../components/navigation/TabIconWithBadge';
 import DashboardAdmin from '../screens/admin/DashboardAdmin';
 import DashboardDoctor from '../screens/doctor/DashboardDoctor';
 import GestionAdmin from '../screens/admin/GestionAdmin';
@@ -50,8 +48,8 @@ const GestionScreen = ({ navigation }) => {
   return <ListaPacientesDoctor navigation={navigation} />;
 };
 
-const MensajesScreen = ({ navigation }) => (
-  <ListaChats navigation={navigation} />
+const MensajesScreen = ({ navigation, onBackFromSection }) => (
+  <ListaChats navigation={navigation} onBackFromSection={onBackFromSection} />
 );
 
 const PerfilScreen = ({ navigation }) => {
@@ -139,119 +137,135 @@ const DashboardSelector = ({ navigation }) => {
   return <DashboardDoctor navigation={navigation} />;
 };
 
-// Bottom Tab Navigator
-const Tab = createBottomTabNavigator();
+// Pantalla única con menú lateral propio (sin tabs ni drawer de React Navigation)
+const SECCIONES = [
+  { key: 'Dashboard', label: 'Dashboard', icon: '🏠' },
+  { key: 'Gestion', label: 'Gestión', icon: '📋' },
+  { key: 'Mensajes', label: 'Mensajes', icon: '💬' },
+  { key: 'Perfil', label: 'Perfil', icon: '⚙️' },
+];
 
-const TabNavigator = () => {
-  const insets = useSafeAreaInsets();
+// Accesos rápidos según rol (screen = nombre de ruta en el Stack)
+const ACCESOS_RAPIDOS_ADMIN = [
+  { label: 'Agregar Doctor', icon: '👨‍⚕️', screen: 'AgregarDoctor' },
+  { label: 'Registrar Paciente', icon: '👥', screen: 'AgregarPaciente' },
+  { label: 'Todas las Citas', icon: '📅', screen: 'VerTodasCitas' },
+  { label: 'Reportes', icon: '📊', screen: 'ReportesAdmin' },
+  { label: 'Historial de Auditoría', icon: '📜', screen: 'HistorialAuditoria' },
+  { label: 'Módulos', icon: '🏢', screen: 'GestionModulos' },
+  { label: 'Instituciones', icon: '🏥', screen: 'GestionInstituciones' },
+  { label: 'Medicamentos', icon: '💊', screen: 'GestionMedicamentos' },
+  { label: 'Comorbilidades', icon: '🩺', screen: 'GestionComorbilidades' },
+  { label: 'Vacunas', icon: '💉', screen: 'GestionVacunas' },
+];
+
+const ACCESOS_RAPIDOS_DOCTOR = [
+  { label: 'Ver Todas las Citas', icon: '📅', screen: 'VerTodasCitas' },
+  { label: 'Mis Pacientes', icon: '👥', screen: 'ListaPacientesDoctor' },
+  { label: 'Nuevo Paciente', icon: '➕', screen: 'AgregarPaciente' },
+  { label: 'Historial Médico', icon: '📋', screen: 'HistorialMedicoDoctor' },
+  { label: 'Solicitudes reprogramación', icon: '🔄', screen: 'GestionSolicitudesReprogramacion' },
+  { label: 'Notificaciones', icon: '🔔', screen: 'HistorialNotificaciones' },
+];
+
+const MainScreenWithMenu = ({ navigation }) => {
+  const [seccion, setSeccion] = useState('Dashboard');
+  const [menuVisible, setMenuVisible] = useState(false);
   const { userData, userRole } = useAuth();
-  const [refreshKey, setRefreshKey] = useState(0);
-  
-  // Reservar espacio inferior para la barra del sistema (evitar solapamiento con tabs)
-  const tabBarBottomPadding = Math.max(8, insets.bottom || 0);
-  const tabBarHeight = 60 + tabBarBottomPadding;
-  
-  // Obtener conversaciones solo para doctores
+
   const esDoctor = userRole === 'Doctor' || userRole === 'doctor';
+  const esAdmin = userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador';
   const doctorId = esDoctor ? userData?.id_doctor : null;
-  
   const { conversaciones, refresh: refreshConversaciones } = useConversacionesDoctor(doctorId);
-  
-  // Calcular total de mensajes no leídos
+
   const totalMensajesNoLeidos = useMemo(() => {
-    if (!esDoctor || !conversaciones || conversaciones.length === 0) {
-      return 0;
-    }
-    
-    return conversaciones.reduce((total, conv) => {
-      const mensajesNoLeidos = Number(conv.mensajes_no_leidos) || 0;
-      return total + mensajesNoLeidos;
-    }, 0);
+    if (!esDoctor || !conversaciones || conversaciones.length === 0) return 0;
+    return conversaciones.reduce((total, conv) => total + (Number(conv.mensajes_no_leidos) || 0), 0);
   }, [conversaciones, esDoctor]);
 
-  // Forzar actualización del tab bar cuando cambien las conversaciones
-  useEffect(() => {
-    // Forzar re-render del tab navigator cuando cambien los mensajes no leídos
-    setRefreshKey(prev => prev + 1);
-  }, [totalMensajesNoLeidos]);
-
-  // Refrescar conversaciones cuando se vuelve a la pantalla
   useFocusEffect(
     React.useCallback(() => {
-      if (esDoctor && doctorId) {
-        Logger.info('TabNavigator: Pantalla enfocada, refrescando conversaciones para badge');
-        refreshConversaciones();
-      }
+      if (esDoctor && doctorId) refreshConversaciones();
     }, [esDoctor, doctorId, refreshConversaciones])
   );
 
+  const titulo = SECCIONES.find(s => s.key === seccion)?.label || 'Dashboard';
+  const labelMensajes = totalMensajesNoLeidos > 0 ? `Mensajes (${totalMensajesNoLeidos})` : 'Mensajes';
+  const accesosRapidos = esAdmin ? ACCESOS_RAPIDOS_ADMIN : (esDoctor ? ACCESOS_RAPIDOS_DOCTOR : []);
+
+  const elegirSeccion = (key) => {
+    setSeccion(key);
+    setMenuVisible(false);
+  };
+
+  const navegarAccesoRapido = (screenName) => {
+    setMenuVisible(false);
+    navigation.navigate(screenName);
+  };
+
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: COLORES.NAV_PRIMARIO,
-          borderTopColor: COLORES.NAV_PRIMARIO,
-          height: tabBarHeight,
-          paddingBottom: tabBarBottomPadding,
-          paddingTop: 8,
-        },
-        tabBarActiveTintColor: COLORES.TEXTO_EN_PRIMARIO,
-        tabBarInactiveTintColor: COLORES.NAV_PRIMARIO_INACTIVO,
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
-      }}
-    >
-      <Tab.Screen 
-        name="Dashboard" 
-        options={{
-          tabBarLabel: 'Dashboard',
-          tabBarIcon: ({ focused }) => (
-            <TabIconWithBadge icon="🏠" badgeCount={0} focused={focused} />
-          ),
-        }}
-      >
-        {({ navigation }) => <DashboardSelector navigation={navigation} />}
-      </Tab.Screen>
-      <Tab.Screen 
-        name="Gestion" 
-        options={{
-          tabBarLabel: 'Gestión',
-          tabBarIcon: ({ focused }) => (
-            <TabIconWithBadge icon="📋" badgeCount={0} focused={focused} />
-          ),
-        }}
-      >
-        {({ navigation }) => <GestionScreen navigation={navigation} />}
-      </Tab.Screen>
-      <Tab.Screen 
-        name="Mensajes" 
-        key={`mensajes-${refreshKey}`}
-        component={MensajesScreen}
-        options={{
-          tabBarLabel: 'Mensajes',
-          tabBarIcon: ({ focused }) => (
-            <TabIconWithBadge 
-              icon="💬" 
-              badgeCount={totalMensajesNoLeidos} 
-              focused={focused} 
-            />
-          ),
-        }}
-      />
-      <Tab.Screen 
-        name="Perfil" 
-        component={PerfilScreen}
-        options={{
-          tabBarLabel: 'Perfil',
-          tabBarIcon: ({ focused }) => (
-            <TabIconWithBadge icon="⚙️" badgeCount={0} focused={focused} />
-          ),
-        }}
-      />
-    </Tab.Navigator>
+    <View style={styles.mainContainer}>
+      {/* Header con botón hamburguesa */}
+      <View style={styles.mainHeader}>
+        <TouchableOpacity
+          onPress={() => setMenuVisible(true)}
+          style={styles.hamburgerButton}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Text style={styles.hamburgerIcon}>☰</Text>
+        </TouchableOpacity>
+        <Text style={styles.mainHeaderTitle} numberOfLines={1}>{titulo}</Text>
+      </View>
+
+      {/* Contenido según sección */}
+      <View style={styles.mainContent}>
+        {seccion === 'Dashboard' && <DashboardSelector navigation={navigation} />}
+        {seccion === 'Gestion' && <GestionScreen navigation={navigation} />}
+        {seccion === 'Mensajes' && <MensajesScreen navigation={navigation} onBackFromSection={() => setSeccion('Dashboard')} />}
+        {seccion === 'Perfil' && <PerfilScreen navigation={navigation} />}
+      </View>
+
+      {/* Modal: menú lateral (hamburguesa) */}
+      <Modal visible={menuVisible} transparent animationType="fade">
+        <View style={styles.menuOverlay}>
+          <View style={styles.menuPanel}>
+            <ScrollView style={styles.menuPanelScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.menuPanelTitle}>Menú</Text>
+              {SECCIONES.map(({ key, label, icon }) => (
+                <TouchableOpacity
+                  key={key}
+                  style={[styles.menuItem, seccion === key && styles.menuItemActive]}
+                  onPress={() => elegirSeccion(key)}
+                >
+                  <Text style={styles.menuItemIcon}>{icon}</Text>
+                  <Text style={[styles.menuItemLabel, seccion === key && styles.menuItemLabelActive]}>
+                    {key === 'Mensajes' ? labelMensajes : label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+
+              {accesosRapidos.length > 0 && (
+                <>
+                  <View style={styles.menuDivider} />
+                  <Text style={styles.menuSectionTitle}>Accesos Rápidos</Text>
+                  {accesosRapidos.map(({ label, icon, screen }) => (
+                    <TouchableOpacity
+                      key={screen}
+                      style={styles.menuQuickItem}
+                      onPress={() => navegarAccesoRapido(screen)}
+                    >
+                      <Text style={styles.menuQuickIcon}>{icon}</Text>
+                      <Text style={styles.menuQuickLabel} numberOfLines={1}>{label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </>
+              )}
+            </ScrollView>
+          </View>
+          <Pressable style={styles.menuBackdrop} onPress={() => setMenuVisible(false)} />
+        </View>
+      </Modal>
+    </View>
   );
 };
 
@@ -270,7 +284,7 @@ const NavegacionProfesional = () => {
           gestureEnabled: true,
         }}
       >
-      <Stack.Screen name="MainTabs" component={TabNavigator} />
+      <Stack.Screen name="MainTabs" component={MainScreenWithMenu} />
       <Stack.Screen 
         name="DetalleDoctor" 
         component={DetalleDoctor}
@@ -458,6 +472,113 @@ const NavegacionProfesional = () => {
 };
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    backgroundColor: COLORES.FONDO,
+  },
+  mainHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORES.NAV_PRIMARIO,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  hamburgerButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  hamburgerIcon: {
+    fontSize: 28,
+    color: COLORES.TEXTO_EN_PRIMARIO,
+    fontWeight: 'bold',
+  },
+  mainHeaderTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORES.TEXTO_EN_PRIMARIO,
+  },
+  mainContent: {
+    flex: 1,
+  },
+  menuOverlay: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  menuBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  menuPanel: {
+    width: 280,
+    backgroundColor: COLORES.FONDO_CARD || '#fff',
+    paddingTop: 20,
+    paddingHorizontal: 16,
+    alignSelf: 'stretch',
+  },
+  menuPanelScroll: {
+    flexGrow: 1,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: COLORES.BORDE_CLARO || '#eee',
+    marginVertical: 12,
+  },
+  menuSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORES.TEXTO_SECUNDARIO || '#666',
+    marginBottom: 8,
+    paddingHorizontal: 4,
+  },
+  menuQuickItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 2,
+  },
+  menuQuickIcon: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+  menuQuickLabel: {
+    flex: 1,
+    fontSize: 14,
+    color: COLORES.TEXTO_PRIMARIO || '#333',
+  },
+  menuPanelTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: COLORES.NAV_PRIMARIO,
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  menuItemActive: {
+    backgroundColor: COLORES.NAV_PRIMARIO,
+  },
+  menuItemIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  menuItemLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: COLORES.TEXTO_SECUNDARIO || '#333',
+  },
+  menuItemLabelActive: {
+    color: COLORES.TEXTO_EN_PRIMARIO,
+  },
   container: {
     flex: 1,
     backgroundColor: COLORES.FONDO,
@@ -564,9 +685,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: 20,
-  },
-  tabIcon: {
-    fontSize: 20,
   },
   logoutButton: {
     backgroundColor: COLORES.ERROR_LIGHT,

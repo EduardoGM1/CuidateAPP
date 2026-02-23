@@ -5,7 +5,6 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   Alert,
   ActivityIndicator,
   RefreshControl,
@@ -23,10 +22,10 @@ import useWebSocket from '../../hooks/useWebSocket';
 import gestionService from '../../api/gestionService';
 import { estaFueraDeRango, RANGOS_NORMALES } from '../../utils/vitalSignsRanges';
 import { COLORES, getDisplayMotivo } from '../../utils/constantes';
-
-const { width } = Dimensions.get('window');
+import { useResponsiveDimensions } from '../../utils/responsive';
 
 const DashboardDoctor = ({ navigation }) => {
+  const { cardWidthHalf } = useResponsiveDimensions();
   const { userData, userRole } = useAuth();
   
   // Validar que solo doctores puedan acceder
@@ -475,7 +474,7 @@ const DashboardDoctor = ({ navigation }) => {
   // }, [citasHoy, citasHoyData, dashboardData, metrics]);
 
   const renderMetricCard = (title, value, subtitle, color = COLORES.NAV_PRIMARIO) => (
-    <Card style={[styles.metricCard, { borderLeftColor: color }]}>
+    <Card style={[styles.metricCard, { borderLeftColor: color, width: cardWidthHalf }]}>
       <Card.Content style={styles.metricContent}>
         <Text style={styles.metricValue}>{value}</Text>
         <Text style={styles.metricTitle}>{title}</Text>
@@ -809,18 +808,18 @@ const DashboardDoctor = ({ navigation }) => {
         <View style={styles.quickAccessContainer}>
           <Text style={styles.sectionTitle}>Accesos Rápidos</Text>
           <View style={styles.quickAccessGrid}>
-            <TouchableOpacity style={[styles.quickAccessButton, styles.primaryButton]} onPress={handleViewAllAppointments}>
+            <TouchableOpacity style={[styles.quickAccessButton, styles.primaryButton, { width: cardWidthHalf }]} onPress={handleViewAllAppointments}>
               <Text style={styles.quickAccessIcon}>📅</Text>
               <Text style={styles.quickAccessText}>Ver Todas las Citas</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={[styles.quickAccessButton, styles.primaryButton]} onPress={handleViewPatients}>
+            <TouchableOpacity style={[styles.quickAccessButton, styles.primaryButton, { width: cardWidthHalf }]} onPress={handleViewPatients}>
               <Text style={styles.quickAccessIcon}>👥</Text>
               <Text style={styles.quickAccessText}>Mis Pacientes</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.quickAccessButton, styles.primaryButton]}
+              style={[styles.quickAccessButton, styles.primaryButton, { width: cardWidthHalf }]}
               onPress={() => {
                 Logger.navigation('DashboardDoctor', 'AgregarPaciente');
                 navigation.navigate('AgregarPaciente');
@@ -1031,7 +1030,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   metricCard: {
-    width: (width - 50) / 2,
     marginBottom: 15,
     elevation: 3,
     borderLeftWidth: 4,
@@ -1111,7 +1109,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   quickAccessButton: {
-    width: (width - 50) / 2,
     height: 80,
     borderRadius: 12,
     justifyContent: 'center',

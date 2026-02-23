@@ -34,7 +34,7 @@ export const modalStyles = StyleSheet.create({
     color: COLORES.TEXTO_PRIMARIO,
   },
   modalScrollView: {
-    maxHeight: 400,
+    maxHeight: '70%',
   },
   modalScrollContent: {
     padding: TAMAÑOS.ESPACIADO_MEDIO,
@@ -156,7 +156,7 @@ export const emptyStateStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 40,
-    minHeight: 400,
+    minHeight: 280,
   },
   emptyEmoji: {
     fontSize: 64,
