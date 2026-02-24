@@ -16,17 +16,19 @@ const queryClient = new QueryClient({
   },
 });
 
-/** Tema Ant Design con paleta IMSS Bienestar (igual que app móvil) */
+/** Tema Ant Design — minimalista, alineado con CSS variables */
 const antdTheme = {
   token: {
     colorPrimary: COLORES.PRIMARIO,
     colorSuccess: COLORES.EXITO,
     colorError: COLORES.ERROR,
-    colorWarning: COLORES.SECUNDARIO_DARK,
+    colorWarning: COLORES.ADVERTENCIA,
     colorText: COLORES.TEXTO_PRIMARIO,
     colorTextSecondary: COLORES.TEXTO_SECUNDARIO,
     colorBgContainer: COLORES.FONDO_CARD,
     colorBorder: COLORES.BORDE_CLARO,
+    borderRadius: 8,
+    fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
   },
 };
 

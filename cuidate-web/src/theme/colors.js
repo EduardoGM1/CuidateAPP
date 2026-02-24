@@ -1,32 +1,33 @@
 /**
- * Paleta IMSS Bienestar - misma que ClinicaMovil
- * Uso: import { COLORES } from '@/theme/colors';
+ * Paleta minimalista moderna — Cuidate Web
+ * Diseño: limpio, responsive, accesible (contraste WCAG).
+ * Un solo acento (teal) para acciones y jerarquía visual.
  */
 export const COLORES = {
-  PRIMARIO: '#006657',
-  PRIMARIO_LIGHT: '#0A7D6B',
-  PRIMARIO_DARK: '#10312B',
-  SECUNDARIO: '#BC955C',
-  SECUNDARIO_LIGHT: '#DDC9A3',
-  SECUNDARIO_DARK: '#9B7B4A',
-  FONDO: '#F5F2ED',
-  FONDO_SECUNDARIO: '#FAF8F5',
-  FONDO_CARD: '#FFFFFF',
-  TEXTO_PRIMARIO: '#212121',
-  TEXTO_SECUNDARIO: '#5C5346',
-  TEXTO_DISABLED: '#BDBDBD',
-  TEXTO_EN_PRIMARIO: '#FFFFFF',
-  EXITO: '#006657',
-  ADVERTENCIA: '#BC955C',
-  ERROR: '#9F2241',
-  ERROR_LIGHT: '#B52D4D',
-  BORDE_CLARO: '#DDC9A3',
-  FONDO_VERDE_SUAVE: '#E8F0EE',
-  FONDO_ERROR_CLARO: '#FDF2F4',
-  BORDE_ERROR_CLARO: '#9F2241',
-  NAV_PRIMARIO: '#006657',
-  BLANCO: '#FFFFFF',
-  NEGRO: '#000000',
+  PRIMARIO: '#0d9488',
+  PRIMARIO_LIGHT: '#14b8a6',
+  PRIMARIO_DARK: '#0f766e',
+  SECUNDARIO: '#64748b',
+  SECUNDARIO_LIGHT: '#94a3b8',
+  SECUNDARIO_DARK: '#475569',
+  FONDO: '#f8fafc',
+  FONDO_SECUNDARIO: '#f1f5f9',
+  FONDO_CARD: '#ffffff',
+  TEXTO_PRIMARIO: '#0f172a',
+  TEXTO_SECUNDARIO: '#64748b',
+  TEXTO_DISABLED: '#94a3b8',
+  TEXTO_EN_PRIMARIO: '#ffffff',
+  EXITO: '#059669',
+  ADVERTENCIA: '#d97706',
+  ERROR: '#dc2626',
+  ERROR_LIGHT: '#ef4444',
+  BORDE_CLARO: '#e2e8f0',
+  FONDO_VERDE_SUAVE: '#ccfbf1',
+  FONDO_ERROR_CLARO: '#fef2f2',
+  BORDE_ERROR_CLARO: '#fecaca',
+  NAV_PRIMARIO: '#0d9488',
+  BLANCO: '#ffffff',
+  NEGRO: '#0f172a',
 };
 
 export default COLORES;

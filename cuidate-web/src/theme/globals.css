@@ -1,58 +1,58 @@
 /* ============================================
-   Design system - Paleta IMSS Bienestar (sin cambios)
-   Mejoras: spacing, sombras, transiciones, tipografía, UX
+   Cuidate Web — Design system minimalista
+   Reglas: UI/UX, responsive, accesibilidad (focus, contraste)
    ============================================ */
 
 :root {
-  /* --- Paleta (igual que antes) --- */
-  --color-primario: #006657;
-  --color-primario-light: #0A7D6B;
-  --color-primario-dark: #10312B;
-  --color-secundario: #BC955C;
-  --color-secundario-light: #DDC9A3;
-  --color-secundario-dark: #9B7B4A;
-  --color-fondo: #F5F2ED;
-  --color-fondo-secundario: #FAF8F5;
-  --color-fondo-card: #FFFFFF;
-  --color-texto-primario: #212121;
-  --color-texto-secundario: #5C5346;
-  --color-texto-en-primario: #FFFFFF;
-  --color-exito: #006657;
-  --color-advertencia: #BC955C;
-  --color-error: #9F2241;
-  --color-error-light: #B52D4D;
-  --color-borde-claro: #DDC9A3;
-  --color-fondo-verde-suave: #E8F0EE;
-  --color-fondo-error-claro: #FDF2F4;
-  --color-nav-primario: #006657;
-  --color-nav-inactivo: #DDC9A3;
-  --color-texto-disabled: #BDBDBD;
-  --color-fondo-advertencia-claro: #F8F4ED;
+  /* --- Paleta minimalista (teal + neutros) --- */
+  --color-primario: #0d9488;
+  --color-primario-light: #14b8a6;
+  --color-primario-dark: #0f766e;
+  --color-secundario: #64748b;
+  --color-secundario-light: #94a3b8;
+  --color-secundario-dark: #475569;
+  --color-fondo: #f8fafc;
+  --color-fondo-secundario: #f1f5f9;
+  --color-fondo-card: #ffffff;
+  --color-texto-primario: #0f172a;
+  --color-texto-secundario: #64748b;
+  --color-texto-en-primario: #ffffff;
+  --color-exito: #059669;
+  --color-advertencia: #d97706;
+  --color-error: #dc2626;
+  --color-error-light: #ef4444;
+  --color-borde-claro: #e2e8f0;
+  --color-fondo-verde-suave: #ccfbf1;
+  --color-fondo-error-claro: #fef2f2;
+  --color-nav-primario: #0d9488;
+  --color-nav-inactivo: #94a3b8;
+  --color-texto-disabled: #94a3b8;
+  --color-fondo-advertencia-claro: #fffbeb;
 
   /* --- Espaciado (8px base) --- */
-  --space-1: 0.25rem;   /* 4px */
-  --space-2: 0.5rem;   /* 8px */
-  --space-3: 0.75rem;  /* 12px */
-  --space-4: 1rem;     /* 16px */
-  --space-5: 1.25rem;  /* 20px */
-  --space-6: 1.5rem;   /* 24px */
-  --space-8: 2rem;     /* 32px */
-  --space-10: 2.5rem;  /* 40px */
-  --space-12: 3rem;    /* 48px */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
 
-  /* --- Bordes --- */
+  /* --- Bordes (modernos, consistentes) --- */
   --radius-sm: 6px;
   --radius: 8px;
   --radius-md: 10px;
   --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-xl: 14px;
 
-  /* --- Sombras (suaves, profesionales) --- */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
-  --shadow-focus: 0 0 0 3px rgba(0, 102, 87, 0.25);
+  /* --- Sombras mínimas --- */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.1);
+  --shadow-focus: 0 0 0 3px rgba(13, 148, 136, 0.25);
 
   /* --- Transiciones --- */
   --transition-fast: 150ms ease;
@@ -60,7 +60,7 @@
   --transition-slow: 300ms ease;
 
   /* --- Tipografía --- */
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -96,8 +96,7 @@ body {
   min-height: 100vh;
 }
 
-/* Fondo igual que app móvil (crema suave IMSS Bienestar) */
-.saas-layout { --saas-bg: #F5F2ED; }
+.saas-layout { --saas-bg: var(--color-fondo); }
 body:has(.saas-layout) { background-color: var(--saas-bg); }
 
 #root {
@@ -163,6 +162,15 @@ select:focus-visible {
     padding-left: var(--space-4);
     padding-right: var(--space-4);
   }
+}
+
+/* Ant Design — bordes alineados con design system */
+.ant-layout-header {
+  border-bottom: 1px solid var(--color-borde-claro) !important;
+}
+.ant-layout-sider,
+.main-layout-sider {
+  border-right: 1px solid var(--color-borde-claro) !important;
 }
 
 @keyframes spin {
@@ -497,7 +505,7 @@ select:focus-visible {
 .btn-primary { background: var(--color-primario); color: var(--color-texto-en-primario); border: none; }
 .btn-secondary { background: var(--color-secundario); color: var(--color-texto-en-primario); border: none; }
 .btn-outline { background: transparent; color: var(--color-primario); border: 2px solid var(--color-primario); }
-.btn-outline:hover:not(:disabled) { background: rgba(0,102,87,0.08); }
+.btn-outline:hover:not(:disabled) { background: rgba(13, 148, 136, 0.08); }
 .btn-danger { background: var(--color-error); color: var(--color-texto-en-primario); border: none; }
 .btn:disabled { cursor: not-allowed; opacity: 0.7; }
 
@@ -898,8 +906,8 @@ select:focus-visible {
   transition: box-shadow var(--transition), border-color var(--transition);
 }
 .saas-stat-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  border-color: rgba(0,102,87,0.2);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  border-color: rgba(13, 148, 136, 0.2);
 }
 .saas-stat-card .saas-stat-icon {
   width: 48px;
@@ -957,7 +965,7 @@ select:focus-visible {
   color: inherit;
 }
 .saas-quick-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
   border-color: var(--color-primario);
   background: var(--color-fondo-card);
 }
@@ -1019,8 +1027,8 @@ select:focus-visible {
   width: 100%;
   max-width: 420px;
   border-radius: var(--radius-xl);
-  border: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  border: 1px solid var(--color-borde-claro);
+  box-shadow: var(--shadow-md);
 }
 .login-card h1 { margin: 0 0 var(--space-2); color: var(--color-primario); font-size: var(--text-2xl); font-weight: var(--font-bold); }
 .login-card .login-subtitle { color: var(--color-texto-secundario); margin-bottom: var(--space-6); font-size: var(--text-sm); }
