@@ -203,7 +203,7 @@ export default function CitaDetail() {
               {saveError}
             </p>
           )}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end' }}>
+          <div className="form-row-inline">
             <div style={{ minWidth: 180 }}>
               <Select
                 label="Nuevo estado"

@@ -141,7 +141,7 @@ export default function AuditoriaList() {
   return (
     <div>
       <PageHeader title="Auditoría" />
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-end', marginBottom: '1rem' }}>
+      <div className="form-row-inline" style={{ marginBottom: '1rem' }}>
         <div style={{ minWidth: 140 }}>
           <label style={{ display: 'block', marginBottom: '0.35rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-texto-secundario)' }}>Desde</label>
           <input

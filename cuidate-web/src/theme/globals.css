@@ -719,15 +719,61 @@ select:focus-visible {
 .chat-form {
   display: flex;
   gap: var(--space-3);
-  align-items: flex-end;
+  align-items: stretch;
   padding: var(--space-3);
   background: var(--color-fondo-card, #fff);
   border-radius: var(--radius-xl, 12px);
   border: 1px solid var(--color-borde-claro, #e9ecef);
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
-.chat-form .chat-input-wrap { flex: 1; min-width: 0; }
-.chat-form .chat-input-wrap .ui-input { margin-bottom: 0; }
+.chat-form .chat-input-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+}
+.chat-form .chat-input-wrap > div {
+  margin-bottom: 0 !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.chat-form .chat-input-wrap .ant-input,
+.chat-form .chat-input-wrap input {
+  min-height: 40px;
+  border-radius: var(--radius, 8px);
+  box-sizing: border-box;
+}
+.chat-form .chat-send-btn {
+  min-height: 40px;
+  border-radius: var(--radius, 8px);
+  flex-shrink: 0;
+}
+
+/* --- Form row inline: input/select + botón alineados (evita desalineación por margin del Input) --- */
+.form-row-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3, 0.75rem);
+  align-items: center;
+}
+.form-row-inline > div {
+  margin-bottom: 0 !important;
+}
+.form-row-inline .ant-input,
+.form-row-inline input:not([type="checkbox"]):not([type="radio"]),
+.form-row-inline .ant-select .ant-select-selector,
+.form-row-inline .ant-btn {
+  min-height: 40px;
+  box-sizing: border-box;
+}
+.form-row-inline .ant-input,
+.form-row-inline input[type="text"],
+.form-row-inline input[type="date"],
+.form-row-inline input[type="datetime-local"] {
+  border-radius: var(--radius, 8px);
+}
 
 /* --- Search/Filter bar --- */
 .search-filter-bar {

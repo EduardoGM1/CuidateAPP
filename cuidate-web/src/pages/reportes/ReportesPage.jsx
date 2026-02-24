@@ -99,15 +99,7 @@ function ReporteEstadisticasCard() {
       }
     >
       {(canFilterByModulo || isDoctor()) && (
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '1rem',
-            marginBottom: '1rem',
-            alignItems: 'flex-end',
-          }}
-        >
+        <div className="form-row-inline" style={{ marginBottom: '1rem' }}>
           {canFilterByModulo && (
             <Select
               label="Módulo"
