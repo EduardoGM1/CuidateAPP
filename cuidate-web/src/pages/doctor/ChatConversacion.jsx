@@ -78,6 +78,10 @@ export default function ChatConversacion() {
     return () => off('nuevo_mensaje', handler);
   }, [token, idDoctor, pacienteId]);
 
+  const sortMensajes = useCallback((list) => {
+    return [...list].sort((a, b) => new Date(a.fecha_envio || 0) - new Date(b.fecha_envio || 0));
+  }, []);
+
   const handleSend = async (e) => {
     e.preventDefault();
     const t = texto?.trim();
@@ -85,14 +89,30 @@ export default function ChatConversacion() {
     setSending(true);
     setTexto('');
     try {
-      await createMensaje({
+      const created = await createMensaje({
         id_paciente: pacienteId,
         id_doctor: idDoctor,
         remitente: 'Doctor',
         mensaje_texto: t,
       });
-      load();
+      const newMsg = created && typeof created === 'object' ? {
+        ...created,
+        id_mensaje: created.id_mensaje ?? created.id,
+        remitente: 'Doctor',
+        mensaje_texto: t,
+        fecha_envio: created.fecha_envio || new Date().toISOString(),
+      } : null;
+      if (newMsg) {
+        setMensajes((prev) => {
+          const exists = prev.some((m) => (m.id_mensaje ?? m.id) === (newMsg.id_mensaje ?? newMsg.id));
+          if (exists) return prev;
+          return sortMensajes([...prev, newMsg]);
+        });
+      } else {
+        load();
+      }
     } catch (err) {
+      setTexto(t);
       setError(err?.response?.data?.error || err?.message || 'Error al enviar');
     } finally {
       setSending(false);
@@ -122,32 +142,22 @@ export default function ChatConversacion() {
     : `Paciente #${pacienteId}`;
 
   return (
-    <div>
+    <div className="chat-conversacion">
       <PageHeader
         title={sanitizeForDisplay(nombrePaciente)}
         showBack
         backTo="/chat"
       />
-      {error && <p style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>{error}</p>}
+      {error && (
+        <p style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>
+          {error}
+        </p>
+      )}
       {loading ? (
         <LoadingSpinner />
       ) : (
         <>
-          <div
-            ref={scrollRef}
-            style={{
-              maxHeight: '60vh',
-              overflowY: 'auto',
-              marginBottom: '1rem',
-              padding: '1rem',
-              backgroundColor: 'var(--color-fondo-card)',
-              borderRadius: 'var(--radius)',
-              border: '1px solid var(--color-borde-claro)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.75rem',
-            }}
-          >
+          <div ref={scrollRef} className="chat-messages">
             {mensajes.length === 0 ? (
               <EmptyState message="No hay mensajes. Escribe uno para iniciar." />
             ) : (
@@ -155,16 +165,8 @@ export default function ChatConversacion() {
                 const esDoctor = (m.remitente || '').toLowerCase() === 'doctor';
                 return (
                   <div
-                    key={m.id_mensaje ?? m.id}
-                    style={{
-                      alignSelf: esDoctor ? 'flex-end' : 'flex-start',
-                      maxWidth: '85%',
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: 'var(--radius)',
-                      backgroundColor: esDoctor ? 'var(--color-primario)' : 'var(--color-fondo-card)',
-                      color: esDoctor ? 'var(--color-texto-en-primario)' : 'var(--color-texto-primario)',
-                      border: `1px solid ${esDoctor ? 'transparent' : 'var(--color-borde-claro)'}`,
-                    }}
+                    key={m.id_mensaje ?? m.id ?? `msg-${m.fecha_envio}-${m.mensaje_texto?.slice(0, 8)}`}
+                    className={`chat-bubble ${esDoctor ? 'is-own' : ''}`}
                   >
                     {m.mensaje_audio_url ? (
                       <VoiceMessagePlayer
@@ -178,23 +180,22 @@ export default function ChatConversacion() {
                         {sanitizeForDisplay(m.mensaje_texto) || '[mensaje]'}
                       </p>
                     )}
-                    <span style={{ fontSize: '0.75rem', opacity: 0.9, display: 'block', marginTop: '0.25rem' }}>
-                      {formatDateTime(m.fecha_envio)}
-                    </span>
+                    <span className="chat-bubble-time">{formatDateTime(m.fecha_envio)}</span>
                   </div>
                 );
               })
             )}
           </div>
-          <form onSubmit={handleSend} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-            <Input
-              label=""
-              value={texto}
-              onChange={(e) => setTexto(e.target.value)}
-              placeholder="Escribe un mensaje..."
-              maxLength={4000}
-              style={{ flex: 1, marginBottom: 0 }}
-            />
+          <form onSubmit={handleSend} className="chat-form">
+            <div className="chat-input-wrap">
+              <Input
+                label=""
+                value={texto}
+                onChange={(e) => setTexto(e.target.value)}
+                placeholder="Escribe un mensaje..."
+                maxLength={4000}
+              />
+            </div>
             <Button type="submit" variant="primary" disabled={sending || !texto?.trim()}>
               {sending ? 'Enviando…' : 'Enviar'}
             </Button>
