@@ -26,6 +26,22 @@ import {
   SesionEducativa
 } from '../models/associations.js';
 import logger from '../utils/logger.js';
+import EncryptionService from './encryptionService.js';
+
+/** Desencripta un campo para mostrar en reportes (p. ej. descripcion de Diagnostico). Si no está encriptado, devuelve el valor. */
+function decryptForReport(value) {
+  if (value == null || value === '') return value;
+  const isEncrypted = (typeof value === 'string' && value.trim().startsWith('{') && value.includes('encrypted')) ||
+    (typeof value === 'object' && value?.encrypted != null && value?.iv != null && value?.authTag != null);
+  if (!isEncrypted) return value;
+  try {
+    const decrypted = EncryptionService.decryptField(value);
+    return decrypted != null ? decrypted : '';
+  } catch (e) {
+    logger.debug('decryptForReport: no se pudo desencriptar', e?.message);
+    return '';
+  }
+}
 
 const MESES_NOMBRE = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 import DashboardService from './dashboardService.js';
@@ -121,9 +137,9 @@ class ReportService {
       const rows = citas.map(cita => [
         cita.fecha_cita || '',
         cita.estado || '',
-        cita.motivo || '',
+        decryptForReport(cita.motivo) || '',
         cita.Doctor ? `${cita.Doctor.nombre} ${cita.Doctor.apellido_paterno || ''}` : '',
-        cita.observaciones || ''
+        decryptForReport(cita.observaciones) || ''
       ]);
       
       const csv = [
@@ -164,7 +180,7 @@ class ReportService {
       
       const rows = diagnosticos.map(diagnostico => [
         diagnostico.fecha_diagnostico || '',
-        diagnostico.descripcion || '',
+        decryptForReport(diagnostico.descripcion) || '',
         diagnostico.observaciones || ''
       ]);
       
@@ -344,8 +360,8 @@ class ReportService {
       <p><strong>Fecha:</strong> ${formatDate(cita.fecha_cita)}</p>
       <p><strong>Estado:</strong> ${escapeHtml(cita.estado || 'N/A')}</p>
       ${cita.Doctor ? `<p><strong>Doctor:</strong> Dr. ${escapeHtml(cita.Doctor.nombre)} ${escapeHtml(cita.Doctor.apellido_paterno || '')} ${escapeHtml(cita.Doctor.apellido_materno || '')}</p>` : ''}
-      ${cita.motivo ? `<p><strong>Motivo:</strong> ${escapeHtml(cita.motivo)}</p>` : ''}
-      ${cita.observaciones ? `<p><strong>Observaciones:</strong> ${escapeHtml(cita.observaciones)}</p>` : ''}
+      ${cita.motivo ? `<p><strong>Motivo:</strong> ${escapeHtml(decryptForReport(cita.motivo))}</p>` : ''}
+      ${cita.observaciones ? `<p><strong>Observaciones:</strong> ${escapeHtml(decryptForReport(cita.observaciones))}</p>` : ''}
       
       ${cita.SignosVitales && cita.SignosVitales.length > 0 ? `
         <table border="1">
@@ -481,7 +497,6 @@ class ReportService {
         where: { id_paciente: pacienteId },
         include: [
           { model: Doctor, attributes: ['nombre', 'apellido_paterno', 'apellido_materno', 'grado_estudio'] },
-          { model: SignoVital, as: 'SignosVitales', required: false },
           { model: Diagnostico, as: 'Diagnosticos', required: false },
           { model: PlanMedicacion, include: [{ model: PlanDetalle, include: [{ model: Medicamento, attributes: ['nombre_medicamento'] }] }], required: false }
         ],
@@ -498,20 +513,21 @@ class ReportService {
     ]);
 
     const cita = Array.isArray(citasRecientes) && citasRecientes.length > 0 ? citasRecientes[0] : null;
-    const signosCita = (cita?.SignosVitales || []).slice().sort((a, b) => new Date(b.fecha_medicion || 0) - new Date(a.fecha_medicion || 0));
-    const signoCita = signosCita[0];
+    const signoCita = cita
+      ? await SignoVital.findOne({ where: { id_cita: cita.id_cita }, order: [['fecha_medicion', 'DESC']] })
+      : null;
     const signo = signoCita || signosSinCita;
     const diagnosticos = cita?.Diagnosticos || [];
     const medicamentos = (cita?.PlanMedicacions && cita.PlanMedicacions.length > 0)
       ? cita.PlanMedicacions.flatMap(p => (p.PlanDetalles || []).map(d => ({ nombre: d.Medicamento?.nombre_medicamento, dosis: d.dosis, frecuencia: d.frecuencia, via: d.via_administracion })))
-      : plansActivos.flatMap(p => (p.PlanDetalles || []).map(d => ({ nombre: d.Medicamento?.nombre_medicamento, dosis: d.dosis, frecuencia: d.frecuencia, via: d.via_administracion })));
+      : planesActivos.flatMap(p => (p.PlanDetalles || []).map(d => ({ nombre: d.Medicamento?.nombre_medicamento, dosis: d.dosis, frecuencia: d.frecuencia, via: d.via_administracion })));
 
     const nombreCompleto = [paciente.nombre, paciente.apellido_paterno, paciente.apellido_materno].filter(Boolean).join(' ').trim() || '—';
     const edad = paciente.fecha_nacimiento
       ? Math.floor((new Date() - new Date(paciente.fecha_nacimiento)) / (365.25 * 24 * 60 * 60 * 1000))
       : '—';
     const sexo = paciente.sexo === 'Mujer' ? 'Fem' : paciente.sexo === 'Hombre' ? 'M' : paciente.sexo || '—';
-    const domicilio = [paciente.direccion, paciente.colonia, paciente.codigo_postal].filter(Boolean).join(', ').trim() || '—';
+    const domicilio = [paciente.direccion, paciente.localidad].filter(Boolean).join(', ').trim() || '—';
     const fechaHoraConsulta = cita?.fecha_cita
       ? new Date(cita.fecha_cita).toLocaleString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '')
       : new Date().toLocaleString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
@@ -527,7 +543,7 @@ class ReportService {
     const trigliceridos = signo?.trigliceridos_mg_dl != null ? `${signo.trigliceridos_mg_dl} MG/DL` : '—';
 
     const comorbText = (paciente.Comorbilidades || []).map(c => c.nombre_comorbilidad).filter(Boolean).join('; ') || '—';
-    const diagText = diagnosticos.map(d => d.descripcion).filter(Boolean).join('; ') || '—';
+    const diagText = diagnosticos.map(d => decryptForReport(d.descripcion)).filter(Boolean).join('; ') || '—';
     const medRows = medicamentos.map(m => `<tr><td>${escapeHtml(m.nombre || '—')} ${m.dosis ? escapeHtml(m.dosis) : ''} ${m.frecuencia ? escapeHtml(m.frecuencia) : ''} ${m.via ? escapeHtml(m.via) : ''}</td></tr>`).join('') || '<tr><td>—</td></tr>';
 
     const institucion = process.env.NOTAS_MEDICAS_INSTITUCION || 'SECRETARÍA DE SALUD MÓDULO IV';
@@ -592,7 +608,7 @@ class ReportService {
   </table>
 
   <div class="section"><strong>Diagnósticos / Valoraciones</strong></div>
-  <table class="notas"><tr><th>Diagnóstico</th></tr>${diagnosticos.length ? diagnosticos.map(d => `<tr><td>${escapeHtml(d.descripcion || '—')}</td></tr>`).join('') : '<tr><td>—</td></tr>'}</table>
+  <table class="notas"><tr><th>Diagnóstico</th></tr>${diagnosticos.length ? diagnosticos.map(d => `<tr><td>${escapeHtml(decryptForReport(d.descripcion) || '—')}</td></tr>`).join('') : '<tr><td>—</td></tr>'}</table>
 
   <div class="section"><strong>Acciones de línea de vida</strong></div>
   <p>—</p>
