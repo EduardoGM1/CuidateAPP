@@ -657,9 +657,16 @@ select:focus-visible {
   font-size: 10px;
   color: #666;
 }
-/* Ocultar controles al imprimir */
+/* Ocultar controles al imprimir y que el expediente ocupe 90% de la hoja */
 @media print {
   .detalle-signo-no-print { display: none !important; }
+  .detalle-signo-expediente {
+    width: 90% !important;
+    max-width: 90% !important;
+    margin: 5% auto !important;
+    padding: 0 !important;
+    box-sizing: border-box;
+  }
 }
 
 /* --- Search/Filter bar --- */
