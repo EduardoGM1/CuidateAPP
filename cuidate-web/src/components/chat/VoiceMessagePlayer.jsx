@@ -84,7 +84,7 @@ export default function VoiceMessagePlayer({
       setCurrentTime(0);
     };
     const onError = () => {
-      setError('Error al cargar el audio');
+      setError('Formato no soportado o URL no accesible');
       setLoading(false);
     };
 
@@ -125,7 +125,9 @@ export default function VoiceMessagePlayer({
       role="region"
       aria-label="Reproducir mensaje de voz"
     >
-      <audio ref={audioRef} src={fullUrl} preload="metadata" />
+      <audio ref={audioRef} preload="metadata" crossOrigin="anonymous">
+        <source src={fullUrl} type={fullUrl.toLowerCase().endsWith('.m4a') ? 'audio/mp4' : undefined} />
+      </audio>
       <button
         type="button"
         onClick={handlePlayPause}
