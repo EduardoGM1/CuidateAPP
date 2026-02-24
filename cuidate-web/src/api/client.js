@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { STORAGE_KEYS } from '../utils/constants';
+import { STORAGE_KEYS, AUTH_PERSIST_KEY, LOGIN_REASON_SESSION_EXPIRED } from '../utils/constants';
 
 const baseURL = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '')}`
@@ -14,6 +14,26 @@ const client = axios.create({
   },
 });
 
+/** Indica si la respuesta de error es por token inválido/expirado (401 o 403 con mensaje de token). */
+function isTokenInvalidResponse(error) {
+  const status = error.response?.status;
+  const message = (error.response?.data?.error || error.response?.data?.message || '').toString().toLowerCase();
+  const tokenInvalidMessage = /token\s*inválido|token\s*invalido|token\s*requerido|token\s*de\s*acceso|acceso\s*requerido|no\s*autenticado/.test(message);
+  return status === 401 || (status === 403 && tokenInvalidMessage);
+}
+
+/** Limpia sesión en localStorage (token, user, persist) y redirige a login con motivo de sesión caducada. */
+function clearSessionAndRedirectToLogin() {
+  localStorage.removeItem(STORAGE_KEYS.TOKEN);
+  localStorage.removeItem(STORAGE_KEYS.USER);
+  localStorage.removeItem(AUTH_PERSIST_KEY);
+  const isLoginPage = window.location.pathname === '/login';
+  if (!isLoginPage) {
+    const params = new URLSearchParams({ reason: LOGIN_REASON_SESSION_EXPIRED });
+    window.location.href = `/login?${params.toString()}`;
+  }
+}
+
 client.interceptors.request.use((config) => {
   const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
   if (token) {
@@ -25,13 +45,8 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem(STORAGE_KEYS.TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.USER);
-      const isLoginPage = window.location.pathname === '/login';
-      if (!isLoginPage) {
-        window.location.href = '/login';
-      }
+    if (isTokenInvalidResponse(error)) {
+      clearSessionAndRedirectToLogin();
     }
     return Promise.reject(error);
   }

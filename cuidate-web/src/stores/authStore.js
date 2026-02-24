@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { STORAGE_KEYS, ROLES } from '../utils/constants';
+import { STORAGE_KEYS, AUTH_PERSIST_KEY, ROLES } from '../utils/constants';
 import * as authApi from '../api/auth';
 import { disconnect } from '../api/socket';
 
@@ -73,7 +73,7 @@ export const useAuthStore = create(
       },
     }),
     {
-      name: 'cuidate-web-auth',
+      name: AUTH_PERSIST_KEY,
       partialize: (state) => ({ token: state.token, user: state.user }),
     }
   )

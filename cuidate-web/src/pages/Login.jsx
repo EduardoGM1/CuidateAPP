@@ -1,17 +1,30 @@
-import { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link, useSearchParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '../lib/validations/loginSchema';
 import { useAuthStore } from '../stores/authStore';
 import { Button, Input, Card } from '../components/ui';
 import Logo from '../components/common/Logo';
+import { LOGIN_REASON_SESSION_EXPIRED } from '../utils/constants';
+
+const SESSION_EXPIRED_MESSAGE = 'Tu sesión ha caducado, inicia sesión nuevamente.';
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const login = useAuthStore((s) => s.login);
   const [submitError, setSubmitError] = useState('');
+  const [showSessionExpiredMessage, setShowSessionExpiredMessage] = useState(false);
+  const reason = searchParams.get('reason');
+
+  useEffect(() => {
+    if (reason === LOGIN_REASON_SESSION_EXPIRED) {
+      setShowSessionExpiredMessage(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [reason, setSearchParams]);
 
   const {
     control,
@@ -46,6 +59,12 @@ export default function Login() {
           <Logo size="large" variant="stack" />
         </h1>
         <p className="login-subtitle">Área de Doctores y Administradores</p>
+
+        {showSessionExpiredMessage && (
+          <p role="status" className="login-session-expired" style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--color-warning-bg, #fffbe6)', border: '1px solid var(--color-warning, #faad14)', borderRadius: '6px', color: 'var(--color-texto-primario)', fontSize: '0.9rem' }}>
+            {SESSION_EXPIRED_MESSAGE}
+          </p>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <Controller

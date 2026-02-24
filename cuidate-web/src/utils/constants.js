@@ -12,6 +12,12 @@ export const STORAGE_KEYS = {
   USER: 'cuidate_web_user',
 };
 
+/** Clave de persistencia del store de auth (Zustand). Limpiar junto con TOKEN/USER al cerrar sesión por token inválido. */
+export const AUTH_PERSIST_KEY = 'cuidate-web-auth';
+
+/** Query param para indicar en /login que la sesión caducó (redirección desde interceptor 401/403). */
+export const LOGIN_REASON_SESSION_EXPIRED = 'session_expired';
+
 export const API_PATHS = {
   LOGIN: '/api/auth/login',
   DASHBOARD: '/api/dashboard',
