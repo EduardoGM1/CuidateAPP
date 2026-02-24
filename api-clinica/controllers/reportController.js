@@ -224,7 +224,7 @@ export const getNotasMedicasHTML = async (req, res) => {
     res.setHeader('Content-Disposition', `inline; filename=notas-medicas-${idPaciente}-${new Date().toISOString().split('T')[0]}.html`);
     res.send(html);
   } catch (error) {
-    logger.error('Error generando Notas Médicas HTML:', error);
+    logger.error('Error generando Notas Médicas HTML:', { message: error?.message, stack: error?.stack });
     if (!res.headersSent) {
       res.status(500).json({ success: false, error: error?.message || 'Error al generar Notas Médicas' });
     }

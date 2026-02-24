@@ -476,16 +476,17 @@ class ReportService {
     });
     if (!paciente) throw new Error('Paciente no encontrado');
 
-    const [ultimaCita, signosSinCita, planesActivos] = await Promise.all([
-      Cita.findOne({
+    const [citasRecientes, signosSinCita, planesActivos] = await Promise.all([
+      Cita.findAll({
         where: { id_paciente: pacienteId },
         include: [
           { model: Doctor, attributes: ['nombre', 'apellido_paterno', 'apellido_materno', 'grado_estudio'] },
-          { model: SignoVital, as: 'SignosVitales', limit: 1, order: [['fecha_medicion', 'DESC']], required: false },
+          { model: SignoVital, as: 'SignosVitales', required: false },
           { model: Diagnostico, as: 'Diagnosticos', required: false },
           { model: PlanMedicacion, include: [{ model: PlanDetalle, include: [{ model: Medicamento, attributes: ['nombre_medicamento'] }] }], required: false }
         ],
-        order: [['fecha_cita', 'DESC']]
+        order: [['fecha_cita', 'DESC']],
+        limit: 1
       }),
       SignoVital.findOne({ where: { id_paciente: pacienteId, id_cita: null }, order: [['fecha_medicion', 'DESC']] }),
       PlanMedicacion.findAll({
@@ -496,8 +497,9 @@ class ReportService {
       })
     ]);
 
-    const cita = ultimaCita;
-    const signoCita = cita?.SignosVitales?.[0];
+    const cita = Array.isArray(citasRecientes) && citasRecientes.length > 0 ? citasRecientes[0] : null;
+    const signosCita = (cita?.SignosVitales || []).slice().sort((a, b) => new Date(b.fecha_medicion || 0) - new Date(a.fecha_medicion || 0));
+    const signoCita = signosCita[0];
     const signo = signoCita || signosSinCita;
     const diagnosticos = cita?.Diagnosticos || [];
     const medicamentos = (cita?.PlanMedicacions && cita.PlanMedicacions.length > 0)
