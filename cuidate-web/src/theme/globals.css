@@ -604,6 +604,64 @@ select:focus-visible {
 .data-card-dt { margin: 0; font-weight: var(--font-semibold); color: var(--color-texto-secundario); font-size: var(--text-sm); }
 .data-card-dd { margin: 0; color: var(--color-texto-primario); }
 
+/* --- Detalle signo vital: estilo expediente médico (tablas tipo NOTAS MÉDICAS) --- */
+.detalle-signo-expediente {
+  font-size: 12px;
+  color: #000;
+}
+.detalle-signo-expediente .expediente-header {
+  text-align: center;
+  margin-bottom: 12px;
+}
+.detalle-signo-expediente .expediente-header h2 {
+  font-size: 14px;
+  margin: 0 0 4px;
+  font-weight: 700;
+}
+.detalle-signo-expediente .expediente-header p {
+  margin: 0;
+  font-size: 12px;
+  color: #333;
+}
+.detalle-signo-expediente .expediente-section {
+  margin-top: 10px;
+}
+.detalle-signo-expediente .expediente-section strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+.detalle-signo-expediente table.expediente-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4px 0 8px;
+}
+.detalle-signo-expediente table.expediente-table th,
+.detalle-signo-expediente table.expediente-table td {
+  border: 1px solid #000;
+  padding: 6px 8px;
+  vertical-align: top;
+  text-align: left;
+}
+.detalle-signo-expediente table.expediente-table th {
+  background: #e8e8e8;
+  font-weight: 700;
+  width: 1%;
+  white-space: nowrap;
+}
+.detalle-signo-expediente table.expediente-table td.empty {
+  color: #666;
+}
+.detalle-signo-expediente .expediente-footer {
+  margin-top: 12px;
+  font-size: 10px;
+  color: #666;
+}
+/* Ocultar controles al imprimir */
+@media print {
+  .detalle-signo-no-print { display: none !important; }
+}
+
 /* --- Search/Filter bar --- */
 .search-filter-bar {
   display: flex;

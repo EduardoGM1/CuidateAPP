@@ -3143,7 +3143,7 @@ export default function PacienteDetail() {
           </div>
           <div className="patient-header-actions" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
             <Button variant="outline" type="button" onClick={() => setFormaModalOpen(true)}>
-              Descargar FORMA en Excel
+              Descargar Excel
             </Button>
             <Button
               variant="outline"
