@@ -64,3 +64,13 @@ export async function marcarConversacionLeida(pacienteId, doctorId) {
   if (pid === 0 || did === 0) throw new Error('IDs inválidos');
   await client.put(`${BASE}/paciente/${pid}/doctor/${did}/leer-todos`);
 }
+
+/**
+ * Marcar un mensaje como leído (p. ej. al reproducir audio del paciente).
+ * PUT /api/mensajes-chat/:id/leido
+ */
+export async function marcarMensajeComoLeido(mensajeId) {
+  const id = parsePositiveInt(mensajeId, 0);
+  if (id === 0) throw new Error('ID de mensaje inválido');
+  await client.put(`${BASE}/${id}/leido`);
+}

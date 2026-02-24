@@ -11,12 +11,14 @@ const EVENT_PLAY_STARTED = 'voice-message-play-started';
  * @param {number} durationSeconds - Duración en segundos (opcional, para mostrar hasta que el audio cargue)
  * @param {string} transcription - Transcripción opcional (se muestra debajo)
  * @param {boolean} isOwnMessage - Si el mensaje es del usuario actual (estilo)
+ * @param {function} onPlayComplete - Llamado al terminar la reproducción (p. ej. para marcar como leído)
  */
 export default function VoiceMessagePlayer({
   audioUrl,
   durationSeconds = 0,
   transcription = '',
   isOwnMessage = false,
+  onPlayComplete,
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -82,6 +84,7 @@ export default function VoiceMessagePlayer({
     const onEnded = () => {
       setIsPlaying(false);
       setCurrentTime(0);
+      onPlayComplete?.();
     };
     const onError = () => {
       setError('Formato no soportado o URL no accesible');
@@ -105,7 +108,7 @@ export default function VoiceMessagePlayer({
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('error', onError);
     };
-  }, [fullUrl]);
+  }, [fullUrl, onPlayComplete]);
 
   if (!fullUrl) return null;
 

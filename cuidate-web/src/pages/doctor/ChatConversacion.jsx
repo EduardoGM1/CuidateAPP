@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useCurrentDoctorId } from '../../hooks/useCurrentDoctorId';
 import { useAuthStore } from '../../stores/authStore';
 import { getPacienteById } from '../../api/pacientes';
-import { getConversacion, createMensaje, marcarConversacionLeida } from '../../api/mensajesChat';
+import { getConversacion, createMensaje, marcarConversacionLeida, marcarMensajeComoLeido } from '../../api/mensajesChat';
 import { connect, on, off } from '../../api/socket';
 import { PageHeader } from '../../components/shared';
 import { Button, Input, LoadingSpinner, EmptyState } from '../../components/ui';
@@ -77,6 +77,45 @@ export default function ChatConversacion() {
     on('nuevo_mensaje', handler);
     return () => off('nuevo_mensaje', handler);
   }, [token, idDoctor, pacienteId]);
+
+  // Tiempo real: vistos — mensaje marcado como leído (actualizar estado en nuestros mensajes enviados)
+  useEffect(() => {
+    if (!idDoctor || pacienteId === 0) return;
+    const handler = (data) => {
+      const pid = Number(data?.id_paciente);
+      const did = Number(data?.id_doctor);
+      if (pid !== pacienteId || did !== idDoctor) return;
+      const msg = data?.mensaje;
+      if (msg && (msg.id_mensaje ?? msg.id)) {
+        setMensajes((prev) =>
+          prev.map((m) =>
+            (m.id_mensaje ?? m.id) === (msg.id_mensaje ?? msg.id)
+              ? { ...m, leido: msg.leido ?? true }
+              : m
+          )
+        );
+      }
+    };
+    on('mensaje_actualizado', handler);
+    return () => off('mensaje_actualizado', handler);
+  }, [idDoctor, pacienteId]);
+
+  // Tiempo real: vistos — todos los mensajes de la conversación marcados como leídos (p. ej. paciente abrió el chat)
+  useEffect(() => {
+    if (!idDoctor || pacienteId === 0) return;
+    const handler = (data) => {
+      const pid = Number(data?.id_paciente);
+      const did = Number(data?.id_doctor);
+      if (pid !== pacienteId || did !== idDoctor) return;
+      setMensajes((prev) =>
+        prev.map((m) =>
+          (m.remitente || '').toLowerCase() === 'doctor' ? { ...m, leido: true } : m
+        )
+      );
+    };
+    on('mensajes_marcados_leidos', handler);
+    return () => off('mensajes_marcados_leidos', handler);
+  }, [idDoctor, pacienteId]);
 
   const sortMensajes = useCallback((list) => {
     return [...list].sort((a, b) => new Date(a.fecha_envio || 0) - new Date(b.fecha_envio || 0));
@@ -163,6 +202,11 @@ export default function ChatConversacion() {
             ) : (
               mensajes.map((m) => {
                 const esDoctor = (m.remitente || '').toLowerCase() === 'doctor';
+                const leido = m.leido === true;
+                const readIcon = esDoctor ? (leido ? '✓✓' : '✓') : null;
+                const readColor = esDoctor
+                  ? (leido ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.75)')
+                  : (leido ? 'var(--color-primario, #2196F3)' : 'var(--color-texto-secundario, #999)');
                 return (
                   <div
                     key={m.id_mensaje ?? m.id ?? `msg-${m.fecha_envio}-${m.mensaje_texto?.slice(0, 8)}`}
@@ -174,13 +218,25 @@ export default function ChatConversacion() {
                         durationSeconds={m.mensaje_audio_duracion ? Number(m.mensaje_audio_duracion) : 0}
                         transcription={m.mensaje_audio_transcripcion ? sanitizeForDisplay(m.mensaje_audio_transcripcion) : ''}
                         isOwnMessage={esDoctor}
+                        onPlayComplete={
+                          !esDoctor && !leido && (m.id_mensaje ?? m.id)
+                            ? () => marcarMensajeComoLeido(m.id_mensaje ?? m.id).catch(() => {})
+                            : undefined
+                        }
                       />
                     ) : (
                       <p style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                         {sanitizeForDisplay(m.mensaje_texto) || '[mensaje]'}
                       </p>
                     )}
-                    <span className="chat-bubble-time">{formatDateTime(m.fecha_envio)}</span>
+                    <div className="chat-bubble-footer">
+                      <span className="chat-bubble-time">{formatDateTime(m.fecha_envio)}</span>
+                      {readIcon != null && (
+                        <span className="chat-bubble-read-status" style={{ color: readColor }} aria-label={leido ? 'Visto' : 'Enviado'}>
+                          {readIcon}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })
@@ -192,11 +248,17 @@ export default function ChatConversacion() {
                 label=""
                 value={texto}
                 onChange={(e) => setTexto(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (texto?.trim() && !sending) handleSend(e);
+                  }
+                }}
                 placeholder="Escribe un mensaje..."
                 maxLength={4000}
               />
             </div>
-            <Button type="submit" variant="primary" disabled={sending || !texto?.trim()}>
+            <Button type="submit" variant="primary" disabled={sending || !texto?.trim()} className="chat-send-btn">
               {sending ? 'Enviando…' : 'Enviar'}
             </Button>
           </form>
