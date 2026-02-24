@@ -210,6 +210,28 @@ export const getReporteEstadisticasHTML = async (req, res) => {
 };
 
 /**
+ * Notas Médicas en HTML (formato Secretaría de Salud). Para imprimir/guardar como PDF.
+ * GET /api/reportes/notas-medicas/:idPaciente/html
+ */
+export const getNotasMedicasHTML = async (req, res) => {
+  try {
+    const idPaciente = parseInt(req.params.idPaciente, 10);
+    if (!Number.isInteger(idPaciente) || idPaciente <= 0) {
+      return res.status(400).json({ success: false, error: 'ID de paciente inválido' });
+    }
+    const html = await reportService.generateNotasMedicasHTML(idPaciente);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `inline; filename=notas-medicas-${idPaciente}-${new Date().toISOString().split('T')[0]}.html`);
+    res.send(html);
+  } catch (error) {
+    logger.error('Error generando Notas Médicas HTML:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: error?.message || 'Error al generar Notas Médicas' });
+    }
+  }
+};
+
+/**
  * Periodos (mes/año) con registros del paciente para elegir en FORMA. Solo web.
  * GET /api/reportes/forma/:idPaciente/meses-disponibles
  */

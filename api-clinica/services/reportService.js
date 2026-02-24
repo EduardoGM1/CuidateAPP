@@ -457,9 +457,162 @@ class ReportService {
   }
 
   /**
+   * Genera HTML del formato NOTAS MÉDICAS (Secretaría de Salud - mismo diseño que formato oficial).
+   * GET /api/reportes/notas-medicas/:idPaciente/html
+   * @param {number} pacienteId
+   * @returns {Promise<string>}
+   */
+  async generateNotasMedicasHTML(pacienteId) {
+    const escapeHtml = (text) => {
+      if (text == null || text === undefined) return '';
+      return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    };
+
+    const paciente = await Paciente.findByPk(pacienteId, {
+      include: [
+        { model: Comorbilidad, as: 'Comorbilidades', through: { attributes: [] }, attributes: ['nombre_comorbilidad'], required: false },
+        { model: RedApoyo, as: 'RedApoyos', required: false }
+      ]
+    });
+    if (!paciente) throw new Error('Paciente no encontrado');
+
+    const [ultimaCita, signosSinCita, planesActivos] = await Promise.all([
+      Cita.findOne({
+        where: { id_paciente: pacienteId },
+        include: [
+          { model: Doctor, attributes: ['nombre', 'apellido_paterno', 'apellido_materno', 'grado_estudio'] },
+          { model: SignoVital, as: 'SignosVitales', limit: 1, order: [['fecha_medicion', 'DESC']], required: false },
+          { model: Diagnostico, as: 'Diagnosticos', required: false },
+          { model: PlanMedicacion, include: [{ model: PlanDetalle, include: [{ model: Medicamento, attributes: ['nombre_medicamento'] }] }], required: false }
+        ],
+        order: [['fecha_cita', 'DESC']]
+      }),
+      SignoVital.findOne({ where: { id_paciente: pacienteId, id_cita: null }, order: [['fecha_medicion', 'DESC']] }),
+      PlanMedicacion.findAll({
+        where: { id_paciente: pacienteId, activo: true },
+        include: [{ model: PlanDetalle, include: [{ model: Medicamento, attributes: ['nombre_medicamento'] }] }, { model: Doctor, attributes: ['nombre', 'apellido_paterno'] }],
+        order: [['fecha_inicio', 'DESC']],
+        limit: 10
+      })
+    ]);
+
+    const cita = ultimaCita;
+    const signoCita = cita?.SignosVitales?.[0];
+    const signo = signoCita || signosSinCita;
+    const diagnosticos = cita?.Diagnosticos || [];
+    const medicamentos = (cita?.PlanMedicacions && cita.PlanMedicacions.length > 0)
+      ? cita.PlanMedicacions.flatMap(p => (p.PlanDetalles || []).map(d => ({ nombre: d.Medicamento?.nombre_medicamento, dosis: d.dosis, frecuencia: d.frecuencia, via: d.via_administracion })))
+      : plansActivos.flatMap(p => (p.PlanDetalles || []).map(d => ({ nombre: d.Medicamento?.nombre_medicamento, dosis: d.dosis, frecuencia: d.frecuencia, via: d.via_administracion })));
+
+    const nombreCompleto = [paciente.nombre, paciente.apellido_paterno, paciente.apellido_materno].filter(Boolean).join(' ').trim() || '—';
+    const edad = paciente.fecha_nacimiento
+      ? Math.floor((new Date() - new Date(paciente.fecha_nacimiento)) / (365.25 * 24 * 60 * 60 * 1000))
+      : '—';
+    const sexo = paciente.sexo === 'Mujer' ? 'Fem' : paciente.sexo === 'Hombre' ? 'M' : paciente.sexo || '—';
+    const domicilio = [paciente.direccion, paciente.colonia, paciente.codigo_postal].filter(Boolean).join(', ').trim() || '—';
+    const fechaHoraConsulta = cita?.fecha_cita
+      ? new Date(cita.fecha_cita).toLocaleString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '')
+      : new Date().toLocaleString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+    const nombreDoctor = cita?.Doctor
+      ? `Dr. ${[cita.Doctor.nombre, cita.Doctor.apellido_paterno, cita.Doctor.apellido_materno].filter(Boolean).join(' ')}`
+      : '—';
+
+    const ta = (signo?.presion_sistolica != null && signo?.presion_diastolica != null) ? `${signo.presion_sistolica}/${signo.presion_diastolica}` : '—';
+    const peso = signo?.peso_kg != null ? `${signo.peso_kg} kg` : '—';
+    const talla = signo?.talla_m != null ? `${(signo.talla_m * 100).toFixed(0)} cm` : '—';
+    const glucosa = signo?.glucosa_mg_dl != null ? `${signo.glucosa_mg_dl} MG/DL` : '—';
+    const colesterol = signo?.colesterol_mg_dl != null ? `${signo.colesterol_mg_dl} MG/DL` : '—';
+    const trigliceridos = signo?.trigliceridos_mg_dl != null ? `${signo.trigliceridos_mg_dl} MG/DL` : '—';
+
+    const comorbText = (paciente.Comorbilidades || []).map(c => c.nombre_comorbilidad).filter(Boolean).join('; ') || '—';
+    const diagText = diagnosticos.map(d => d.descripcion).filter(Boolean).join('; ') || '—';
+    const medRows = medicamentos.map(m => `<tr><td>${escapeHtml(m.nombre || '—')} ${m.dosis ? escapeHtml(m.dosis) : ''} ${m.frecuencia ? escapeHtml(m.frecuencia) : ''} ${m.via ? escapeHtml(m.via) : ''}</td></tr>`).join('') || '<tr><td>—</td></tr>';
+
+    const institucion = process.env.NOTAS_MEDICAS_INSTITUCION || 'SECRETARÍA DE SALUD MÓDULO IV';
+    const subsecretaria = process.env.NOTAS_MEDICAS_SUBSECRETARIA || 'SUBSECRETARÍA DE SERVICIOS DE SALUD';
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"/><title>Notas Médicas - ${escapeHtml(nombreCompleto)}</title>
+<style>
+  body{font-family:Arial,sans-serif;font-size:11px;color:#000;padding:16px;max-width:900px;margin:0 auto;}
+  .header{text-align:center;margin-bottom:12px;}
+  .header h1{font-size:14px;margin:0;}
+  .header h2{font-size:16px;margin:4px 0;}
+  table.notas{width:100%;border-collapse:collapse;margin:8px 0;}
+  table.notas th, table.notas td{border:1px solid #000;padding:4px 6px;vertical-align:top;}
+  table.notas th{background:#e8e8e8;font-weight:bold;}
+  .label{font-weight:bold;}
+  .section{margin-top:10px;}
+  .footer{margin-top:16px;font-size:10px;}
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>${escapeHtml(institucion)}</h1>
+    <h2>${escapeHtml(subsecretaria)}</h2>
+    <h2>NOTAS MÉDICAS</h2>
+  </div>
+
+  <table class="notas">
+    <tr><th>Nombre</th><td>${escapeHtml(nombreCompleto)}</td><th>Edad</th><td>${edad}</td><th>Sexo</th><td>${escapeHtml(sexo)}</td></tr>
+    <tr><th>Servicio</th><td>—</td><th>No. EXPEDIENTE</th><td>${pacienteId}</td><th>Domicilio</th><td colspan="3">${escapeHtml(domicilio)}</td></tr>
+    <tr><th>Tipo consulta</th><td>C. EXTERNA</td><th>Paciente ID</th><td colspan="3">${escapeHtml(paciente.codigo_paciente || paciente.id_paciente?.toString() || '—')}</td></tr>
+    <tr><th colspan="2">Fecha y hora</th><td colspan="4">${fechaHoraConsulta}</td></tr>
+  </table>
+
+  <div class="section"><strong>Signos vitales y antropometría</strong></div>
+  <table class="notas">
+    <tr><th>TA (mmHg)</th><td>${ta}</td><th>P (x')</th><td>—</td><th>R (x')</th><td>—</td><th>T (°C)</th><td>—</td></tr>
+    <tr><th>Peso</th><td>${peso}</td><th>Talla</th><td>${talla}</td><th>Glucosa</th><td>${glucosa}</td><th>Colesterol</th><td>${colesterol}</td></tr>
+    <tr><th>Triglicéridos</th><td>${trigliceridos}</td><th>Presión sistólica/diastólica</th><td colspan="3">${ta}</td></tr>
+  </table>
+
+  <div class="section"><strong>Antecedentes</strong></div>
+  <table class="notas">
+    <tr><th>AHE</th><td colspan="5">—</td></tr>
+    <tr><th>APP</th><td colspan="5">${escapeHtml(comorbText)}</td></tr>
+    <tr><th>APNP</th><td colspan="5">—</td></tr>
+    <tr><th>Gineco-obstétricos (M:G:P:C:OTB)</th><td colspan="5">—</td></tr>
+  </table>
+
+  <div class="section"><strong>Problema actual (P:S:O:)</strong></div>
+  <table class="notas">
+    <tr><th>P</th><td colspan="5">${escapeHtml(diagText)}</td></tr>
+    <tr><th>S</th><td colspan="5">—</td></tr>
+    <tr><th>O</th><td colspan="5">—</td></tr>
+  </table>
+
+  <div class="section"><strong>Laboratorio</strong></div>
+  <table class="notas">
+    <tr><th>Glucosa</th><td>${glucosa}</td><th>Colesterol</th><td>${colesterol}</td><th>Triglicéridos</th><td>${trigliceridos}</td></tr>
+    <tr><th>Creatinina</th><td>—</td><th>Urea</th><td>—</td><th>General orina</th><td>—</td></tr>
+  </table>
+
+  <div class="section"><strong>Diagnósticos / Valoraciones</strong></div>
+  <table class="notas"><tr><th>Diagnóstico</th></tr>${diagnosticos.length ? diagnosticos.map(d => `<tr><td>${escapeHtml(d.descripcion || '—')}</td></tr>`).join('') : '<tr><td>—</td></tr>'}</table>
+
+  <div class="section"><strong>Acciones de línea de vida</strong></div>
+  <p>—</p>
+
+  <div class="section"><strong>Medicamentos</strong></div>
+  <table class="notas"><thead><tr><th>Medicamento / Dosis / Frecuencia / Vía</th></tr></thead><tbody>${medRows}</tbody></table>
+
+  <div class="section"><strong>Pronóstico</strong></div>
+  <p>—</p>
+  <p><strong>${escapeHtml(nombreDoctor)}</strong></p>
+
+  <div class="footer"><em>Documento generado por CuidateAPP. Información sensible protegida.</em></div>
+  <script>window.onload=function(){window.print();}</script>
+</body>
+</html>`;
+    return html;
+  }
+
+  /**
    * Generar HTML del expediente médico completo
    * Incluye toda la información del paciente relacionada y estructurada
-   * 
+   *
    * @param {number} pacienteId - ID del paciente
    * @param {string} fechaInicio - Fecha inicio para filtrar (opcional)
    * @param {string} fechaFin - Fecha fin para filtrar (opcional)

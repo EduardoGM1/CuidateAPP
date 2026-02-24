@@ -7,7 +7,7 @@ import { getDoctores } from '../../api/doctores';
 import { createCita, getCitaById } from '../../api/citas';
 import { getMedicamentos } from '../../api/medicamentos';
 import { useAuthStore } from '../../stores/authStore';
-import { getExpedienteHTML, getFormaData, getFormaMesesDisponibles } from '../../api/reportes';
+import { getExpedienteHTML, getFormaData, getFormaMesesDisponibles, openNotasMedicasPDF } from '../../api/reportes';
 import { downloadFormaExcel } from '../../utils/formaExcelUtils';
 import {
   getPacienteCitas,
@@ -112,6 +112,7 @@ export default function PacienteDetail() {
   const [periodosDisponibles, setPeriodosDisponibles] = useState([]);
   const [periodosLoading, setPeriodosLoading] = useState(false);
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState('');
+  const [notasMedicasLoading, setNotasMedicasLoading] = useState(false);
 
   const [citas, setCitas] = useState({ data: [], total: 0 });
   const [citasLoading, setCitasLoading] = useState(false);
@@ -3143,6 +3144,25 @@ export default function PacienteDetail() {
           <div className="patient-header-actions" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
             <Button variant="outline" type="button" onClick={() => setFormaModalOpen(true)}>
               Descargar FORMA en Excel
+            </Button>
+            <Button
+              variant="outline"
+              type="button"
+              loading={notasMedicasLoading}
+              onClick={async () => {
+                if (notasMedicasLoading || !parsedId) return;
+                setNotasMedicasLoading(true);
+                try {
+                  await openNotasMedicasPDF(parsedId);
+                  message.success('Se abrió el documento. Usa Imprimir > Guardar como PDF si quieres descargar el PDF.');
+                } catch (err) {
+                  message.error(err?.message || 'Error al generar Notas Médicas');
+                } finally {
+                  setNotasMedicasLoading(false);
+                }
+              }}
+            >
+              Descargar Notas Médicas (PDF)
             </Button>
             <Button variant="outline" onClick={() => navigate(`/pacientes/${parsedId}/editar`)}>
               Editar paciente

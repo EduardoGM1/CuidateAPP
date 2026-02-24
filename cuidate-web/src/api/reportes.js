@@ -78,6 +78,32 @@ export async function getFormaData(params) {
 }
 
 /**
+ * Obtiene el HTML de Notas Médicas (formato Secretaría de Salud) para un paciente.
+ * Se abre en nueva ventana para imprimir o guardar como PDF.
+ * @param {number|string} idPaciente
+ * @returns {Promise<string>} HTML
+ */
+export async function getNotasMedicasHTML(idPaciente) {
+  const id = parsePositiveInt(idPaciente, 0);
+  if (id === 0) throw new Error('ID de paciente inválido');
+  const { data } = await client.get(API_PATHS.REPORTES_NOTAS_MEDICAS_HTML(id), { responseType: 'text' });
+  return typeof data === 'string' ? data : '';
+}
+
+/**
+ * Abre las Notas Médicas en una nueva ventana (se abre el diálogo de impresión para guardar como PDF).
+ * @param {number|string} idPaciente
+ */
+export async function openNotasMedicasPDF(idPaciente) {
+  const html = await getNotasMedicasHTML(idPaciente);
+  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const w = window.open(url, '_blank', 'noopener,noreferrer');
+  if (w) w.focus();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+/**
  * Obtiene los periodos (mes/año) con registros del paciente para FORMA. Solo web.
  * @param {number} idPaciente
  * @returns {Promise<{ periodos: Array<{ mes, anio, value, label }> }>}

@@ -33,6 +33,7 @@ export const API_PATHS = {
   REPORTES_FORMA: (id) => `/api/reportes/forma/${id}`,
   REPORTES_FORMA_MESES_DISPONIBLES: (id) => `/api/reportes/forma/${id}/meses-disponibles`,
   REPORTES_EXPEDIENTE_HTML: (id) => `/api/reportes/expediente/${id}/html`,
+  REPORTES_NOTAS_MEDICAS_HTML: (id) => `/api/reportes/notas-medicas/${id}/html`,
   DASHBOARD_ADMIN_SUMMARY: '/api/dashboard/admin/summary',
   DASHBOARD_DOCTOR_SUMMARY: '/api/dashboard/doctor/summary',
   AUTH_CHANGE_PASSWORD: '/api/auth/change-password',
