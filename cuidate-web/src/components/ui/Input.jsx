@@ -52,12 +52,12 @@ const Input = forwardRef(function Input(
             display: 'block',
             marginBottom: 4,
             fontWeight: 500,
-            color: 'rgba(0,0,0,0.88)',
-            fontSize: 12,
+            color: 'var(--color-texto-primario)',
+            fontSize: 'var(--text-sm, 0.875rem)',
           }}
         >
           {label}
-          {required && <span style={{ color: '#ff4d4f' }}> *</span>}
+          {required && <span style={{ color: 'var(--color-error)' }}> *</span>}
         </label>
       )}
       {isPassword ? (
@@ -86,8 +86,8 @@ const Input = forwardRef(function Input(
           role="alert"
           style={{
             marginTop: 4,
-            fontSize: 12,
-            color: '#ff4d4f',
+            fontSize: 'var(--text-sm, 0.875rem)',
+            color: 'var(--color-error)',
           }}
         >
           {error}

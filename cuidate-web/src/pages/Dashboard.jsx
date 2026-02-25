@@ -96,7 +96,7 @@ function StatCard({ icon: Icon, label, value, sublabel }) {
   return (
     <div className="saas-stat-card">
       <div className="saas-stat-icon" aria-hidden="true">
-        <Icon />
+        {typeof Icon === 'function' ? <Icon /> : null}
       </div>
       <div className="saas-stat-value">{value ?? '—'}</div>
       <div className="saas-stat-label">{label}</div>

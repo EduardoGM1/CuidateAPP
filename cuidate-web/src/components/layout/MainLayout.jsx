@@ -178,7 +178,7 @@ export default function MainLayout() {
   const menuItems = navLinks.map(({ path, label, icon: Icon }) => ({
     key: path,
     label,
-    icon: Icon ? <Icon /> : null,
+    icon: typeof Icon === 'function' ? <Icon /> : null,
     onClick: () => {
       navigate(path);
       setDrawerOpen(false);

@@ -26,7 +26,7 @@ export default function SectionCard({ icon, label, onClick, className = '' }) {
       aria-label={`Abrir ${label}`}
     >
       <div className="patient-section-card-clickable-content">
-        {icon && (
+        {icon != null && typeof icon !== 'function' && (
           <span className="patient-section-card-clickable-icon" aria-hidden>
             {icon}
           </span>

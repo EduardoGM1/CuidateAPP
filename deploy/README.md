@@ -88,3 +88,13 @@ El script crea `/var/www`, clona **git@github.com:EduardoGM1/CuidateAPP.git** en
 |------|-----|-----|
 | Solo IP | `http://TU_IP` | `http://TU_IP/api` |
 | Con dominio | `https://tudominio.com` | `https://api.tudominio.com` |
+
+## Dominio cuidateapp.com.mx
+
+Para servir la app web con el dominio **cuidateapp.com.mx**:
+
+1. **Nginx:** Usar `nginx-cuidateapp-domain.conf` sustituyendo `{{WEB_DOMAIN}}` por `cuidateapp.com.mx` y `{{API_DOMAIN}}` por tu subdominio de API (ej. `api.cuidateapp.com.mx`). O bien, en el `server` que ya usas por IP, añadir a `server_name`: `cuidateapp.com.mx www.cuidateapp.com.mx`.
+2. **API (.env):** Incluir en `ALLOWED_ORIGINS` las URLs del dominio, por ejemplo:  
+   `ALLOWED_ORIGINS=...,http://cuidateapp.com.mx,http://www.cuidateapp.com.mx`  
+   (y con `https://` si usas SSL). Actualizar `FRONTEND_URL` (y `WEB_APP_ORIGIN` si se usa) a `http://cuidateapp.com.mx` (o `https://` si aplica). Reiniciar la API: `pm2 restart api-clinica`.
+3. **DNS:** Dejar solo el registro **A** de `@` (y `www` si lo usas) apuntando a la IP del servidor (ej. `187.77.14.148`). Eliminar cualquier registro A que apunte a otra IP (ej. página aparcada en `84.32.84.32`) para evitar que a veces cargue el sitio equivocado.

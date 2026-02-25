@@ -1014,7 +1014,7 @@ select:focus-visible {
 .saas-alert-card .section-title { color: var(--color-error); }
 .section-title { font-size: var(--text-lg); font-weight: var(--font-semibold); margin: 0 0 var(--space-3); color: var(--color-primario); }
 
-/* --- Login (estilo SaaS) --- */
+/* --- Login (contraste en tema oscuro) --- */
 .login-page {
   min-height: 100vh;
   display: flex;
@@ -1030,10 +1030,37 @@ select:focus-visible {
   border: 1px solid var(--color-borde-claro);
   box-shadow: var(--shadow-md);
 }
-.login-card h1 { margin: 0 0 var(--space-2); color: var(--color-primario); font-size: var(--text-2xl); font-weight: var(--font-bold); }
-.login-card .login-subtitle { color: var(--color-texto-secundario); margin-bottom: var(--space-6); font-size: var(--text-sm); }
+.login-card .ant-card-body { color: var(--color-texto-primario); }
+.login-card h1 { margin: 0 0 var(--space-2); font-size: var(--text-2xl); font-weight: var(--font-bold); }
+.login-card .login-subtitle {
+  color: var(--color-texto-primario);
+  margin-bottom: var(--space-6);
+  font-size: var(--text-sm);
+  opacity: 0.9;
+}
 .login-card .login-error { margin-bottom: var(--space-4); font-size: var(--text-sm); color: var(--color-error); }
 .login-card .login-footer { margin-top: var(--space-4); font-size: var(--text-sm); text-align: center; }
+.login-card .login-footer a {
+  color: var(--color-primario);
+  font-weight: var(--font-medium);
+}
+.login-card .login-footer a:hover { opacity: 0.9; text-decoration: underline; }
+/* Inputs dentro del login: fondo y borde visibles, texto claro */
+.login-card .ant-input,
+.login-card .ant-input-password .ant-input {
+  background: var(--color-fondo) !important;
+  color: var(--color-texto-primario) !important;
+  border-color: var(--color-borde-claro) !important;
+}
+.login-card .ant-input::placeholder { color: var(--color-texto-secundario); opacity: 0.8; }
+.login-card .ant-input-password .ant-input-password-icon { color: var(--color-texto-secundario); }
+.login-card .ant-input-password .ant-input-password-icon:hover { color: var(--color-texto-primario); }
+/* Aviso sesión caducada: legible en oscuro */
+.login-card .login-session-expired {
+  background: var(--color-fondo-advertencia-claro) !important;
+  border-color: var(--color-advertencia) !important;
+  color: var(--color-texto-primario) !important;
+}
 
 /* --- Detalle paciente: ancho amplio para aprovechar espacio (grid de cards) --- */
 .patient-detail-page {
