@@ -1,31 +1,31 @@
 /**
- * Paleta minimalista moderna — Cuidate Web
- * Diseño: limpio, responsive, accesible (contraste WCAG).
- * Un solo acento (teal) para acciones y jerarquía visual.
+ * Paleta minimalista oscura — Cuidate Web
+ * Diseño: oscuro, limpio, responsive, accesible (contraste WCAG).
+ * Acento teal sobre fondos slate.
  */
 export const COLORES = {
-  PRIMARIO: '#0d9488',
-  PRIMARIO_LIGHT: '#14b8a6',
-  PRIMARIO_DARK: '#0f766e',
-  SECUNDARIO: '#64748b',
-  SECUNDARIO_LIGHT: '#94a3b8',
-  SECUNDARIO_DARK: '#475569',
-  FONDO: '#f8fafc',
-  FONDO_SECUNDARIO: '#f1f5f9',
-  FONDO_CARD: '#ffffff',
-  TEXTO_PRIMARIO: '#0f172a',
-  TEXTO_SECUNDARIO: '#64748b',
-  TEXTO_DISABLED: '#94a3b8',
-  TEXTO_EN_PRIMARIO: '#ffffff',
-  EXITO: '#059669',
-  ADVERTENCIA: '#d97706',
-  ERROR: '#dc2626',
-  ERROR_LIGHT: '#ef4444',
-  BORDE_CLARO: '#e2e8f0',
-  FONDO_VERDE_SUAVE: '#ccfbf1',
-  FONDO_ERROR_CLARO: '#fef2f2',
-  BORDE_ERROR_CLARO: '#fecaca',
-  NAV_PRIMARIO: '#0d9488',
+  PRIMARIO: '#2dd4bf',
+  PRIMARIO_LIGHT: '#5eead4',
+  PRIMARIO_DARK: '#14b8a6',
+  SECUNDARIO: '#94a3b8',
+  SECUNDARIO_LIGHT: '#cbd5e1',
+  SECUNDARIO_DARK: '#64748b',
+  FONDO: '#0f172a',
+  FONDO_SECUNDARIO: '#1e293b',
+  FONDO_CARD: '#1e293b',
+  TEXTO_PRIMARIO: '#f8fafc',
+  TEXTO_SECUNDARIO: '#94a3b8',
+  TEXTO_DISABLED: '#64748b',
+  TEXTO_EN_PRIMARIO: '#0f172a',
+  EXITO: '#34d399',
+  ADVERTENCIA: '#fbbf24',
+  ERROR: '#f87171',
+  ERROR_LIGHT: '#fca5a5',
+  BORDE_CLARO: '#334155',
+  FONDO_VERDE_SUAVE: '#134e4a',
+  FONDO_ERROR_CLARO: '#450a0a',
+  BORDE_ERROR_CLARO: '#7f1d1d',
+  NAV_PRIMARIO: '#1e293b',
   BLANCO: '#ffffff',
   NEGRO: '#0f172a',
 };

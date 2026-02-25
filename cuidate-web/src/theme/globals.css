@@ -1,33 +1,33 @@
 /* ============================================
-   Cuidate Web — Design system minimalista
+   Cuidate Web — Design system minimalista oscuro
    Reglas: UI/UX, responsive, accesibilidad (focus, contraste)
    ============================================ */
 
 :root {
-  /* --- Paleta minimalista (teal + neutros) --- */
-  --color-primario: #0d9488;
-  --color-primario-light: #14b8a6;
-  --color-primario-dark: #0f766e;
-  --color-secundario: #64748b;
-  --color-secundario-light: #94a3b8;
-  --color-secundario-dark: #475569;
-  --color-fondo: #f8fafc;
-  --color-fondo-secundario: #f1f5f9;
-  --color-fondo-card: #ffffff;
-  --color-texto-primario: #0f172a;
-  --color-texto-secundario: #64748b;
-  --color-texto-en-primario: #ffffff;
-  --color-exito: #059669;
-  --color-advertencia: #d97706;
-  --color-error: #dc2626;
-  --color-error-light: #ef4444;
-  --color-borde-claro: #e2e8f0;
-  --color-fondo-verde-suave: #ccfbf1;
-  --color-fondo-error-claro: #fef2f2;
-  --color-nav-primario: #0d9488;
-  --color-nav-inactivo: #94a3b8;
-  --color-texto-disabled: #94a3b8;
-  --color-fondo-advertencia-claro: #fffbeb;
+  /* --- Paleta oscura (teal + slate) --- */
+  --color-primario: #2dd4bf;
+  --color-primario-light: #5eead4;
+  --color-primario-dark: #14b8a6;
+  --color-secundario: #94a3b8;
+  --color-secundario-light: #cbd5e1;
+  --color-secundario-dark: #64748b;
+  --color-fondo: #0f172a;
+  --color-fondo-secundario: #1e293b;
+  --color-fondo-card: #1e293b;
+  --color-texto-primario: #f8fafc;
+  --color-texto-secundario: #94a3b8;
+  --color-texto-en-primario: #0f172a;
+  --color-exito: #34d399;
+  --color-advertencia: #fbbf24;
+  --color-error: #f87171;
+  --color-error-light: #fca5a5;
+  --color-borde-claro: #334155;
+  --color-fondo-verde-suave: #134e4a;
+  --color-fondo-error-claro: #450a0a;
+  --color-nav-primario: #1e293b;
+  --color-nav-inactivo: #64748b;
+  --color-texto-disabled: #64748b;
+  --color-fondo-advertencia-claro: #422006;
 
   /* --- Espaciado (8px base) --- */
   --space-1: 0.25rem;
@@ -47,12 +47,12 @@
   --radius-lg: 12px;
   --radius-xl: 14px;
 
-  /* --- Sombras mínimas --- */
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.1);
-  --shadow-focus: 0 0 0 3px rgba(13, 148, 136, 0.25);
+  /* --- Sombras (sobre fondo oscuro) --- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-focus: 0 0 0 3px rgba(45, 212, 191, 0.4);
 
   /* --- Transiciones --- */
   --transition-fast: 150ms ease;
@@ -505,7 +505,7 @@ select:focus-visible {
 .btn-primary { background: var(--color-primario); color: var(--color-texto-en-primario); border: none; }
 .btn-secondary { background: var(--color-secundario); color: var(--color-texto-en-primario); border: none; }
 .btn-outline { background: transparent; color: var(--color-primario); border: 2px solid var(--color-primario); }
-.btn-outline:hover:not(:disabled) { background: rgba(13, 148, 136, 0.08); }
+.btn-outline:hover:not(:disabled) { background: rgba(45, 212, 191, 0.15); }
 .btn-danger { background: var(--color-error); color: var(--color-texto-en-primario); border: none; }
 .btn:disabled { cursor: not-allowed; opacity: 0.7; }
 
@@ -906,8 +906,8 @@ select:focus-visible {
   transition: box-shadow var(--transition), border-color var(--transition);
 }
 .saas-stat-card:hover {
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-  border-color: rgba(13, 148, 136, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: rgba(45, 212, 191, 0.35);
 }
 .saas-stat-card .saas-stat-icon {
   width: 48px;
@@ -965,7 +965,7 @@ select:focus-visible {
   color: inherit;
 }
 .saas-quick-card:hover {
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   border-color: var(--color-primario);
   background: var(--color-fondo-card);
 }
