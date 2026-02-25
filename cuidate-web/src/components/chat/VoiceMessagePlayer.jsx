@@ -142,7 +142,7 @@ export default function VoiceMessagePlayer({
           borderRadius: '50%',
           border: 'none',
           background: isOwnMessage ? 'rgba(255,255,255,0.3)' : 'var(--color-borde-claro, #e0e0e0)',
-          color: isOwnMessage ? 'inherit' : 'var(--color-texto-primario, #333)',
+          color: isOwnMessage ? 'inherit' : 'var(--color-texto-primario, #f8fafc)',
           cursor: loading ? 'wait' : 'pointer',
           display: 'flex',
           alignItems: 'center',

@@ -615,7 +615,7 @@ select:focus-visible {
 /* --- Detalle signo vital: estilo expediente médico (tablas tipo NOTAS MÉDICAS) --- */
 .detalle-signo-expediente {
   font-size: 12px;
-  color: #000;
+  color: var(--color-texto-primario);
 }
 .detalle-signo-expediente .expediente-header {
   text-align: center;
@@ -629,7 +629,7 @@ select:focus-visible {
 .detalle-signo-expediente .expediente-header p {
   margin: 0;
   font-size: 12px;
-  color: #333;
+  color: var(--color-texto-secundario);
 }
 .detalle-signo-expediente .expediente-section {
   margin-top: 10px;
@@ -646,26 +646,31 @@ select:focus-visible {
 }
 .detalle-signo-expediente table.expediente-table th,
 .detalle-signo-expediente table.expediente-table td {
-  border: 1px solid #000;
+  border: 1px solid var(--color-borde-claro);
   padding: 6px 8px;
   vertical-align: top;
   text-align: left;
+  color: var(--color-texto-primario);
 }
 .detalle-signo-expediente table.expediente-table th {
-  background: #e8e8e8;
+  background: var(--color-fondo-secundario);
   font-weight: 700;
   width: 1%;
   white-space: nowrap;
 }
 .detalle-signo-expediente table.expediente-table td.empty {
-  color: #666;
+  color: var(--color-texto-secundario);
 }
 .detalle-signo-expediente .expediente-footer {
   margin-top: 12px;
   font-size: 10px;
-  color: #666;
+  color: var(--color-texto-secundario);
 }
-/* Ocultar controles al imprimir y que el expediente ocupe 90% de la hoja */
+.detalle-signo-expediente .expediente-header h2,
+.detalle-signo-expediente .expediente-section strong {
+  color: var(--color-texto-primario);
+}
+/* Imprimir: expediente con texto negro para papel */
 @media print {
   .detalle-signo-no-print { display: none !important; }
   .detalle-signo-expediente {
@@ -674,7 +679,18 @@ select:focus-visible {
     margin: 5% auto !important;
     padding: 0 !important;
     box-sizing: border-box;
+    color: #000 !important;
   }
+  .detalle-signo-expediente .expediente-header h2,
+  .detalle-signo-expediente .expediente-header p,
+  .detalle-signo-expediente .expediente-section strong,
+  .detalle-signo-expediente table.expediente-table th,
+  .detalle-signo-expediente table.expediente-table td { color: #000 !important; }
+  .detalle-signo-expediente table.expediente-table th,
+  .detalle-signo-expediente table.expediente-table td { border-color: #000 !important; }
+  .detalle-signo-expediente table.expediente-table th { background: #e8e8e8 !important; }
+  .detalle-signo-expediente table.expediente-table td.empty,
+  .detalle-signo-expediente .expediente-footer { color: #666 !important; }
 }
 
 /* --- Chat conversación --- */
@@ -715,7 +731,7 @@ select:focus-visible {
 .chat-bubble:not(.is-own) {
   align-self: flex-start;
   background: var(--color-fondo-card, #fff);
-  color: var(--color-texto-primario, #212121);
+  color: var(--color-texto-primario, #f8fafc);
   border: 1px solid var(--color-borde-claro, #e9ecef);
   border-bottom-left-radius: 4px;
 }
