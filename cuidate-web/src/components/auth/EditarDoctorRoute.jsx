@@ -11,11 +11,12 @@ import EditarDoctor from '../../pages/doctores/EditarDoctor';
  */
 export default function EditarDoctorRoute() {
   const { id } = useParams();
-  const isAdmin = useAuthStore((s) => s.isAdmin());
+  const isAdminFn = useAuthStore((s) => s.isAdmin);
+  const isAdmin = typeof isAdminFn === 'function' ? isAdminFn() : false;
   const { idDoctor } = useCurrentDoctorId();
   const parsedId = parsePositiveInt(id, 0);
 
-  if (isAdmin()) return <EditarDoctor />;
+  if (isAdmin) return <EditarDoctor />;
   if (parsedId > 0 && idDoctor != null && parsedId === idDoctor) return <EditarDoctor />;
 
   return <Navigate to="/" replace />;

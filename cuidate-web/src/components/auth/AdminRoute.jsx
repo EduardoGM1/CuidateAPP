@@ -7,7 +7,8 @@ import { useAuthStore } from '../../stores/authStore';
  */
 export default function AdminRoute({ children }) {
   const location = useLocation();
-  const isAdmin = useAuthStore((s) => s.isAdmin());
+  const isAdminFn = useAuthStore((s) => s.isAdmin);
+  const isAdmin = typeof isAdminFn === 'function' ? isAdminFn() : false;
 
   if (!isAdmin) {
     return <Navigate to="/" state={{ from: location }} replace />;

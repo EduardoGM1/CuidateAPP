@@ -169,10 +169,13 @@ export default function MainLayout() {
     if (token) connect(token);
   }, [token]);
 
+  const isAdminFn = typeof isAdmin === 'function' ? isAdmin : () => false;
+  const getDisplayNameSafe = typeof getDisplayName === 'function' ? getDisplayName : () => '';
+
   const navLinks = [
     ...navLinksBase,
-    ...(isAdmin() ? navLinksAdmin : []),
-    ...(!isAdmin() ? navLinksDoctor : []),
+    ...(isAdminFn() ? navLinksAdmin : []),
+    ...(!isAdminFn() ? navLinksDoctor : []),
   ];
 
   const menuItems = navLinks.map(({ path, label, icon: Icon }) => ({
@@ -236,7 +239,7 @@ export default function MainLayout() {
         />
         <div style={{ padding: '1rem 1rem 0', borderTop: '1px solid var(--color-borde-claro)', marginTop: '1rem' }}>
           <div style={{ padding: '0.75rem', marginBottom: '0.75rem', background: 'var(--color-fondo-secundario)', borderRadius: 8, fontSize: '0.875rem', fontWeight: 500 }}>
-            {getDisplayName()}
+            {getDisplayNameSafe()}
           </div>
           <ButtonUI variant="outline" className="sidebar-logout" onClick={handleLogout} style={{ width: '100%', justifyContent: 'center' }}>
             Cerrar sesión
@@ -260,7 +263,7 @@ export default function MainLayout() {
           style={{ borderRight: 'none', padding: '0.5rem' }}
         />
         <div style={{ padding: '1rem', borderTop: '1px solid var(--color-borde-claro)' }}>
-          <div style={{ marginBottom: '0.75rem', fontSize: '0.875rem' }}>{getDisplayName()}</div>
+          <div style={{ marginBottom: '0.75rem', fontSize: '0.875rem' }}>{getDisplayNameSafe()}</div>
           <ButtonUI variant="outline" onClick={handleLogout} style={{ width: '100%', justifyContent: 'center' }}>
             Cerrar sesión
           </ButtonUI>

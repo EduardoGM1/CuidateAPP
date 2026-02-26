@@ -18,9 +18,10 @@ export default function DoctorDetail() {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const parsedId = parsePositiveInt(id, 0);
-  const isAdmin = useAuthStore((s) => s.isAdmin());
+  const isAdminFn = useAuthStore((s) => s.isAdmin);
+  const isAdmin = typeof isAdminFn === 'function' ? isAdminFn() : false;
   const { idDoctor } = useCurrentDoctorId();
-  const canEdit = isAdmin() || (idDoctor != null && idDoctor === parsedId);
+  const canEdit = isAdmin || (idDoctor != null && idDoctor === parsedId);
 
   const load = useCallback(async () => {
     if (parsedId === 0) return;
@@ -101,14 +102,14 @@ export default function DoctorDetail() {
     <div>
       <PageHeader title="Detalle de doctor" showBack backTo="/doctores" />
       <DataCard title="Datos del doctor" items={items} />
-      {(canEdit || isAdmin()) && (
+      {(canEdit || isAdmin) && (
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '1rem' }}>
         {canEdit && (
           <Button variant="primary" type="button" onClick={() => navigate(`/doctores/${parsedId}/editar`)}>
             Editar
           </Button>
         )}
-        {isAdmin() && (
+        {isAdmin && (
           !confirmDelete ? (
             <Button variant="danger" type="button" onClick={() => setConfirmDelete(true)} disabled={deleting}>
               Eliminar
