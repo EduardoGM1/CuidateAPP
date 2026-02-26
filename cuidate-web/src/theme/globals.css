@@ -198,6 +198,58 @@ select:focus-visible {
   color: var(--color-texto-primario) !important;
   border-color: var(--color-borde-claro) !important;
 }
+/* Dentro de modales/drawers: forzar contraste en todos los controles */
+.ant-modal .ant-input,
+.ant-modal .ant-input-affix-wrapper,
+.ant-modal .ant-input-number,
+.ant-modal .ant-select-selector,
+.ant-modal .ant-select-selection-placeholder,
+.ant-modal .ant-select-selection-item,
+.ant-modal .ant-picker,
+.ant-modal .ant-picker-input input,
+.ant-drawer .ant-input,
+.ant-drawer .ant-input-affix-wrapper,
+.ant-drawer .ant-input-number,
+.ant-drawer .ant-select-selector,
+.ant-drawer .ant-select-selection-placeholder,
+.ant-drawer .ant-select-selection-item,
+.ant-drawer .ant-picker,
+.ant-drawer .ant-picker-input input {
+  background-color: var(--color-fondo) !important;
+  color: var(--color-texto-primario) !important;
+  border-color: var(--color-borde-claro) !important;
+}
+.ant-modal .ant-select-selection-placeholder,
+.ant-drawer .ant-select-selection-placeholder,
+.ant-modal .ant-input::placeholder,
+.ant-drawer .ant-input::placeholder,
+.ant-modal .ant-picker-input input::placeholder,
+.ant-drawer .ant-picker-input input::placeholder {
+  color: var(--color-texto-secundario) !important;
+  opacity: 0.9;
+}
+.ant-modal label,
+.ant-drawer label {
+  color: var(--color-texto-primario) !important;
+}
+/* Inputs/selects nativos dentro de modales (p. ej. type="date") */
+.ant-modal-body input,
+.ant-modal-body select,
+.ant-modal-body textarea,
+.ant-drawer-body input,
+.ant-drawer-body select,
+.ant-drawer-body textarea {
+  background: var(--color-fondo) !important;
+  color: var(--color-texto-primario) !important;
+  border-color: var(--color-borde-claro) !important;
+}
+.ant-modal-body input::placeholder,
+.ant-modal-body textarea::placeholder,
+.ant-drawer-body input::placeholder,
+.ant-drawer-body textarea::placeholder {
+  color: var(--color-texto-secundario) !important;
+  opacity: 0.9;
+}
 .ant-empty-description,
 .ant-result-title,
 .ant-result-subtitle {
@@ -230,6 +282,7 @@ select:focus-visible {
 .ant-select-dropdown,
 .ant-picker-dropdown {
   background: var(--color-fondo-card) !important;
+  color: var(--color-texto-primario) !important;
 }
 .ant-select-item {
   color: var(--color-texto-primario) !important;
@@ -238,18 +291,38 @@ select:focus-visible {
 .ant-picker-cell:hover {
   background: var(--color-fondo-secundario) !important;
 }
+/* Select: trigger, placeholder y valor seleccionado visibles */
+.ant-select-selector,
+.ant-select-selection-placeholder,
+.ant-select-selection-item,
+.ant-select-selection-search-input {
+  color: var(--color-texto-primario) !important;
+  background-color: var(--color-fondo-card) !important;
+}
+.ant-select-selection-placeholder {
+  color: var(--color-texto-secundario) !important;
+  opacity: 0.9;
+}
 .ant-input,
 .ant-input-affix-wrapper,
 .ant-input-number,
 .ant-select-selector,
 .ant-picker {
-  background-color: var(--color-fondo) !important;
+  background-color: var(--color-fondo-card) !important;
   color: var(--color-texto-primario) !important;
   border-color: var(--color-borde-claro) !important;
 }
-.ant-input::placeholder {
-  color: var(--color-texto-secundario);
-  opacity: 0.8;
+.ant-input::placeholder,
+.ant-input-affix-wrapper input::placeholder {
+  color: var(--color-texto-secundario) !important;
+  opacity: 0.9;
+}
+.ant-picker-input input,
+.ant-picker-input input::placeholder {
+  color: var(--color-texto-primario) !important;
+}
+.ant-picker-input input::placeholder {
+  color: var(--color-texto-secundario) !important;
 }
 .ant-message-notice-content {
   background: var(--color-fondo-card) !important;
