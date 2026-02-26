@@ -192,10 +192,19 @@ select:focus-visible {
 .ant-drawer-title {
   color: var(--color-texto-primario) !important;
 }
+.ant-modal-body,
+.ant-drawer-body {
+  background-color: var(--color-fondo-card) !important;
+  color: var(--color-texto-primario) !important;
+  border-color: var(--color-borde-claro) !important;
+}
 .ant-empty-description,
 .ant-result-title,
 .ant-result-subtitle {
   color: var(--color-texto-primario) !important;
+}
+.ant-spin-dot-item {
+  background-color: var(--color-primario) !important;
 }
 .ant-table {
   color: var(--color-texto-primario) !important;
@@ -206,9 +215,14 @@ select:focus-visible {
   background: var(--color-fondo-secundario) !important;
   border-bottom-color: var(--color-borde-claro) !important;
 }
-.ant-table-tbody > tr > td {
+.ant-table-tbody > tr > td,
+.ant-table-cell {
   border-bottom-color: var(--color-borde-claro) !important;
   color: var(--color-texto-primario) !important;
+}
+.ant-table-tbody > tr > td *,
+.ant-table-cell * {
+  color: inherit;
 }
 .ant-table-tbody > tr:hover > td {
   background: var(--color-fondo-secundario) !important;

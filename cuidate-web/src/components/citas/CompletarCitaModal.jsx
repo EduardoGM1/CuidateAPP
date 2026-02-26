@@ -165,11 +165,11 @@ export default function CompletarCitaModal({ open, onClose, citaId, onSuccess })
           )}
 
           {pasoActual === 'asistencia' && (
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <div style={{ marginBottom: '1rem', color: 'var(--color-texto-primario)' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--color-texto-primario)', cursor: 'pointer' }}>
                 <input type="radio" checked={asistencia} onChange={() => setAsistencia(true)} /> Asistió
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--color-texto-primario)', cursor: 'pointer' }}>
                 <input type="radio" checked={!asistencia} onChange={() => setAsistencia(false)} /> No asistió
               </label>
               {!asistencia && (
