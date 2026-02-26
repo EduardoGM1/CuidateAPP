@@ -198,6 +198,55 @@ select:focus-visible {
   color: var(--color-texto-primario) !important;
   border-color: var(--color-borde-claro) !important;
 }
+/* Modales/drawers: inputs y selects con contraste garantizado (texto ≠ fondo) */
+.ant-modal .ant-input,
+.ant-modal .ant-input-affix-wrapper,
+.ant-modal .ant-input-number,
+.ant-modal .ant-select-selector,
+.ant-modal .ant-select-selection-placeholder,
+.ant-modal .ant-select-selection-item,
+.ant-modal .ant-picker,
+.ant-modal .ant-picker-input input,
+.ant-drawer .ant-input,
+.ant-drawer .ant-input-affix-wrapper,
+.ant-drawer .ant-input-number,
+.ant-drawer .ant-select-selector,
+.ant-drawer .ant-select-selection-placeholder,
+.ant-drawer .ant-select-selection-item,
+.ant-drawer .ant-picker,
+.ant-drawer .ant-picker-input input {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  border-color: #cbd5e1 !important;
+}
+.ant-modal .ant-select-selection-placeholder,
+.ant-drawer .ant-select-selection-placeholder,
+.ant-modal .ant-input::placeholder,
+.ant-drawer .ant-input::placeholder,
+.ant-modal .ant-picker-input input::placeholder,
+.ant-drawer .ant-picker-input input::placeholder {
+  color: #64748b !important;
+}
+.ant-modal-body input,
+.ant-modal-body select,
+.ant-modal-body textarea,
+.ant-drawer-body input,
+.ant-drawer-body select,
+.ant-drawer-body textarea {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  border-color: #cbd5e1 !important;
+}
+.ant-modal-body input::placeholder,
+.ant-modal-body textarea::placeholder,
+.ant-drawer-body input::placeholder,
+.ant-drawer-body textarea::placeholder {
+  color: #64748b !important;
+}
+.ant-modal label,
+.ant-drawer label {
+  color: var(--color-texto-primario) !important;
+}
 .ant-empty-description,
 .ant-result-title,
 .ant-result-subtitle {
