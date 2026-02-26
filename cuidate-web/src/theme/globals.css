@@ -242,16 +242,6 @@ select:focus-visible {
   color: var(--color-texto-primario) !important;
   border: 1px solid var(--color-borde-claro);
 }
-.ant-btn-default {
-  color: var(--color-primario) !important;
-  border-color: var(--color-borde-claro) !important;
-  background: transparent !important;
-}
-.ant-btn-default:hover {
-  color: var(--color-primario-light) !important;
-  border-color: var(--color-primario) !important;
-  background: rgba(45, 212, 191, 0.1) !important;
-}
 /* Gráficos Recharts: textos y ejes visibles en tema oscuro */
 .recharts-text,
 .recharts-cartesian-axis-tick-value {
@@ -685,6 +675,7 @@ select:focus-visible {
   gap: var(--space-4);
   margin-bottom: var(--space-5);
   flex-wrap: wrap;
+  color: var(--color-texto-primario);
 }
 .page-header h1 {
   margin: 0;
@@ -693,6 +684,35 @@ select:focus-visible {
   font-weight: var(--font-bold);
   flex: 1;
   line-height: var(--leading-tight);
+}
+/* Botón Volver / outline: siempre texto visible (teal sobre fondo oscuro) */
+.page-header .ant-btn-default,
+.page-header .ant-btn.ant-btn-default,
+.ant-btn.ant-btn-default {
+  color: var(--color-primario) !important;
+  border-color: var(--color-borde-claro) !important;
+  background: transparent !important;
+}
+.page-header .ant-btn-default:hover,
+.ant-btn.ant-btn-default:hover {
+  color: var(--color-primario-light) !important;
+  border-color: var(--color-primario) !important;
+  background: rgba(45, 212, 191, 0.1) !important;
+}
+.page-header .ant-btn-default span,
+.ant-btn.ant-btn-default span {
+  color: inherit !important;
+}
+
+/* Selects nativos en área de contenido: contraste en tema oscuro */
+.ant-layout-content select {
+  background: var(--color-fondo-card);
+  color: var(--color-texto-primario);
+  border-color: var(--color-borde-claro);
+}
+.ant-layout-content select option {
+  background: var(--color-fondo-card);
+  color: var(--color-texto-primario);
 }
 
 /* --- Data card --- */

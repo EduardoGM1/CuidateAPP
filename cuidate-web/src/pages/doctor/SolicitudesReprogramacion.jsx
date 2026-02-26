@@ -71,11 +71,17 @@ export default function SolicitudesReprogramacion() {
     <div>
       <PageHeader title="Solicitudes de reprogramación" showBack backTo="/" />
       <div style={{ marginBottom: '1rem' }}>
-        <label style={{ marginRight: '0.5rem', fontWeight: 600 }}>Estado:</label>
+        <label style={{ marginRight: '0.5rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}>Estado:</label>
         <select
           value={filtroEstado}
           onChange={(e) => setFiltroEstado(e.target.value)}
-          style={{ padding: '0.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-borde-claro)' }}
+          style={{
+            padding: '0.5rem',
+            borderRadius: 'var(--radius)',
+            border: '1px solid var(--color-borde-claro)',
+            background: 'var(--color-fondo-card)',
+            color: 'var(--color-texto-primario)',
+          }}
         >
           <option value="">Todos</option>
           <option value="pendiente">Pendientes</option>

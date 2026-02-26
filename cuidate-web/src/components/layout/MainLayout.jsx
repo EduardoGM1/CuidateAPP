@@ -302,6 +302,8 @@ export default function MainLayout() {
             padding: '2rem',
             overflow: 'auto',
             minHeight: 'calc(100vh - 64px)',
+            background: 'var(--color-fondo)',
+            color: 'var(--color-texto-primario)',
           }}
         >
           <Outlet />
