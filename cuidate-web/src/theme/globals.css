@@ -247,6 +247,30 @@ select:focus-visible {
 .ant-drawer label {
   color: var(--color-texto-primario) !important;
 }
+/* Modal Agregar vacuna: contenedor 90%, fondo negro, texto blanco, inputs sin fondo blanco */
+.vacuna-modal-form-wrap {
+  color: #fff !important;
+}
+.vacuna-modal-form-wrap .ant-input,
+.vacuna-modal-form-wrap .ant-input-affix-wrapper,
+.vacuna-modal-form-wrap .ant-input-number,
+.vacuna-modal-form-wrap .ant-select-selector,
+.vacuna-modal-form-wrap .ant-select-selection-placeholder,
+.vacuna-modal-form-wrap .ant-select-selection-item,
+.vacuna-modal-form-wrap .ant-picker,
+.vacuna-modal-form-wrap .ant-picker-input input {
+  background-color: transparent !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+.vacuna-modal-form-wrap .ant-select-selection-placeholder,
+.vacuna-modal-form-wrap .ant-input::placeholder,
+.vacuna-modal-form-wrap .ant-picker-input input::placeholder {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+.vacuna-modal-form-wrap label {
+  color: #fff !important;
+}
 .ant-empty-description,
 .ant-result-title,
 .ant-result-subtitle {

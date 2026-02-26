@@ -1877,26 +1877,38 @@ export default function PacienteDetail() {
                     }
                   }}
                 >
-                  {vacunaError && (
-                    <p
-                      style={{
-                        margin: '0 0 0.5rem',
-                        color: 'var(--color-error)',
-                        fontSize: '0.9rem',
-                      }}
-                    >
-                      {vacunaError}
-                    </p>
-                  )}
                   <div
+                    className="vacuna-modal-form-wrap"
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))',
-                      gap: '0.75rem',
-                      marginBottom: '0.75rem',
+                      width: '90%',
+                      minHeight: '90%',
+                      margin: '0 auto',
+                      padding: '1.25rem',
+                      background: '#000',
+                      color: '#fff',
+                      borderRadius: 'var(--radius-xl, 8px)',
                     }}
                   >
-                    <Select
+                    {vacunaError && (
+                      <p
+                        style={{
+                          margin: '0 0 0.5rem',
+                          color: '#f87171',
+                          fontSize: '0.9rem',
+                        }}
+                      >
+                        {vacunaError}
+                      </p>
+                    )}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))',
+                        gap: '0.75rem',
+                        marginBottom: '0.75rem',
+                      }}
+                    >
+                      <Select
                       label="Vacuna"
                       placeholder="— Seleccionar vacuna —"
                       value={vacunaForm.id_vacuna || undefined}
@@ -1933,6 +1945,7 @@ export default function PacienteDetail() {
                         setVacunaForm((f) => ({ ...f, observaciones: e.target.value }))
                       }
                     />
+                    </div>
                   </div>
                 </Modal>
               </div>
