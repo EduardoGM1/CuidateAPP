@@ -20,9 +20,9 @@ function calcularIMC(pesoKg, tallaM) {
 function getIMCColor(imc) {
   if (imc == null) return 'var(--color-texto-secundario)';
   if (imc < 18.5) return 'var(--color-primario)';
-  if (imc < 25) return 'var(--color-success, #52c41a)';
-  if (imc < 30) return 'var(--color-warning, #faad14)';
-  return 'var(--color-error, #ff4d4f)';
+  if (imc < 25) return 'var(--color-exito, #34d399)';
+  if (imc < 30) return 'var(--color-advertencia, #fbbf24)';
+  return 'var(--color-error, #f87171)';
 }
 
 const sectionStyle = {

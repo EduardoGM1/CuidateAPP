@@ -106,11 +106,11 @@ function StatCard({ icon: Icon, label, value, sublabel }) {
 }
 
 const CHART_COLORS = {
-  primary: '#006657',
-  secondary: '#BC955C',
-  success: '#0d9488',
-  warning: '#d97706',
-  error: '#dc2626',
+  primary: '#2dd4bf',
+  secondary: '#94a3b8',
+  success: '#34d399',
+  warning: '#fbbf24',
+  error: '#f87171',
   neutral: '#64748b',
 };
 
@@ -273,7 +273,7 @@ export default function Dashboard() {
                     <div className="saas-chart-inner">
                       <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={summary.chartData.citasUltimos7Dias} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde, #e2e8f0)" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
                           <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
                           <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
                           <Tooltip />
@@ -289,7 +289,7 @@ export default function Dashboard() {
                     <div className="saas-chart-inner">
                       <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={summary.chartData.pacientesNuevos} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde, #e2e8f0)" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
                           <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
                           <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
                           <Tooltip />
@@ -342,7 +342,7 @@ export default function Dashboard() {
                           layout="vertical"
                           margin={{ top: 8, right: 8, left: 60, bottom: 0 }}
                         >
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde, #e2e8f0)" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
                           <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
                           <YAxis type="category" dataKey="nombre" width={55} tick={{ fontSize: 11 }} />
                           <Tooltip />
@@ -361,7 +361,7 @@ export default function Dashboard() {
                   <div className="saas-chart-inner">
                     <ResponsiveContainer width="100%" height={220}>
                       <BarChart data={summary.chartData.citasUltimos7Dias} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde, #e2e8f0)" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
                         <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
                         <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
                         <Tooltip />

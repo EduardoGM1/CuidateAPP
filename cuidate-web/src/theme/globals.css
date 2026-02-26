@@ -28,6 +28,7 @@
   --color-nav-inactivo: #64748b;
   --color-texto-disabled: #64748b;
   --color-fondo-advertencia-claro: #422006;
+  --color-texto-sobre-primario: #f8fafc;
 
   /* --- Espaciado (8px base) --- */
   --space-1: 0.25rem;
@@ -173,6 +174,98 @@ select:focus-visible {
   border-right: 1px solid var(--color-borde-claro) !important;
 }
 
+/* Ant Design — contraste en tema oscuro (textos y fondos legibles) */
+.ant-card,
+.ant-modal-content,
+.ant-drawer-content {
+  background-color: var(--color-fondo-card) !important;
+  color: var(--color-texto-primario) !important;
+  border-color: var(--color-borde-claro) !important;
+}
+.ant-modal-header,
+.ant-drawer-header {
+  background-color: var(--color-fondo-card) !important;
+  border-bottom-color: var(--color-borde-claro) !important;
+  color: var(--color-texto-primario) !important;
+}
+.ant-modal-title,
+.ant-drawer-title {
+  color: var(--color-texto-primario) !important;
+}
+.ant-empty-description,
+.ant-result-title,
+.ant-result-subtitle {
+  color: var(--color-texto-primario) !important;
+}
+.ant-table {
+  color: var(--color-texto-primario) !important;
+  background: var(--color-fondo-card) !important;
+}
+.ant-table-thead > tr > th {
+  color: var(--color-texto-secundario) !important;
+  background: var(--color-fondo-secundario) !important;
+  border-bottom-color: var(--color-borde-claro) !important;
+}
+.ant-table-tbody > tr > td {
+  border-bottom-color: var(--color-borde-claro) !important;
+  color: var(--color-texto-primario) !important;
+}
+.ant-table-tbody > tr:hover > td {
+  background: var(--color-fondo-secundario) !important;
+}
+.ant-select-dropdown,
+.ant-picker-dropdown {
+  background: var(--color-fondo-card) !important;
+}
+.ant-select-item {
+  color: var(--color-texto-primario) !important;
+}
+.ant-select-item-option-active,
+.ant-picker-cell:hover {
+  background: var(--color-fondo-secundario) !important;
+}
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-number,
+.ant-select-selector,
+.ant-picker {
+  background-color: var(--color-fondo) !important;
+  color: var(--color-texto-primario) !important;
+  border-color: var(--color-borde-claro) !important;
+}
+.ant-input::placeholder {
+  color: var(--color-texto-secundario);
+  opacity: 0.8;
+}
+.ant-message-notice-content {
+  background: var(--color-fondo-card) !important;
+  color: var(--color-texto-primario) !important;
+  border: 1px solid var(--color-borde-claro);
+}
+.ant-btn-default {
+  color: var(--color-primario) !important;
+  border-color: var(--color-borde-claro) !important;
+  background: transparent !important;
+}
+.ant-btn-default:hover {
+  color: var(--color-primario-light) !important;
+  border-color: var(--color-primario) !important;
+  background: rgba(45, 212, 191, 0.1) !important;
+}
+/* Gráficos Recharts: textos y ejes visibles en tema oscuro */
+.recharts-text,
+.recharts-cartesian-axis-tick-value {
+  fill: var(--color-texto-secundario) !important;
+}
+.recharts-legend-item-text {
+  fill: var(--color-texto-primario) !important;
+}
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: var(--color-fondo-card) !important;
+  border: 1px solid var(--color-borde-claro) !important;
+  color: var(--color-texto-primario) !important;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -214,7 +307,7 @@ select:focus-visible {
 .saas-topbar {
   height: 64px;
   background: var(--color-fondo-card);
-  border-bottom: 1px solid rgba(0,0,0,0.06);
+  border-bottom: 1px solid var(--color-borde-claro);
   padding: 0 var(--space-8);
   display: flex;
   align-items: center;
@@ -300,8 +393,8 @@ select:focus-visible {
   flex-direction: column;
   position: relative;
   z-index: 50;
-  border-right: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+  border-right: 1px solid var(--color-borde-claro);
+  box-shadow: var(--shadow);
 }
 .sidebar-inner {
   display: flex;
@@ -375,7 +468,7 @@ select:focus-visible {
 .sidebar-link-label { flex: 1; }
 .sidebar-footer {
   padding: var(--space-5) var(--space-4) 0;
-  border-top: 1px solid rgba(0,0,0,0.06);
+  border-top: 1px solid var(--color-borde-claro);
   margin-top: var(--space-4);
 }
 .sidebar-user {
@@ -477,13 +570,14 @@ select:focus-visible {
 .ui-card {
   background-color: var(--color-fondo-card);
   border-radius: var(--radius-xl);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  box-shadow: var(--shadow-sm);
   padding: var(--space-6);
-  border: 1px solid rgba(0,0,0,0.06);
+  border: 1px solid var(--color-borde-claro);
   transition: box-shadow var(--transition), border-color var(--transition);
+  color: var(--color-texto-primario);
 }
 .ui-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow);
 }
 
 /* --- Button --- */
@@ -514,8 +608,8 @@ select:focus-visible {
   width: 100%;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(0,0,0,0.12);
-  background: var(--color-fondo-card);
+  border: 1px solid var(--color-borde-claro);
+  background: var(--color-fondo);
   color: var(--color-texto-primario);
   font-size: var(--text-base);
   transition: border-color var(--transition), box-shadow var(--transition);
@@ -528,14 +622,15 @@ select:focus-visible {
 .ui-table-wrap {
   overflow-x: auto;
   border-radius: var(--radius-xl);
-  border: 1px solid rgba(0,0,0,0.06);
+  border: 1px solid var(--color-borde-claro);
   background: var(--color-fondo-card);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  box-shadow: var(--shadow-sm);
 }
 .ui-table {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--text-sm);
+  color: var(--color-texto-primario);
 }
 .ui-table th {
   text-align: left;
@@ -546,11 +641,11 @@ select:focus-visible {
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
+  border-bottom: 1px solid var(--color-borde-claro);
 }
 .ui-table td {
   padding: var(--space-4) var(--space-5);
-  border-bottom: 1px solid rgba(0,0,0,0.06);
+  border-bottom: 1px solid var(--color-borde-claro);
   color: var(--color-texto-primario);
 }
 .ui-table tbody tr {

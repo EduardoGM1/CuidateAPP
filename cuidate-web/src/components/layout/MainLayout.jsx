@@ -204,7 +204,7 @@ export default function MainLayout() {
         onBreakpoint={(broken) => setMobile(broken)}
         style={{
           background: 'var(--color-fondo-card)',
-          borderRight: '1px solid rgba(0,0,0,0.06)',
+          borderRight: '1px solid var(--color-borde-claro)',
           overflow: 'auto',
           height: '100vh',
           position: 'fixed',
@@ -234,7 +234,7 @@ export default function MainLayout() {
             background: 'transparent',
           }}
         />
-        <div style={{ padding: '1rem 1rem 0', borderTop: '1px solid rgba(0,0,0,0.06)', marginTop: '1rem' }}>
+        <div style={{ padding: '1rem 1rem 0', borderTop: '1px solid var(--color-borde-claro)', marginTop: '1rem' }}>
           <div style={{ padding: '0.75rem', marginBottom: '0.75rem', background: 'var(--color-fondo-secundario)', borderRadius: 8, fontSize: '0.875rem', fontWeight: 500 }}>
             {getDisplayName()}
           </div>
@@ -259,7 +259,7 @@ export default function MainLayout() {
           items={menuItems}
           style={{ borderRight: 'none', padding: '0.5rem' }}
         />
-        <div style={{ padding: '1rem', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ padding: '1rem', borderTop: '1px solid var(--color-borde-claro)' }}>
           <div style={{ marginBottom: '0.75rem', fontSize: '0.875rem' }}>{getDisplayName()}</div>
           <ButtonUI variant="outline" onClick={handleLogout} style={{ width: '100%', justifyContent: 'center' }}>
             Cerrar sesión
@@ -273,11 +273,11 @@ export default function MainLayout() {
             height: 64,
             padding: '0 1.5rem',
             background: 'var(--color-fondo-card)',
-            borderBottom: '1px solid rgba(0,0,0,0.06)',
+            borderBottom: '1px solid var(--color-borde-claro)',
             display: 'flex',
             alignItems: 'center',
             gap: '1rem',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            boxShadow: 'var(--shadow-sm)',
           }}
         >
           <Button
