@@ -175,30 +175,43 @@ select:focus-visible {
 }
 
 /* Ant Design — contraste en tema oscuro (textos y fondos legibles) */
-.ant-card,
-.ant-modal-content,
-.ant-drawer-content {
+.ant-card {
   background-color: var(--color-fondo-card) !important;
   color: var(--color-texto-primario) !important;
+  border-color: var(--color-borde-claro) !important;
+}
+/* Todos los modales y drawers: fondo oscuro igual al general, texto blanco */
+.ant-modal-content,
+.ant-drawer-content {
+  background-color: var(--color-fondo) !important;
+  color: #fff !important;
   border-color: var(--color-borde-claro) !important;
 }
 .ant-modal-header,
 .ant-drawer-header {
-  background-color: var(--color-fondo-card) !important;
+  background-color: var(--color-fondo) !important;
   border-bottom-color: var(--color-borde-claro) !important;
-  color: var(--color-texto-primario) !important;
+  color: #fff !important;
 }
 .ant-modal-title,
 .ant-drawer-title {
-  color: var(--color-texto-primario) !important;
+  color: #fff !important;
+}
+.ant-modal-close,
+.ant-drawer-close {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+.ant-modal-close:hover,
+.ant-drawer-close:hover {
+  color: #fff !important;
 }
 .ant-modal-body,
 .ant-drawer-body {
-  background-color: var(--color-fondo-card) !important;
-  color: var(--color-texto-primario) !important;
+  background-color: var(--color-fondo) !important;
+  color: #fff !important;
   border-color: var(--color-borde-claro) !important;
 }
-/* Modales/drawers: inputs y selects con contraste garantizado (texto ≠ fondo) */
+/* Inputs/selects dentro de modales: fondo oscuro, texto blanco */
 .ant-modal .ant-input,
 .ant-modal .ant-input-affix-wrapper,
 .ant-modal .ant-input-number,
@@ -215,9 +228,9 @@ select:focus-visible {
 .ant-drawer .ant-select-selection-item,
 .ant-drawer .ant-picker,
 .ant-drawer .ant-picker-input input {
-  background-color: #ffffff !important;
-  color: #1e293b !important;
-  border-color: #cbd5e1 !important;
+  background-color: var(--color-fondo-card) !important;
+  color: #fff !important;
+  border-color: var(--color-borde-claro) !important;
 }
 .ant-modal .ant-select-selection-placeholder,
 .ant-drawer .ant-select-selection-placeholder,
@@ -225,7 +238,7 @@ select:focus-visible {
 .ant-drawer .ant-input::placeholder,
 .ant-modal .ant-picker-input input::placeholder,
 .ant-drawer .ant-picker-input input::placeholder {
-  color: #64748b !important;
+  color: rgba(255, 255, 255, 0.75) !important;
 }
 .ant-modal-body input,
 .ant-modal-body select,
@@ -233,19 +246,23 @@ select:focus-visible {
 .ant-drawer-body input,
 .ant-drawer-body select,
 .ant-drawer-body textarea {
-  background-color: #ffffff !important;
-  color: #1e293b !important;
-  border-color: #cbd5e1 !important;
+  background-color: var(--color-fondo-card) !important;
+  color: #fff !important;
+  border-color: var(--color-borde-claro) !important;
 }
 .ant-modal-body input::placeholder,
 .ant-modal-body textarea::placeholder,
 .ant-drawer-body input::placeholder,
 .ant-drawer-body textarea::placeholder {
-  color: #64748b !important;
+  color: rgba(255, 255, 255, 0.75) !important;
 }
 .ant-modal label,
-.ant-drawer label {
-  color: var(--color-texto-primario) !important;
+.ant-drawer label,
+.ant-modal p,
+.ant-drawer p,
+.ant-modal span,
+.ant-drawer span {
+  color: #fff !important;
 }
 /* Modal Agregar vacuna: contenedor 90%, fondo negro, texto blanco, inputs sin fondo blanco */
 .vacuna-modal-form-wrap {
