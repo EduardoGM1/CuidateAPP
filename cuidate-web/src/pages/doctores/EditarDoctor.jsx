@@ -43,27 +43,38 @@ export default function EditarDoctor() {
     },
   });
 
+  const authUser = useAuthStore((s) => s.user);
+
   const load = useCallback(async () => {
     if (parsedId === 0) return;
     setLoading(true);
     try {
-      const [doc, mods] = await Promise.all([getDoctorById(parsedId), getModulos()]);
-      setDoctor(doc);
+      const [rawDoc, mods] = await Promise.all([getDoctorById(parsedId), getModulos()]);
+      const doc = rawDoc && typeof rawDoc === 'object' ? rawDoc : {};
+      const email = doc.email ?? doc.Usuario?.email ?? (isSelfEdit ? authUser?.email : null) ?? '';
+      const nombre = doc.nombre ?? (isSelfEdit ? authUser?.nombre : null) ?? '';
+      const apellido_paterno = doc.apellido_paterno ?? (isSelfEdit ? authUser?.apellido_paterno : null) ?? '';
+      const apellido_materno = doc.apellido_materno ?? '';
+      const id_modulo = doc.id_modulo != null ? String(doc.id_modulo) : '';
+      const telefono = doc.telefono ?? '';
+
+      setDoctor({ ...doc, email, nombre, apellido_paterno, apellido_materno, id_modulo: doc.id_modulo, telefono });
       setModulos(Array.isArray(mods) ? mods : []);
+
       reset({
-        email: doc.email ?? '',
-        nombre: doc.nombre ?? '',
-        apellido_paterno: doc.apellido_paterno ?? '',
-        apellido_materno: doc.apellido_materno ?? '',
-        id_modulo: doc.id_modulo != null ? String(doc.id_modulo) : '',
-        telefono: doc.telefono ?? '',
+        email: String(email ?? ''),
+        nombre: String(nombre ?? ''),
+        apellido_paterno: String(apellido_paterno ?? ''),
+        apellido_materno: String(apellido_materno ?? ''),
+        id_modulo,
+        telefono: String(telefono ?? ''),
       });
     } catch {
       setDoctor(null);
     } finally {
       setLoading(false);
     }
-  }, [parsedId, reset]);
+  }, [parsedId, reset, isSelfEdit, authUser?.email, authUser?.nombre, authUser?.apellido_paterno]);
 
   useEffect(() => {
     load();
