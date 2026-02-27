@@ -3416,12 +3416,42 @@ const tooltipStyle = {
   boxShadow: 'var(--shadow-md)',
 };
 
+/** Formatea valores de un registro de signos vitales para mostrar en desglose (paridad con app móvil) */
+function getSignoValores(signo) {
+  const items = [];
+  if (signo.presion_sistolica != null || signo.presion_diastolica != null) {
+    items.push({ label: 'Presión arterial', value: `${signo.presion_sistolica ?? '—'}/${signo.presion_diastolica ?? '—'} mmHg` });
+  }
+  if (signo.glucosa_mg_dl != null) items.push({ label: 'Glucosa', value: `${signo.glucosa_mg_dl} mg/dL` });
+  if (signo.peso_kg != null) items.push({ label: 'Peso', value: `${signo.peso_kg} kg` });
+  if (signo.talla_m != null) items.push({ label: 'Talla', value: `${signo.talla_m} m` });
+  const imc = signo.imc ?? calcIMC(signo.peso_kg, signo.talla_m);
+  if (imc != null) items.push({ label: 'IMC', value: `${imc} kg/m²` });
+  if (signo.medida_cintura_cm != null) items.push({ label: 'Cintura', value: `${signo.medida_cintura_cm} cm` });
+  if (signo.colesterol_mg_dl != null) items.push({ label: 'Colesterol total', value: `${signo.colesterol_mg_dl} mg/dL` });
+  if (signo.colesterol_ldl != null) items.push({ label: 'Colesterol LDL', value: `${signo.colesterol_ldl} mg/dL` });
+  if (signo.colesterol_hdl != null) items.push({ label: 'Colesterol HDL', value: `${signo.colesterol_hdl} mg/dL` });
+  if (signo.trigliceridos_mg_dl != null) items.push({ label: 'Triglicéridos', value: `${signo.trigliceridos_mg_dl} mg/dL` });
+  if (signo.hba1c_porcentaje != null) items.push({ label: 'HbA1c', value: `${signo.hba1c_porcentaje}%` });
+  if (signo.observaciones) items.push({ label: 'Observaciones', value: sanitizeForDisplay(signo.observaciones) });
+  return items;
+}
+
 function PacienteGraficosEvolucion({ pacienteId, signosData, loadSignos, signosLoading }) {
   const [filtroTiempo, setFiltroTiempo] = useState(FILTROS_TIEMPO.COMPLETO);
+  const [detalleMesOpen, setDetalleMesOpen] = useState(false);
+  const [mesSeleccionado, setMesSeleccionado] = useState(null);
+  const [diaFiltro, setDiaFiltro] = useState('todos');
+  const [registroDetalleOpen, setRegistroDetalleOpen] = useState(false);
+  const [registroDetalle, setRegistroDetalle] = useState(null);
 
   useEffect(() => {
     if (pacienteId && (!signosData || signosData.length === 0)) loadSignos?.();
   }, [pacienteId, signosData?.length, loadSignos]);
+
+  useEffect(() => {
+    setDiaFiltro('todos');
+  }, [mesSeleccionado]);
 
   if (signosLoading || !signosData?.length) {
     return signosLoading ? <LoadingSpinner /> : <EmptyState message="No hay datos de signos vitales para graficar. Registra mediciones en la pestaña Signos vitales." />;
@@ -3432,6 +3462,7 @@ function PacienteGraficosEvolucion({ pacienteId, signosData, loadSignos, signosL
   const chartData = sorted.map((s) => {
     const imc = s.imc ?? calcIMC(s.peso_kg, s.talla_m);
     return {
+      ...s,
       fecha: formatDate(s.fecha_medicion),
       fechaRaw: s.fecha_medicion,
       peso_kg: s.peso_kg != null ? Number(s.peso_kg) : null,
@@ -3463,32 +3494,198 @@ function PacienteGraficosEvolucion({ pacienteId, signosData, loadSignos, signosL
       {monthlyData.length > 0 && (
         <div style={{ ...chartSectionStyle, marginBottom: 'var(--space-6)' }}>
           <h3 style={chartTitleStyle}>Registros por mes</h3>
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-texto-secundario)', marginBottom: 'var(--space-2)' }}>
+            Haz clic en una barra para ver el desglose de signos vitales de ese mes.
+          </p>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={monthlyData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
               <XAxis dataKey="mesLabel" tick={{ fontSize: 11, fill: 'var(--color-texto-secundario)' }} />
               <YAxis domain={[0, 'auto']} tick={{ fontSize: 11, fill: 'var(--color-texto-secundario)' }} allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} formatter={(value) => [value, 'Registros']} labelFormatter={(label) => label} />
-              <Bar dataKey="registros" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} name="Registros" />
+              <Bar
+                dataKey="registros"
+                fill={CHART_COLORS.primary}
+                radius={[4, 4, 0, 0]}
+                name="Registros"
+                onClick={(payload) => {
+                  if (payload && (payload.signos || payload.mesKey)) {
+                    setMesSeleccionado(payload);
+                    setDetalleMesOpen(true);
+                  }
+                }}
+                style={{ cursor: 'pointer' }}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
       )}
 
+      {/* Modal desglose por mes (paridad con app móvil) */}
+      <Modal
+        open={detalleMesOpen}
+        onClose={() => { setDetalleMesOpen(false); setMesSeleccionado(null); }}
+        title={mesSeleccionado ? `Desglose: ${mesSeleccionado.mesLabel}` : 'Desglose'}
+        footer={null}
+        width={560}
+        destroyOnClose
+      >
+        {mesSeleccionado && (() => {
+          const signosMes = mesSeleccionado.signos || [];
+          const diasUnicos = [];
+          const seen = new Set();
+          signosMes.forEach((s) => {
+            const raw = s.fecha_medicion || s.fecha_registro || s.fecha_creacion;
+            if (raw) {
+              const d = new Date(raw);
+              if (!Number.isNaN(d.getTime())) {
+                const key = d.toISOString().slice(0, 10);
+                if (!seen.has(key)) {
+                  seen.add(key);
+                  diasUnicos.push({ key, label: formatDate(raw) });
+                }
+              }
+            }
+          });
+          diasUnicos.sort((a, b) => b.key.localeCompare(a.key));
+          const registrosFiltrados = diaFiltro === 'todos'
+            ? [...signosMes].sort((a, b) => new Date(b.fecha_medicion || b.fecha_registro) - new Date(a.fecha_medicion || a.fecha_registro))
+            : signosMes.filter((s) => {
+                const raw = s.fecha_medicion || s.fecha_registro || s.fecha_creacion;
+                return raw && raw.slice(0, 10) === diaFiltro;
+              }).sort((a, b) => new Date(b.fecha_medicion || b.fecha_registro) - new Date(a.fecha_medicion || a.fecha_registro));
+          return (
+            <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+              <div style={{ marginBottom: 'var(--space-4)', padding: 'var(--space-3)', background: 'var(--color-fondo-secundario)', borderRadius: 'var(--radius)' }}>
+                <span style={{ fontWeight: 600, color: 'var(--color-texto-secundario)' }}>Total mediciones: </span>
+                <span style={{ fontWeight: 700 }}>{mesSeleccionado.totalRegistros ?? signosMes.length}</span>
+              </div>
+              {diasUnicos.length > 1 && (
+                <div style={{ marginBottom: 'var(--space-4)' }}>
+                  <label style={{ display: 'block', marginBottom: 4, fontWeight: 600, fontSize: 'var(--text-sm)' }}>Filtrar por día</label>
+                  <Select
+                    options={[{ value: 'todos', label: 'Todos los días' }, ...diasUnicos.map((d) => ({ value: d.key, label: d.label }))]}
+                    value={diaFiltro}
+                    onChange={(val) => setDiaFiltro(val ?? 'todos')}
+                    placeholder="Todos los días"
+                  />
+                </div>
+              )}
+              <h4 style={{ marginBottom: 'var(--space-3)', fontSize: 'var(--text-base)' }}>Registros ({registrosFiltrados.length})</h4>
+              {registrosFiltrados.length === 0 ? (
+                <p style={{ color: 'var(--color-texto-secundario)' }}>No hay registros para el filtro seleccionado.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                  {registrosFiltrados.map((signo, idx) => {
+                    const fechaRaw = signo.fecha_medicion || signo.fecha_registro || signo.fecha_creacion;
+                    const valores = getSignoValores(signo);
+                    return (
+                      <div
+                        key={signo.id_signo_vital ?? `${fechaRaw}-${idx}`}
+                        style={{
+                          border: '1px solid var(--color-borde-claro)',
+                          borderRadius: 'var(--radius)',
+                          overflow: 'hidden',
+                          background: 'var(--color-fondo-card)',
+                        }}
+                      >
+                        <div style={{ padding: 'var(--space-2) var(--space-3)', background: 'var(--color-fondo-secundario)', borderBottom: '1px solid var(--color-borde-claro)', fontWeight: 600, fontSize: 'var(--text-sm)' }}>
+                          {formatDateTime(fechaRaw)}
+                        </div>
+                        <div style={{ padding: 'var(--space-3)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                          {valores.length === 0 ? (
+                            <span style={{ color: 'var(--color-texto-secundario)', fontSize: 'var(--text-sm)' }}>Sin valores registrados</span>
+                          ) : (
+                            valores.map((item) => (
+                              <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-2)' }}>
+                                <span style={{ color: 'var(--color-texto-secundario)', fontSize: 'var(--text-sm)' }}>{item.label}</span>
+                                <span style={{ fontWeight: 600 }}>{item.value}</span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+      </Modal>
+
       {hasPeso && (
         <div style={chartSectionStyle}>
           <h3 style={chartTitleStyle}>Evolución del peso (kg)</h3>
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-texto-secundario)', marginBottom: 'var(--space-2)' }}>
+            Haz clic en un punto para ver el registro de esa fecha.
+          </p>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
               <XAxis dataKey="fecha" tick={{ fontSize: 11, fill: 'var(--color-texto-secundario)' }} />
               <YAxis domain={['auto', 'auto']} tick={{ fontSize: 11, fill: 'var(--color-texto-secundario)' }} />
               <Tooltip contentStyle={tooltipStyle} formatter={(value) => [value != null ? `${value} kg` : '—', 'Peso']} labelFormatter={(label) => `Fecha: ${label}`} />
-              <Line type="monotone" dataKey="peso_kg" stroke={CHART_COLORS.primary} strokeWidth={2} dot={{ fill: CHART_COLORS.primary, r: 4 }} connectNulls />
+              <Line
+                type="monotone"
+                dataKey="peso_kg"
+                stroke={CHART_COLORS.primary}
+                strokeWidth={2}
+                connectNulls
+                dot={(props) => {
+                  const { cx, cy, payload } = props;
+                  if (payload == null) return null;
+                  return (
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={5}
+                      fill={CHART_COLORS.primary}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => {
+                        if (payload.fechaRaw) {
+                          setRegistroDetalle(payload);
+                          setRegistroDetalleOpen(true);
+                        }
+                      }}
+                    />
+                  );
+                }}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
       )}
+
+      {/* Modal detalle de un registro (al clic en punto de evolución) */}
+      <Modal
+        open={registroDetalleOpen}
+        onClose={() => { setRegistroDetalleOpen(false); setRegistroDetalle(null); }}
+        title={registroDetalle ? `Registro: ${formatDateTime(registroDetalle.fechaRaw)}` : 'Registro'}
+        footer={null}
+        width={480}
+        destroyOnClose
+      >
+        {registroDetalle && (() => {
+          const valores = getSignoValores(registroDetalle);
+          return (
+            <div style={{ padding: 'var(--space-2) 0' }}>
+              {valores.length === 0 ? (
+                <p style={{ color: 'var(--color-texto-secundario)' }}>Sin valores registrados para esta fecha.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                  {valores.map((item) => (
+                    <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-2) 0', borderBottom: '1px solid var(--color-borde-claro)' }}>
+                      <span style={{ color: 'var(--color-texto-secundario)' }}>{item.label}</span>
+                      <span style={{ fontWeight: 600 }}>{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+      </Modal>
 
       {hasGlucosa && (
         <div style={chartSectionStyle}>
