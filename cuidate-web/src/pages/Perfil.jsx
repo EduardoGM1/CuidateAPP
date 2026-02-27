@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { changePasswordSchema } from '../lib/validations/changePasswordSchema';
 import { doctorEditSchema } from '../lib/validations/doctorSchema';
@@ -56,21 +56,29 @@ export default function Perfil() {
     if (!idDoctor) return;
     setLoadingDoctor(true);
     try {
-      const doc = await getDoctorById(idDoctor);
-      setDoctor(doc);
+      const rawDoc = await getDoctorById(idDoctor);
+      const doc = rawDoc && typeof rawDoc === 'object' ? rawDoc : {};
+      const email = doc.email ?? doc.Usuario?.email ?? user?.email ?? '';
+      const nombre = doc.nombre ?? user?.nombre ?? '';
+      const apellido_paterno = doc.apellido_paterno ?? user?.apellido_paterno ?? '';
+      const apellido_materno = doc.apellido_materno ?? '';
+      const telefono = doc.telefono ?? '';
+
+      setDoctor({ ...doc, email, nombre, apellido_paterno, apellido_materno, telefono });
+
       perfilForm.reset({
-        email: doc.email ?? '',
-        nombre: doc.nombre ?? '',
-        apellido_paterno: doc.apellido_paterno ?? '',
-        apellido_materno: doc.apellido_materno ?? '',
-        telefono: doc.telefono ?? '',
+        email: String(email ?? ''),
+        nombre: String(nombre ?? ''),
+        apellido_paterno: String(apellido_paterno ?? ''),
+        apellido_materno: String(apellido_materno ?? ''),
+        telefono: String(telefono ?? ''),
       });
     } catch {
       setDoctor(null);
     } finally {
       setLoadingDoctor(false);
     }
-  }, [idDoctor, perfilForm]);
+  }, [idDoctor, perfilForm, user?.email, user?.nombre, user?.apellido_paterno]);
 
   useEffect(() => {
     loadDoctor();
@@ -181,11 +189,71 @@ export default function Perfil() {
               {perfilError && (
                 <p style={{ margin: '0 0 1rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{perfilError}</p>
               )}
-              <Input label="Correo electrónico" type="email" error={perfilForm.formState.errors.email?.message} {...perfilForm.register('email')} required />
-              <Input label="Nombre" error={perfilForm.formState.errors.nombre?.message} {...perfilForm.register('nombre')} required />
-              <Input label="Apellido paterno" error={perfilForm.formState.errors.apellido_paterno?.message} {...perfilForm.register('apellido_paterno')} required />
-              <Input label="Apellido materno" error={perfilForm.formState.errors.apellido_materno?.message} {...perfilForm.register('apellido_materno')} />
-              <Input label="Teléfono" type="tel" error={perfilForm.formState.errors.telefono?.message} {...perfilForm.register('telefono')} />
+              <Controller
+                name="email"
+                control={perfilForm.control}
+                render={({ field }) => (
+                  <Input
+                    label="Correo electrónico"
+                    type="email"
+                    placeholder={doctor?.email ?? user?.email ?? 'Correo (API o usuario logueado)'}
+                    error={perfilForm.formState.errors.email?.message}
+                    {...field}
+                    required
+                  />
+                )}
+              />
+              <Controller
+                name="nombre"
+                control={perfilForm.control}
+                render={({ field }) => (
+                  <Input
+                    label="Nombre"
+                    placeholder={doctor?.nombre ?? user?.nombre ?? 'Nombre (API o usuario logueado)'}
+                    error={perfilForm.formState.errors.nombre?.message}
+                    {...field}
+                    required
+                  />
+                )}
+              />
+              <Controller
+                name="apellido_paterno"
+                control={perfilForm.control}
+                render={({ field }) => (
+                  <Input
+                    label="Apellido paterno"
+                    placeholder={doctor?.apellido_paterno ?? user?.apellido_paterno ?? 'Apellido paterno (API o usuario logueado)'}
+                    error={perfilForm.formState.errors.apellido_paterno?.message}
+                    {...field}
+                    required
+                  />
+                )}
+              />
+              <Controller
+                name="apellido_materno"
+                control={perfilForm.control}
+                render={({ field }) => (
+                  <Input
+                    label="Apellido materno"
+                    placeholder={doctor?.apellido_materno ?? 'Apellido materno (API)'}
+                    error={perfilForm.formState.errors.apellido_materno?.message}
+                    {...field}
+                  />
+                )}
+              />
+              <Controller
+                name="telefono"
+                control={perfilForm.control}
+                render={({ field }) => (
+                  <Input
+                    label="Teléfono"
+                    type="tel"
+                    placeholder={doctor?.telefono ?? 'Teléfono (API)'}
+                    error={perfilForm.formState.errors.telefono?.message}
+                    {...field}
+                  />
+                )}
+              />
               <div style={{ marginTop: '1rem' }}>
                 <Button type="submit" variant="primary" disabled={perfilForm.formState.isSubmitting}>
                   {perfilForm.formState.isSubmitting ? 'Guardando…' : 'Guardar datos'}
