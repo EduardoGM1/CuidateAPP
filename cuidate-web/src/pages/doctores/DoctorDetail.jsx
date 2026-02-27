@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { getDoctorById, deleteDoctor } from '../../api/doctores';
 import { PageHeader, DataCard } from '../../components/shared';
 import { LoadingSpinner, Button } from '../../components/ui';
@@ -21,6 +21,12 @@ export default function DoctorDetail() {
   const isAdminFn = useAuthStore((s) => s.isAdmin);
   const isAdmin = typeof isAdminFn === 'function' ? isAdminFn() : false;
   const { idDoctor } = useCurrentDoctorId();
+
+  // Solo administradores pueden ver otros doctores; los doctores solo su propio perfil
+  if (!isAdmin && idDoctor != null && parsedId > 0 && parsedId !== idDoctor) {
+    return <Navigate to="/doctores" replace />;
+  }
+
   const canEdit = isAdmin || (idDoctor != null && idDoctor === parsedId);
 
   const load = useCallback(async () => {

@@ -140,6 +140,11 @@ export default function DoctoresList() {
   return (
     <div>
       <PageHeader title="Doctores" />
+      {!isAdmin && (
+        <p style={{ marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
+          Solo puedes ver y editar tu propio perfil. Los administradores pueden gestionar todos los doctores.
+        </p>
+      )}
       {isAdmin && (
         <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
           <Button variant="primary" type="button" onClick={() => navigate('/doctores/nuevo')}>
@@ -147,12 +152,14 @@ export default function DoctoresList() {
           </Button>
         </div>
       )}
-      <SearchFilterBar
-        placeholder="Buscar por nombre o email..."
-        filterOptions={filterOptions}
-        initialFilters={{ estado: params.estado, modulo: params.modulo ? String(params.modulo) : '' }}
-        onSearch={handleSearch}
-      />
+      {isAdmin && (
+        <SearchFilterBar
+          placeholder="Buscar por nombre o email..."
+          filterOptions={filterOptions}
+          initialFilters={{ estado: params.estado, modulo: params.modulo ? String(params.modulo) : '' }}
+          onSearch={handleSearch}
+        />
+      )}
       {error && (
         <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: 'var(--color-fondo-error-claro)', color: 'var(--color-error)', borderRadius: 'var(--radius)' }}>
           {error}
