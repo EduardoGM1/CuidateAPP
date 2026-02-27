@@ -1884,8 +1884,8 @@ export default function PacienteDetail() {
                       minHeight: '90%',
                       margin: '0 auto',
                       padding: '1.25rem',
-                      background: '#000',
-                      color: '#fff',
+                      background: 'var(--color-fondo-secundario)',
+                      color: 'var(--color-texto-primario)',
                       borderRadius: 'var(--radius-xl, 8px)',
                     }}
                   >
@@ -1893,7 +1893,7 @@ export default function PacienteDetail() {
                       <p
                         style={{
                           margin: '0 0 0.5rem',
-                          color: '#f87171',
+                          color: 'var(--color-error)',
                           fontSize: '0.9rem',
                         }}
                       >

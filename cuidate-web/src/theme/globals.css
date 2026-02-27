@@ -4,31 +4,31 @@
    ============================================ */
 
 :root {
-  /* --- Paleta oscura (teal + slate) --- */
-  --color-primario: #2dd4bf;
-  --color-primario-light: #5eead4;
-  --color-primario-dark: #14b8a6;
-  --color-secundario: #94a3b8;
-  --color-secundario-light: #cbd5e1;
-  --color-secundario-dark: #64748b;
-  --color-fondo: #0f172a;
-  --color-fondo-secundario: #1e293b;
-  --color-fondo-card: #1e293b;
-  --color-texto-primario: #f8fafc;
-  --color-texto-secundario: #94a3b8;
-  --color-texto-en-primario: #0f172a;
-  --color-exito: #34d399;
-  --color-advertencia: #fbbf24;
-  --color-error: #f87171;
-  --color-error-light: #fca5a5;
-  --color-borde-claro: #334155;
-  --color-fondo-verde-suave: #134e4a;
-  --color-fondo-error-claro: #450a0a;
-  --color-nav-primario: #1e293b;
-  --color-nav-inactivo: #64748b;
-  --color-texto-disabled: #64748b;
-  --color-fondo-advertencia-claro: #422006;
-  --color-texto-sobre-primario: #f8fafc;
+  /* --- Paleta IMSS Bienestar (https://imssbienestar.gob.mx/) --- */
+  --color-primario: #004B87;
+  --color-primario-light: #0066a1;
+  --color-primario-dark: #003366;
+  --color-secundario: #4a5568;
+  --color-secundario-light: #718096;
+  --color-secundario-dark: #2d3748;
+  --color-fondo: #f0f4f8;
+  --color-fondo-secundario: #e2e8f0;
+  --color-fondo-card: #ffffff;
+  --color-texto-primario: #1a1a2e;
+  --color-texto-secundario: #4a5568;
+  --color-texto-en-primario: #ffffff;
+  --color-exito: #00843d;
+  --color-advertencia: #b45309;
+  --color-error: #c53030;
+  --color-error-light: #e53e3e;
+  --color-borde-claro: #cbd5e0;
+  --color-fondo-verde-suave: #e6f4ee;
+  --color-fondo-error-claro: #fff5f5;
+  --color-nav-primario: #004B87;
+  --color-nav-inactivo: #718096;
+  --color-texto-disabled: #718096;
+  --color-fondo-advertencia-claro: #fffaf0;
+  --color-texto-sobre-primario: #ffffff;
 
   /* --- Espaciado (8px base) --- */
   --space-1: 0.25rem;
@@ -53,7 +53,7 @@
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-focus: 0 0 0 3px rgba(45, 212, 191, 0.4);
+  --shadow-focus: 0 0 0 3px rgba(0, 75, 135, 0.35);
 
   /* --- Transiciones --- */
   --transition-fast: 150ms ease;
@@ -180,38 +180,37 @@ select:focus-visible {
   color: var(--color-texto-primario) !important;
   border-color: var(--color-borde-claro) !important;
 }
-/* Todos los modales y drawers: fondo oscuro igual al general, texto blanco */
+/* Modales y drawers: usan variables del tema (IMSS Bienestar) */
 .ant-modal-content,
 .ant-drawer-content {
-  background-color: var(--color-fondo) !important;
-  color: #fff !important;
+  background-color: var(--color-fondo-card) !important;
+  color: var(--color-texto-primario) !important;
   border-color: var(--color-borde-claro) !important;
 }
 .ant-modal-header,
 .ant-drawer-header {
-  background-color: var(--color-fondo) !important;
+  background-color: var(--color-fondo-card) !important;
   border-bottom-color: var(--color-borde-claro) !important;
-  color: #fff !important;
+  color: var(--color-texto-primario) !important;
 }
 .ant-modal-title,
 .ant-drawer-title {
-  color: #fff !important;
+  color: var(--color-texto-primario) !important;
 }
 .ant-modal-close,
 .ant-drawer-close {
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: var(--color-texto-secundario) !important;
 }
 .ant-modal-close:hover,
 .ant-drawer-close:hover {
-  color: #fff !important;
+  color: var(--color-texto-primario) !important;
 }
 .ant-modal-body,
 .ant-drawer-body {
-  background-color: var(--color-fondo) !important;
-  color: #fff !important;
+  background-color: var(--color-fondo-card) !important;
+  color: var(--color-texto-primario) !important;
   border-color: var(--color-borde-claro) !important;
 }
-/* Inputs/selects dentro de modales: fondo oscuro, texto blanco */
 .ant-modal .ant-input,
 .ant-modal .ant-input-affix-wrapper,
 .ant-modal .ant-input-number,
@@ -228,8 +227,8 @@ select:focus-visible {
 .ant-drawer .ant-select-selection-item,
 .ant-drawer .ant-picker,
 .ant-drawer .ant-picker-input input {
-  background-color: var(--color-fondo-card) !important;
-  color: #fff !important;
+  background-color: var(--color-fondo) !important;
+  color: var(--color-texto-primario) !important;
   border-color: var(--color-borde-claro) !important;
 }
 .ant-modal .ant-select-selection-placeholder,
@@ -238,7 +237,7 @@ select:focus-visible {
 .ant-drawer .ant-input::placeholder,
 .ant-modal .ant-picker-input input::placeholder,
 .ant-drawer .ant-picker-input input::placeholder {
-  color: rgba(255, 255, 255, 0.75) !important;
+  color: var(--color-texto-secundario) !important;
 }
 .ant-modal-body input,
 .ant-modal-body select,
@@ -246,15 +245,15 @@ select:focus-visible {
 .ant-drawer-body input,
 .ant-drawer-body select,
 .ant-drawer-body textarea {
-  background-color: var(--color-fondo-card) !important;
-  color: #fff !important;
+  background-color: var(--color-fondo) !important;
+  color: var(--color-texto-primario) !important;
   border-color: var(--color-borde-claro) !important;
 }
 .ant-modal-body input::placeholder,
 .ant-modal-body textarea::placeholder,
 .ant-drawer-body input::placeholder,
 .ant-drawer-body textarea::placeholder {
-  color: rgba(255, 255, 255, 0.75) !important;
+  color: var(--color-texto-secundario) !important;
 }
 .ant-modal label,
 .ant-drawer label,
@@ -262,11 +261,12 @@ select:focus-visible {
 .ant-drawer p,
 .ant-modal span,
 .ant-drawer span {
-  color: #fff !important;
+  color: var(--color-texto-primario) !important;
 }
-/* Modal Agregar vacuna: contenedor 90%, fondo negro, texto blanco, inputs sin fondo blanco */
+/* Modal Agregar vacuna: contenedor 90%, usa variables del tema */
 .vacuna-modal-form-wrap {
-  color: #fff !important;
+  color: var(--color-texto-primario) !important;
+  background: var(--color-fondo-secundario) !important;
 }
 .vacuna-modal-form-wrap .ant-input,
 .vacuna-modal-form-wrap .ant-input-affix-wrapper,
@@ -276,17 +276,17 @@ select:focus-visible {
 .vacuna-modal-form-wrap .ant-select-selection-item,
 .vacuna-modal-form-wrap .ant-picker,
 .vacuna-modal-form-wrap .ant-picker-input input {
-  background-color: transparent !important;
-  color: #fff !important;
-  border-color: rgba(255, 255, 255, 0.35) !important;
+  background-color: var(--color-fondo-card) !important;
+  color: var(--color-texto-primario) !important;
+  border-color: var(--color-borde-claro) !important;
 }
 .vacuna-modal-form-wrap .ant-select-selection-placeholder,
 .vacuna-modal-form-wrap .ant-input::placeholder,
 .vacuna-modal-form-wrap .ant-picker-input input::placeholder {
-  color: rgba(255, 255, 255, 0.75) !important;
+  color: var(--color-texto-secundario) !important;
 }
 .vacuna-modal-form-wrap label {
-  color: #fff !important;
+  color: var(--color-texto-primario) !important;
 }
 .ant-empty-description,
 .ant-result-title,
