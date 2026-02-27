@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { doctorEditSchema } from '../../lib/validations/doctorSchema';
 import { getDoctorById, updateDoctor } from '../../api/doctores';
@@ -28,6 +28,7 @@ export default function EditarDoctor() {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
@@ -128,11 +129,71 @@ export default function EditarDoctor() {
           {submitError && (
             <p style={{ margin: '0 0 1rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{submitError}</p>
           )}
-          <Input label="Correo electrónico" type="email" error={errors.email?.message} {...register('email')} required />
-          <Input label="Nombre" error={errors.nombre?.message} {...register('nombre')} required />
-          <Input label="Apellido paterno" error={errors.apellido_paterno?.message} {...register('apellido_paterno')} required />
-          <Input label="Apellido materno" error={errors.apellido_materno?.message} {...register('apellido_materno')} />
-          <Input label="Teléfono" type="tel" error={errors.telefono?.message} {...register('telefono')} />
+          <Controller
+            name="email"
+            control={control}
+            render={({ field }) => (
+              <Input
+                label="Correo electrónico"
+                type="email"
+                placeholder={doctor?.email ?? authUser?.email ?? 'Correo (API o usuario logueado)'}
+                error={errors.email?.message}
+                {...field}
+                required
+              />
+            )}
+          />
+          <Controller
+            name="nombre"
+            control={control}
+            render={({ field }) => (
+              <Input
+                label="Nombre"
+                placeholder={doctor?.nombre ?? authUser?.nombre ?? 'Nombre (API o usuario logueado)'}
+                error={errors.nombre?.message}
+                {...field}
+                required
+              />
+            )}
+          />
+          <Controller
+            name="apellido_paterno"
+            control={control}
+            render={({ field }) => (
+              <Input
+                label="Apellido paterno"
+                placeholder={doctor?.apellido_paterno ?? authUser?.apellido_paterno ?? 'Apellido paterno (API o usuario logueado)'}
+                error={errors.apellido_paterno?.message}
+                {...field}
+                required
+              />
+            )}
+          />
+          <Controller
+            name="apellido_materno"
+            control={control}
+            render={({ field }) => (
+              <Input
+                label="Apellido materno"
+                placeholder={doctor?.apellido_materno ?? 'Apellido materno (API)'}
+                error={errors.apellido_materno?.message}
+                {...field}
+              />
+            )}
+          />
+          <Controller
+            name="telefono"
+            control={control}
+            render={({ field }) => (
+              <Input
+                label="Teléfono"
+                type="tel"
+                placeholder={doctor?.telefono ?? 'Teléfono (API)'}
+                error={errors.telefono?.message}
+                {...field}
+              />
+            )}
+          />
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}>
               Módulo
