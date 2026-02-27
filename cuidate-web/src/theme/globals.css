@@ -615,6 +615,7 @@ select:focus-visible {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: var(--font-medium);
+  color: #000;
 }
 .sidebar-logout {
   width: 100%;
