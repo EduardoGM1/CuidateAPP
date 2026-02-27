@@ -194,9 +194,22 @@ select:focus-visible {
   color: rgba(255, 255, 255, 0.9);
   border-top-color: rgba(255, 255, 255, 0.2) !important;
 }
+/* Bloque del correo y botón Cerrar sesión: texto negro (fondo claro) */
+.main-layout-sider > div:last-of-type > div {
+  color: #000 !important;
+}
 .main-layout-sider .ant-btn {
   color: #fff !important;
   border-color: rgba(255, 255, 255, 0.5) !important;
+}
+.main-layout-sider > div:last-of-type .ant-btn {
+  color: #000 !important;
+  border-color: rgba(0, 0, 0, 0.45) !important;
+}
+.main-layout-sider > div:last-of-type .ant-btn:hover {
+  color: #000 !important;
+  border-color: #000 !important;
+  background: rgba(0, 0, 0, 0.06) !important;
 }
 .main-layout-sider .ant-btn:hover {
   border-color: #fff !important;
