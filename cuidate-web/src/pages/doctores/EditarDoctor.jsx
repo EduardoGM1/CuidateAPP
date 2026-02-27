@@ -5,6 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { doctorEditSchema } from '../../lib/validations/doctorSchema';
 import { getDoctorById, updateDoctor } from '../../api/doctores';
 import { getModulos } from '../../api/modulos';
+import { useAuthStore } from '../../stores/authStore';
+import { useCurrentDoctorId } from '../../hooks/useCurrentDoctorId';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, Input } from '../../components/ui';
 import { LoadingSpinner } from '../../components/ui';
@@ -15,6 +17,10 @@ export default function EditarDoctor() {
   const { id } = useParams();
   const navigate = useNavigate();
   const parsedId = parsePositiveInt(id, 0);
+  const isAdmin = useAuthStore((s) => s.isAdmin)?.() ?? false;
+  const { idDoctor } = useCurrentDoctorId();
+  const isSelfEdit = !isAdmin && parsedId > 0 && idDoctor != null && parsedId === idDoctor;
+
   const [doctor, setDoctor] = useState(null);
   const [modulos, setModulos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +55,7 @@ export default function EditarDoctor() {
         nombre: doc.nombre ?? '',
         apellido_paterno: doc.apellido_paterno ?? '',
         apellido_materno: doc.apellido_materno ?? '',
-        id_modulo: doc.id_modulo ?? '',
+        id_modulo: doc.id_modulo != null ? String(doc.id_modulo) : '',
         telefono: doc.telefono ?? '',
       });
     } catch {
@@ -66,12 +72,13 @@ export default function EditarDoctor() {
   async function onSubmit(data) {
     setSubmitError('');
     try {
+      const idModulo = isSelfEdit ? (doctor?.id_modulo ?? null) : (data.id_modulo ?? null);
       await updateDoctor(parsedId, {
         email: data.email.trim(),
         nombre: data.nombre.trim(),
         apellido_paterno: data.apellido_paterno.trim(),
         apellido_materno: data.apellido_materno?.trim() || null,
-        id_modulo: data.id_modulo ?? null,
+        id_modulo: idModulo != null && idModulo !== '' ? Number(idModulo) : null,
         telefono: data.telefono?.trim() || null,
       });
       navigate(`/doctores/${parsedId}`, { replace: true });
@@ -121,21 +128,28 @@ export default function EditarDoctor() {
             </label>
             <select
               {...register('id_modulo')}
+              disabled={isSelfEdit}
               style={{
                 width: '100%',
                 padding: '0.6rem 0.75rem',
                 border: '1px solid var(--color-borde-claro)',
                 borderRadius: 'var(--radius)',
-                backgroundColor: 'var(--color-fondo-card)',
+                backgroundColor: isSelfEdit ? 'var(--color-fondo-secundario)' : 'var(--color-fondo-card)',
+                cursor: isSelfEdit ? 'not-allowed' : undefined,
               }}
             >
               <option value="">— Sin módulo —</option>
               {modulos.map((m) => (
-                <option key={m.id_modulo ?? m.id} value={m.id_modulo ?? m.id}>
+                <option key={m.id_modulo ?? m.id} value={String(m.id_modulo ?? m.id)}>
                   {sanitizeForDisplay(m.nombre_modulo ?? m.nombre) || '—'}
                 </option>
               ))}
             </select>
+            {isSelfEdit && (
+              <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem', color: 'var(--color-texto-secundario)' }}>
+                No puedes cambiar tu módulo asignado.
+              </p>
+            )}
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <Button type="submit" variant="primary" disabled={isSubmitting}>
