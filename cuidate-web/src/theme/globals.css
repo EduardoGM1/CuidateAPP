@@ -840,6 +840,21 @@ select:focus-visible {
 .ant-btn.ant-btn-default span {
   color: inherit !important;
 }
+/* Botones azules (primary): texto siempre blanco */
+.ant-btn-primary,
+.ant-btn.ant-btn-primary,
+.ant-btn-primary span,
+.ant-btn.ant-btn-primary span {
+  color: #fff !important;
+}
+.ant-btn-primary:hover:not(:disabled),
+.ant-btn.ant-btn-primary:hover:not(:disabled) {
+  color: #fff !important;
+}
+.ant-btn-primary:hover:not(:disabled) span,
+.ant-btn.ant-btn-primary:hover:not(:disabled) span {
+  color: #fff !important;
+}
 
 /* Selects nativos en área de contenido */
 .ant-layout-content select {
