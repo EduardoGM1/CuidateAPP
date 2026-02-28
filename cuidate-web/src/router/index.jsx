@@ -29,9 +29,11 @@ import ChatConversacion from '../pages/doctor/ChatConversacion';
 import Perfil from '../pages/Perfil';
 
 const router = createBrowserRouter([
+  /* Rutas públicas (sin sesión) */
   { path: '/login', element: <Login /> },
   { path: '/forgot-password', element: <ForgotPassword /> },
   { path: '/reset-password', element: <ResetPassword /> },
+  /* Rutas protegidas: requieren sesión iniciada. Todas las children pasan por ProtectedRoute. */
   {
     path: '/',
     element: (
@@ -65,6 +67,7 @@ const router = createBrowserRouter([
       { path: 'perfil', element: <Perfil /> },
     ],
   },
+  /* Cualquier otra ruta no definida → redirige a / (protegido; si no hay sesión, ProtectedRoute redirige a /login) */
   { path: '*', element: <Navigate to="/" replace /> },
 ], {
   future: {

@@ -1,12 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getReporteEstadisticasHTML } from '../../api/reportes';
+import { getPacientes } from '../../api/pacientes';
 import { getModulos } from '../../api/modulos';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, Input, Select } from '../../components/ui';
+import { LoadingSpinner } from '../../components/ui';
+import ComorbilidadesHeatmap from '../../components/reportes/ComorbilidadesHeatmap';
 import { openHTMLInNewWindow, downloadAsFile } from '../../utils/reportUtils';
 import { useAuthStore } from '../../stores/authStore';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { PAGE_SIZE_MAX } from '../../utils/constants';
 
 function ReporteCardWrapper({ title, description, children }) {
   return (
@@ -238,6 +242,100 @@ function ReporteCitasPorEstadoCard() {
   );
 }
 
+/**
+ * Tarjeta con heatmap de comorbilidades más frecuentes (en la propia pantalla).
+ * Carga pacientes y calcula frecuencias; opcional filtro por módulo (solo Admin).
+ */
+function ReporteComorbilidadesHeatmapCard() {
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const [modulos, setModulos] = useState([]);
+  const [filtroModulo, setFiltroModulo] = useState('');
+  const [datos, setDatos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (isAdmin()) {
+      getModulos()
+        .then((list) => setModulos(Array.isArray(list) ? list : []))
+        .catch(() => setModulos([]));
+    }
+  }, [isAdmin]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = { limit: PAGE_SIZE_MAX, estado: 'activos' };
+      if (filtroModulo && parseInt(filtroModulo, 10) > 0) {
+        params.modulo = parseInt(filtroModulo, 10);
+      }
+      const res = await getPacientes(params);
+      const pacientes = res?.pacientes ?? (Array.isArray(res) ? res : []);
+      const freq = {};
+      (pacientes || []).forEach((p) => {
+        const coms = p.comorbilidades ?? [];
+        if (!Array.isArray(coms)) return;
+        coms.forEach((c) => {
+          const nombre = c?.nombre ?? c?.nombre_comorbilidad ?? (typeof c === 'string' ? c : '');
+          if (nombre) freq[nombre] = (freq[nombre] || 0) + 1;
+        });
+      });
+      const list = Object.entries(freq)
+        .map(([nombre, frecuencia]) => ({ nombre, frecuencia }))
+        .sort((a, b) => b.frecuencia - a.frecuencia);
+      setDatos(list);
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || 'Error al cargar datos');
+      setDatos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [filtroModulo]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return (
+    <ReporteCardWrapper
+      title="Comorbilidades más frecuentes"
+      description="Heatmap de comorbilidades según frecuencia en pacientes activos. Puedes filtrar por módulo (solo Admin)."
+    >
+      {isAdmin() && modulos.length > 0 && (
+        <div style={{ marginBottom: '1rem' }}>
+          <Select
+            label="Módulo"
+            placeholder="Todos"
+            value={filtroModulo || undefined}
+            onChange={(v) => setFiltroModulo(v ?? '')}
+            options={[
+              { value: '', label: 'Todos' },
+              ...modulos.map((m) => ({
+                value: String(m.id_modulo ?? m.id),
+                label: sanitizeForDisplay(m.nombre_modulo ?? m.nombre) || '—',
+              })),
+            ]}
+            style={{ marginBottom: 0, minWidth: 200 }}
+          />
+        </div>
+      )}
+      {error && (
+        <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.875rem' }}>
+          {error}
+        </p>
+      )}
+      {loading ? (
+        <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <ComorbilidadesHeatmap datos={datos} />
+      )}
+    </ReporteCardWrapper>
+  );
+}
+
 export default function ReportesPage() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const isDoctor = useAuthStore((s) => s.isDoctor);
@@ -254,6 +352,7 @@ export default function ReportesPage() {
         }}
       >
         {(isAdmin() || isDoctor()) && <ReporteEstadisticasCard />}
+        {(isAdmin() || isDoctor()) && <ReporteComorbilidadesHeatmapCard />}
         {isAdmin() && <ReportePacientesActivosCard />}
         {(isAdmin() || isDoctor()) && <ReporteCitasPorEstadoCard />}
       </div>
