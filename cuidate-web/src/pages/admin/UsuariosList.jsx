@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getUsuarios, updateUsuario, deleteUsuario } from '../../api/auth';
 import { PageHeader } from '../../components/shared';
 import { message } from 'antd';
-import { Card, Button, Input, Select, Table, LoadingSpinner, EmptyState, Badge } from '../../components/ui';
+import { Button, Input, Select, Table, LoadingSpinner, EmptyState, Badge, Modal } from '../../components/ui';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { ROLES } from '../../utils/constants';
 
@@ -111,9 +111,14 @@ export default function UsuariosList() {
   return (
     <div>
       <PageHeader title="Usuarios (Admin)" />
-      {editingId && (
-        <Card style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>Editar usuario</h3>
+      <Modal
+        open={Boolean(editingId)}
+        onClose={() => { if (!submitting) setEditingId(null); }}
+        title="Editar usuario"
+        width={480}
+        footer={null}
+      >
+        {editingId && (
           <form onSubmit={handleSubmit}>
             {submitError && <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{submitError}</p>}
             <Input label="Correo" type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} required />
@@ -138,8 +143,8 @@ export default function UsuariosList() {
               <Button type="button" variant="outline" onClick={() => setEditingId(null)}>Cancelar</Button>
             </div>
           </form>
-        </Card>
-      )}
+        )}
+      </Modal>
       {error && <p style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>{error} <button type="button" onClick={load} style={{ marginLeft: '0.5rem', textDecoration: 'underline' }}>Reintentar</button></p>}
       {loading ? <LoadingSpinner /> : list.length === 0 ? <EmptyState message="No hay usuarios" /> : <Table columns={columns} data={list} emptyMessage="No hay usuarios" />}
     </div>

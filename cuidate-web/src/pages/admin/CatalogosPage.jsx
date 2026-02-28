@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '../../components/shared';
-import { Card, Button, Input, Table, Tabs, LoadingSpinner, EmptyState } from '../../components/ui';
+import { Card, Button, Input, Table, Tabs, LoadingSpinner, EmptyState, Modal } from '../../components/ui';
 import { getModulos, createModulo, updateModulo, deleteModulo } from '../../api/modulos';
 import { getInstitucionesSalud, createInstitucionSalud, updateInstitucionSalud, deleteInstitucionSalud } from '../../api/institucionesSalud';
 import { getComorbilidades, createComorbilidad, updateComorbilidad, deleteComorbilidad } from '../../api/comorbilidades';
@@ -173,9 +173,14 @@ export default function CatalogosPage() {
     <div>
       <PageHeader title="Catálogos (Admin)" />
       <Tabs tabs={TABS} activeId={activeTab} onChange={setActiveTab} />
-      {editingId && (
-        <Card style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>{editingId === 'new' ? 'Nuevo' : 'Editar'}</h3>
+      <Modal
+        open={Boolean(editingId)}
+        onClose={() => { if (!submitting) { setEditingId(null); setSubmitError(''); } }}
+        title={editingId === 'new' ? 'Nuevo' : 'Editar'}
+        width={480}
+        footer={null}
+      >
+        {editingId && (
           <form onSubmit={handleSubmit}>
             {submitError && <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{submitError}</p>}
             <Input label={formLabel} value={formNombre} onChange={(e) => setFormNombre(e.target.value)} required maxLength={activeTab === 'modulos' ? 50 : activeTab === 'instituciones' ? 100 : 150} />
@@ -193,8 +198,8 @@ export default function CatalogosPage() {
               <Button type="button" variant="outline" onClick={() => { setEditingId(null); setSubmitError(''); }}>Cancelar</Button>
             </div>
           </form>
-        </Card>
-      )}
+        )}
+      </Modal>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
         <h2 style={{ margin: 0, fontSize: '1.15rem', color: 'var(--color-primario)' }}>{TABS.find((t) => t.id === activeTab)?.label}</h2>
         {!editingId && <Button variant="primary" onClick={handleNew}>Nuevo</Button>}
