@@ -272,17 +272,19 @@ export default function MainLayout() {
         </div>
       </Drawer>
 
-      <Layout style={{ marginLeft: mobile ? 0 : 280, minHeight: '100vh' }}>
+      <Layout style={{ marginLeft: mobile ? 0 : 280, minHeight: '100vh', maxWidth: '100%', overflow: 'hidden' }}>
         <Layout.Header
           style={{
             height: 64,
-            padding: '0 1.5rem',
+            padding: '0 1rem',
             background: 'var(--color-fondo-card)',
             borderBottom: '1px solid var(--color-borde-claro)',
             display: 'flex',
             alignItems: 'center',
-            gap: '1rem',
+            gap: '0.75rem',
             boxShadow: 'var(--shadow-sm)',
+            minWidth: 0,
+            flex: '0 0 auto',
           }}
         >
           <Button
@@ -294,21 +296,36 @@ export default function MainLayout() {
               display: mobile ? 'flex' : 'none',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
             <MenuIcon />
           </Button>
-          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}>
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 'clamp(1rem, 4vw, 1.25rem)',
+              fontWeight: 600,
+              color: 'var(--color-texto-primario)',
+              flex: 1,
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {pageTitle}
           </h1>
         </Layout.Header>
         <Layout.Content
           style={{
-            padding: '2rem',
+            padding: 'clamp(1rem, 4vw, 2rem)',
             overflow: 'auto',
             minHeight: 'calc(100vh - 64px)',
             background: 'var(--color-fondo)',
             color: 'var(--color-texto-primario)',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
           }}
         >
           <Outlet />
