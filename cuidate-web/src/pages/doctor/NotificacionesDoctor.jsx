@@ -5,7 +5,7 @@ import { connect, on, off } from '../../api/socket';
 import { useAuthStore } from '../../stores/authStore';
 import { STORAGE_KEYS } from '../../utils/constants';
 import { PageHeader } from '../../components/shared';
-import { Card, Button, LoadingSpinner, EmptyState, Badge } from '../../components/ui';
+import { Card, Button, LoadingSpinner, EmptyState, Badge, Input, Select } from '../../components/ui';
 import DetalleNotificacionModal from '../../components/doctor/DetalleNotificacionModal';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
@@ -16,7 +16,22 @@ const TIPO_LABELS = {
   nuevo_mensaje: 'Mensaje',
   cita_proxima: 'Cita próxima',
   cita_cancelada: 'Cita cancelada',
+  cita_actualizada: 'Cita actualizada',
+  cita_reprogramada: 'Cita reprogramada',
+  paciente_registro_signos: 'Registro signos',
 };
+
+const TIPO_OPCIONES = [
+  { value: '', label: 'Todos los tipos' },
+  ...Object.entries(TIPO_LABELS).map(([value, label]) => ({ value, label })),
+];
+
+const ESTADO_OPCIONES = [
+  { value: '', label: 'Todos' },
+  { value: 'enviada', label: 'Enviada' },
+  { value: 'leida', label: 'Leída' },
+  { value: 'archivada', label: 'Archivada' },
+];
 
 export default function NotificacionesDoctor() {
   const { idDoctor, loading: loadingDoctor, error: errorDoctor } = useCurrentDoctorId();
@@ -24,6 +39,11 @@ export default function NotificacionesDoctor() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filtroTipo, setFiltroTipo] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
+  const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
+  const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
+  const [filtroSearch, setFiltroSearch] = useState('');
   const [incluirTodos, setIncluirTodos] = useState(false);
   const [actingId, setActingId] = useState(null);
   const [detalleNotificacion, setDetalleNotificacion] = useState(null);
@@ -33,7 +53,15 @@ export default function NotificacionesDoctor() {
     setLoading(true);
     setError(null);
     try {
-      const res = await getNotificacionesDoctor(idDoctor, { limit: 50, incluir_todos: incluirTodos });
+      const res = await getNotificacionesDoctor(idDoctor, {
+        limit: 50,
+        incluir_todos: incluirTodos,
+        tipo: filtroTipo || undefined,
+        estado: filtroEstado || undefined,
+        fecha_desde: filtroFechaDesde || undefined,
+        fecha_hasta: filtroFechaHasta || undefined,
+        search: filtroSearch?.trim() || undefined,
+      });
       setList(res.notificaciones ?? []);
       setTotal(res.total ?? 0);
     } catch (err) {
@@ -42,7 +70,7 @@ export default function NotificacionesDoctor() {
     } finally {
       setLoading(false);
     }
-  }, [idDoctor, incluirTodos]);
+  }, [idDoctor, incluirTodos, filtroTipo, filtroEstado, filtroFechaDesde, filtroFechaHasta, filtroSearch]);
 
   useEffect(() => {
     load();
@@ -116,10 +144,19 @@ export default function NotificacionesDoctor() {
   return (
     <div>
       <PageHeader title="Notificaciones" showBack backTo="/" />
-      <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+      <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-end' }}>
+        <div style={{ minWidth: 180 }}>
+          <Select label="Tipo" value={filtroTipo} onChange={(v) => setFiltroTipo(v ?? '')} options={TIPO_OPCIONES} placeholder="Todos" />
+        </div>
+        <div style={{ minWidth: 140 }}>
+          <Select label="Estado" value={filtroEstado} onChange={(v) => setFiltroEstado(v ?? '')} options={ESTADO_OPCIONES} placeholder="Todos" />
+        </div>
+        <Input label="Desde" type="date" value={filtroFechaDesde} onChange={(e) => setFiltroFechaDesde(e.target.value)} style={{ marginBottom: 0, minWidth: 140 }} />
+        <Input label="Hasta" type="date" value={filtroFechaHasta} onChange={(e) => setFiltroFechaHasta(e.target.value)} style={{ marginBottom: 0, minWidth: 140 }} />
+        <Input label="Buscar" value={filtroSearch} onChange={(e) => setFiltroSearch(e.target.value)} placeholder="Texto en título o mensaje" style={{ marginBottom: 0, minWidth: 200 }} />
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '0.75rem' }}>
           <input type="checkbox" checked={incluirTodos} onChange={(e) => setIncluirTodos(e.target.checked)} />
-          Incluir todos los tipos
+          Incluir archivadas
         </label>
       </div>
       {error && (

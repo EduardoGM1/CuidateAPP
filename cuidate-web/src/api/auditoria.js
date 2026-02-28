@@ -8,7 +8,7 @@ const BASE = API_PATHS.ADMIN_AUDITORIA;
 
 /**
  * Lista de auditoría con filtros (solo Admin).
- * @param {{ page?: number, limit?: number, offset?: number, tipo_accion?: string, entidad_afectada?: string, fecha_desde?: string, fecha_hasta?: string, id_usuario?: number, search?: string, severidad?: string }} params
+ * @param {{ page?: number, limit?: number, offset?: number, tipo_accion?: string, entidad_afectada?: string, fecha_desde?: string, fecha_hasta?: string, id_usuario?: number, search?: string, severidad?: string, ip_address?: string }} params
  */
 export async function getAuditoria(params = {}) {
   const limit = Math.min(
@@ -31,6 +31,8 @@ export async function getAuditoria(params = {}) {
   if (id_usuario > 0) q.set('id_usuario', String(id_usuario));
   const search = normalizeString(params.search, { maxLength: 200 });
   if (search) q.set('search', search);
+  const ip_address = normalizeString(params.ip_address, { maxLength: 45 });
+  if (ip_address) q.set('ip_address', ip_address);
 
   const { data } = await client.get(`${BASE}?${q.toString()}`);
   const body = data?.data ?? data;

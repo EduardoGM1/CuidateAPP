@@ -175,7 +175,8 @@ export default function MainLayout() {
 
   const navLinks = [
     ...navLinksBase,
-    ...(isAdminFn() ? [navLinkDoctores, navLinkReportes] : []),
+    ...(isAdminFn() ? [navLinkDoctores] : []),
+    navLinkReportes,
     ...(isAdminFn() ? navLinksAdmin : []),
     ...(!isAdminFn() ? navLinksDoctor : []),
   ];

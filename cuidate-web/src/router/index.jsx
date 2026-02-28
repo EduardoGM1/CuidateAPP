@@ -51,7 +51,7 @@ const router = createBrowserRouter([
       { path: 'pacientes/:id/agendar-cita', element: <AgendarCita /> },
       { path: 'citas', element: <CitasList /> },
       { path: 'citas/:id', element: <CitaDetail /> },
-      { path: 'reportes', element: <AdminRoute><ReportesPage /></AdminRoute> },
+      { path: 'reportes', element: <ReportesPage /> },
       { path: 'doctores', element: <AdminRoute><DoctoresList /></AdminRoute> },
       { path: 'doctores/nuevo', element: <AdminRoute><AgregarDoctor /></AdminRoute> },
       { path: 'doctores/:id/editar', element: <AdminRoute><EditarDoctor /></AdminRoute> },

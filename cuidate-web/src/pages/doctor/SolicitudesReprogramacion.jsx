@@ -4,7 +4,7 @@ import { connect, on, off } from '../../api/socket';
 import { useAuthStore } from '../../stores/authStore';
 import { STORAGE_KEYS } from '../../utils/constants';
 import { PageHeader } from '../../components/shared';
-import { Card, Button, LoadingSpinner, EmptyState, Badge } from '../../components/ui';
+import { Card, Button, LoadingSpinner, EmptyState, Badge, Modal, Input } from '../../components/ui';
 import { formatDateTime, formatDate } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 
@@ -22,6 +22,8 @@ export default function SolicitudesReprogramacion() {
   const [filtroEstado, setFiltroEstado] = useState('');
   const [acting, setActing] = useState(null);
   const [submitError, setSubmitError] = useState('');
+  const [aprobarModal, setAprobarModal] = useState(null);
+  const [rechazarModal, setRechazarModal] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,14 +53,19 @@ export default function SolicitudesReprogramacion() {
     return () => off('solicitud_reprogramacion', load);
   }, [token, load]);
 
-  const handleResponder = async (solicitud, accion) => {
+  const handleResponder = async (solicitud, accion, extra = {}) => {
     const idCita = solicitud.id_cita;
     const idSolicitud = solicitud.id_solicitud;
     if (!idCita || !idSolicitud) return;
     setSubmitError('');
     setActing(idSolicitud);
     try {
-      await responderSolicitudReprogramacion(idCita, idSolicitud, { accion });
+      const body = { accion };
+      if (extra.fecha_reprogramada) body.fecha_reprogramada = extra.fecha_reprogramada;
+      if (extra.respuesta_doctor != null) body.respuesta_doctor = String(extra.respuesta_doctor).slice(0, 1000);
+      await responderSolicitudReprogramacion(idCita, idSolicitud, body);
+      setAprobarModal(null);
+      setRechazarModal(null);
       load();
     } catch (err) {
       setSubmitError(err?.response?.data?.error || err?.message || 'Error al procesar');
@@ -120,8 +127,8 @@ export default function SolicitudesReprogramacion() {
                   </div>
                   {isPendiente && (
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <Button variant="primary" disabled={acting === s.id_solicitud} onClick={() => handleResponder(s, 'aprobar')}>Aprobar</Button>
-                      <Button variant="danger" disabled={acting === s.id_solicitud} onClick={() => handleResponder(s, 'rechazar')}>Rechazar</Button>
+                      <Button variant="primary" disabled={acting === s.id_solicitud} onClick={() => setAprobarModal({ solicitud: s, fecha: '', respuesta: '' })}>Aprobar</Button>
+                      <Button variant="danger" disabled={acting === s.id_solicitud} onClick={() => setRechazarModal({ solicitud: s, respuesta: '' })}>Rechazar</Button>
                     </div>
                   )}
                 </div>
@@ -130,6 +137,41 @@ export default function SolicitudesReprogramacion() {
           })}
         </div>
       )}
+
+      <Modal open={!!aprobarModal} onClose={() => { if (!acting) setAprobarModal(null); }} title="Aprobar reprogramación" footer={null} width={420}>
+        {aprobarModal && (
+          <div>
+            <p style={{ marginBottom: '1rem', color: 'var(--color-texto-secundario)' }}>
+              {sanitizeForDisplay(aprobarModal.solicitud.paciente_nombre)} — {formatDateTime(aprobarModal.solicitud.fecha_cita_original)}
+            </p>
+            <Input label="Nueva fecha (opcional)" type="date" value={aprobarModal.fecha} onChange={(e) => setAprobarModal((m) => ({ ...m, fecha: e.target.value }))} />
+            <Input label="Respuesta para el paciente (opcional)" value={aprobarModal.respuesta} onChange={(e) => setAprobarModal((m) => ({ ...m, respuesta: e.target.value }))} placeholder="Ej: Aprobado para el nuevo horario" />
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+              <Button variant="primary" disabled={acting} onClick={() => handleResponder(aprobarModal.solicitud, 'aprobar', { fecha_reprogramada: aprobarModal.fecha || undefined, respuesta_doctor: aprobarModal.respuesta || undefined })}>
+                {acting ? 'Procesando…' : 'Aprobar'}
+              </Button>
+              <Button variant="outline" onClick={() => setAprobarModal(null)}>Cancelar</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal open={!!rechazarModal} onClose={() => { if (!acting) setRechazarModal(null); }} title="Rechazar reprogramación" footer={null} width={420}>
+        {rechazarModal && (
+          <div>
+            <p style={{ marginBottom: '1rem', color: 'var(--color-texto-secundario)' }}>
+              {sanitizeForDisplay(rechazarModal.solicitud.paciente_nombre)} — {formatDateTime(rechazarModal.solicitud.fecha_cita_original)}
+            </p>
+            <Input label="Motivo o respuesta (opcional)" value={rechazarModal.respuesta} onChange={(e) => setRechazarModal((m) => ({ ...m, respuesta: e.target.value }))} placeholder="Ej: No hay disponibilidad ese día" />
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+              <Button variant="danger" disabled={acting} onClick={() => handleResponder(rechazarModal.solicitud, 'rechazar', { respuesta_doctor: rechazarModal.respuesta || undefined })}>
+                {acting ? 'Procesando…' : 'Rechazar'}
+              </Button>
+              <Button variant="outline" onClick={() => setRechazarModal(null)}>Cancelar</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

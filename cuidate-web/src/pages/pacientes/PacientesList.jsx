@@ -45,6 +45,7 @@ export default function PacientesList() {
   const [params, setParams] = useState({
     page: 1,
     limit: PAGE_SIZE_DEFAULT,
+    sort: 'recent',
     estado: 'activos',
     comorbilidad: '',
     modulo: '',
@@ -118,6 +119,7 @@ export default function PacientesList() {
     setParams((prev) => ({
       ...prev,
       page: 1,
+      sort: searchParams.sort ?? prev.sort,
       estado: searchParams.estado ?? prev.estado,
       comorbilidad: searchParams.comorbilidad ?? prev.comorbilidad,
       modulo: searchParams.modulo ?? prev.modulo,
@@ -130,6 +132,14 @@ export default function PacientesList() {
 
   const filterOptions = [
     FILTER_ESTADO,
+    {
+      key: 'sort',
+      label: 'Orden',
+      options: [
+        { value: 'recent', label: 'Más recientes primero' },
+        { value: 'oldest', label: 'Más antiguos primero' },
+      ],
+    },
     ...(comorbilidades.length > 0
       ? [
           {
@@ -182,6 +192,7 @@ export default function PacientesList() {
         filterOptions={filterOptions}
         initialFilters={{
           estado: params.estado,
+          sort: params.sort || 'recent',
           comorbilidad: params.comorbilidad || '',
           modulo: params.modulo ? String(params.modulo) : '',
         }}

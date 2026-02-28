@@ -10,6 +10,8 @@ export default function Table({
   emptyMessage = 'No hay datos',
   loading = false,
   onRowClick,
+  rowClassName,
+  rowStyle,
 }) {
   const antColumns = (columns || []).map((col) => ({
     title: col.label,
@@ -37,6 +39,8 @@ export default function Table({
       columns={antColumns}
       dataSource={data}
       rowKey={(row) => row.id ?? row.id_paciente ?? row.id_cita ?? row.key}
+      rowClassName={typeof rowClassName === 'function' ? rowClassName : undefined}
+      rowStyle={typeof rowStyle === 'function' ? rowStyle : undefined}
       onRow={
         onRowClick
           ? (record) => ({

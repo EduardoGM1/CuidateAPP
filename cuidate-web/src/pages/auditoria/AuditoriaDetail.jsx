@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getAuditoriaById } from '../../api/auditoria';
 import { PageHeader, DataCard } from '../../components/shared';
-import { LoadingSpinner } from '../../components/ui';
+import { LoadingSpinner, Button } from '../../components/ui';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatDateTime } from '../../utils/format';
 
 export default function AuditoriaDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [registro, setRegistro] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -73,6 +74,9 @@ export default function AuditoriaDetail() {
   }
 
   const r = registro;
+  const idCita = r.id_cita ?? r.id_entidad;
+  const esCita = (r.entidad_afectada || '').toLowerCase() === 'cita' && idCita;
+
   const items = [
     { label: 'Fecha', value: formatDateTime(r.fecha_creacion) },
     { label: 'Tipo de acción', value: sanitizeForDisplay(r.tipo_accion) || '—' },
@@ -87,6 +91,13 @@ export default function AuditoriaDetail() {
     <div>
       <PageHeader title="Detalle de auditoría" showBack backTo="/admin/auditoria" />
       <DataCard title="Registro" items={items} />
+      {esCita && (
+        <div style={{ marginTop: '1rem' }}>
+          <Button variant="outline" onClick={() => navigate(`/citas/${idCita}`)}>
+            Ver cita
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

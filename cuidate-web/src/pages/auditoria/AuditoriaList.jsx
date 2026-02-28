@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuditoria, getAuditoriaUsuarios } from '../../api/auditoria';
-import { Table, Button } from '../../components/ui';
+import { Table, Button, Input } from '../../components/ui';
+import { downloadAsFile } from '../../utils/reportUtils';
 import { PageHeader, SearchFilterBar } from '../../components/shared';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatDateTime } from '../../utils/format';
@@ -39,6 +40,7 @@ export default function AuditoriaList() {
   const [params, setParams] = useState({
     page: 1,
     limit: PAGE_SIZE_DEFAULT,
+    ip_address: '',
   });
 
   const loadUsuarios = useCallback(async () => {
@@ -63,6 +65,7 @@ export default function AuditoriaList() {
         id_usuario: params.id_usuario,
         search: params.search,
         severidad: params.severidad,
+        ip_address: params.ip_address || undefined,
       });
       setList(res?.auditoria ?? []);
       setTotal(res?.total ?? 0);
@@ -71,7 +74,7 @@ export default function AuditoriaList() {
     } finally {
       setLoading(false);
     }
-  }, [params.page, params.limit, params.tipo_accion, params.fecha_desde, params.fecha_hasta, params.id_usuario, params.search, params.severidad]);
+  }, [params.page, params.limit, params.tipo_accion, params.fecha_desde, params.fecha_hasta, params.id_usuario, params.search, params.severidad, params.ip_address]);
 
   useEffect(() => {
     loadUsuarios();
@@ -91,6 +94,7 @@ export default function AuditoriaList() {
       id_usuario: searchParams.id_usuario ? Number(searchParams.id_usuario) : undefined,
       search: searchParams.search,
       severidad: searchParams.severidad,
+      ip_address: searchParams.ip_address ?? prev.ip_address,
     }));
   };
 
@@ -134,13 +138,36 @@ export default function AuditoriaList() {
     if (id) navigate(`/admin/auditoria/${id}`);
   };
 
+  const exportarCSV = () => {
+    const headers = ['Fecha', 'Tipo', 'Entidad', 'Usuario', 'Descripción', 'Severidad', 'IP'];
+    const escape = (v) => {
+      const s = v != null ? String(v) : '';
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const rows = list.map((r) => [
+      formatDateTime(r.fecha_creacion),
+      r.tipo_accion ?? '',
+      r.entidad_afectada ?? '',
+      r.usuario_nombre ?? '',
+      (r.descripcion ?? '').slice(0, 500),
+      r.severidad ?? '',
+      r.ip_address ?? '',
+    ].map(escape).join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const bom = '\uFEFF';
+    downloadAsFile(bom + csv, `auditoria-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8');
+  };
+
   const applyFechas = () => {
     setParams((prev) => ({ ...prev, page: 1 }));
   };
 
   return (
     <div>
-      <PageHeader title="Auditoría" />
+      <PageHeader
+        title="Auditoría"
+        action={list.length > 0 ? <Button variant="outline" onClick={exportarCSV}>Exportar CSV</Button> : undefined}
+      />
       <div className="form-row-inline" style={{ marginBottom: '1rem' }}>
         <div style={{ minWidth: 140 }}>
           <label style={{ display: 'block', marginBottom: '0.35rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-texto-secundario)' }}>Desde</label>
@@ -161,6 +188,11 @@ export default function AuditoriaList() {
           />
         </div>
         <Button type="button" variant="secondary" onClick={applyFechas}>Aplicar fechas</Button>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-end', marginBottom: '1rem' }}>
+        <div style={{ minWidth: 160 }}>
+          <Input label="IP" value={params.ip_address || ''} onChange={(e) => setParams((p) => ({ ...p, page: 1, ip_address: e.target.value }))} placeholder="Filtrar por IP" />
+        </div>
       </div>
       <SearchFilterBar
         placeholder="Buscar en descripción..."

@@ -6,6 +6,7 @@ import { STORAGE_KEYS } from '../utils/constants';
 import { Card, Button } from '../components/ui';
 import { LoadingSpinner } from '../components/ui';
 import { sanitizeForDisplay } from '../utils/sanitize';
+import AlertDetailModal from '../components/dashboard/AlertDetailModal';
 import {
   BarChart,
   Bar,
@@ -120,6 +121,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [alertaSeleccionada, setAlertaSeleccionada] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -235,7 +237,15 @@ export default function Dashboard() {
                 <h2 id="alertas-title" className="section-title">Alertas recientes</h2>
                 <ul style={{ margin: 0, paddingLeft: 'var(--space-5)', color: 'var(--color-texto-primario)' }}>
                   {summary.alertas.slice(0, 5).map((a, i) => (
-                    <li key={i}>{sanitizeForDisplay(a.descripcion ?? a.mensaje ?? JSON.stringify(a))}</li>
+                    <li key={i}>
+                      <button
+                        type="button"
+                        onClick={() => setAlertaSeleccionada(a)}
+                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', color: 'inherit', textDecoration: 'underline' }}
+                      >
+                        {sanitizeForDisplay(a.descripcion ?? a.mensaje ?? JSON.stringify(a))}
+                      </button>
+                    </li>
                   ))}
                 </ul>
               </Card>
@@ -251,13 +261,21 @@ export default function Dashboard() {
                 <ul style={{ margin: 0, paddingLeft: 'var(--space-5)' }}>
                   {summary.alertas.signosVitalesCriticos.slice(0, 5).map((a) => (
                     <li key={a.id_paciente}>
-                      {sanitizeForDisplay(a.paciente)} — {a.tipo_alerta ?? 'Alerta'}
+                      <button
+                        type="button"
+                        onClick={() => setAlertaSeleccionada(a)}
+                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', color: 'inherit', textDecoration: 'underline' }}
+                      >
+                        {sanitizeForDisplay(a.paciente)} — {a.tipo_alerta ?? 'Alerta'}
+                      </button>
                     </li>
                   ))}
                 </ul>
               </Card>
             </section>
           )}
+
+          <AlertDetailModal open={!!alertaSeleccionada} onClose={() => setAlertaSeleccionada(null)} alerta={alertaSeleccionada} />
         </>
       )}
 

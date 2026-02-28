@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getCitaById, updateCitaEstado } from '../../api/citas';
+import { getCitaById, updateCitaEstado, updateCita } from '../../api/citas';
 import { message } from 'antd';
 import { connect, on, off } from '../../api/socket';
 import { PageHeader, DataCard } from '../../components/shared';
-import { LoadingSpinner, Button, Card, Badge, Input, Select } from '../../components/ui';
+import { LoadingSpinner, Button, Card, Badge, Input, Select, Modal } from '../../components/ui';
 import CompletarCitaModal from '../../components/citas/CompletarCitaModal';
 import { useAuthStore } from '../../stores/authStore';
 import { STORAGE_KEYS } from '../../utils/constants';
@@ -34,6 +34,10 @@ export default function CitaDetail() {
   const [saveError, setSaveError] = useState(null);
 
   const [wizardModalOpen, setWizardModalOpen] = useState(false);
+  const [reprogramarOpen, setReprogramarOpen] = useState(false);
+  const [reprogramarFecha, setReprogramarFecha] = useState('');
+  const [reprogramarMotivo, setReprogramarMotivo] = useState('');
+  const [reprogramarSaving, setReprogramarSaving] = useState(false);
 
   const parsedId = parsePositiveInt(id, 0);
   const canEditCita = isDoctor() || isAdmin();
@@ -98,6 +102,27 @@ export default function CitaDetail() {
       message.error(msg);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleReprogramar = async () => {
+    if (!reprogramarFecha?.trim()) {
+      message.warning('Indica la nueva fecha y hora');
+      return;
+    }
+    setReprogramarSaving(true);
+    try {
+      const fechaCita = reprogramarFecha.length <= 10 ? `${reprogramarFecha}T12:00:00` : reprogramarFecha.replace('T', ' ').slice(0, 19);
+      await updateCita(parsedId, { fecha_cita: fechaCita, motivo_reprogramacion: reprogramarMotivo?.trim() || undefined });
+      message.success('Cita reprogramada');
+      setReprogramarOpen(false);
+      setReprogramarFecha('');
+      setReprogramarMotivo('');
+      load();
+    } catch (err) {
+      message.error(err?.response?.data?.error || err?.message || 'Error al reprogramar');
+    } finally {
+      setReprogramarSaving(false);
     }
   };
 
@@ -248,6 +273,25 @@ export default function CitaDetail() {
           </Button>
         </Card>
       )}
+
+      {canEditCita && (
+        <Card style={{ marginTop: '1rem' }}>
+          <Button variant="outline" type="button" onClick={() => setReprogramarOpen(true)}>
+            Reprogramar cita
+          </Button>
+        </Card>
+      )}
+
+      <Modal open={reprogramarOpen} onClose={() => { if (!reprogramarSaving) { setReprogramarOpen(false); setReprogramarFecha(''); setReprogramarMotivo(''); } }} title="Reprogramar cita" footer={null} width={420}>
+        <Input label="Nueva fecha y hora" type="datetime-local" value={reprogramarFecha} onChange={(e) => setReprogramarFecha(e.target.value)} />
+        <Input label="Motivo (opcional)" value={reprogramarMotivo} onChange={(e) => setReprogramarMotivo(e.target.value)} placeholder="Ej: Cambio de horario..." />
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+          <Button variant="primary" onClick={handleReprogramar} disabled={reprogramarSaving || !reprogramarFecha?.trim()}>
+            {reprogramarSaving ? 'Reprogramando…' : 'Reprogramar'}
+          </Button>
+          <Button variant="outline" onClick={() => { setReprogramarOpen(false); setReprogramarFecha(''); setReprogramarMotivo(''); }}>Cancelar</Button>
+        </div>
+      </Modal>
 
       <CompletarCitaModal
         open={wizardModalOpen}

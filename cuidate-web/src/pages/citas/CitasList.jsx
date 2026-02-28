@@ -71,6 +71,8 @@ export default function CitasList() {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const pacienteFromUrl = searchParams.get('paciente');
+  const highlightIdParam = searchParams.get('highlight');
+  const highlightCitaId = highlightIdParam ? parseInt(highlightIdParam, 10) : null;
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -464,6 +466,17 @@ export default function CitasList() {
           loading={loading}
           emptyMessage="No hay citas"
           onRowClick={handleRowClick}
+          rowStyle={
+            highlightCitaId != null
+              ? (record) => {
+                  const id = record.id_cita ?? record.id;
+                  if (id != null && Number(id) === highlightCitaId) {
+                    return { backgroundColor: 'var(--color-fondo-verde-suave, #e8f5e9)' };
+                  }
+                  return {};
+                }
+              : undefined
+          }
         />
       ) : (
         <div>
@@ -553,6 +566,17 @@ export default function CitasList() {
                   loading={loading}
                   emptyMessage="Cargando agenda…"
                   onRowClick={handleRowClick}
+                  rowStyle={
+                    highlightCitaId != null
+                      ? (record) => {
+                          const id = record.id_cita ?? record.id;
+                          if (id != null && Number(id) === highlightCitaId) {
+                            return { backgroundColor: 'var(--color-fondo-verde-suave, #e8f5e9)' };
+                          }
+                          return {};
+                        }
+                      : undefined
+                  }
                 />
               );
             }
