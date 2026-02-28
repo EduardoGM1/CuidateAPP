@@ -71,22 +71,6 @@ export async function getCitaById(id) {
 const ESTADOS_VALIDOS = ['pendiente', 'atendida', 'no_asistida', 'reprogramada', 'cancelada'];
 
 /**
- * Reprogramar cita (Admin/Doctor).
- * @param {number|string} id
- * @param {{ fecha_reprogramada: string, motivo_reprogramacion?: string }} body - fecha_reprogramada ISO
- */
-export async function reprogramarCita(id, body) {
-  const parsed = parsePositiveInt(id, 0);
-  if (parsed === 0) throw new Error('ID de cita inválido');
-  const fecha = body?.fecha_reprogramada && String(body.fecha_reprogramada).trim();
-  if (!fecha) throw new Error('fecha_reprogramada es obligatoria');
-  const payload = { fecha_reprogramada: fecha.slice(0, 30) };
-  if (body?.motivo_reprogramacion != null) payload.motivo_reprogramacion = String(body.motivo_reprogramacion).slice(0, 500);
-  const { data } = await client.put(`${BASE}/${parsed}/reprogramar`, payload);
-  return data?.data ?? data;
-}
-
-/**
  * Actualizar estado de una cita.
  * @param {number|string} id
  * @param {{ estado: string, observaciones?: string }} body - estado: uno de ESTADOS_VALIDOS
@@ -99,6 +83,23 @@ export async function updateCitaEstado(id, body) {
   const payload = { estado };
   if (body?.observaciones !== undefined) payload.observaciones = String(body.observaciones).slice(0, 2000);
   const { data } = await client.put(`${BASE}/${parsed}/estado`, payload);
+  return data?.data ?? data;
+}
+
+/**
+ * Actualizar cita (parcial). Para reprogramar: { fecha_cita, motivo_reprogramacion? }.
+ * @param {number|string} id
+ * @param {{ fecha_cita?: string, motivo?: string, motivo_reprogramacion?: string }} body
+ */
+export async function updateCita(id, body) {
+  const parsed = parsePositiveInt(id, 0);
+  if (parsed === 0) throw new Error('ID de cita inválido');
+  const payload = {};
+  if (body?.fecha_cita != null) payload.fecha_cita = String(body.fecha_cita).slice(0, 30);
+  if (body?.motivo != null) payload.motivo = String(body.motivo).slice(0, 500);
+  if (body?.motivo_reprogramacion != null) payload.motivo_reprogramacion = String(body.motivo_reprogramacion).slice(0, 500);
+  if (Object.keys(payload).length === 0) throw new Error('Nada que actualizar');
+  const { data } = await client.put(`${BASE}/${parsed}`, payload);
   return data?.data ?? data;
 }
 
