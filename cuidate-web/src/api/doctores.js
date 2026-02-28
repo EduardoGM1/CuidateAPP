@@ -73,3 +73,76 @@ export async function deleteDoctor(id) {
   if (parsed === 0) throw new Error('ID de doctor inválido');
   await client.delete(`${BASE}/${parsed}`);
 }
+
+/**
+ * Reactivar doctor (solo Admin).
+ * @param {number|string} id
+ */
+export async function reactivateDoctor(id) {
+  const parsed = parsePositiveInt(id, 0);
+  if (parsed === 0) throw new Error('ID de doctor inválido');
+  const { data } = await client.post(`${BASE}/${parsed}/reactivar`);
+  return data?.data ?? data;
+}
+
+/**
+ * Eliminar doctor permanentemente (solo Admin).
+ * @param {number|string} id
+ */
+export async function hardDeleteDoctor(id) {
+  const parsed = parsePositiveInt(id, 0);
+  if (parsed === 0) throw new Error('ID de doctor inválido');
+  await client.delete(`${BASE}/${parsed}/permanente`);
+}
+
+/**
+ * Dashboard del doctor: doctor, pacientesAsignados, citasHoy, citasRecientes (solo Admin).
+ * @param {number|string} id - id_doctor
+ */
+export async function getDoctorDashboard(id) {
+  const parsed = parsePositiveInt(id, 0);
+  if (parsed === 0) throw new Error('ID de doctor inválido');
+  const { data } = await client.get(`${BASE}/${parsed}/dashboard`);
+  return data?.data ?? data;
+}
+
+/**
+ * Pacientes disponibles para asignar a un doctor (solo Admin).
+ * @param {number|string} doctorId
+ */
+export async function getAvailablePatientsForDoctor(doctorId) {
+  const parsed = parsePositiveInt(doctorId, 0);
+  if (parsed === 0) throw new Error('ID de doctor inválido');
+  const { data } = await client.get(`${BASE}/${parsed}/available-patients`);
+  const list = data?.data ?? data?.pacientes ?? (Array.isArray(data) ? data : []);
+  return Array.isArray(list) ? list : [];
+}
+
+/**
+ * Asignar paciente a doctor (solo Admin).
+ * @param {number|string} doctorId
+ * @param {number|string} pacienteId
+ * @param {{ observaciones?: string }} [body]
+ */
+export async function assignPatientToDoctor(doctorId, pacienteId, body = {}) {
+  const d = parsePositiveInt(doctorId, 0);
+  const p = parsePositiveInt(pacienteId, 0);
+  if (d === 0 || p === 0) throw new Error('ID de doctor y paciente requeridos');
+  const { data } = await client.post(`${BASE}/${d}/assign-patient`, {
+    id_paciente: p,
+    observaciones: body?.observaciones ?? '',
+  });
+  return data?.data ?? data;
+}
+
+/**
+ * Desasignar paciente de doctor (solo Admin).
+ * @param {number|string} doctorId
+ * @param {number|string} pacienteId
+ */
+export async function unassignPatientFromDoctor(doctorId, pacienteId) {
+  const d = parsePositiveInt(doctorId, 0);
+  const p = parsePositiveInt(pacienteId, 0);
+  if (d === 0 || p === 0) throw new Error('ID de doctor y paciente requeridos');
+  await client.delete(`${BASE}/${d}/assign-patient/${p}`);
+}

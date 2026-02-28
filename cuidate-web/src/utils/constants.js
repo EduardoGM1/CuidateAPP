@@ -37,6 +37,7 @@ export const API_PATHS = {
   DASHBOARD_ADMIN_SUMMARY: '/api/dashboard/admin/summary',
   DASHBOARD_DOCTOR_SUMMARY: '/api/dashboard/doctor/summary',
   AUTH_CHANGE_PASSWORD: '/api/auth/change-password',
+  AUTH_ADMIN_CHANGE_PASSWORD: '/api/auth/admin/change-password',
   AUTH_FORGOT_PASSWORD: '/api/auth/forgot-password',
   AUTH_RESET_PASSWORD: '/api/auth/reset-password',
   COMORBILIDADES: '/api/comorbilidades',

@@ -45,6 +45,21 @@ export async function changePassword(payload) {
 }
 
 /**
+ * Cambiar contraseña de otro usuario (solo Admin, sin contraseña actual).
+ * @param {{ userId: number, newPassword: string }} payload
+ */
+export async function adminChangePassword(payload) {
+  const newPassword = normalizeString(payload.newPassword, { maxLength: 128 });
+  if (!newPassword || newPassword.length < 8) throw new Error('La contraseña debe tener al menos 8 caracteres');
+  const body = { newPassword };
+  if (payload.userId != null) body.userId = Number(payload.userId);
+  if (payload.email != null) body.email = sanitizeEmail(payload.email);
+  if (!body.userId && !body.email) throw new Error('userId o email es requerido');
+  const { data } = await client.put(API_PATHS.AUTH_ADMIN_CHANGE_PASSWORD, body);
+  return data;
+}
+
+/**
  * Lista de usuarios (solo Admin).
  * @returns {Promise<Array>}
  */
