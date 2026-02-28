@@ -2,7 +2,6 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import MainLayout from '../components/layout/MainLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import AdminRoute from '../components/auth/AdminRoute';
-import EditarDoctorRoute from '../components/auth/EditarDoctorRoute';
 import Login from '../pages/Login';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
@@ -51,10 +50,10 @@ const router = createBrowserRouter([
       { path: 'citas', element: <CitasList /> },
       { path: 'citas/:id', element: <CitaDetail /> },
       { path: 'reportes', element: <ReportesPage /> },
-      { path: 'doctores', element: <DoctoresList /> },
+      { path: 'doctores', element: <AdminRoute><DoctoresList /></AdminRoute> },
       { path: 'doctores/nuevo', element: <AdminRoute><AgregarDoctor /></AdminRoute> },
-      { path: 'doctores/:id/editar', element: <EditarDoctorRoute /> },
-      { path: 'doctores/:id', element: <DoctorDetail /> },
+      { path: 'doctores/:id/editar', element: <AdminRoute><EditarDoctor /></AdminRoute> },
+      { path: 'doctores/:id', element: <AdminRoute><DoctorDetail /></AdminRoute> },
       { path: 'admin/auditoria', element: <AdminRoute><AuditoriaList /></AdminRoute> },
       { path: 'admin/auditoria/:id', element: <AdminRoute><AuditoriaDetail /></AdminRoute> },
       { path: 'admin/catalogos', element: <AdminRoute><CatalogosPage /></AdminRoute> },

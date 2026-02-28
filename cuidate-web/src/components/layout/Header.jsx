@@ -7,10 +7,11 @@ const navLinksBase = [
   { path: '/', label: 'Dashboard' },
   { path: '/pacientes', label: 'Pacientes' },
   { path: '/citas', label: 'Citas' },
-  { path: '/doctores', label: 'Doctores' },
   { path: '/reportes', label: 'Reportes' },
   { path: '/perfil', label: 'Perfil' },
 ];
+
+const navLinkDoctores = { path: '/doctores', label: 'Doctores' };
 
 const navLinksDoctor = [
   { path: '/notificaciones', label: 'Notificaciones' },
@@ -31,7 +32,9 @@ export default function Header() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const logout = useAuthStore((s) => s.logout);
   const navLinks = [
-    ...navLinksBase,
+    ...navLinksBase.slice(0, 3),
+    ...(isAdmin() ? [navLinkDoctores] : []),
+    ...navLinksBase.slice(3),
     ...(isAdmin() ? navLinksAdmin : []),
     ...(!isAdmin() ? navLinksDoctor : []),
   ];

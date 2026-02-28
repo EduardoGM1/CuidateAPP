@@ -126,10 +126,11 @@ const navLinksBase = [
   { path: '/', label: 'Inicio', icon: iconByPath['/'] },
   { path: '/pacientes', label: 'Pacientes', icon: iconByPath['/pacientes'] },
   { path: '/citas', label: 'Citas', icon: iconByPath['/citas'] },
-  { path: '/doctores', label: 'Doctores', icon: iconByPath['/doctores'] },
   { path: '/reportes', label: 'Reportes', icon: iconByPath['/reportes'] },
   { path: '/perfil', label: 'Perfil', icon: iconByPath['/perfil'] },
 ];
+
+const navLinkDoctores = { path: '/doctores', label: 'Doctores', icon: iconByPath['/doctores'] };
 
 const navLinksDoctor = [
   { path: '/notificaciones', label: 'Notificaciones', icon: iconByPath['/notificaciones'] },
@@ -173,7 +174,9 @@ export default function MainLayout() {
   const getDisplayNameSafe = typeof getDisplayName === 'function' ? getDisplayName : () => '';
 
   const navLinks = [
-    ...navLinksBase,
+    ...navLinksBase.slice(0, 3),
+    ...(isAdminFn() ? [navLinkDoctores] : []),
+    ...navLinksBase.slice(3),
     ...(isAdminFn() ? navLinksAdmin : []),
     ...(!isAdminFn() ? navLinksDoctor : []),
   ];
