@@ -5,6 +5,7 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import TextArea from '../ui/TextArea';
+import SignosVitalesForm, { INITIAL_SIGNOS_VITALES, signosVitalesToPayload } from '../signos/SignosVitalesForm';
 
 const WIZARD_STEPS = [
   { id: 'asistencia', label: 'Asistencia' },
@@ -15,15 +16,6 @@ const WIZARD_STEPS = [
   { id: 'finalizar', label: 'Finalizar' },
 ];
 
-const initialSignos = {
-  peso_kg: '',
-  talla_m: '',
-  presion_sistolica: '',
-  presion_diastolica: '',
-  glucosa_mg_dl: '',
-  observaciones: '',
-};
-
 /**
  * Modal para completar una cita (flujo paso a paso).
  * Pasos: asistencia → signos vitales → observaciones → diagnóstico → plan medicación → finalizar.
@@ -32,12 +24,13 @@ const initialSignos = {
  * @param {() => void} onClose
  * @param {number|string} citaId - ID de la cita a completar
  * @param {() => void} [onSuccess] - Llamado al completar correctamente el último paso
+ * @param {object} [cita] - Cita (opcional) para obtener fecha_nacimiento del paciente y calcular edad en signos vitales
  */
-export default function CompletarCitaModal({ open, onClose, citaId, onSuccess }) {
+export default function CompletarCitaModal({ open, onClose, citaId, onSuccess, cita }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [asistencia, setAsistencia] = useState(true);
   const [motivoNoAsistencia, setMotivoNoAsistencia] = useState('');
-  const [signos, setSignos] = useState(initialSignos);
+  const [signos, setSignos] = useState(INITIAL_SIGNOS_VITALES);
   const [observaciones, setObservaciones] = useState('');
   const [diagnostico, setDiagnostico] = useState('');
   const [planObs, setPlanObs] = useState('');
@@ -48,12 +41,14 @@ export default function CompletarCitaModal({ open, onClose, citaId, onSuccess })
   const pasoActual = WIZARD_STEPS[stepIndex]?.id ?? 'asistencia';
   const isLastStep = stepIndex >= WIZARD_STEPS.length - 1;
 
+  const fechaNacimientoPaciente = cita?.Paciente?.fecha_nacimiento ?? cita?.paciente?.fecha_nacimiento ?? cita?.fecha_nacimiento ?? null;
+
   useEffect(() => {
     if (open) {
       setStepIndex(0);
       setAsistencia(true);
       setMotivoNoAsistencia('');
-      setSignos(initialSignos);
+      setSignos(INITIAL_SIGNOS_VITALES);
       setObservaciones('');
       setDiagnostico('');
       setPlanObs('');
@@ -72,13 +67,7 @@ export default function CompletarCitaModal({ open, onClose, citaId, onSuccess })
         body.asistencia = asistencia;
         body.motivo_no_asistencia = motivoNoAsistencia.trim() || undefined;
       } else if (pasoActual === 'signos_vitales' && !skipCurrent) {
-        const signosObj = {};
-        if (signos.peso_kg?.trim()) signosObj.peso_kg = parseFloat(signos.peso_kg);
-        if (signos.talla_m?.trim()) signosObj.talla_m = parseFloat(signos.talla_m);
-        if (signos.presion_sistolica?.trim()) signosObj.presion_sistolica = parseInt(signos.presion_sistolica, 10);
-        if (signos.presion_diastolica?.trim()) signosObj.presion_diastolica = parseInt(signos.presion_diastolica, 10);
-        if (signos.glucosa_mg_dl?.trim()) signosObj.glucosa_mg_dl = parseFloat(signos.glucosa_mg_dl);
-        if (signos.observaciones?.trim()) signosObj.observaciones = signos.observaciones;
+        const signosObj = signosVitalesToPayload(signos, fechaNacimientoPaciente);
         if (Object.keys(signosObj).length) body.signos_vitales = signosObj;
       } else if (pasoActual === 'observaciones') {
         body.observaciones = observaciones.trim() || '';
@@ -94,13 +83,7 @@ export default function CompletarCitaModal({ open, onClose, citaId, onSuccess })
           observaciones: observaciones.trim() || undefined,
           marcar_como_atendida: true,
         };
-        const signosObj = {};
-        if (signos.peso_kg?.trim()) signosObj.peso_kg = parseFloat(signos.peso_kg);
-        if (signos.talla_m?.trim()) signosObj.talla_m = parseFloat(signos.talla_m);
-        if (signos.presion_sistolica?.trim()) signosObj.presion_sistolica = parseInt(signos.presion_sistolica, 10);
-        if (signos.presion_diastolica?.trim()) signosObj.presion_diastolica = parseInt(signos.presion_diastolica, 10);
-        if (signos.glucosa_mg_dl?.trim()) signosObj.glucosa_mg_dl = parseFloat(signos.glucosa_mg_dl);
-        if (signos.observaciones?.trim()) signosObj.observaciones = signos.observaciones;
+        const signosObj = signosVitalesToPayload(signos, fechaNacimientoPaciente);
         if (Object.keys(signosObj).length) body.signos_vitales = signosObj;
         if (diagnostico.trim().length >= 10) body.diagnostico = { descripcion: diagnostico.trim() };
         if (planObs.trim()) body.plan_medicacion = { observaciones: planObs.trim(), medicamentos: [] };
@@ -184,56 +167,12 @@ export default function CompletarCitaModal({ open, onClose, citaId, onSuccess })
             </div>
           )}
           {pasoActual === 'signos_vitales' && (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                gap: '0.5rem',
-                marginBottom: '1rem',
-              }}
-            >
-              <Input
-                type="number"
-                placeholder="Peso (kg)"
-                value={signos.peso_kg}
-                onChange={(e) => setSignos((s) => ({ ...s, peso_kg: e.target.value }))}
-                style={{ marginBottom: 0 }}
-              />
-              <Input
-                type="number"
-                placeholder="Talla (m)"
-                value={signos.talla_m}
-                onChange={(e) => setSignos((s) => ({ ...s, talla_m: e.target.value }))}
-                style={{ marginBottom: 0 }}
-              />
-              <Input
-                type="number"
-                placeholder="PA sist."
-                value={signos.presion_sistolica}
-                onChange={(e) => setSignos((s) => ({ ...s, presion_sistolica: e.target.value }))}
-                style={{ marginBottom: 0 }}
-              />
-              <Input
-                type="number"
-                placeholder="PA diast."
-                value={signos.presion_diastolica}
-                onChange={(e) => setSignos((s) => ({ ...s, presion_diastolica: e.target.value }))}
-                style={{ marginBottom: 0 }}
-              />
-              <Input
-                type="number"
-                placeholder="Glucosa"
-                value={signos.glucosa_mg_dl}
-                onChange={(e) => setSignos((s) => ({ ...s, glucosa_mg_dl: e.target.value }))}
-                style={{ marginBottom: 0 }}
-              />
-              <Input
-                placeholder="Observaciones"
-                value={signos.observaciones}
-                onChange={(e) => setSignos((s) => ({ ...s, observaciones: e.target.value }))}
-                style={{ marginBottom: 0, gridColumn: '1 / -1' }}
-              />
-            </div>
+            <SignosVitalesForm
+              value={signos}
+              onChange={setSignos}
+              showImc
+              fechaNacimientoPaciente={fechaNacimientoPaciente}
+            />
           )}
           {pasoActual === 'observaciones' && (
             <TextArea

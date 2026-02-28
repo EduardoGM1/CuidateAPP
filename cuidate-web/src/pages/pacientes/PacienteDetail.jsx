@@ -62,6 +62,7 @@ import SectionCard from '../../components/pacientes/SectionCard';
 import PatientSectionModal from '../../components/pacientes/PatientSectionModal';
 import DetalleCitaModal from '../../components/pacientes/DetalleCitaModal';
 import CompletarCitaModal from '../../components/citas/CompletarCitaModal';
+import SignosVitalesForm, { INITIAL_SIGNOS_VITALES, signosVitalesToPayload } from '../../components/signos/SignosVitalesForm';
 import DetalleSignoVitalModal from '../../components/pacientes/DetalleSignoVitalModal';
 import ComparativaEvolucionSignos from '../../components/pacientes/ComparativaEvolucionSignos';
 import { PATIENT_DETAIL_SECTIONS } from '../../constants/patientDetailSections';
@@ -197,10 +198,7 @@ export default function PacienteDetail() {
   const isDoctor = useAuthStore((s) => s.isDoctor);
   const canEditMedical = isDoctor() || isAdmin();
 
-  const [signosForm, setSignosForm] = useState({
-    peso_kg: '', talla_m: '', medida_cintura_cm: '', presion_sistolica: '', presion_diastolica: '',
-    glucosa_mg_dl: '', colesterol_mg_dl: '', colesterol_ldl: '', colesterol_hdl: '', trigliceridos_mg_dl: '', hba1c_porcentaje: '', observaciones: '',
-  });
+  const [signosForm, setSignosForm] = useState(INITIAL_SIGNOS_VITALES);
   const [signosSubmitError, setSignosSubmitError] = useState('');
   const [signosSubmitting, setSignosSubmitting] = useState(false);
   const [editingSignoId, setEditingSignoId] = useState(null);
@@ -255,6 +253,7 @@ export default function PacienteDetail() {
   const [citaDetalle, setCitaDetalle] = useState(null);
   const [citaDetalleLoading, setCitaDetalleLoading] = useState(false);
   const [wizardCitaId, setWizardCitaId] = useState(null);
+  const [wizardCita, setWizardCita] = useState(null);
   const [wizardCitaModalOpen, setWizardCitaModalOpen] = useState(false);
   const [signoDetalleSeleccionado, setSignoDetalleSeleccionado] = useState(null);
   const [allComorbilidadesData, setAllComorbilidadesData] = useState([]);
@@ -382,6 +381,7 @@ export default function PacienteDetail() {
   const openSignosFormForEdit = useCallback((signo) => {
     if (!signo) return;
     setSignosForm({
+      ...INITIAL_SIGNOS_VITALES,
       peso_kg: signo.peso_kg != null ? String(signo.peso_kg) : '',
       talla_m: signo.talla_m != null ? String(signo.talla_m) : '',
       medida_cintura_cm: signo.medida_cintura_cm != null ? String(signo.medida_cintura_cm) : '',
@@ -393,6 +393,7 @@ export default function PacienteDetail() {
       colesterol_hdl: signo.colesterol_hdl != null ? String(signo.colesterol_hdl) : '',
       trigliceridos_mg_dl: signo.trigliceridos_mg_dl != null ? String(signo.trigliceridos_mg_dl) : '',
       hba1c_porcentaje: signo.hba1c_porcentaje != null ? String(signo.hba1c_porcentaje) : '',
+      edad_paciente_en_medicion: signo.edad_paciente_en_medicion != null ? String(signo.edad_paciente_en_medicion) : '',
       observaciones: signo.observaciones != null ? String(signo.observaciones) : '',
     });
     setEditingSignoId(signo.id_signo ?? signo.id_signo_vital ?? signo.id ?? null);
@@ -910,42 +911,18 @@ export default function PacienteDetail() {
         );
       }
       case 'signos': {
-        const emptySignosForm = {
-          peso_kg: '', talla_m: '', medida_cintura_cm: '', presion_sistolica: '', presion_diastolica: '',
-          glucosa_mg_dl: '', colesterol_mg_dl: '', colesterol_ldl: '', colesterol_hdl: '', trigliceridos_mg_dl: '', hba1c_porcentaje: '', observaciones: '',
-        };
         const handleCreateSignos = async () => {
-          const peso = signosForm.peso_kg.trim() ? parseFloat(signosForm.peso_kg) : null;
-          const talla = signosForm.talla_m.trim() ? parseFloat(signosForm.talla_m) : null;
-          const medidaCintura = signosForm.medida_cintura_cm.trim() ? parseFloat(signosForm.medida_cintura_cm) : null;
-          const ps = signosForm.presion_sistolica.trim() ? parseInt(signosForm.presion_sistolica, 10) : null;
-          const pd = signosForm.presion_diastolica.trim() ? parseInt(signosForm.presion_diastolica, 10) : null;
-          const glucosa = signosForm.glucosa_mg_dl.trim() ? parseFloat(signosForm.glucosa_mg_dl) : null;
-          const col = signosForm.colesterol_mg_dl.trim() ? parseFloat(signosForm.colesterol_mg_dl) : null;
-          const ldl = signosForm.colesterol_ldl.trim() ? parseFloat(signosForm.colesterol_ldl) : null;
-          const hdl = signosForm.colesterol_hdl.trim() ? parseFloat(signosForm.colesterol_hdl) : null;
-          const trig = signosForm.trigliceridos_mg_dl.trim() ? parseFloat(signosForm.trigliceridos_mg_dl) : null;
-          const hba1c = signosForm.hba1c_porcentaje.trim() ? parseFloat(signosForm.hba1c_porcentaje) : null;
-          if (!peso && !talla && !medidaCintura && !ps && !pd && !glucosa && !col && !ldl && !hdl && !trig && !hba1c) {
+          const body = signosVitalesToPayload(signosForm, paciente?.fecha_nacimiento);
+          const tieneAlgunValor = body.peso_kg != null || body.talla_m != null || body.medida_cintura_cm != null ||
+            body.presion_sistolica != null || body.presion_diastolica != null || body.glucosa_mg_dl != null ||
+            body.colesterol_mg_dl != null || body.colesterol_ldl != null || body.colesterol_hdl != null ||
+            body.trigliceridos_mg_dl != null || body.hba1c_porcentaje != null || (body.observaciones && body.observaciones.length > 0);
+          if (!tieneAlgunValor) {
             setSignosSubmitError('Indica al menos un valor (peso, talla, presión, glucosa, colesterol, HbA1c, etc.).');
             return;
           }
           setSignosSubmitError('');
           setSignosSubmitting(true);
-          const body = {
-            peso_kg: peso,
-            talla_m: talla,
-            medida_cintura_cm: medidaCintura,
-            presion_sistolica: ps,
-            presion_diastolica: pd,
-            glucosa_mg_dl: glucosa,
-            colesterol_mg_dl: col,
-            colesterol_ldl: ldl || undefined,
-            colesterol_hdl: hdl || undefined,
-            trigliceridos_mg_dl: trig,
-            hba1c_porcentaje: hba1c ?? undefined,
-            observaciones: signosForm.observaciones.trim() || undefined,
-          };
           if (!editingSignoId && signosCitaId) body.id_cita = signosCitaId;
           try {
             if (editingSignoId) {
@@ -955,7 +932,7 @@ export default function PacienteDetail() {
               await apiCreateSignosVitales(parsedId, body);
               message.success('Registro de signos vitales guardado');
             }
-            setSignosForm(emptySignosForm);
+            setSignosForm(INITIAL_SIGNOS_VITALES);
             setEditingSignoId(null);
             setSignosCitaId(null);
             loadSignos();
@@ -1032,7 +1009,7 @@ export default function PacienteDetail() {
                     setSignosSubmitError('');
                     setEditingSignoId(null);
                     setSignosCitaId(null);
-                    setSignosForm(emptySignosForm);
+                    setSignosForm(INITIAL_SIGNOS_VITALES);
                     setSignosModalOpen(true);
                   }}
                 >
@@ -1064,121 +1041,11 @@ export default function PacienteDetail() {
                       {signosSubmitError}
                     </p>
                   )}
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
-                      gap: '0.5rem',
-                      marginBottom: '0.5rem',
-                    }}
-                  >
-                    <Input
-                      type="number"
-                      placeholder="Peso (kg)"
-                      value={signosForm.peso_kg}
-                      onChange={(e) =>
-                        setSignosForm((f) => ({ ...f, peso_kg: e.target.value }))
-                      }
-                      style={{ marginBottom: 0 }}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Talla (m)"
-                      value={signosForm.talla_m}
-                      onChange={(e) =>
-                        setSignosForm((f) => ({ ...f, talla_m: e.target.value }))
-                      }
-                      style={{ marginBottom: 0 }}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Cintura (cm)"
-                      value={signosForm.medida_cintura_cm}
-                      onChange={(e) =>
-                        setSignosForm((f) => ({ ...f, medida_cintura_cm: e.target.value }))
-                      }
-                      style={{ marginBottom: 0 }}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="PA sist."
-                      value={signosForm.presion_sistolica}
-                      onChange={(e) =>
-                        setSignosForm((f) => ({ ...f, presion_sistolica: e.target.value }))
-                      }
-                      style={{ marginBottom: 0 }}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="PA diast."
-                      value={signosForm.presion_diastolica}
-                      onChange={(e) =>
-                        setSignosForm((f) => ({ ...f, presion_diastolica: e.target.value }))
-                      }
-                      style={{ marginBottom: 0 }}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Glucosa"
-                      value={signosForm.glucosa_mg_dl}
-                      onChange={(e) =>
-                        setSignosForm((f) => ({ ...f, glucosa_mg_dl: e.target.value }))
-                      }
-                      style={{ marginBottom: 0 }}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Colesterol"
-                      value={signosForm.colesterol_mg_dl}
-                      onChange={(e) =>
-                        setSignosForm((f) => ({ ...f, colesterol_mg_dl: e.target.value }))
-                      }
-                      style={{ marginBottom: 0 }}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="LDL"
-                      value={signosForm.colesterol_ldl}
-                      onChange={(e) =>
-                        setSignosForm((f) => ({ ...f, colesterol_ldl: e.target.value }))
-                      }
-                      style={{ marginBottom: 0 }}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="HDL"
-                      value={signosForm.colesterol_hdl}
-                      onChange={(e) =>
-                        setSignosForm((f) => ({ ...f, colesterol_hdl: e.target.value }))
-                      }
-                      style={{ marginBottom: 0 }}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Triglicéridos"
-                      value={signosForm.trigliceridos_mg_dl}
-                      onChange={(e) =>
-                        setSignosForm((f) => ({ ...f, trigliceridos_mg_dl: e.target.value }))
-                      }
-                      style={{ marginBottom: 0 }}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="HbA1c (%)"
-                      value={signosForm.hba1c_porcentaje}
-                      onChange={(e) =>
-                        setSignosForm((f) => ({ ...f, hba1c_porcentaje: e.target.value }))
-                      }
-                      style={{ marginBottom: 0 }}
-                    />
-                  </div>
-                  <Input
-                    placeholder="Observaciones"
-                    value={signosForm.observaciones}
-                    onChange={(e) =>
-                      setSignosForm((f) => ({ ...f, observaciones: e.target.value }))
-                    }
-                    style={{ marginBottom: 0 }}
+                  <SignosVitalesForm
+                    value={signosForm}
+                    onChange={setSignosForm}
+                    showImc
+                    fechaNacimientoPaciente={paciente?.fecha_nacimiento}
                   />
                 </Modal>
               </div>
@@ -3287,14 +3154,15 @@ export default function PacienteDetail() {
         loading={citaDetalleLoading}
         onVerEnPagina={(idCita) => navigate(`/citas/${idCita}`)}
         canEditMedical={canEditMedical}
-        onCompletarWizard={(idCita) => { closeDetalleCita(); setWizardCitaId(idCita); setWizardCitaModalOpen(true); }}
-        onSoloSignosVitales={(idCita) => { closeDetalleCita(); setSignosCitaId(idCita); setSignosForm({ peso_kg: '', talla_m: '', medida_cintura_cm: '', presion_sistolica: '', presion_diastolica: '', glucosa_mg_dl: '', colesterol_mg_dl: '', colesterol_ldl: '', colesterol_hdl: '', trigliceridos_mg_dl: '', hba1c_porcentaje: '', observaciones: '' }); setSignosModalOpen(true); }}
+        onCompletarWizard={(idCita) => { closeDetalleCita(); setWizardCitaId(idCita); setWizardCita(citaDetalle); setWizardCitaModalOpen(true); }}
+        onSoloSignosVitales={(idCita) => { closeDetalleCita(); setSignosCitaId(idCita); setSignosForm(INITIAL_SIGNOS_VITALES); setSignosModalOpen(true); }}
       />
       <CompletarCitaModal
         open={wizardCitaModalOpen}
-        onClose={() => { setWizardCitaModalOpen(false); setWizardCitaId(null); }}
+        onClose={() => { setWizardCitaModalOpen(false); setWizardCitaId(null); setWizardCita(null); }}
         citaId={wizardCitaId}
-        onSuccess={() => { loadCitas(); setWizardCitaModalOpen(false); setWizardCitaId(null); }}
+        cita={wizardCita}
+        onSuccess={() => { loadCitas(); setWizardCitaModalOpen(false); setWizardCitaId(null); setWizardCita(null); }}
       />
       <Modal open={showAllComorbilidadesOpen} onClose={() => setShowAllComorbilidadesOpen(false)} title="Comorbilidades registradas" footer={null} width={560}>
         {allComorbilidadesLoading ? <LoadingSpinner /> : allComorbilidadesData.length === 0 ? <EmptyState message="No hay comorbilidades" /> : (

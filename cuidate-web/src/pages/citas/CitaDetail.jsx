@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getCitaById, updateCitaEstado, updateCita } from '../../api/citas';
+import { getCitaById, updateCitaEstado, updateCita, completarCitaWizard } from '../../api/citas';
 import { message } from 'antd';
 import { connect, on, off } from '../../api/socket';
 import { PageHeader, DataCard } from '../../components/shared';
 import { LoadingSpinner, Button, Card, Badge, Input, Select, Modal } from '../../components/ui';
 import CompletarCitaModal from '../../components/citas/CompletarCitaModal';
+import SignosVitalesForm, { INITIAL_SIGNOS_VITALES, signosVitalesToPayload } from '../../components/signos/SignosVitalesForm';
 import { useAuthStore } from '../../stores/authStore';
 import { STORAGE_KEYS } from '../../utils/constants';
 import { parsePositiveInt } from '../../utils/params';
@@ -34,6 +35,10 @@ export default function CitaDetail() {
   const [saveError, setSaveError] = useState(null);
 
   const [wizardModalOpen, setWizardModalOpen] = useState(false);
+  const [soloSignosOpen, setSoloSignosOpen] = useState(false);
+  const [soloSignosForm, setSoloSignosForm] = useState(INITIAL_SIGNOS_VITALES);
+  const [soloSignosSaving, setSoloSignosSaving] = useState(false);
+  const [soloSignosError, setSoloSignosError] = useState('');
   const [reprogramarOpen, setReprogramarOpen] = useState(false);
   const [reprogramarFecha, setReprogramarFecha] = useState('');
   const [reprogramarMotivo, setReprogramarMotivo] = useState('');
@@ -102,6 +107,32 @@ export default function CitaDetail() {
       message.error(msg);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const fechaNacimientoPaciente = cita?.Paciente?.fecha_nacimiento ?? cita?.paciente?.fecha_nacimiento ?? cita?.fecha_nacimiento ?? null;
+
+  const handleSoloSignosVitales = async () => {
+    const payload = signosVitalesToPayload(soloSignosForm, fechaNacimientoPaciente);
+    const tieneAlgunValor = Object.keys(payload).some((k) => k !== 'observaciones' && payload[k] != null) || (payload.observaciones && payload.observaciones.length > 0);
+    if (!tieneAlgunValor) {
+      setSoloSignosError('Indica al menos un valor (peso, talla, presión, glucosa, colesterol, HbA1c, etc.).');
+      return;
+    }
+    setSoloSignosError('');
+    setSoloSignosSaving(true);
+    try {
+      await completarCitaWizard(parsedId, { paso: 'signos_vitales', signos_vitales: payload });
+      message.success('Signos vitales registrados');
+      setSoloSignosForm(INITIAL_SIGNOS_VITALES);
+      setSoloSignosOpen(false);
+      load();
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || 'Error al guardar';
+      setSoloSignosError(msg);
+      message.error(msg);
+    } finally {
+      setSoloSignosSaving(false);
     }
   };
 
@@ -268,9 +299,14 @@ export default function CitaDetail() {
           <p style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
             Flujo guiado paso a paso con guardado progresivo.
           </p>
-          <Button variant="primary" type="button" onClick={() => setWizardModalOpen(true)}>
-            Registrar datos de la cita
-          </Button>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <Button variant="primary" type="button" onClick={() => setWizardModalOpen(true)}>
+              Registrar datos de la cita
+            </Button>
+            <Button variant="outline" type="button" onClick={() => { setSoloSignosError(''); setSoloSignosForm(INITIAL_SIGNOS_VITALES); setSoloSignosOpen(true); }}>
+              Solo Agregar Signos Vitales
+            </Button>
+          </div>
         </Card>
       )}
 
@@ -297,8 +333,33 @@ export default function CitaDetail() {
         open={wizardModalOpen}
         onClose={() => setWizardModalOpen(false)}
         citaId={parsedId}
+        cita={cita}
         onSuccess={() => { load(); setWizardModalOpen(false); }}
       />
+
+      <Modal
+        open={soloSignosOpen}
+        onClose={() => { if (!soloSignosSaving) setSoloSignosOpen(false); }}
+        title="Solo Agregar Signos Vitales"
+        footer={null}
+        width={720}
+      >
+        {soloSignosError && (
+          <p style={{ color: 'var(--color-error)', marginBottom: '0.75rem', fontSize: '0.9rem' }}>{soloSignosError}</p>
+        )}
+        <SignosVitalesForm
+          value={soloSignosForm}
+          onChange={setSoloSignosForm}
+          showImc
+          fechaNacimientoPaciente={fechaNacimientoPaciente}
+        />
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+          <Button variant="primary" onClick={handleSoloSignosVitales} disabled={soloSignosSaving}>
+            {soloSignosSaving ? 'Guardando…' : 'Guardar signos vitales'}
+          </Button>
+          <Button variant="outline" onClick={() => setSoloSignosOpen(false)}>Cancelar</Button>
+        </div>
+      </Modal>
     </div>
   );
 }
