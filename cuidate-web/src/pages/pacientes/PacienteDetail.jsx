@@ -3155,7 +3155,7 @@ export default function PacienteDetail() {
         onVerEnPagina={(idCita) => navigate(`/citas/${idCita}`)}
         canEditMedical={canEditMedical}
         onCompletarWizard={(idCita) => { closeDetalleCita(); setWizardCitaId(idCita); setWizardCita(citaDetalle); setWizardCitaModalOpen(true); }}
-        onSoloSignosVitales={(idCita) => { closeDetalleCita(); setSignosCitaId(idCita); setSignosForm(INITIAL_SIGNOS_VITALES); setSignosModalOpen(true); }}
+        onSoloSignosVitales={(idCita) => { closeDetalleCita(); setSignosCitaId(idCita); setSignosForm(INITIAL_SIGNOS_VITALES); setModalSection('signos'); setSignosModalOpen(true); }}
       />
       <CompletarCitaModal
         open={wizardCitaModalOpen}
