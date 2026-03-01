@@ -379,6 +379,14 @@ export default function ReportesPage() {
   const chartData = summary?.chartData ?? {};
   const charts = summary?.charts ?? {};
 
+  // Mismos datos que el reporte PDF: comorbilidades (doctor desde summary; admin puede no traerlas en chartData)
+  const comorbilidadesChart = Array.isArray(chartData.comorbilidadesMasFrecuentes)
+    ? chartData.comorbilidadesMasFrecuentes.map((c) => ({
+        nombre: c.nombre ?? c.nombre_comorbilidad ?? '—',
+        total: Number(c.frecuencia ?? c.pacientes_afectados ?? 0) || 0,
+      })).filter((d) => d.total > 0)
+    : [];
+
   const citasPorEstadoPie = charts.citasPorEstado && typeof charts.citasPorEstado === 'object'
     ? Object.entries(charts.citasPorEstado)
         .filter(([, v]) => Number(v) > 0)
@@ -395,6 +403,9 @@ export default function ReportesPage() {
           <h2 id="reportes-graficos-title" className="saas-section-title">
             Gráficos
           </h2>
+          <p style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
+            Los siguientes gráficos muestran los mismos datos que el reporte en PDF (Citas últimos 7 días, Comorbilidades más frecuentes, etc.).
+          </p>
           {loadingSummary && (
             <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'center' }}>
               <LoadingSpinner />
@@ -442,6 +453,15 @@ export default function ReportesPage() {
                 dataKey="total_citas"
                 nameKey="nombre"
                 barName="Citas"
+              />
+            )}
+            {comorbilidadesChart.length > 0 && (
+              <ReportesHorizontalBarChart
+                title="Comorbilidades más frecuentes"
+                data={comorbilidadesChart}
+                dataKey="total"
+                nameKey="nombre"
+                barName="Frecuencia"
               />
             )}
           </div>
