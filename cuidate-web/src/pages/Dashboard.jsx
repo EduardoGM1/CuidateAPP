@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { getAdminSummary, getDoctorSummary } from '../api/dashboard';
 import { getNotificacionesDoctor, marcarNotificacionLeida } from '../api/notificaciones';
+import { getCitaById } from '../api/citas';
 import { connect, on, off } from '../api/socket';
 import { STORAGE_KEYS } from '../utils/constants';
 import { useCurrentDoctorId } from '../hooks/useCurrentDoctorId';
@@ -11,6 +12,7 @@ import { sanitizeForDisplay } from '../utils/sanitize';
 import AlertDetailModal from '../components/dashboard/AlertDetailModal';
 import AdminAlertDetailModal from '../components/dashboard/AdminAlertDetailModal';
 import DetalleNotificacionModal from '../components/doctor/DetalleNotificacionModal';
+import DetalleCitaModal from '../components/pacientes/DetalleCitaModal';
 import StatCard, { IconUsers, IconUser, IconCalendar, IconTrendingUp, IconMessageCircle, IconAlertTriangle } from '../components/dashboard/StatCard';
 import { Card, Button } from '../components/ui';
 import { LoadingSpinner } from '../components/ui';
@@ -56,6 +58,7 @@ function getAlertaDescripcion(item) {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const getDisplayName = useAuthStore((s) => s.getDisplayName);
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const { idDoctor } = useCurrentDoctorId();
@@ -67,6 +70,9 @@ export default function Dashboard() {
   const [notificaciones, setNotificaciones] = useState([]);
   const [notifLoading, setNotifLoading] = useState(false);
   const [actingId, setActingId] = useState(null);
+  const [citaDetalleId, setCitaDetalleId] = useState(null);
+  const [citaDetalle, setCitaDetalle] = useState(null);
+  const [citaDetalleLoading, setCitaDetalleLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -115,6 +121,21 @@ export default function Dashboard() {
       setActingId(null);
     }
   }, [idDoctor, loadNotificaciones]);
+
+  const openDetalleCita = useCallback((id) => {
+    if (!id) return;
+    setCitaDetalleId(id);
+    setCitaDetalle(null);
+    setCitaDetalleLoading(true);
+    getCitaById(id)
+      .then((data) => setCitaDetalle(data))
+      .catch(() => setCitaDetalle(null))
+      .finally(() => setCitaDetalleLoading(false));
+  }, []);
+  const closeDetalleCita = useCallback(() => {
+    setCitaDetalleId(null);
+    setCitaDetalle(null);
+  }, []);
 
   // Tiempo real: actualizar resumen al crear/actualizar pacientes, citas o doctores
   const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
@@ -290,7 +311,13 @@ export default function Dashboard() {
                     <ul style={{ margin: 0, paddingLeft: 'var(--space-5)' }}>
                       {summary.citasHoy.slice(0, 5).map((c) => (
                         <li key={c.id} style={{ marginBottom: '0.5rem' }}>
-                          <strong>{sanitizeForDisplay(c.paciente)}</strong> · {formatTime(c.hora)} · {sanitizeForDisplay(c.motivo)} · {c.estado ?? '—'}
+                          <button
+                            type="button"
+                            onClick={() => openDetalleCita(c.id)}
+                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', color: 'inherit', textDecoration: 'underline', font: 'inherit', width: '100%' }}
+                          >
+                            <strong>{sanitizeForDisplay(c.paciente)}</strong> · {formatTime(c.hora)} · {sanitizeForDisplay(c.motivo)} · {c.estado ?? '—'}
+                          </button>
                         </li>
                       ))}
                     </ul>
@@ -300,6 +327,13 @@ export default function Dashboard() {
                   </Card>
                 </section>
               )}
+              <DetalleCitaModal
+                open={!!citaDetalleId}
+                onClose={closeDetalleCita}
+                citaDetalle={citaDetalle}
+                loading={citaDetalleLoading}
+                onVerEnPagina={(idCita) => { closeDetalleCita(); navigate(`/citas/${idCita}`); }}
+              />
               <section className="saas-section" aria-labelledby="notif-doctor-title">
                 <Card style={{ marginBottom: 0 }}>
                   <h2 id="notif-doctor-title" className="section-title">Notificaciones</h2>
