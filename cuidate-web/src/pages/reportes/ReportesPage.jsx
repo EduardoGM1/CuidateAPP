@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getReporteEstadisticasHTML } from '../../api/reportes';
+import { getReporteEstadisticasHTML, openReporteEstadisticasPDF } from '../../api/reportes';
 import { getPacientes } from '../../api/pacientes';
 import { getModulos } from '../../api/modulos';
 import { PageHeader } from '../../components/shared';
@@ -45,6 +45,7 @@ function ReporteEstadisticasCard() {
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -94,6 +95,22 @@ function ReporteEstadisticasCard() {
     },
     [params.modulo, params.fechaInicio, params.fechaFin, queryClient]
   );
+
+  const handleDescargarPDF = useCallback(async () => {
+    setPdfLoading(true);
+    setError(null);
+    try {
+      await openReporteEstadisticasPDF(params);
+    } catch (err) {
+      setError(
+        err?.response?.data?.error ||
+          err?.message ||
+          'Error al generar el reporte para PDF'
+      );
+    } finally {
+      setPdfLoading(false);
+    }
+  }, [params.modulo, params.fechaInicio, params.fechaFin]);
 
   const canFilterByModulo = isAdmin() && modulos.length > 0;
 
@@ -175,7 +192,18 @@ function ReporteEstadisticasCard() {
         >
           Descargar HTML
         </Button>
+        <Button
+          variant="outline"
+          type="button"
+          disabled={pdfLoading}
+          onClick={handleDescargarPDF}
+        >
+          {pdfLoading ? 'Cargando…' : 'Descargar PDF'}
+        </Button>
       </div>
+      <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--color-texto-secundario)' }}>
+        Para guardar como PDF: al abrirse el reporte, usa Imprimir → Guardar como PDF.
+      </p>
     </ReporteCardWrapper>
   );
 }

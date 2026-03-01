@@ -24,6 +24,20 @@ export async function getReporteEstadisticasHTML(params = {}) {
 }
 
 /**
+ * Abre el reporte de estadísticas en una nueva ventana (mismo flujo que Notas Médicas:
+ * Imprimir > Guardar como PDF).
+ * @param {{ modulo?: number, fechaInicio?: string, fechaFin?: string }} [params]
+ */
+export async function openReporteEstadisticasPDF(params = {}) {
+  const html = await getReporteEstadisticasHTML(params);
+  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const w = window.open(url, '_blank', 'noopener,noreferrer');
+  if (w) w.focus();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+/**
  * Obtiene el expediente médico completo en HTML para un paciente.
  * @param {number|string} idPaciente
  * @param {{ fechaInicio?: string, fechaFin?: string }} [params]
