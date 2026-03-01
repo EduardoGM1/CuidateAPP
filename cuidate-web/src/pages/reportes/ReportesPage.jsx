@@ -8,7 +8,7 @@ import { Card, Button, Input, Select } from '../../components/ui';
 import { LoadingSpinner } from '../../components/ui';
 import ComorbilidadesHeatmap from '../../components/reportes/ComorbilidadesHeatmap';
 import { ReportesBarChart, ReportesPieChart, ReportesHorizontalBarChart } from '../../components/reportes/ReportesCharts';
-import StatCard, { IconUsers, IconUser, IconCalendar, IconTrendingUp, IconMessageCircle, IconAlertTriangle } from '../../components/dashboard/StatCard';
+import { IconAlertTriangle } from '../../components/dashboard/StatCard';
 import { openHTMLInNewWindow, downloadAsFile } from '../../utils/reportUtils';
 import { useAuthStore } from '../../stores/authStore';
 import { sanitizeForDisplay } from '../../utils/sanitize';
@@ -348,7 +348,6 @@ export default function ReportesPage() {
   const detalle = useReportesDetalle();
   const showDetalle = admin && !detalle.loading;
 
-  const m = summary?.metrics ?? {};
   const chartData = summary?.chartData ?? {};
   const charts = summary?.charts ?? {};
 
@@ -362,10 +361,12 @@ export default function ReportesPage() {
     <div>
       <PageHeader title="Reportes" />
 
-      {/* Resumen (métricas) */}
+      {/* Gráficos (citas 7 días, pacientes nuevos, etc.) */}
       {(admin || isDoctor()) && (
-        <section className="saas-section" aria-label="Resumen de reportes" style={{ marginBottom: '1.5rem' }}>
-          <h2 className="saas-section-title">Resumen</h2>
+        <section className="saas-section" aria-labelledby="reportes-graficos-title" style={{ marginBottom: '1.5rem' }}>
+          <h2 id="reportes-graficos-title" className="saas-section-title">
+            Gráficos
+          </h2>
           {loadingSummary && (
             <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'center' }}>
               <LoadingSpinner />
@@ -383,46 +384,6 @@ export default function ReportesPage() {
             </Card>
           )}
           {!loadingSummary && !errorSummary && summary && (
-            <div className="saas-stats">
-              {admin ? (
-                <>
-                  <StatCard icon={IconUsers} label="Total pacientes" value={m.totalPacientes} />
-                  <StatCard icon={IconUser} label="Doctores activos" value={m.totalDoctores} />
-                  <StatCard
-                    icon={IconCalendar}
-                    label="Citas hoy"
-                    value={m.citasHoy?.total != null ? m.citasHoy.total : m.citasHoy}
-                    sublabel={m.citasHoy?.completadas != null ? `Completadas: ${m.citasHoy.completadas}` : ''}
-                  />
-                  <StatCard
-                    icon={IconTrendingUp}
-                    label="Tasa de asistencia"
-                    value={
-                      m.tasaAsistencia?.tasa_asistencia != null
-                        ? `${Number(m.tasaAsistencia.tasa_asistencia).toFixed(1)}%`
-                        : (m.tasaAsistencia ?? '—')
-                    }
-                  />
-                </>
-              ) : (
-                <>
-                  <StatCard icon={IconUsers} label="Pacientes asignados" value={m.pacientesAsignados} />
-                  <StatCard icon={IconCalendar} label="Citas hoy" value={m.citasHoy} />
-                  <StatCard icon={IconMessageCircle} label="Mensajes pendientes" value={m.mensajesPendientes} />
-                  <StatCard icon={IconTrendingUp} label="Tasa de asistencia" value={m.tasaAsistencia ?? '—'} />
-                </>
-              )}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Gráficos (citas 7 días, pacientes nuevos, etc.) */}
-      {(admin || isDoctor()) && !loadingSummary && !errorSummary && summary && (
-        <section className="saas-section" aria-labelledby="reportes-graficos-title" style={{ marginBottom: '1.5rem' }}>
-          <h2 id="reportes-graficos-title" className="saas-section-title">
-            Gráficos
-          </h2>
           <div className="saas-charts-grid">
             {Array.isArray(chartData.citasUltimos7Dias) && chartData.citasUltimos7Dias.length > 0 && (
               <ReportesBarChart
@@ -456,6 +417,7 @@ export default function ReportesPage() {
               />
             )}
           </div>
+          )}
         </section>
       )}
 
