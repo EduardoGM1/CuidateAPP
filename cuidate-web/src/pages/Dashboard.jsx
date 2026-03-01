@@ -302,6 +302,121 @@ export default function Dashboard() {
             </section>
           )}
 
+          {!error && summary && (
+            <section className="saas-section" aria-labelledby="graficos-title">
+              <h2 id="graficos-title" className="saas-section-title">Gráficos y métricas</h2>
+              <div className="saas-charts-grid">
+                {isAdmin() ? (
+                  <>
+                    {Array.isArray(summary.chartData?.citasUltimos7Dias) && summary.chartData.citasUltimos7Dias.length > 0 && (
+                      <Card className="saas-chart-card">
+                        <h3 className="saas-chart-title">Citas últimos 7 días</h3>
+                        <div className="saas-chart-inner">
+                          <ResponsiveContainer width="100%" height={220}>
+                            <BarChart data={summary.chartData.citasUltimos7Dias} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
+                              <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
+                              <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                              <Tooltip />
+                              <Bar dataKey="citas" name="Citas" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </Card>
+                    )}
+                    {Array.isArray(summary.chartData?.pacientesNuevos) && summary.chartData.pacientesNuevos.length > 0 && (
+                      <Card className="saas-chart-card">
+                        <h3 className="saas-chart-title">Pacientes nuevos (últimos 7 días)</h3>
+                        <div className="saas-chart-inner">
+                          <ResponsiveContainer width="100%" height={220}>
+                            <BarChart data={summary.chartData.pacientesNuevos} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
+                              <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
+                              <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                              <Tooltip />
+                              <Bar dataKey="pacientes" name="Pacientes" fill={CHART_COLORS.secondary} radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </Card>
+                    )}
+                    {summary.charts?.citasPorEstado && (() => {
+                      const pieData = Object.entries(summary.charts.citasPorEstado)
+                        .filter(([, v]) => Number(v) > 0)
+                        .map(([name, value]) => ({ name, value: Number(value) }));
+                      const pieColors = [CHART_COLORS.success, CHART_COLORS.warning, CHART_COLORS.error, CHART_COLORS.neutral, CHART_COLORS.secondary];
+                      if (pieData.length === 0) return null;
+                      return (
+                        <Card className="saas-chart-card" key="citas-estado">
+                          <h3 className="saas-chart-title">Citas por estado</h3>
+                          <div className="saas-chart-inner">
+                            <ResponsiveContainer width="100%" height={220}>
+                              <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                                <Pie
+                                  data={pieData}
+                                  dataKey="value"
+                                  nameKey="name"
+                                  cx="50%"
+                                  cy="45%"
+                                  outerRadius={65}
+                                  label={false}
+                                >
+                                  {pieData.map((_, i) => (
+                                    <Cell key={i} fill={pieColors[i % pieColors.length]} />
+                                  ))}
+                                </Pie>
+                                <Tooltip />
+                                <Legend />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </Card>
+                      );
+                    })()}
+                    {Array.isArray(summary.charts?.doctoresActivos) && summary.charts.doctoresActivos.length > 0 && (
+                      <Card className="saas-chart-card">
+                        <h3 className="saas-chart-title">Doctores más activos (por citas)</h3>
+                        <div className="saas-chart-inner">
+                          <ResponsiveContainer width="100%" height={220}>
+                            <BarChart
+                              data={summary.charts.doctoresActivos}
+                              layout="vertical"
+                              margin={{ top: 8, right: 8, left: 60, bottom: 0 }}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
+                              <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
+                              <YAxis type="category" dataKey="nombre" width={55} tick={{ fontSize: 11 }} />
+                              <Tooltip />
+                              <Bar dataKey="total_citas" name="Citas" fill={CHART_COLORS.primary} radius={[0, 4, 4, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </Card>
+                    )}
+                  </>
+                ) : (
+                  Array.isArray(summary.chartData?.citasUltimos7Dias) &&
+                  summary.chartData.citasUltimos7Dias.length > 0 && (
+                    <Card className="saas-chart-card">
+                      <h3 className="saas-chart-title">Mis citas últimos 7 días</h3>
+                      <div className="saas-chart-inner">
+                        <ResponsiveContainer width="100%" height={220}>
+                          <BarChart data={summary.chartData.citasUltimos7Dias} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
+                            <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
+                            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                            <Tooltip />
+                            <Bar dataKey="citas" name="Citas" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </Card>
+                  )
+                )}
+              </div>
+            </section>
+          )}
+
           {!isAdmin() && (
             <>
               {Array.isArray(summary.citasHoy) && summary.citasHoy.length > 0 && (
@@ -372,121 +487,6 @@ export default function Dashboard() {
             <AlertDetailModal open onClose={() => setAlertaSeleccionada(null)} alerta={alertaSeleccionada} />
           )}
         </>
-      )}
-
-      {!error && summary && (
-        <section className="saas-section" aria-labelledby="graficos-title">
-          <h2 id="graficos-title" className="saas-section-title">Gráficos y métricas</h2>
-          <div className="saas-charts-grid">
-            {isAdmin() ? (
-              <>
-                {Array.isArray(summary.chartData?.citasUltimos7Dias) && summary.chartData.citasUltimos7Dias.length > 0 && (
-                  <Card className="saas-chart-card">
-                    <h3 className="saas-chart-title">Citas últimos 7 días</h3>
-                    <div className="saas-chart-inner">
-                      <ResponsiveContainer width="100%" height={220}>
-                        <BarChart data={summary.chartData.citasUltimos7Dias} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
-                          <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
-                          <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                          <Tooltip />
-                          <Bar dataKey="citas" name="Citas" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </Card>
-                )}
-                {Array.isArray(summary.chartData?.pacientesNuevos) && summary.chartData.pacientesNuevos.length > 0 && (
-                  <Card className="saas-chart-card">
-                    <h3 className="saas-chart-title">Pacientes nuevos (últimos 7 días)</h3>
-                    <div className="saas-chart-inner">
-                      <ResponsiveContainer width="100%" height={220}>
-                        <BarChart data={summary.chartData.pacientesNuevos} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
-                          <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
-                          <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                          <Tooltip />
-                          <Bar dataKey="pacientes" name="Pacientes" fill={CHART_COLORS.secondary} radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </Card>
-                )}
-                {summary.charts?.citasPorEstado && (() => {
-                  const pieData = Object.entries(summary.charts.citasPorEstado)
-                    .filter(([, v]) => Number(v) > 0)
-                    .map(([name, value]) => ({ name, value: Number(value) }));
-                  const pieColors = [CHART_COLORS.success, CHART_COLORS.warning, CHART_COLORS.error, CHART_COLORS.neutral, CHART_COLORS.secondary];
-                  if (pieData.length === 0) return null;
-                  return (
-                    <Card className="saas-chart-card" key="citas-estado">
-                      <h3 className="saas-chart-title">Citas por estado</h3>
-                      <div className="saas-chart-inner">
-                        <ResponsiveContainer width="100%" height={220}>
-                          <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                            <Pie
-                              data={pieData}
-                              dataKey="value"
-                              nameKey="name"
-                              cx="50%"
-                              cy="45%"
-                              outerRadius={65}
-                              label={false}
-                            >
-                              {pieData.map((_, i) => (
-                                <Cell key={i} fill={pieColors[i % pieColors.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                            <Legend />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </Card>
-                  );
-                })()}
-                {Array.isArray(summary.charts?.doctoresActivos) && summary.charts.doctoresActivos.length > 0 && (
-                  <Card className="saas-chart-card">
-                    <h3 className="saas-chart-title">Doctores más activos (por citas)</h3>
-                    <div className="saas-chart-inner">
-                      <ResponsiveContainer width="100%" height={220}>
-                        <BarChart
-                          data={summary.charts.doctoresActivos}
-                          layout="vertical"
-                          margin={{ top: 8, right: 8, left: 60, bottom: 0 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
-                          <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
-                          <YAxis type="category" dataKey="nombre" width={55} tick={{ fontSize: 11 }} />
-                          <Tooltip />
-                          <Bar dataKey="total_citas" name="Citas" fill={CHART_COLORS.primary} radius={[0, 4, 4, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </Card>
-                )}
-              </>
-            ) : (
-              Array.isArray(summary.chartData?.citasUltimos7Dias) &&
-              summary.chartData.citasUltimos7Dias.length > 0 && (
-                <Card className="saas-chart-card">
-                  <h3 className="saas-chart-title">Mis citas últimos 7 días</h3>
-                  <div className="saas-chart-inner">
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={summary.chartData.citasUltimos7Dias} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
-                        <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                        <Tooltip />
-                        <Bar dataKey="citas" name="Citas" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </Card>
-              )
-            )}
-          </div>
-        </section>
       )}
     </div>
   );
