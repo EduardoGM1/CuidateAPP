@@ -1420,6 +1420,8 @@ select:focus-visible {
 .patient-detail-page {
   width: 100%;
   max-width: 1440px;
+  min-width: 0;
+  overflow-x: hidden;
 }
 .patient-header-card {
   background: var(--color-fondo-card);
@@ -1428,12 +1430,15 @@ select:focus-visible {
   margin-bottom: var(--space-6);
   border: 1px solid rgba(0,0,0,0.06);
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  min-width: 0;
+  overflow: hidden;
 }
 .patient-header-top {
   display: flex;
   align-items: flex-start;
   gap: var(--space-5);
   flex-wrap: wrap;
+  min-width: 0;
 }
 .patient-avatar {
   width: 64px;
@@ -1469,7 +1474,9 @@ select:focus-visible {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
 }
 .patient-back {
   display: inline-flex;
