@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { getReporteEstadisticasHTML, openReporteEstadisticasPDF } from '../../api/reportes';
+import { openReporteEstadisticasPDF } from '../../api/reportes';
 import { getPacientes } from '../../api/pacientes';
 import { getModulos } from '../../api/modulos';
 import { PageHeader } from '../../components/shared';
@@ -9,7 +8,6 @@ import { LoadingSpinner } from '../../components/ui';
 import ComorbilidadesHeatmap from '../../components/reportes/ComorbilidadesHeatmap';
 import { ReportesBarChart, ReportesPieChart, ReportesHorizontalBarChart } from '../../components/reportes/ReportesCharts';
 import { IconAlertTriangle } from '../../components/dashboard/StatCard';
-import { openHTMLInNewWindow, downloadAsFile } from '../../utils/reportUtils';
 import { useAuthStore } from '../../stores/authStore';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { PAGE_SIZE_MAX } from '../../utils/constants';
@@ -39,12 +37,10 @@ function ReporteCardWrapper({ title, description, children }) {
 function ReporteEstadisticasCard() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const isDoctor = useAuthStore((s) => s.isDoctor);
-  const queryClient = useQueryClient();
   const [modulos, setModulos] = useState([]);
   const [filtroModulo, setFiltroModulo] = useState('');
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
-  const [loading, setLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -60,41 +56,6 @@ function ReporteEstadisticasCard() {
   if (filtroModulo && parseInt(filtroModulo, 10) > 0) params.modulo = parseInt(filtroModulo, 10);
   if (fechaInicio) params.fechaInicio = fechaInicio;
   if (fechaFin) params.fechaFin = fechaFin;
-
-  const handleFetch = useCallback(
-    async (mode) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const html = await queryClient.fetchQuery({
-          queryKey: [
-            'reporteEstadisticas',
-            params.modulo || null,
-            params.fechaInicio || null,
-            params.fechaFin || null,
-          ],
-          queryFn: () => getReporteEstadisticasHTML(params),
-        });
-        if (mode === 'view') {
-          openHTMLInNewWindow(html, 'Reporte de estadísticas');
-        } else {
-          const filename = `reporte-estadisticas-${new Date()
-            .toISOString()
-            .slice(0, 10)}.html`;
-          downloadAsFile(html, filename);
-        }
-      } catch (err) {
-        setError(
-          err?.response?.data?.error ||
-            err?.message ||
-            'Error al cargar el reporte de estadísticas'
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [params.modulo, params.fechaInicio, params.fechaFin, queryClient]
-  );
 
   const handleDescargarPDF = useCallback(async () => {
     setPdfLoading(true);
@@ -176,22 +137,6 @@ function ReporteEstadisticasCard() {
           alignItems: 'center',
         }}
       >
-        <Button
-          variant="primary"
-          type="button"
-          disabled={loading}
-          onClick={() => handleFetch('view')}
-        >
-          {loading ? 'Cargando…' : 'Ver en nueva pestaña'}
-        </Button>
-        <Button
-          variant="outline"
-          type="button"
-          disabled={loading}
-          onClick={() => handleFetch('download')}
-        >
-          Descargar HTML
-        </Button>
         <Button
           variant="outline"
           type="button"
@@ -509,7 +454,7 @@ export default function ReportesPage() {
         </section>
       )}
 
-      {/* Tarjetas existentes: Estadísticas HTML, Comorbilidades, Pacientes activos, Citas por estado */}
+      {/* Tarjetas: Comorbilidades primero, luego Estadísticas, Pacientes activos, Citas por estado */}
       <div
         style={{
           display: 'grid',
@@ -518,8 +463,8 @@ export default function ReportesPage() {
           alignItems: 'flex-start',
         }}
       >
-        {(admin || isDoctor()) && <ReporteEstadisticasCard />}
         {(admin || isDoctor()) && <ReporteComorbilidadesHeatmapCard />}
+        {(admin || isDoctor()) && <ReporteEstadisticasCard />}
         {admin && <ReportePacientesActivosCard />}
         {(admin || isDoctor()) && <ReporteCitasPorEstadoCard />}
       </div>
