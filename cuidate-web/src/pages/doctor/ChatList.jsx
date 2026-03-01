@@ -17,6 +17,7 @@ export default function ChatList() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filterNombre, setFilterNombre] = useState('');
 
   const load = useCallback(async () => {
     if (!idDoctor) return;
@@ -69,9 +70,37 @@ export default function ChatList() {
     );
   }
 
+  const filtro = (filterNombre || '').trim().toLowerCase();
+  const listFiltrada = filtro
+    ? list.filter((c) => {
+        const nombre = (c.paciente?.nombre_completo ?? c.paciente_nombre ?? [c.nombre, c.apellido_paterno, c.apellido_materno].filter(Boolean).join(' ')) || '';
+        return nombre.toLowerCase().includes(filtro);
+      })
+    : list;
+
   return (
     <div>
       <PageHeader title="Conversaciones" showBack backTo="/" />
+      {list.length > 0 && (
+        <input
+          type="text"
+          placeholder="Filtrar por nombre del paciente..."
+          value={filterNombre}
+          onChange={(e) => setFilterNombre(e.target.value)}
+          style={{
+            width: '100%',
+            maxWidth: '400px',
+            padding: '0.5rem 0.75rem',
+            marginBottom: '1rem',
+            fontSize: '1rem',
+            border: '1px solid var(--color-borde-claro)',
+            borderRadius: 'var(--radius)',
+            background: 'var(--color-fondo-card)',
+            color: 'var(--color-texto-primario)',
+          }}
+          aria-label="Filtrar conversaciones por nombre del paciente"
+        />
+      )}
       {error && (
         <p style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>
           {error} <button type="button" onClick={load} style={{ marginLeft: '0.5rem', textDecoration: 'underline' }}>Reintentar</button>
@@ -79,11 +108,15 @@ export default function ChatList() {
       )}
       {loading ? (
         <LoadingSpinner />
-      ) : list.length === 0 ? (
-        <EmptyState message="No hay conversaciones. Los mensajes aparecerán cuando un paciente te escriba." />
+      ) : listFiltrada.length === 0 ? (
+        <EmptyState
+          message={list.length === 0
+            ? 'No hay conversaciones. Los mensajes aparecerán cuando un paciente te escriba.'
+            : 'Ninguna conversación coincide con el filtro.'}
+        />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {list.map((c) => {
+          {listFiltrada.map((c) => {
             const pid = c.id_paciente ?? c.paciente_id;
             const nombre = (c.paciente?.nombre_completo ?? c.paciente_nombre ?? [c.nombre, c.apellido_paterno, c.apellido_materno].filter(Boolean).join(' ')) || 'Paciente';
             const preview = c.ultimo_mensaje?.preview ?? c.preview_mensaje;
