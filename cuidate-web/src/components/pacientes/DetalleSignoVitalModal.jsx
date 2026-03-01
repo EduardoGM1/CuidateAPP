@@ -46,14 +46,28 @@ const gridStyle = {
 const itemStyle = { fontSize: '0.9rem', color: 'var(--color-texto-secundario)' };
 const valueStyle = { fontWeight: 600, color: 'var(--color-texto-primario)' };
 
+/** Estilo para enlace tipo botón en expediente */
+const linkVerCitaStyle = {
+  marginLeft: '0.5rem',
+  fontSize: '0.875rem',
+  color: 'var(--color-primario)',
+  cursor: 'pointer',
+  textDecoration: 'underline',
+  background: 'none',
+  border: 'none',
+  padding: 0,
+  font: 'inherit',
+};
+
 /**
  * Vista tipo expediente médico: tablas con todos los datos del registro (estilo NOTAS MÉDICAS).
  */
-function VistaExpedienteSignoVital({ signo, formatearFecha, registradoPor, imcCalculado }) {
+function VistaExpedienteSignoVital({ signo, formatearFecha, registradoPor, imcCalculado, onVerCita }) {
   const ta = (signo.presion_sistolica != null || signo.presion_diastolica != null)
     ? `${formatVal(signo.presion_sistolica)}/${formatVal(signo.presion_diastolica)} mmHg`
     : '—';
-  const vinculadoCita = signo.id_cita ? 'Sí' : 'No';
+  const fechaCita = signo.Cita?.fecha_cita ?? signo.fecha_cita ?? null;
+  const tieneCita = !!signo.id_cita;
   const observaciones = signo.observaciones ? sanitizeForDisplay(signo.observaciones) : '—';
 
   return (
@@ -77,7 +91,24 @@ function VistaExpedienteSignoVital({ signo, formatearFecha, registradoPor, imcCa
               <th>Registrado por</th>
               <td>{registradoPor}</td>
               <th>Vinculado a cita</th>
-              <td>{vinculadoCita}</td>
+              <td>
+                {!tieneCita ? (
+                  'No'
+                ) : (
+                  <>
+                    {fechaCita ? formatearFecha(fechaCita) : `Cita #${signo.id_cita}`}
+                    {typeof onVerCita === 'function' && (
+                      <button
+                        type="button"
+                        style={linkVerCitaStyle}
+                        onClick={() => onVerCita(signo.id_cita)}
+                      >
+                        Ver detalle de la cita
+                      </button>
+                    )}
+                  </>
+                )}
+              </td>
             </tr>
             <tr>
               <th>Edad en medición</th>
@@ -284,6 +315,7 @@ export default function DetalleSignoVitalModal({
   signo,
   canEdit = false,
   onEdit,
+  onVerCita,
 }) {
   const [viewMode, setViewMode] = useState('expediente');
 
@@ -339,6 +371,7 @@ export default function DetalleSignoVitalModal({
                 formatearFecha={formatearFecha}
                 registradoPor={registradoPor}
                 imcCalculado={imcCalculado}
+                onVerCita={onVerCita}
               />
             ) : (
               <VistaResumenSignoVital

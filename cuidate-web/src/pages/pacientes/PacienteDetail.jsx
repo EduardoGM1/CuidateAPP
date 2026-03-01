@@ -3130,6 +3130,7 @@ export default function PacienteDetail() {
         signo={signoDetalleSeleccionado}
         canEdit={canEditMedical}
         onEdit={openSignosFormForEdit}
+        onVerCita={(idCita) => { closeDetalleSigno(); openDetalleCita(idCita); }}
       />
       <Modal open={showAllCitasOpen} onClose={() => setShowAllCitasOpen(false)} title="Historial de citas" footer={null} width={640}>
         {allCitasLoading ? <LoadingSpinner /> : allCitasData.length === 0 ? <EmptyState message="No hay citas" /> : (
