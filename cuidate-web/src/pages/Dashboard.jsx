@@ -1,13 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { getAdminSummary, getDoctorSummary } from '../api/dashboard';
+import { getNotificacionesDoctor, marcarNotificacionLeida } from '../api/notificaciones';
 import { connect, on, off } from '../api/socket';
 import { STORAGE_KEYS } from '../utils/constants';
-import { Card, Button } from '../components/ui';
-import { LoadingSpinner } from '../components/ui';
+import { useCurrentDoctorId } from '../hooks/useCurrentDoctorId';
+import { formatDateWithWeekday, formatTime } from '../utils/format';
 import { sanitizeForDisplay } from '../utils/sanitize';
 import AlertDetailModal from '../components/dashboard/AlertDetailModal';
+import AdminAlertDetailModal from '../components/dashboard/AdminAlertDetailModal';
+import DetalleNotificacionModal from '../components/doctor/DetalleNotificacionModal';
 import StatCard, { IconUsers, IconUser, IconCalendar, IconTrendingUp, IconMessageCircle, IconAlertTriangle } from '../components/dashboard/StatCard';
+import { Card, Button } from '../components/ui';
+import { LoadingSpinner } from '../components/ui';
 import { CHART_COLORS } from '../components/reportes/chartConfig';
 import {
   BarChart,
@@ -23,13 +29,44 @@ import {
   Legend,
 } from 'recharts';
 
+/** Unifica alertas admin (valoresCriticos, citasPerdidas, alertasAuditoria) en una lista con tipo y fecha para ordenar. */
+function buildAlertasUnificadas(alertas) {
+  if (!alertas) return [];
+  const out = [];
+  (alertas.valoresCriticos || []).forEach((a) => {
+    out.push({ tipo: 'valor_critico', fecha: a.fecha_medicion ? new Date(a.fecha_medicion) : new Date(), ...a });
+  });
+  (alertas.citasPerdidas || []).forEach((a) => {
+    out.push({ tipo: 'cita_perdida', fecha: a.fecha ? new Date(a.fecha) : new Date(), ...a });
+  });
+  (alertas.alertasAuditoria || []).forEach((a) => {
+    out.push({ tipo: 'auditoria', fecha: a.fecha_creacion ? new Date(a.fecha_creacion) : new Date(), ...a });
+  });
+  out.sort((x, y) => (y.fecha && x.fecha ? y.fecha - x.fecha : 0));
+  return out;
+}
+
+/** Descripción corta para un ítem de alerta unificada. */
+function getAlertaDescripcion(item) {
+  if (!item) return '—';
+  if (item.tipo === 'valor_critico') return item.tipo_alerta || `${item.paciente ?? ''} - Signos críticos`.trim() || 'Valor crítico';
+  if (item.tipo === 'cita_perdida') return `Cita perdida: ${item.paciente ?? 'Paciente'}`;
+  if (item.tipo === 'auditoria') return item.descripcion || item.tipo_accion || 'Auditoría';
+  return item.descripcion ?? item.mensaje ?? 'Alerta';
+}
+
 export default function Dashboard() {
   const getDisplayName = useAuthStore((s) => s.getDisplayName);
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const { idDoctor } = useCurrentDoctorId();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState(null);
   const [alertaSeleccionada, setAlertaSeleccionada] = useState(null);
+  const [notifSeleccionada, setNotifSeleccionada] = useState(null);
+  const [notificaciones, setNotificaciones] = useState([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [actingId, setActingId] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -50,6 +87,35 @@ export default function Dashboard() {
     load();
   }, [load]);
 
+  const loadNotificaciones = useCallback(async () => {
+    if (!idDoctor) return;
+    setNotifLoading(true);
+    try {
+      const res = await getNotificacionesDoctor(idDoctor, { limit: 5, estado: 'enviada' });
+      setNotificaciones(res.notificaciones ?? []);
+    } catch {
+      setNotificaciones([]);
+    } finally {
+      setNotifLoading(false);
+    }
+  }, [idDoctor]);
+
+  useEffect(() => {
+    if (idDoctor && !isAdmin()) loadNotificaciones();
+  }, [idDoctor, isAdmin, loadNotificaciones]);
+
+  const handleMarcarNotifLeida = useCallback(async (notif) => {
+    const id = notif.id_notificacion ?? notif.id;
+    if (!id || !idDoctor) return;
+    setActingId(id);
+    try {
+      await marcarNotificacionLeida(idDoctor, id);
+      loadNotificaciones();
+    } finally {
+      setActingId(null);
+    }
+  }, [idDoctor, loadNotificaciones]);
+
   // Tiempo real: actualizar resumen al crear/actualizar pacientes, citas o doctores
   const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
   useEffect(() => {
@@ -61,6 +127,7 @@ export default function Dashboard() {
     on('cita_actualizada', load);
     on('cita_reprogramada', load);
     on('doctor_created', load);
+    if (idDoctor) on('notificacion_doctor', loadNotificaciones);
     return () => {
       off('patient_created', load);
       off('patient_assigned', load);
@@ -68,8 +135,9 @@ export default function Dashboard() {
       off('cita_actualizada', load);
       off('cita_reprogramada', load);
       off('doctor_created', load);
+      if (idDoctor) off('notificacion_doctor', loadNotificaciones);
     };
-  }, [token, load]);
+  }, [token, load, idDoctor, loadNotificaciones]);
 
   if (loading) {
     return (
@@ -92,7 +160,7 @@ export default function Dashboard() {
     <div className="saas-page">
       <section className="saas-welcome" aria-label="Bienvenida">
         <h1>Bienvenido, {sanitizeForDisplay(getDisplayName())}</h1>
-        <p>Rol: {rolLabel}</p>
+        <p>Rol: {rolLabel} · {formatDateWithWeekday(new Date())}</p>
       </section>
 
       {error && (
@@ -128,6 +196,18 @@ export default function Dashboard() {
                   label="Tasa de asistencia"
                   value={m.tasaAsistencia?.tasa_asistencia != null ? `${Number(m.tasaAsistencia.tasa_asistencia).toFixed(1)}%` : (m.tasaAsistencia ?? '—')}
                 />
+                {(() => {
+                  const alertasUnif = buildAlertasUnificadas(summary.alertas);
+                  const pendientes = alertasUnif.length;
+                  return (
+                    <StatCard
+                      icon={IconAlertTriangle}
+                      label="Alertas pendientes"
+                      value={pendientes}
+                      sublabel={pendientes > 0 ? 'Revisar ahora' : ''}
+                    />
+                  );
+                })()}
               </>
             ) : (
               <>
@@ -139,26 +219,44 @@ export default function Dashboard() {
             )}
           </section>
 
-          {isAdmin() && Array.isArray(summary.alertas) && summary.alertas.length > 0 && (
-            <section className="saas-section" aria-labelledby="alertas-title">
-              <Card style={{ marginBottom: 0 }}>
-                <h2 id="alertas-title" className="section-title">Alertas recientes</h2>
-                <ul style={{ margin: 0, paddingLeft: 'var(--space-5)', color: 'var(--color-texto-primario)' }}>
-                  {summary.alertas.slice(0, 5).map((a, i) => (
-                    <li key={i}>
-                      <button
-                        type="button"
-                        onClick={() => setAlertaSeleccionada(a)}
-                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', color: 'inherit', textDecoration: 'underline' }}
-                      >
-                        {sanitizeForDisplay(a.descripcion ?? a.mensaje ?? JSON.stringify(a))}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            </section>
-          )}
+          {isAdmin() && (() => {
+            const alertasUnif = buildAlertasUnificadas(summary.alertas);
+            const hayCriticas = alertasUnif.some((a) => a.tipo === 'valor_critico' || a.tipo === 'cita_perdida');
+            return (
+              <>
+                {hayCriticas && (
+                  <Card className="saas-alert-card" style={{ marginBottom: 'var(--space-4)', borderLeft: '4px solid var(--color-error)', backgroundColor: 'var(--color-fondo-error-claro)' }}>
+                    <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                      <IconAlertTriangle />
+                      <span>Hay alertas críticas (valores fuera de rango o citas perdidas).</span>
+                      <Link to="/admin/auditoria" style={{ marginLeft: 'auto', color: 'var(--color-primario)', textDecoration: 'underline' }}>Ver auditoría</Link>
+                    </p>
+                  </Card>
+                )}
+                {alertasUnif.length > 0 && (
+                  <section className="saas-section" aria-labelledby="alertas-title">
+                    <Card style={{ marginBottom: 0 }}>
+                      <h2 id="alertas-title" className="section-title">Notificaciones importantes</h2>
+                      <ul style={{ margin: 0, paddingLeft: 'var(--space-5)', color: 'var(--color-texto-primario)' }}>
+                        {alertasUnif.slice(0, 10).map((a, i) => (
+                          <li key={`${a.tipo}-${i}`}>
+                            <button
+                              type="button"
+                              onClick={() => setAlertaSeleccionada(a)}
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', color: 'inherit', textDecoration: 'underline' }}
+                            >
+                              {sanitizeForDisplay(getAlertaDescripcion(a))}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </Card>
+                  </section>
+                )}
+                <AdminAlertDetailModal open={!!alertaSeleccionada && isAdmin()} onClose={() => setAlertaSeleccionada(null)} alerta={alertaSeleccionada} />
+              </>
+            );
+          })()}
 
           {!isAdmin() && Array.isArray(summary.alertas?.signosVitalesCriticos) && summary.alertas.signosVitalesCriticos.length > 0 && (
             <section className="saas-section" aria-labelledby="signos-criticos-title">
@@ -183,7 +281,62 @@ export default function Dashboard() {
             </section>
           )}
 
-          <AlertDetailModal open={!!alertaSeleccionada} onClose={() => setAlertaSeleccionada(null)} alerta={alertaSeleccionada} />
+          {!isAdmin() && (
+            <>
+              {Array.isArray(summary.citasHoy) && summary.citasHoy.length > 0 && (
+                <section className="saas-section" aria-labelledby="citas-hoy-title">
+                  <Card style={{ marginBottom: 'var(--space-4)' }}>
+                    <h2 id="citas-hoy-title" className="section-title">Citas de hoy</h2>
+                    <ul style={{ margin: 0, paddingLeft: 'var(--space-5)' }}>
+                      {summary.citasHoy.slice(0, 5).map((c) => (
+                        <li key={c.id} style={{ marginBottom: '0.5rem' }}>
+                          <strong>{sanitizeForDisplay(c.paciente)}</strong> · {formatTime(c.hora)} · {sanitizeForDisplay(c.motivo)} · {c.estado ?? '—'}
+                        </li>
+                      ))}
+                    </ul>
+                    <p style={{ margin: '0.75rem 0 0', fontSize: '0.9rem' }}>
+                      <Link to="/citas">Ver todas</Link>
+                    </p>
+                  </Card>
+                </section>
+              )}
+              <section className="saas-section" aria-labelledby="notif-doctor-title">
+                <Card style={{ marginBottom: 0 }}>
+                  <h2 id="notif-doctor-title" className="section-title">Notificaciones</h2>
+                  {notifLoading ? (
+                    <LoadingSpinner />
+                  ) : notificaciones.length === 0 ? (
+                    <p style={{ margin: 0, color: 'var(--color-texto-secundario)' }}>No hay notificaciones nuevas.</p>
+                  ) : (
+                    <ul style={{ margin: 0, paddingLeft: 'var(--space-5)' }}>
+                      {notificaciones.map((n) => (
+                        <li key={n.id_notificacion ?? n.id} style={{ marginBottom: '0.35rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => setNotifSeleccionada(n)}
+                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', color: 'inherit', textDecoration: 'underline' }}
+                          >
+                            {sanitizeForDisplay(n.titulo ?? n.mensaje ?? 'Notificación')}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </Card>
+              </section>
+              <DetalleNotificacionModal
+                open={!!notifSeleccionada}
+                onClose={() => setNotifSeleccionada(null)}
+                notificacion={notifSeleccionada}
+                onMarcarLeida={handleMarcarNotifLeida}
+                actingId={actingId}
+              />
+            </>
+          )}
+
+          {!isAdmin() && alertaSeleccionada && (
+            <AlertDetailModal open onClose={() => setAlertaSeleccionada(null)} alerta={alertaSeleccionada} />
+          )}
         </>
       )}
 

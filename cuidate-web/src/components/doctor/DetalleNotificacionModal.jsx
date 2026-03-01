@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
@@ -52,6 +53,8 @@ export default function DetalleNotificacionModal({
   onArchivar,
   actingId,
 }) {
+  const navigate = useNavigate();
+
   if (!notificacion) {
     return (
       <Modal open={open} onClose={onClose} title="Detalle de notificación" footer={null} width={520} destroyOnClose>
@@ -69,11 +72,31 @@ export default function DetalleNotificacionModal({
   const hasDatos = Object.keys(datos).length > 0;
   const pacienteNombre = notificacion.paciente_nombre ?? datos.paciente_nombre;
 
+  const idPaciente = notificacion.id_paciente ?? notificacion.datos_adicionales?.id_paciente;
+  const handleIrAlChat = () => {
+    onClose();
+    if (idPaciente) navigate(`/chat/${idPaciente}`);
+  };
+  const handleIrASolicitudes = () => {
+    onClose();
+    navigate('/solicitudes-reprogramacion');
+  };
+
   const footer = (
     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
       <Button variant="secondary" size="small" onClick={onClose}>
         Cerrar
       </Button>
+      {idPaciente && (
+        <Button variant="outline" size="small" onClick={handleIrAlChat}>
+          Ir al chat
+        </Button>
+      )}
+      {notificacion.tipo === 'solicitud_reprogramacion' && (
+        <Button variant="outline" size="small" onClick={handleIrASolicitudes}>
+          Ir a solicitudes
+        </Button>
+      )}
       {!isLeida && typeof onMarcarLeida === 'function' && (
         <Button
           variant="outline"
