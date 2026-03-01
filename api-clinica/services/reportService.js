@@ -46,6 +46,116 @@ function decryptForReport(value) {
 const MESES_NOMBRE = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 import DashboardService from './dashboardService.js';
 
+/** Ancho y alto por defecto para gráficas SVG en el reporte PDF */
+const CHART_WIDTH = 420;
+const CHART_HEIGHT = 200;
+const BAR_COLOR = '#1976D2';
+const PIE_COLORS = ['#1976D2', '#2E7D32', '#ED6C02', '#C62828', '#6A1B9A', '#00838F'];
+
+function escapeSvgText(text) {
+  if (text == null) return '';
+  return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/**
+ * Genera SVG de gráfica de barras verticales para el reporte HTML (imprimir a PDF).
+ * @param {Array<{ label: string, value: number }>} data
+ * @param {{ width?: number, height?: number, barColor?: string }} [opts]
+ * @returns {string} SVG
+ */
+function svgBarChart(data, opts = {}) {
+  const w = opts.width ?? CHART_WIDTH;
+  const h = opts.height ?? CHART_HEIGHT;
+  const barColor = opts.barColor ?? BAR_COLOR;
+  if (!Array.isArray(data) || data.length === 0) return '';
+  const maxVal = Math.max(1, ...data.map(d => Number(d.value) || 0));
+  const padding = { top: 20, right: 20, bottom: 30, left: 40 };
+  const chartW = w - padding.left - padding.right;
+  const chartH = h - padding.top - padding.bottom;
+  const barW = Math.max(8, (chartW / data.length) * 0.7);
+  const gap = chartW / data.length;
+  const bars = data.map((d, i) => {
+    const v = Number(d.value) || 0;
+    const barH = maxVal > 0 ? (v / maxVal) * chartH : 0;
+    const x = padding.left + i * gap + (gap - barW) / 2;
+    const y = padding.top + chartH - barH;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" fill="${barColor}" rx="2"/>`;
+  }).join('');
+  const labels = data.map((d, i) => {
+    const x = padding.left + i * gap + gap / 2;
+    return `<text x="${x}" y="${h - 8}" text-anchor="middle" font-size="10" fill="#333">${escapeSvgText(String(d.label || '').slice(0, 4))}</text>`;
+  }).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${bars}${labels}</svg>`;
+}
+
+/**
+ * Genera SVG de gráfica de barras horizontales.
+ * @param {Array<{ label: string, value: number }>} data
+ * @param {{ width?: number, height?: number, maxBars?: number }} [opts]
+ * @returns {string} SVG
+ */
+function svgHorizontalBarChart(data, opts = {}) {
+  const w = opts.width ?? CHART_WIDTH;
+  const h = opts.height ?? CHART_HEIGHT;
+  const maxBars = opts.maxBars ?? 8;
+  const list = (Array.isArray(data) ? data : []).slice(0, maxBars);
+  if (list.length === 0) return '';
+  const maxVal = Math.max(1, ...list.map(d => Number(d.value) || 0));
+  const padding = { top: 10, right: 50, bottom: 10, left: 120 };
+  const chartW = w - padding.left - padding.right;
+  const barH = Math.max(14, (h - padding.top - padding.bottom) / list.length - 4);
+  const bars = list.map((d, i) => {
+    const v = Number(d.value) || 0;
+    const barW = maxVal > 0 ? (v / maxVal) * chartW : 0;
+    const y = padding.top + i * (barH + 4);
+    const label = escapeSvgText(String(d.label || '').slice(0, 18));
+    return `<text x="4" y="${y + barH / 2 + 4}" font-size="10" fill="#333">${label}</text><rect x="${padding.left}" y="${y}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" fill="${BAR_COLOR}" rx="2"/>`;
+  }).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${bars}</svg>`;
+}
+
+/**
+ * Genera SVG de gráfica de pastel para el reporte HTML.
+ * @param {Array<{ name: string, value: number }>} data
+ * @param {{ width?: number, height?: number, cx?: number, cy?: number, r?: number }} [opts]
+ * @returns {string} SVG
+ */
+function svgPieChart(data, opts = {}) {
+  const w = opts.width ?? 280;
+  const h = opts.height ?? CHART_HEIGHT;
+  const list = (Array.isArray(data) ? data : []).filter(d => Number(d.value) > 0);
+  if (list.length === 0) return '';
+  const total = list.reduce((s, d) => s + (Number(d.value) || 0), 0);
+  if (total <= 0) return '';
+  const cx = opts.cx ?? w / 2;
+  const cy = opts.cy ?? h / 2 - 10;
+  const r = opts.r ?? Math.min(w, h) / 2 - 24;
+  let acc = 0;
+  const segments = list.map((d, i) => {
+    const v = Number(d.value) || 0;
+    const ratio = v / total;
+    const startAngle = acc * 2 * Math.PI;
+    acc += ratio;
+    const endAngle = acc * 2 * Math.PI;
+    const x1 = cx + r * Math.sin(startAngle);
+    const y1 = cy - r * Math.cos(startAngle);
+    const x2 = cx + r * Math.sin(endAngle);
+    const y2 = cy - r * Math.cos(endAngle);
+    const large = ratio > 0.5 ? 1 : 0;
+    const color = PIE_COLORS[i % PIE_COLORS.length];
+    return `<path d="M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z" fill="${color}"/>`;
+  }).join('');
+  const legendY = cy + r + 14;
+  const legend = list.map((d, i) => {
+    const x = 20 + (i % 2) * (w / 2);
+    const y = legendY + Math.floor(i / 2) * 16;
+    const color = PIE_COLORS[i % PIE_COLORS.length];
+    const pct = total > 0 ? ((Number(d.value) / total) * 100).toFixed(0) : 0;
+    return `<rect x="${x}" y="${y - 8}" width="12" height="10" fill="${color}"/><text x="${x + 16}" y="${y}" font-size="10" fill="#333">${escapeSvgText(String(d.name || '').slice(0, 20))} (${pct}%)</text>`;
+  }).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${segments}${legend}</svg>`;
+}
+
 class ReportService {
   /**
    * Generar reporte CSV de signos vitales
@@ -862,15 +972,23 @@ class ReportService {
       const chartData = summary?.chartData || {};
       const comorbilidades = chartData.comorbilidadesMasFrecuentes || chartData.comorbilidadesPorPeriodo?.datos || [];
 
-      const citas7Rows = (chartData.citasUltimos7Dias || []).map(d => `
-        <tr><td>${escapeHtml(d.dia || d.fecha)}</td><td>${d.citas ?? 0}</td></tr>`).join('');
-      const comorbRows = (Array.isArray(comorbilidades) ? comorbilidades : []).slice(0, 10).map(c => `
-        <tr><td>${escapeHtml(c.nombre || c.nombre_comorbilidad || '-')}</td><td>${c.frecuencia ?? c.pacientes_afectados ?? 0}</td></tr>`).join('');
+      const citas7 = (chartData.citasUltimos7Dias || []).map(d => ({ label: d.dia || d.fecha || '', value: d.citas ?? 0 }));
+      const comorbList = (Array.isArray(comorbilidades) ? comorbilidades : []).slice(0, 10).map(c => ({
+        label: c.nombre || c.nombre_comorbilidad || '-',
+        value: c.frecuencia ?? c.pacientes_afectados ?? 0
+      }));
+      const citas7Rows = citas7.map(d => `
+        <tr><td>${escapeHtml(d.label)}</td><td>${d.value}</td></tr>`).join('');
+      const comorbRows = comorbList.map(c => `
+        <tr><td>${escapeHtml(c.label)}</td><td>${c.value}</td></tr>`).join('');
+
+      const svgCitas7 = svgBarChart(citas7, { width: CHART_WIDTH, height: CHART_HEIGHT });
+      const svgComorb = svgHorizontalBarChart(comorbList, { width: CHART_WIDTH, height: Math.max(CHART_HEIGHT, comorbList.length * 28) });
 
       const html = `<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"/><title>Reporte Estadísticas - Doctor</title>
-<style>body{font-family:Arial,sans-serif;font-size:12px;padding:20px;color:#333;} h1{color:#1976D2;} h2{color:#1976D2;font-size:16px;margin-top:24px;} table{width:100%;border-collapse:collapse;margin-top:8px;} th,td{border:1px solid #ddd;padding:8px;} th{background:#1976D2;color:#fff;} .metric{display:inline-block;margin:8px 16px 8px 0;} .metric strong{font-size:18px;}</style>
+<style>body{font-family:Arial,sans-serif;font-size:12px;padding:20px;color:#333;} h1{color:#1976D2;} h2{color:#1976D2;font-size:16px;margin-top:24px;} table{width:100%;border-collapse:collapse;margin-top:8px;} th,td{border:1px solid #ddd;padding:8px;} th{background:#1976D2;color:#fff;} .metric{display:inline-block;margin:8px 16px 8px 0;} .metric strong{font-size:18px;} .chart-wrap{margin:12px 0;}</style>
 </head>
 <body>
 <h1>Reporte de Estadísticas - Doctor</h1>
@@ -880,8 +998,10 @@ class ReportService {
 <span class="metric">Citas hoy: <strong>${metrics.citasHoy ?? 0}</strong></span>
 <span class="metric">Próximas citas: <strong>${metrics.proximasCitas ?? 0}</strong></span></p>
 <h2>Citas últimos 7 días</h2>
+<div class="chart-wrap">${svgCitas7 || '<p>Sin datos para graficar</p>'}</div>
 <table><thead><tr><th>Día</th><th>Citas</th></tr></thead><tbody>${citas7Rows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
 <h2>Comorbilidades más frecuentes</h2>
+<div class="chart-wrap">${svgComorb || '<p>Sin datos para graficar</p>'}</div>
 <table><thead><tr><th>Comorbilidad</th><th>Frecuencia</th></tr></thead><tbody>${comorbRows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
 <footer style="margin-top:32px;font-size:10px;color:#666;">Generado por CuidateAPP - Reporte Doctor</footer>
 </body>
@@ -901,21 +1021,32 @@ class ReportService {
     const doctoresActivos = charts.doctoresActivos || [];
     const comorbilidades = analytics?.comorbilidades || [];
 
-    const citas7Rows = (chartData.citasUltimos7Dias || []).map(d => `
-        <tr><td>${escapeHtml(d.dia || d.fecha)}</td><td>${d.citas ?? 0}</td></tr>`).join('');
-    const pacientes7Rows = (chartData.pacientesNuevos || []).map(d => `
-        <tr><td>${escapeHtml(d.dia || d.fecha)}</td><td>${d.pacientes ?? 0}</td></tr>`).join('');
-    const estadoRows = Object.entries(citasPorEstado).map(([estado, count]) => `
-        <tr><td>${escapeHtml(estado)}</td><td>${count}</td></tr>`).join('');
-    const doctoresRows = doctoresActivos.map(d => `
-        <tr><td>${escapeHtml(d.nombre)}</td><td>${d.total_citas ?? 0}</td></tr>`).join('');
+    const citas7 = (chartData.citasUltimos7Dias || []).map(d => ({ label: d.dia || d.fecha || '', value: d.citas ?? 0 }));
+    const pacientes7 = (chartData.pacientesNuevos || []).map(d => ({ label: d.dia || d.fecha || '', value: d.pacientes ?? 0 }));
+    const estadoPie = Object.entries(citasPorEstado).map(([name, value]) => ({ name, value: Number(value) || 0 })).filter(d => d.value > 0);
+    const doctoresBars = doctoresActivos.map(d => ({ label: (d.nombre || '').slice(0, 18), value: d.total_citas ?? 0 }));
+    const comorbList = (Array.isArray(comorbilidades) ? comorbilidades : []).slice(0, 10).map(c => ({
+      label: (c.nombre_comorbilidad || c.nombre || '-').slice(0, 18),
+      value: c.pacientes_afectados ?? c.frecuencia ?? 0
+    }));
+
+    const citas7Rows = citas7.map(d => `<tr><td>${escapeHtml(d.label)}</td><td>${d.value}</td></tr>`).join('');
+    const pacientes7Rows = pacientes7.map(d => `<tr><td>${escapeHtml(d.label)}</td><td>${d.value}</td></tr>`).join('');
+    const estadoRows = Object.entries(citasPorEstado).map(([estado, count]) => `<tr><td>${escapeHtml(estado)}</td><td>${count}</td></tr>`).join('');
+    const doctoresRows = doctoresActivos.map(d => `<tr><td>${escapeHtml(d.nombre)}</td><td>${d.total_citas ?? 0}</td></tr>`).join('');
     const comorbRows = (Array.isArray(comorbilidades) ? comorbilidades : []).slice(0, 10).map(c => `
         <tr><td>${escapeHtml(c.nombre_comorbilidad || c.nombre || '-')}</td><td>${c.pacientes_afectados ?? c.frecuencia ?? 0}</td><td>${c.porcentaje ?? ''}%</td></tr>`).join('');
+
+    const svgCitas7 = svgBarChart(citas7, { width: CHART_WIDTH, height: CHART_HEIGHT });
+    const svgPacientes7 = svgBarChart(pacientes7, { width: CHART_WIDTH, height: CHART_HEIGHT, barColor: '#2E7D32' });
+    const svgCitasEstado = svgPieChart(estadoPie, { width: 320, height: 220 });
+    const svgDoctores = svgHorizontalBarChart(doctoresBars, { width: CHART_WIDTH, height: Math.max(CHART_HEIGHT, doctoresBars.length * 28) });
+    const svgComorb = svgHorizontalBarChart(comorbList, { width: CHART_WIDTH, height: Math.max(CHART_HEIGHT, comorbList.length * 28) });
 
     const html = `<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"/><title>Reporte Estadísticas - Administrador</title>
-<style>body{font-family:Arial,sans-serif;font-size:12px;padding:20px;color:#333;} h1{color:#1976D2;} h2{color:#1976D2;font-size:16px;margin-top:24px;} table{width:100%;border-collapse:collapse;margin-top:8px;} th,td{border:1px solid #ddd;padding:8px;} th{background:#1976D2;color:#fff;} .metric{display:inline-block;margin:8px 16px 8px 0;} .metric strong{font-size:18px;}</style>
+<style>body{font-family:Arial,sans-serif;font-size:12px;padding:20px;color:#333;} h1{color:#1976D2;} h2{color:#1976D2;font-size:16px;margin-top:24px;} table{width:100%;border-collapse:collapse;margin-top:8px;} th,td{border:1px solid #ddd;padding:8px;} th{background:#1976D2;color:#fff;} .metric{display:inline-block;margin:8px 16px 8px 0;} .metric strong{font-size:18px;} .chart-wrap{margin:12px 0;}</style>
 </head>
 <body>
 <h1>Reporte de Estadísticas - Administrador</h1>
@@ -926,14 +1057,19 @@ class ReportService {
 <span class="metric">Citas hoy: <strong>${metrics.citasHoy?.total ?? 0}</strong></span>
 <span class="metric">Tasa asistencia: <strong>${metrics.tasaAsistencia?.tasa_asistencia ?? 0}%</strong></span></p>
 <h2>Citas últimos 7 días</h2>
+<div class="chart-wrap">${svgCitas7 || '<p>Sin datos para graficar</p>'}</div>
 <table><thead><tr><th>Día</th><th>Citas</th></tr></thead><tbody>${citas7Rows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
 <h2>Pacientes nuevos últimos 7 días</h2>
+<div class="chart-wrap">${svgPacientes7 || '<p>Sin datos para graficar</p>'}</div>
 <table><thead><tr><th>Día</th><th>Pacientes</th></tr></thead><tbody>${pacientes7Rows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
 <h2>Citas por estado</h2>
+<div class="chart-wrap">${svgCitasEstado || '<p>Sin datos para graficar</p>'}</div>
 <table><thead><tr><th>Estado</th><th>Cantidad</th></tr></thead><tbody>${estadoRows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
 <h2>Top doctores más activos</h2>
+<div class="chart-wrap">${svgDoctores || '<p>Sin datos para graficar</p>'}</div>
 <table><thead><tr><th>Doctor</th><th>Citas</th></tr></thead><tbody>${doctoresRows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
 <h2>Comorbilidades más frecuentes</h2>
+<div class="chart-wrap">${svgComorb || '<p>Sin datos para graficar</p>'}</div>
 <table><thead><tr><th>Comorbilidad</th><th>Pacientes</th><th>%</th></tr></thead><tbody>${comorbRows || '<tr><td colspan="3">Sin datos</td></tr>'}</tbody></table>
 <footer style="margin-top:32px;font-size:10px;color:#666;">Generado por CuidateAPP - Reporte Administrador</footer>
 </body>
