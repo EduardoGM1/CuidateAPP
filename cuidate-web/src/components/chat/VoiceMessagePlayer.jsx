@@ -45,14 +45,17 @@ export default function VoiceMessagePlayer({
       return;
     }
 
-    // Un solo audio a la vez: notificar a otros reproductores
-    window.dispatchEvent(new CustomEvent(EVENT_PLAY_STARTED, { detail: { source: audio } }));
-
     setLoading(true);
     setError(null);
     audio.play().catch((err) => {
-      setError(err?.message || 'No se pudo reproducir');
       setLoading(false);
+      const msg = err?.message || '';
+      const isInterrupted = /play\(\)\s*request was interrupted|interrupted by a call to pause/i.test(msg);
+      if (isInterrupted) {
+        // Cambio de reproducción: otro audio empezó; no mostrar error al usuario
+        return;
+      }
+      setError('No se pudo reproducir el audio. Inténtalo de nuevo.');
     });
   }, [fullUrl, isPlaying]);
 
@@ -76,6 +79,8 @@ export default function VoiceMessagePlayer({
     const onPlay = () => {
       setIsPlaying(true);
       setLoading(false);
+      // Notificar a otros reproductores solo cuando la reproducción ha empezado (evita error "interrupted by pause")
+      window.dispatchEvent(new CustomEvent(EVENT_PLAY_STARTED, { detail: { source: audio } }));
     };
     const onPause = () => setIsPlaying(false);
     const onTimeUpdate = () => setCurrentTime(audio.currentTime);
@@ -87,7 +92,7 @@ export default function VoiceMessagePlayer({
       onPlayComplete?.();
     };
     const onError = () => {
-      setError('Formato no soportado o URL no accesible');
+      setError('No se pudo reproducir el audio. Inténtalo de nuevo.');
       setLoading(false);
     };
 
