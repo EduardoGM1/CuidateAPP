@@ -2,12 +2,13 @@ import { useState, useCallback, useEffect } from 'react';
 import { openReporteEstadisticasPDF } from '../../api/reportes';
 import { getPacientes } from '../../api/pacientes';
 import { getModulos } from '../../api/modulos';
+import { getDoctorSummary } from '../../api/dashboard';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, Input, Select } from '../../components/ui';
 import { LoadingSpinner } from '../../components/ui';
 import ComorbilidadesHeatmap from '../../components/reportes/ComorbilidadesHeatmap';
 import { ReportesBarChart, ReportesPieChart, ReportesHorizontalBarChart } from '../../components/reportes/ReportesCharts';
-import { IconAlertTriangle } from '../../components/dashboard/StatCard';
+import StatCard, { IconUsers, IconUser, IconCalendar, IconTrendingUp, IconMessageCircle, IconAlertTriangle } from '../../components/dashboard/StatCard';
 import { useAuthStore } from '../../stores/authStore';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { PAGE_SIZE_MAX } from '../../utils/constants';
@@ -219,14 +220,31 @@ function ReporteCitasPorEstadoCard() {
   );
 }
 
+const PERIODO_OPCIONES = [
+  { value: '', label: 'Sin agrupar' },
+  { value: 'semestre', label: 'Semestral' },
+  { value: 'anual', label: 'Anual' },
+  { value: 'mensual', label: 'Rango de meses' },
+];
+const MESES = [
+  { value: 1, label: 'Enero' }, { value: 2, label: 'Febrero' }, { value: 3, label: 'Marzo' },
+  { value: 4, label: 'Abril' }, { value: 5, label: 'Mayo' }, { value: 6, label: 'Junio' },
+  { value: 7, label: 'Julio' }, { value: 8, label: 'Agosto' }, { value: 9, label: 'Septiembre' },
+  { value: 10, label: 'Octubre' }, { value: 11, label: 'Noviembre' }, { value: 12, label: 'Diciembre' },
+];
+
 /**
- * Tarjeta con heatmap de comorbilidades más frecuentes (en la propia pantalla).
- * Carga pacientes y calcula frecuencias; opcional filtro por módulo (solo Admin).
+ * Tarjeta con heatmap de comorbilidades más frecuentes.
+ * Admin: carga pacientes con filtro por módulo. Doctor: usa getDoctorSummary con estado, periodo y rango de meses.
  */
 function ReporteComorbilidadesHeatmapCard() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const isDoctor = useAuthStore((s) => s.isDoctor);
   const [modulos, setModulos] = useState([]);
   const [filtroModulo, setFiltroModulo] = useState('');
+  const [estadoFiltro, setEstadoFiltro] = useState('');
+  const [periodoFiltro, setPeriodoFiltro] = useState('');
+  const [rangoMeses, setRangoMeses] = useState({ mesInicio: '', mesFin: '', año: new Date().getFullYear() });
   const [datos, setDatos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -243,6 +261,33 @@ function ReporteComorbilidadesHeatmapCard() {
     setLoading(true);
     setError(null);
     try {
+      if (isDoctor()) {
+        const params = {};
+        if (estadoFiltro) params.estado = estadoFiltro;
+        if (periodoFiltro) params.periodo = periodoFiltro;
+        if (periodoFiltro === 'mensual' && rangoMeses.mesInicio && rangoMeses.mesFin && rangoMeses.año) {
+          params.mesInicio = Number(rangoMeses.mesInicio);
+          params.mesFin = Number(rangoMeses.mesFin);
+          params.año = Number(rangoMeses.año);
+        }
+        const summary = await getDoctorSummary(params);
+        const chartData = summary?.chartData ?? {};
+        let list = [];
+        if (params.periodo && Array.isArray(chartData.comorbilidadesPorPeriodo) && chartData.comorbilidadesPorPeriodo.length > 0) {
+          const first = chartData.comorbilidadesPorPeriodo[0];
+          list = (first?.comorbilidades ?? []).map((c) => ({
+            nombre: c.nombre ?? c.nombre_comorbilidad ?? '—',
+            frecuencia: c.frecuencia ?? c.pacientes_afectados ?? 0,
+          }));
+        } else if (Array.isArray(chartData.comorbilidadesMasFrecuentes)) {
+          list = chartData.comorbilidadesMasFrecuentes.map((c) => ({
+            nombre: c.nombre ?? c.nombre_comorbilidad ?? '—',
+            frecuencia: c.frecuencia ?? c.pacientes_afectados ?? 0,
+          }));
+        }
+        setDatos(list);
+        return;
+      }
       const params = { limit: PAGE_SIZE_MAX, estado: 'activos' };
       if (filtroModulo && parseInt(filtroModulo, 10) > 0) {
         params.modulo = parseInt(filtroModulo, 10);
@@ -268,19 +313,20 @@ function ReporteComorbilidadesHeatmapCard() {
     } finally {
       setLoading(false);
     }
-  }, [filtroModulo]);
+  }, [isDoctor, filtroModulo, estadoFiltro, periodoFiltro, rangoMeses.mesInicio, rangoMeses.mesFin, rangoMeses.año]);
 
   useEffect(() => {
     load();
   }, [load]);
 
+  const descripcion = isAdmin()
+    ? 'Heatmap de comorbilidades según frecuencia en pacientes activos. Filtro por módulo.'
+    : 'Heatmap de comorbilidades según frecuencia en tus pacientes. Filtra por estado y agrupa por periodo.';
+
   return (
-    <ReporteCardWrapper
-      title="Comorbilidades más frecuentes"
-      description="Heatmap de comorbilidades según frecuencia en pacientes activos. Puedes filtrar por módulo (solo Admin)."
-    >
-      {isAdmin() && modulos.length > 0 && (
-        <div style={{ marginBottom: '1rem' }}>
+    <ReporteCardWrapper title="Comorbilidades más frecuentes" description={descripcion}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem', alignItems: 'flex-end' }}>
+        {isAdmin() && modulos.length > 0 && (
           <Select
             label="Módulo"
             placeholder="Todos"
@@ -293,10 +339,59 @@ function ReporteComorbilidadesHeatmapCard() {
                 label: sanitizeForDisplay(m.nombre_modulo ?? m.nombre) || '—',
               })),
             ]}
-            style={{ marginBottom: 0, minWidth: 200 }}
+            style={{ marginBottom: 0, minWidth: 180 }}
           />
-        </div>
-      )}
+        )}
+        {isDoctor() && (
+          <>
+            <Select
+              label="Estado"
+              placeholder="Todos"
+              value={estadoFiltro || undefined}
+              onChange={(v) => setEstadoFiltro(v ?? '')}
+              options={[
+                { value: '', label: 'Todos' },
+                { value: 'activos', label: 'Activos' },
+                { value: 'inactivos', label: 'Inactivos' },
+              ]}
+              style={{ marginBottom: 0, minWidth: 120 }}
+            />
+            <Select
+              label="Agrupar por periodo"
+              placeholder="Sin agrupar"
+              value={periodoFiltro || undefined}
+              onChange={(v) => setPeriodoFiltro(v ?? '')}
+              options={PERIODO_OPCIONES}
+              style={{ marginBottom: 0, minWidth: 160 }}
+            />
+            {periodoFiltro === 'mensual' && (
+              <>
+                <Select
+                  label="Mes inicio"
+                  value={rangoMeses.mesInicio ? String(rangoMeses.mesInicio) : undefined}
+                  onChange={(v) => setRangoMeses((prev) => ({ ...prev, mesInicio: v ? Number(v) : '' }))}
+                  options={[{ value: '', label: '—' }, ...MESES.map((m) => ({ value: String(m.value), label: m.label }))]}
+                  style={{ marginBottom: 0, minWidth: 130 }}
+                />
+                <Select
+                  label="Mes fin"
+                  value={rangoMeses.mesFin ? String(rangoMeses.mesFin) : undefined}
+                  onChange={(v) => setRangoMeses((prev) => ({ ...prev, mesFin: v ? Number(v) : '' }))}
+                  options={[{ value: '', label: '—' }, ...MESES.map((m) => ({ value: String(m.value), label: m.label }))]}
+                  style={{ marginBottom: 0, minWidth: 130 }}
+                />
+                <Input
+                  label="Año"
+                  type="number"
+                  value={rangoMeses.año || ''}
+                  onChange={(e) => setRangoMeses((prev) => ({ ...prev, año: e.target.value ? Number(e.target.value) : '' }))}
+                  style={{ marginBottom: 0, width: 100 }}
+                />
+              </>
+            )}
+          </>
+        )}
+      </div>
       {error && (
         <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.875rem' }}>
           {error}
@@ -330,9 +425,69 @@ export default function ReportesPage() {
         .map(([name, value]) => ({ name, value: Number(value) }))
     : [];
 
+  const m = summary?.metrics ?? {};
+
   return (
     <div>
       <PageHeader title="Reportes" />
+
+      {/* Resumen (métricas) - paridad con app móvil */}
+      {(admin || isDoctor()) && (
+        <section className="saas-section" aria-label="Resumen" style={{ marginBottom: '1.5rem' }}>
+          <h2 className="saas-section-title">Resumen</h2>
+          {loadingSummary && (
+            <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
+              <LoadingSpinner />
+            </div>
+          )}
+          {errorSummary && (
+            <Card style={{ marginBottom: '1rem', backgroundColor: 'var(--color-fondo-error-claro)', borderColor: 'var(--color-error)' }}>
+              <p style={{ margin: 0, color: 'var(--color-error)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <IconAlertTriangle />
+                {errorSummary}
+              </p>
+              <Button variant="outline" type="button" style={{ marginTop: '0.75rem' }} onClick={refreshSummary}>
+                Reintentar
+              </Button>
+            </Card>
+          )}
+          {!loadingSummary && !errorSummary && summary && (
+            <div className="saas-stats">
+              {admin ? (
+                <>
+                  <StatCard icon={IconUsers} label="Pacientes totales" value={m.totalPacientes} />
+                  <StatCard icon={IconUser} label="Doctores activos" value={m.totalDoctores} />
+                  <StatCard
+                    icon={IconCalendar}
+                    label="Citas hoy"
+                    value={m.citasHoy?.total != null ? m.citasHoy.total : m.citasHoy}
+                    sublabel={m.citasHoy?.completadas != null ? `Completadas: ${m.citasHoy.completadas}` : ''}
+                  />
+                  <StatCard
+                    icon={IconTrendingUp}
+                    label="Tasa de asistencia"
+                    value={
+                      m.tasaAsistencia?.tasa_asistencia != null
+                        ? `${Number(m.tasaAsistencia.tasa_asistencia).toFixed(1)}%`
+                        : (m.tasaAsistencia ?? '—')
+                    }
+                  />
+                </>
+              ) : (
+                <>
+                  <StatCard icon={IconUsers} label="Pacientes asignados" value={m.pacientesAsignados} />
+                  <StatCard icon={IconCalendar} label="Citas hoy" value={m.citasHoy} />
+                  <StatCard
+                    icon={IconTrendingUp}
+                    label="Tasa activos"
+                    value={m.tasaAsistencia != null ? `${Number(m.tasaAsistencia).toFixed(1)}%` : (m.tasaAsistencia ?? '—')}
+                  />
+                </>
+              )}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Gráficos (citas 7 días, pacientes nuevos, etc.) */}
       {(admin || isDoctor()) && (
