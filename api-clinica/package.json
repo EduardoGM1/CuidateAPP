@@ -18,6 +18,7 @@
     "test:instituciones": "node scripts/test-endpoints-instituciones-salud.js",
     "seed:forma": "node scripts/seed-forma-solo-bd.js",
     "seed:instituciones": "node scripts/seed-instituciones-salud.js",
+    "seed:masivo": "node scripts/seed-masivo-1000-pacientes.js",
     "migrate:instituciones": "node scripts/migrate-instituciones-salud.js",
     "test:email": "node scripts/test-resend-email.js",
     "test:email:reset": "node scripts/test-email-password-reset.js",
