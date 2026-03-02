@@ -106,25 +106,31 @@ export default function EditarPaciente() {
     setLoading(true);
     try {
       const [p, mods, insts] = await Promise.all([getPacienteById(parsedId), getModulos(), getInstitucionesSalud()]);
+      if (!p || typeof p !== 'object') {
+        setPaciente(null);
+        return;
+      }
       setPaciente(p);
       setModulos(Array.isArray(mods) ? mods : []);
       setInstitucionesSalud(Array.isArray(insts) ? insts : []);
+
       const tel = p.numero_celular ?? p.telefono ?? '';
-      reset({
-        nombre: p.nombre ?? '',
-        apellido_paterno: p.apellido_paterno ?? '',
-        apellido_materno: p.apellido_materno ?? '',
+      const formValues = {
+        nombre: String(p.nombre ?? '').trim(),
+        apellido_paterno: String(p.apellido_paterno ?? '').trim(),
+        apellido_materno: String(p.apellido_materno ?? '').trim(),
         fecha_nacimiento: toInputDate(p.fecha_nacimiento),
-        curp: p.curp ?? '',
-        numero_celular: tel,
-        direccion: p.direccion ?? '',
-        estado: p.estado ?? '',
-        localidad: p.localidad ?? '',
-        sexo: p.sexo ?? '',
-        institucion_salud: p.institucion_salud ?? '',
-        id_modulo: p.id_modulo ?? '',
+        curp: String(p.curp ?? '').trim(),
+        numero_celular: String(tel).trim(),
+        direccion: String(p.direccion ?? '').trim(),
+        estado: String(p.estado ?? '').trim(),
+        localidad: String(p.localidad ?? '').trim(),
+        sexo: String(p.sexo ?? '').trim(),
+        institucion_salud: String(p.institucion_salud ?? '').trim(),
+        id_modulo: p.id_modulo != null ? String(p.id_modulo) : '',
         activo: p.activo !== false,
-      });
+      };
+      reset(formValues);
     } catch {
       setPaciente(null);
     } finally {
