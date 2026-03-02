@@ -277,34 +277,50 @@ export default function EditarPaciente() {
           {submitError && (
             <p style={{ margin: '0 0 1rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{submitError}</p>
           )}
-          <Input label="Nombre" error={errors.nombre?.message} {...register('nombre')} required />
+          <Input
+            label="Nombre"
+            placeholder="Ej. Juan"
+            error={errors.nombre?.message}
+            {...register('nombre')}
+            required
+          />
           <Input
             label="Apellido paterno"
+            placeholder="Ej. García"
             error={errors.apellido_paterno?.message}
             {...register('apellido_paterno')}
             required
           />
           <Input
             label="Apellido materno"
+            placeholder="Ej. López"
             error={errors.apellido_materno?.message}
             {...register('apellido_materno')}
           />
           <Input
             label="Fecha de nacimiento"
             type="date"
+            placeholder="dd/mm/aaaa"
             error={errors.fecha_nacimiento?.message}
             {...register('fecha_nacimiento')}
             required
           />
-          <Input label="CURP" error={errors.curp?.message} {...register('curp')} />
+          <Input
+            label="CURP"
+            placeholder="Ej. XXXX000000HDFXXX00"
+            error={errors.curp?.message}
+            {...register('curp')}
+          />
           <Input
             label="Teléfono / Celular"
             type="tel"
+            placeholder="Ej. 55 1234 5678"
             error={errors.numero_celular?.message}
             {...register('numero_celular')}
           />
           <Input
             label="Dirección"
+            placeholder="Ej. Calle, número, colonia, CP"
             error={errors.direccion?.message}
             {...register('direccion')}
           />
@@ -420,16 +436,19 @@ export default function EditarPaciente() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
             <Input
               label="Nombre del contacto"
+              placeholder="Ej. María López"
               value={redApoyo.nombre_contacto}
               onChange={(e) => setRedApoyo((prev) => ({ ...prev, nombre_contacto: e.target.value }))}
             />
             <Input
               label="Teléfono del contacto"
+              placeholder="Ej. 55 9876 5432"
               value={redApoyo.numero_celular}
               onChange={(e) => setRedApoyo((prev) => ({ ...prev, numero_celular: e.target.value }))}
             />
             <Input
               label="Parentesco"
+              placeholder="Ej. Cónyuge, hijo/a, hermano/a"
               value={redApoyo.parentesco}
               onChange={(e) => setRedApoyo((prev) => ({ ...prev, parentesco: e.target.value }))}
             />
@@ -479,16 +498,19 @@ export default function EditarPaciente() {
               <Input
                 label="Fecha y hora de la consulta"
                 type="datetime-local"
+                placeholder="dd/mm/aaaa hh:mm"
                 value={primeraConsulta.fecha_cita}
                 onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, fecha_cita: e.target.value }))}
               />
               <Input
                 label="Motivo de la consulta"
+                placeholder="Ej. Control de diabetes, revisión"
                 value={primeraConsulta.motivo}
                 onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, motivo: e.target.value }))}
               />
               <Input
                 label="Diagnóstico inicial (opcional)"
+                placeholder="Ej. Diabetes tipo 2, Hipertensión"
                 value={primeraConsulta.diagnostico}
                 onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, diagnostico: e.target.value }))}
               />
@@ -503,6 +525,7 @@ export default function EditarPaciente() {
                 <Input
                   label="Peso (kg)"
                   type="number"
+                  placeholder="Ej. 70"
                   value={primeraConsulta.peso_kg}
                   onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, peso_kg: e.target.value }))}
                 />
@@ -510,18 +533,21 @@ export default function EditarPaciente() {
                   label="Talla (m)"
                   type="number"
                   step="0.01"
+                  placeholder="Ej. 1.65"
                   value={primeraConsulta.talla_m}
                   onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, talla_m: e.target.value }))}
                 />
                 <Input
                   label="PA sistólica"
                   type="number"
+                  placeholder="Ej. 120"
                   value={primeraConsulta.presion_sistolica}
                   onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, presion_sistolica: e.target.value }))}
                 />
                 <Input
                   label="PA diastólica"
                   type="number"
+                  placeholder="Ej. 80"
                   value={primeraConsulta.presion_diastolica}
                   onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, presion_diastolica: e.target.value }))}
                 />
@@ -529,6 +555,7 @@ export default function EditarPaciente() {
                   label="Glucosa (mg/dL)"
                   type="number"
                   step="0.1"
+                  placeholder="Ej. 100"
                   value={primeraConsulta.glucosa_mg_dl}
                   onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, glucosa_mg_dl: e.target.value }))}
                 />
@@ -592,6 +619,7 @@ export default function EditarPaciente() {
             <Input
               label="Año de diagnóstico (opcional)"
               type="number"
+              placeholder="Ej. 2020"
               value={anioDiagnostico}
               onChange={(e) => setAnioDiagnostico(e.target.value)}
             />
