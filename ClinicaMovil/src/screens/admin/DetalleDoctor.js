@@ -1119,14 +1119,8 @@ const DetalleDoctor = ({ route, navigation }) => {
         <View style={styles.accessDeniedContainer}>
           <Text style={styles.accessDeniedTitle}>🚫 Acceso Denegado</Text>
           <Text style={styles.accessDeniedMessage}>
-            Solo los administradores pueden acceder a esta pantalla.
+            Solo los administradores pueden acceder a esta pantalla. Usa el botón atrás del título.
           </Text>
-          <TouchableOpacity 
-            style={styles.goBackButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.goBackText}>Volver</Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -1139,14 +1133,8 @@ const DetalleDoctor = ({ route, navigation }) => {
         <View style={styles.errorContainer}>
           <Text style={styles.errorTitle}>❌ Error de Datos</Text>
           <Text style={styles.errorMessage}>
-            {dataError}. Por favor, regresa y selecciona un doctor válido.
+            {dataError}. Por favor, usa el botón atrás y selecciona un doctor válido.
           </Text>
-          <TouchableOpacity 
-            style={styles.retryButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.retryText}>Volver</Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -1191,14 +1179,8 @@ const DetalleDoctor = ({ route, navigation }) => {
         <View style={styles.errorContainer}>
           <Text style={styles.errorTitle}>❌ Datos Incompletos</Text>
           <Text style={styles.errorMessage}>
-            La información del doctor está incompleta. Por favor, regresa y selecciona un doctor válido.
+            La información del doctor está incompleta. Por favor, usa el botón atrás y selecciona un doctor válido.
           </Text>
-          <TouchableOpacity 
-            style={styles.retryButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.retryText}>Volver</Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );

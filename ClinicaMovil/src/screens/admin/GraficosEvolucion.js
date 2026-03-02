@@ -1,7 +1,7 @@
 /**
- * Pantalla: Gráficos de Evolución (Admin/Doctor)
+ * Pantalla: Gr?ficos de Evoluci?n (Admin/Doctor)
  * 
- * Visualización de evolución mensual de signos vitales con gráfico de barras interactivo.
+ * Visualizaci?n de evoluci?n mensual de signos vitales con gr?fico de barras interactivo.
  * Cada barra representa un mes, ordenado de peor a mejor resultado.
  */
 
@@ -15,8 +15,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute, useNavigation } from '@react-navigation/native';
-import BackHeader from '../../components/common/BackHeader';
+import { useRoute } from '@react-navigation/native';
 import gestionService from '../../api/gestionService';
 import Logger from '../../services/logger';
 import MonthlyVitalSignsBarChart from '../../components/charts/MonthlyVitalSignsBarChart';
@@ -25,7 +24,6 @@ import ComparativaEvolucion from '../../components/charts/ComparativaEvolucion';
 import { COLORES } from '../../utils/constantes';
 
 const GraficosEvolucion = () => {
-  const navigation = useNavigation();
   const route = useRoute();
   const { paciente } = route.params || {};
   const pacienteId = paciente?.id_paciente || paciente?.id;
@@ -50,7 +48,7 @@ const GraficosEvolucion = () => {
 
   const cargarSignosVitales = async () => {
     if (!pacienteId) {
-      Logger.warn('No se proporcionó pacienteId para cargar signos vitales');
+      Logger.warn('No se proporcion? pacienteId para cargar signos vitales');
       setLoading(false);
       return;
     }
@@ -59,7 +57,7 @@ const GraficosEvolucion = () => {
       setLoading(true);
       setError(null);
       
-      // Ventana de últimos 12 meses para reducir consumo de datos (una sola petición en lugar de getAll)
+      // Ventana de ?ltimos 12 meses para reducir consumo de datos (una sola petici?n en lugar de getAll)
       const ahora = new Date();
       const fechaFin = ahora.toISOString().split('T')[0];
       const fechaInicio = new Date(ahora.getFullYear() - 1, ahora.getMonth(), ahora.getDate()).toISOString().split('T')[0];
@@ -79,7 +77,7 @@ const GraficosEvolucion = () => {
       setSignosVitalesCompletos(signos);
       Logger.info(`Signos vitales cargados (ventana 12 meses, limit ${LIMIT_GRAFICOS}): ${signos.length} registros`);
     } catch (error) {
-      // Capturar toda la información del error de manera segura
+      // Capturar toda la informaci?n del error de manera segura
       const errorInfo = {
         message: error?.message || String(error),
         pacienteId,
@@ -108,10 +106,9 @@ const GraficosEvolucion = () => {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <BackHeader navigation={navigation} title="Gráficos de Evolución" variant="professional" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORES.NAV_PRIMARIO} />
-          <Text style={styles.loadingText}>Cargando gráficos...</Text>
+          <Text style={styles.loadingText}>Cargando gr?ficos...</Text>
         </View>
       </SafeAreaView>
     );
@@ -120,17 +117,13 @@ const GraficosEvolucion = () => {
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
-        <BackHeader navigation={navigation} title="Gráficos de Evolución" variant="professional" />
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Gráficos de Evolución</Text>
-          </View>
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>
               Error al cargar los datos: {error.message || 'Error desconocido'}
             </Text>
             <Text style={styles.errorSubtext}>
-              Por favor, intenta nuevamente más tarde
+              Por favor, intenta nuevamente m?s tarde
             </Text>
           </View>
         </ScrollView>
@@ -140,15 +133,10 @@ const GraficosEvolucion = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <BackHeader navigation={navigation} title="Gráficos de Evolución" variant="professional" />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Gráficos de Evolución</Text>
-        </View>
-
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
-            Visualización mensual consolidada de signos vitales. Las barras están ordenadas de peor a mejor resultado según el score de salud.
+            Visualizaci?n mensual consolidada de signos vitales. Las barras est?n ordenadas de peor a mejor resultado seg?n el score de salud.
           </Text>
         </View>
 
@@ -165,7 +153,7 @@ const GraficosEvolucion = () => {
           signosVitalesCompletos={signosVitalesCompletos}
         />
 
-        {/* Comparativa de evolución - siempre desde el inicio completo */}
+        {/* Comparativa de evoluci?n - siempre desde el inicio completo */}
         <ComparativaEvolucion signosVitales={signosVitalesCompletos} />
       </ScrollView>
     </SafeAreaView>

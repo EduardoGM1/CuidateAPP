@@ -4330,10 +4330,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.noDataContainer}>
-          <Text style={styles.noDataText}>No se encontraron datos del paciente</Text>
-          <Button mode="contained" onPress={() => navigation.goBack()} style={styles.backButton}>
-            Volver
-          </Button>
+          <Text style={styles.noDataText}>No se encontraron datos del paciente. Usa el botón atrás del título.</Text>
         </View>
       </SafeAreaView>
     );
