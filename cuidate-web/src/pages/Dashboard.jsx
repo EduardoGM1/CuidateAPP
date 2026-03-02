@@ -236,6 +236,22 @@ export default function Dashboard() {
                 <StatCard icon={IconUsers} label="Pacientes asignados" value={m.pacientesAsignados} />
                 <StatCard icon={IconMessageCircle} label="Mensajes pendientes" value={m.mensajesPendientes} />
                 <StatCard icon={IconCalendar} label="Próximas citas" value={m.proximasCitas} />
+                {Array.isArray(summary.chartData?.citasUltimos7Dias) && summary.chartData.citasUltimos7Dias.length > 0 && (
+                  <Card className="saas-chart-card" style={{ gridColumn: 'span 2', minHeight: 0 }}>
+                    <h3 className="saas-chart-title">Mis citas últimos 7 días</h3>
+                    <div className="saas-chart-inner">
+                      <ResponsiveContainer width="100%" height={180}>
+                        <BarChart data={summary.chartData.citasUltimos7Dias} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
+                          <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
+                          <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                          <Tooltip />
+                          <Bar dataKey="citas" name="Citas" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </Card>
+                )}
               </>
             )}
           </section>
@@ -302,11 +318,11 @@ export default function Dashboard() {
             </section>
           )}
 
-          {!error && summary && (
+          {!error && summary && isAdmin() && (
             <section className="saas-section" aria-labelledby="graficos-title">
               <h2 id="graficos-title" className="saas-section-title">Gráficos y métricas</h2>
               <div className="saas-charts-grid">
-                {isAdmin() ? (
+                {(
                   <>
                     {Array.isArray(summary.chartData?.citasUltimos7Dias) && summary.chartData.citasUltimos7Dias.length > 0 && (
                       <Card className="saas-chart-card">
@@ -394,24 +410,6 @@ export default function Dashboard() {
                       </Card>
                     )}
                   </>
-                ) : (
-                  Array.isArray(summary.chartData?.citasUltimos7Dias) &&
-                  summary.chartData.citasUltimos7Dias.length > 0 && (
-                    <Card className="saas-chart-card">
-                      <h3 className="saas-chart-title">Mis citas últimos 7 días</h3>
-                      <div className="saas-chart-inner">
-                        <ResponsiveContainer width="100%" height={220}>
-                          <BarChart data={summary.chartData.citasUltimos7Dias} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
-                            <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
-                            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                            <Tooltip />
-                            <Bar dataKey="citas" name="Citas" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </Card>
-                  )
                 )}
               </div>
             </section>
