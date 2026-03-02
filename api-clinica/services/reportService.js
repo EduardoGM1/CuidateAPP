@@ -1102,12 +1102,15 @@ class ReportService {
       });
 
       const meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      const p = paciente;
+      const nombreModulo = p?.Modulo?.nombre_modulo ?? null;
       const cabecera = {
-        institucion: process.env.FORMA_INSTITUCION || 'Institución',
-        entidad: process.env.FORMA_ENTIDAD || 'Entidad Federativa',
-        municipio: process.env.FORMA_MUNICIPIO || 'Municipio',
-        unidadMedica: process.env.FORMA_UNIDAD_MEDICA || 'Unidad Médica',
-        nombreGAM: process.env.FORMA_NOMBRE_GAM || 'Nombre del Grupo de Ayuda Mutua EC',
+        institucion: (p && p.institucion_salud) ? String(p.institucion_salud).trim() : (process.env.FORMA_INSTITUCION || 'Institución'),
+        entidad: (p && p.estado) ? String(p.estado).trim() : (process.env.FORMA_ENTIDAD || 'Entidad Federativa'),
+        jurisdiccion: (p && p.estado) ? String(p.estado).trim() : (process.env.FORMA_JURISDICCION || process.env.FORMA_ENTIDAD || 'Jurisdicción'),
+        municipio: (p && p.localidad) ? String(p.localidad).trim() : (process.env.FORMA_MUNICIPIO || 'Municipio'),
+        unidadMedica: (p && p.institucion_salud) ? String(p.institucion_salud).trim() : (process.env.FORMA_UNIDAD_MEDICA || 'Unidad Médica'),
+        nombreGAM: nombreModulo ? String(nombreModulo).trim() : (process.env.FORMA_NOMBRE_GAM || 'Nombre del Grupo de Ayuda Mutua EC'),
         etapa: process.env.FORMA_ETAPA || 'Etapa',
         mes,
         anio,

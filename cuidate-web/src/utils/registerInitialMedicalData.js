@@ -18,7 +18,7 @@ import { parsePositiveInt } from './params';
  * @param {string} [options.fechaCita] - ISO o compatible con Date
  * @param {string} [options.motivo]
  * @param {string} [options.diagnosticoTexto]
- * @param {{ peso_kg?: string, talla_m?: string, presion_sistolica?: string, presion_diastolica?: string, glucosa_mg_dl?: string }} [options.signos]
+ * @param {Record<string, number|string>} [options.signos] - Payload de signos (ej. resultado de signosVitalesToPayload). Puede incluir peso_kg, talla_m, presion_sistolica, presion_diastolica, glucosa_mg_dl, colesterol_mg_dl, colesterol_ldl, colesterol_hdl, trigliceridos_mg_dl, hba1c_porcentaje, edad_paciente_en_medicion, medida_cintura_cm, observaciones.
  * @param {Array<number|string>} [options.comorbilidadIds]
  * @param {boolean} [options.tratamientoNoFarmaco]
  * @param {boolean} [options.tratamientoFarmaco]
@@ -57,14 +57,20 @@ export async function registerInitialMedicalData(options) {
     }
   }
 
-  // 2) Signos vitales básicos vinculados a la primera consulta (si hay datos)
+  // 2) Signos vitales (payload completo: puede venir de signosVitalesToPayload)
   const signosPayload = {};
-  if (signos.peso_kg?.trim()) signosPayload.peso_kg = parseFloat(signos.peso_kg);
-  if (signos.talla_m?.trim()) signosPayload.talla_m = parseFloat(signos.talla_m);
-  if (signos.presion_sistolica?.trim()) signosPayload.presion_sistolica = parseInt(signos.presion_sistolica, 10);
-  if (signos.presion_diastolica?.trim()) signosPayload.presion_diastolica = parseInt(signos.presion_diastolica, 10);
-  if (signos.glucosa_mg_dl?.trim()) signosPayload.glucosa_mg_dl = parseFloat(signos.glucosa_mg_dl);
-
+  const num = (v) => (v != null && String(v).trim() !== '' ? (Number(v) || null) : null);
+  const keysSignos = ['peso_kg', 'talla_m', 'medida_cintura_cm', 'presion_sistolica', 'presion_diastolica', 'glucosa_mg_dl', 'colesterol_mg_dl', 'colesterol_ldl', 'colesterol_hdl', 'trigliceridos_mg_dl', 'hba1c_porcentaje', 'edad_paciente_en_medicion'];
+  keysSignos.forEach((k) => {
+    const v = signos[k];
+    if (v != null && v !== '') {
+      const n = typeof v === 'number' ? v : num(v);
+      if (n != null) signosPayload[k] = n;
+    }
+  });
+  if (signos.observaciones && String(signos.observaciones).trim()) {
+    signosPayload.observaciones = String(signos.observaciones).trim().slice(0, 2000);
+  }
   if (Object.keys(signosPayload).length > 0) {
     await createSignosVitales(pid, {
       ...signosPayload,

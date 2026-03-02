@@ -28,12 +28,20 @@ export default function AgregarPaciente() {
   const [doctores, setDoctores] = useState([]);
   const [loadingDoctores, setLoadingDoctores] = useState(false);
 
-  // Datos adicionales: red de apoyo básica y primera consulta opcional
-  const [redApoyo, setRedApoyo] = useState({
-    nombre_contacto: '',
-    numero_celular: '',
-    parentesco: '',
-  });
+  // Red de apoyo: lista de contactos (paridad con app móvil: múltiples contactos con email, dirección, localidad)
+  const [redApoyoList, setRedApoyoList] = useState([
+    { nombre_contacto: '', numero_celular: '', email: '', direccion: '', localidad: '', parentesco: '' },
+  ]);
+  const addRedApoyo = () => {
+    setRedApoyoList((prev) => [...prev, { nombre_contacto: '', numero_celular: '', email: '', direccion: '', localidad: '', parentesco: '' }]);
+  };
+  const removeRedApoyo = (index) => {
+    if (redApoyoList.length <= 1) return;
+    setRedApoyoList((prev) => prev.filter((_, i) => i !== index));
+  };
+  const updateRedApoyo = (index, field, value) => {
+    setRedApoyoList((prev) => prev.map((c, i) => (i === index ? { ...c, [field]: value } : c)));
+  };
   const [primeraConsultaEnabled, setPrimeraConsultaEnabled] = useState(false);
   const [primeraConsulta, setPrimeraConsulta] = useState({
     id_doctor: '',
@@ -45,20 +53,32 @@ export default function AgregarPaciente() {
     presion_sistolica: '',
     presion_diastolica: '',
     glucosa_mg_dl: '',
+    colesterol_mg_dl: '',
+    colesterol_ldl: '',
+    colesterol_hdl: '',
+    trigliceridos_mg_dl: '',
+    hba1c_porcentaje: '',
+    edad_paciente_en_medicion: '',
+    medida_cintura_cm: '',
+    observaciones: '',
   });
-  const [enfermedadesCronicas, setEnfermedadesCronicas] = useState({
-    diabetes: false,
-    hipertension: false,
-    obesidad: false,
+  const ENFERMEDADES_CRONICAS_KEYS = [
+    'diabetes', 'hipertension', 'obesidad', 'dislipidemia', 'enfermedad_renal_cronica',
+    'epoc', 'enfermedad_cardiovascular', 'tuberculosis', 'asma', 'tabaquismo', 'otro',
+  ];
+  const [enfermedadesCronicas, setEnfermedadesCronicas] = useState(() => {
+    const o = {};
+    ENFERMEDADES_CRONICAS_KEYS.forEach((k) => { o[k] = false; });
+    return o;
   });
   const [tratamientoNoFarmaco, setTratamientoNoFarmaco] = useState(false);
   const [tratamientoFarmaco, setTratamientoFarmaco] = useState(false);
   const [anioDiagnostico, setAnioDiagnostico] = useState('');
   const [catalogoComorbilidades, setCatalogoComorbilidades] = useState([]);
-  const [comorbilidadIds, setComorbilidadIds] = useState({
-    diabetes: null,
-    hipertension: null,
-    obesidad: null,
+  const [comorbilidadIds, setComorbilidadIds] = useState(() => {
+    const o = {};
+    ENFERMEDADES_CRONICAS_KEYS.forEach((k) => { o[k] = null; });
+    return o;
   });
 
   const {
@@ -116,12 +136,38 @@ export default function AgregarPaciente() {
           diabetes: findByKeyword('diab'),
           hipertension: findByKeyword('hipertens'),
           obesidad: findByKeyword('obes'),
+          dislipidemia: findByKeyword('dislipid') || findByKeyword('colesterol'),
+          enfermedad_renal_cronica: findByKeyword('renal') || findByKeyword('erc'),
+          epoc: findByKeyword('epoc'),
+          enfermedad_cardiovascular: findByKeyword('cardiovascular') || findByKeyword('corazón'),
+          tuberculosis: findByKeyword('tubercul'),
+          asma: findByKeyword('asma'),
+          tabaquismo: findByKeyword('tabaqu'),
+          otro: null,
         });
       })
       .catch(() => {
         setCatalogoComorbilidades([]);
       });
   }, []);
+
+  // Calcular edad en medición desde fecha de nacimiento al activar primera consulta (paridad con app móvil)
+  const fechaNacimientoWatch = watch('fecha_nacimiento');
+  useEffect(() => {
+    if (!fechaNacimientoWatch || !primeraConsultaEnabled) return;
+    const d = new Date(fechaNacimientoWatch);
+    if (Number.isNaN(d.getTime())) return;
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - d.getFullYear();
+    const m = hoy.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && hoy.getDate() < d.getDate())) edad--;
+    if (edad >= 0 && edad <= 120) {
+      setPrimeraConsulta((prev) => ({
+        ...prev,
+        edad_paciente_en_medicion: String(edad),
+      }));
+    }
+  }, [fechaNacimientoWatch, primeraConsultaEnabled]);
 
   async function onSubmit(data) {
     setSubmitError('');
@@ -144,19 +190,21 @@ export default function AgregarPaciente() {
       const id = created?.id_paciente ?? created?.id;
 
       if (id) {
-        // 1) Red de apoyo básica (si se capturó nombre o teléfono)
-        const nombreRed = redApoyo.nombre_contacto.trim();
-        const telRed = redApoyo.numero_celular.trim();
-        if (nombreRed || telRed) {
+        // 1) Red de apoyo: crear cada contacto que tenga al menos nombre (paridad con app móvil)
+        for (const contacto of redApoyoList) {
+          const nombreRed = (contacto.nombre_contacto || '').trim();
+          if (!nombreRed) continue;
           try {
             await createPacienteRedApoyo(id, {
-              nombre_contacto: nombreRed || 'Contacto principal',
-              numero_celular: telRed || undefined,
-              parentesco: redApoyo.parentesco.trim() || undefined,
+              nombre_contacto: nombreRed,
+              numero_celular: (contacto.numero_celular || '').trim() || undefined,
+              email: (contacto.email || '').trim() || undefined,
+              direccion: (contacto.direccion || '').trim() || undefined,
+              localidad: (contacto.localidad || '').trim() || undefined,
+              parentesco: (contacto.parentesco || '').trim() || undefined,
             });
           } catch (e) {
-            // No frenamos el alta del paciente; solo dejamos constancia en el error general
-            console.error('Error al crear red de apoyo inicial', e);
+            console.error('Error al crear contacto de red de apoyo', e);
           }
         }
 
@@ -167,15 +215,11 @@ export default function AgregarPaciente() {
           const fecha = (primeraConsulta.fecha_cita || '').trim() || undefined;
 
           const selectedComorbilidadIds = [];
-          if (enfermedadesCronicas.diabetes && comorbilidadIds.diabetes) {
-            selectedComorbilidadIds.push(comorbilidadIds.diabetes);
-          }
-          if (enfermedadesCronicas.hipertension && comorbilidadIds.hipertension) {
-            selectedComorbilidadIds.push(comorbilidadIds.hipertension);
-          }
-          if (enfermedadesCronicas.obesidad && comorbilidadIds.obesidad) {
-            selectedComorbilidadIds.push(comorbilidadIds.obesidad);
-          }
+          ENFERMEDADES_CRONICAS_KEYS.forEach((key) => {
+            if (enfermedadesCronicas[key] && comorbilidadIds[key]) {
+              selectedComorbilidadIds.push(comorbilidadIds[key]);
+            }
+          });
 
           try {
             await registerInitialMedicalData({
@@ -190,6 +234,14 @@ export default function AgregarPaciente() {
                 presion_sistolica: primeraConsulta.presion_sistolica,
                 presion_diastolica: primeraConsulta.presion_diastolica,
                 glucosa_mg_dl: primeraConsulta.glucosa_mg_dl,
+                colesterol_mg_dl: primeraConsulta.colesterol_mg_dl,
+                colesterol_ldl: primeraConsulta.colesterol_ldl,
+                colesterol_hdl: primeraConsulta.colesterol_hdl,
+                trigliceridos_mg_dl: primeraConsulta.trigliceridos_mg_dl,
+                hba1c_porcentaje: primeraConsulta.hba1c_porcentaje,
+                edad_paciente_en_medicion: primeraConsulta.edad_paciente_en_medicion,
+                medida_cintura_cm: primeraConsulta.medida_cintura_cm,
+                observaciones: primeraConsulta.observaciones,
               },
               comorbilidadIds: selectedComorbilidadIds,
               tratamientoNoFarmaco,
@@ -239,7 +291,7 @@ export default function AgregarPaciente() {
             {...register('fecha_nacimiento')}
             required
           />
-          <Input label="CURP" error={errors.curp?.message} {...register('curp')} />
+          <Input label="CURP" error={errors.curp?.message} {...register('curp')} required placeholder="18 caracteres, formato oficial" />
           <Input
             label="Teléfono / Celular"
             type="tel"
@@ -286,7 +338,7 @@ export default function AgregarPaciente() {
             </select>
           </div>
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}>Institución de salud</label>
+            <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}>Institución de salud *</label>
             <select
               {...register('institucion_salud')}
               style={{ width: '100%', padding: '0.6rem 0.75rem', border: '1px solid var(--color-borde-claro)', borderRadius: 'var(--radius)', backgroundColor: 'var(--color-fondo-card)' }}
@@ -296,6 +348,7 @@ export default function AgregarPaciente() {
                 <option key={inst.id_institucion_salud ?? inst.nombre} value={inst.nombre}>{sanitizeForDisplay(inst.nombre) || inst.nombre}</option>
               ))}
             </select>
+            {errors.institucion_salud?.message && <p style={{ margin: '0.25rem 0 0', fontSize: '0.875rem', color: 'var(--color-error)' }}>{errors.institucion_salud.message}</p>}
           </div>
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}>Módulo</label>
@@ -311,32 +364,94 @@ export default function AgregarPaciente() {
               ))}
             </select>
           </div>
-          {/* Sección opcional: Red de apoyo básica */}
+          {/* Red de apoyo: múltiples contactos con email, dirección, localidad (paridad con app móvil) */}
           <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--color-borde-claro)' }} />
           <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: 'var(--color-primario)' }}>
             Red de apoyo (opcional)
           </h3>
           <p style={{ margin: '0 0 0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
-            Puedes registrar un contacto principal de red de apoyo para este paciente. Podrás agregar más contactos
-            después desde el detalle del paciente.
+            Puedes registrar uno o más contactos de red de apoyo. Podrás agregar más después desde el detalle del paciente.
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
-            <Input
-              label="Nombre del contacto"
-              value={redApoyo.nombre_contacto}
-              onChange={(e) => setRedApoyo((prev) => ({ ...prev, nombre_contacto: e.target.value }))}
-            />
-            <Input
-              label="Teléfono del contacto"
-              value={redApoyo.numero_celular}
-              onChange={(e) => setRedApoyo((prev) => ({ ...prev, numero_celular: e.target.value }))}
-            />
-            <Input
-              label="Parentesco"
-              value={redApoyo.parentesco}
-              onChange={(e) => setRedApoyo((prev) => ({ ...prev, parentesco: e.target.value }))}
-            />
-          </div>
+          {redApoyoList.map((contacto, index) => (
+            <div
+              key={index}
+              style={{
+                marginBottom: '1.25rem',
+                padding: '1rem',
+                border: '1px solid var(--color-borde-claro)',
+                borderRadius: 'var(--radius)',
+                backgroundColor: 'var(--color-fondo-body)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                <span style={{ fontWeight: 600, color: 'var(--color-texto-primario)' }}>Contacto {index + 1}</span>
+                {redApoyoList.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeRedApoyo(index)}
+                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.875rem', color: 'var(--color-error)', background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    Quitar
+                  </button>
+                )}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+                <Input
+                  label="Nombre del contacto"
+                  value={contacto.nombre_contacto}
+                  onChange={(e) => updateRedApoyo(index, 'nombre_contacto', e.target.value)}
+                  placeholder="Ej: María García"
+                />
+                <Input
+                  label="Teléfono del contacto"
+                  type="tel"
+                  value={contacto.numero_celular}
+                  onChange={(e) => updateRedApoyo(index, 'numero_celular', e.target.value)}
+                />
+                <Input
+                  label="Email"
+                  type="email"
+                  value={contacto.email}
+                  onChange={(e) => updateRedApoyo(index, 'email', e.target.value)}
+                  placeholder="opcional"
+                />
+                <Input
+                  label="Dirección"
+                  value={contacto.direccion}
+                  onChange={(e) => updateRedApoyo(index, 'direccion', e.target.value)}
+                  placeholder="opcional"
+                />
+                <Input
+                  label="Localidad"
+                  value={contacto.localidad}
+                  onChange={(e) => updateRedApoyo(index, 'localidad', e.target.value)}
+                  placeholder="opcional"
+                />
+                <Input
+                  label="Parentesco"
+                  value={contacto.parentesco}
+                  onChange={(e) => updateRedApoyo(index, 'parentesco', e.target.value)}
+                  placeholder="Ej: Esposa, Hijo"
+                />
+              </div>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addRedApoyo}
+            style={{
+              marginBottom: '1rem',
+              padding: '0.5rem 1rem',
+              fontSize: '0.9rem',
+              color: 'var(--color-primario)',
+              background: 'none',
+              border: '1px dashed var(--color-borde-claro)',
+              borderRadius: 'var(--radius)',
+              cursor: 'pointer',
+            }}
+          >
+            + Agregar otro contacto
+          </button>
 
           {/* Sección opcional: Primera consulta rápida */}
           <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--color-borde-claro)' }} />
@@ -392,40 +507,30 @@ export default function AgregarPaciente() {
           {primeraConsultaEnabled && (
             <div style={{ marginBottom: '1rem' }}>
               <p style={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
-                Signos vitales básicos de la primera consulta (opcionales):
+                Signos vitales de la primera consulta (opcionales):
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: '0.75rem' }}>
-                <Input
-                  label="Peso (kg)"
-                  type="number"
-                  value={primeraConsulta.peso_kg}
-                  onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, peso_kg: e.target.value }))}
-                />
-                <Input
-                  label="Talla (m)"
-                  type="number"
-                  step="0.01"
-                  value={primeraConsulta.talla_m}
-                  onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, talla_m: e.target.value }))}
-                />
-                <Input
-                  label="PA sistólica"
-                  type="number"
-                  value={primeraConsulta.presion_sistolica}
-                  onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, presion_sistolica: e.target.value }))}
-                />
-                <Input
-                  label="PA diastólica"
-                  type="number"
-                  value={primeraConsulta.presion_diastolica}
-                  onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, presion_diastolica: e.target.value }))}
-                />
-                <Input
-                  label="Glucosa (mg/dL)"
-                  type="number"
-                  step="0.1"
-                  value={primeraConsulta.glucosa_mg_dl}
-                  onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, glucosa_mg_dl: e.target.value }))}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <Input label="Peso (kg)" type="number" value={primeraConsulta.peso_kg} onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, peso_kg: e.target.value }))} />
+                <Input label="Talla (m)" type="number" step="0.01" value={primeraConsulta.talla_m} onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, talla_m: e.target.value }))} />
+                <Input label="Circunf. cintura (cm)" type="number" step="0.1" value={primeraConsulta.medida_cintura_cm} onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, medida_cintura_cm: e.target.value }))} />
+                <Input label="PA sistólica" type="number" value={primeraConsulta.presion_sistolica} onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, presion_sistolica: e.target.value }))} />
+                <Input label="PA diastólica" type="number" value={primeraConsulta.presion_diastolica} onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, presion_diastolica: e.target.value }))} />
+                <Input label="Glucosa (mg/dL)" type="number" step="0.1" value={primeraConsulta.glucosa_mg_dl} onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, glucosa_mg_dl: e.target.value }))} />
+                <Input label="HbA1c (%)" type="number" step="0.1" value={primeraConsulta.hba1c_porcentaje} onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, hba1c_porcentaje: e.target.value }))} placeholder="Criterios acreditación" />
+                <Input label="Edad en medición (años)" type="number" value={primeraConsulta.edad_paciente_en_medicion} onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, edad_paciente_en_medicion: e.target.value }))} placeholder="Ej: 45" />
+                <Input label="Colesterol total (mg/dL)" type="number" value={primeraConsulta.colesterol_mg_dl} onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, colesterol_mg_dl: e.target.value }))} />
+                <Input label="Colesterol LDL (mg/dL)" type="number" value={primeraConsulta.colesterol_ldl} onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, colesterol_ldl: e.target.value }))} />
+                <Input label="Colesterol HDL (mg/dL)" type="number" value={primeraConsulta.colesterol_hdl} onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, colesterol_hdl: e.target.value }))} />
+                <Input label="Triglicéridos (mg/dL)" type="number" value={primeraConsulta.trigliceridos_mg_dl} onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, trigliceridos_mg_dl: e.target.value }))} />
+              </div>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}>Observaciones</label>
+                <textarea
+                  value={primeraConsulta.observaciones}
+                  onChange={(e) => setPrimeraConsulta((prev) => ({ ...prev, observaciones: e.target.value }))}
+                  placeholder="Observaciones adicionales de la primera consulta..."
+                  rows={3}
+                  style={{ width: '100%', padding: '0.6rem 0.75rem', border: '1px solid var(--color-borde-claro)', borderRadius: 'var(--radius)', backgroundColor: 'var(--color-fondo-card)', resize: 'vertical' }}
                 />
               </div>
             </div>
@@ -439,31 +544,29 @@ export default function AgregarPaciente() {
           <p style={{ margin: '0 0 0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
             Marca las enfermedades crónicas principales para registrar comorbilidades iniciales del paciente.
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.75rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={enfermedadesCronicas.diabetes}
-                onChange={(e) => setEnfermedadesCronicas((prev) => ({ ...prev, diabetes: e.target.checked }))}
-              />
-              <span>Diabetes</span>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={enfermedadesCronicas.hipertension}
-                onChange={(e) => setEnfermedadesCronicas((prev) => ({ ...prev, hipertension: e.target.checked }))}
-              />
-              <span>Hipertensión</span>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={enfermedadesCronicas.obesidad}
-                onChange={(e) => setEnfermedadesCronicas((prev) => ({ ...prev, obesidad: e.target.checked }))}
-              />
-              <span>Obesidad</span>
-            </label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem 1.25rem', marginBottom: '0.75rem' }}>
+            {[
+              { key: 'diabetes', label: 'Diabetes' },
+              { key: 'hipertension', label: 'Hipertensión' },
+              { key: 'obesidad', label: 'Obesidad' },
+              { key: 'dislipidemia', label: 'Dislipidemia' },
+              { key: 'enfermedad_renal_cronica', label: 'Enfermedad renal crónica' },
+              { key: 'epoc', label: 'EPOC' },
+              { key: 'enfermedad_cardiovascular', label: 'Enfermedad cardiovascular' },
+              { key: 'tuberculosis', label: 'Tuberculosis' },
+              { key: 'asma', label: 'Asma' },
+              { key: 'tabaquismo', label: 'Tabaquismo' },
+              { key: 'otro', label: 'Otro' },
+            ].map(({ key, label }) => (
+              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={!!enfermedadesCronicas[key]}
+                  onChange={(e) => setEnfermedadesCronicas((prev) => ({ ...prev, [key]: e.target.checked }))}
+                />
+                <span>{label}</span>
+              </label>
+            ))}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.75rem' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
