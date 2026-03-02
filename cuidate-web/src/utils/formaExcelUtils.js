@@ -46,25 +46,31 @@ const FORMA_HEADERS = [
   'Exploración Fondo de Ojo',
 ];
 
+/** Convierte valor booleano del backend (1/0 o true/false) a "Si" o vacío para el Excel. */
+function boolToSi(val) {
+  if (val === 1 || val === true || val === '1') return 'Si';
+  return '';
+}
+
 function filaToRow(fila) {
   return [
     fila.n ?? '',
     fila.nombre ?? '',
     fila.edad ?? '',
     fila.sexo ?? '',
-    fila.recibeTratamiento ?? '',
-    fila.saludBucal ?? '',
-    fila.tuberculosis ?? '',
-    fila.basal ?? '',
+    boolToSi(fila.recibeTratamiento),
+    boolToSi(fila.saludBucal),
+    boolToSi(fila.tuberculosis),
+    boolToSi(fila.basal),
     fila.anoDx ?? '',
     fila.dxAgregados ?? '',
-    fila.noFarmacologico ?? '',
-    fila.farmacologico ?? '',
-    fila.nutricional ?? '',
-    fila.actividadFisica ?? '',
-    fila.medicoPreventiva ?? '',
-    fila.psicologica ?? '',
-    fila.odontologica ?? '',
+    boolToSi(fila.noFarmacologico),
+    boolToSi(fila.farmacologico),
+    boolToSi(fila.nutricional),
+    boolToSi(fila.actividadFisica),
+    boolToSi(fila.medicoPreventiva),
+    boolToSi(fila.psicologica),
+    boolToSi(fila.odontologica),
     fila.talla ?? '',
     fila.imc ?? '',
     fila.colesterol ?? '',
@@ -72,8 +78,8 @@ function filaToRow(fila) {
     fila.glucosa ?? '',
     fila.presionSistolica ?? '',
     fila.presionDiastolica ?? '',
-    fila.microalbuminuria ?? '',
-    fila.fondoOjo ?? '',
+    boolToSi(fila.microalbuminuria),
+    boolToSi(fila.fondoOjo),
   ];
 }
 
