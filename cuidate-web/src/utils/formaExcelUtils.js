@@ -123,7 +123,7 @@ function thinBorder() {
 export async function buildFormaExcel(data, nombreHoja = 'FORMA') {
   const { cabecera = {}, filas = [] } = data;
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet(nombreHoja, { views: [{ state: 'frozen', ySplit: 23 }] });
+  const ws = wb.addWorksheet(nombreHoja, { views: [{ state: 'frozen', ySplit: 15 }] });
 
   let row = 1;
 
@@ -161,25 +161,46 @@ export async function buildFormaExcel(data, nombreHoja = 'FORMA') {
   row++;
   row++;
 
-  // --- Metadatos (ODS ce93/ce94: Arial 14pt bold, borde) ---
-  const metaLabels = [
+  // --- Metadatos en disposición horizontal (2 filas, como formato oficial ODS) ---
+  // Fila 1: Institución, Entidad Federativa, Jurisdicción, Municipio, Unidad Médica
+  const metaRow1 = [
     ['Institución:', cabecera.institucion ?? ''],
     ['Entidad Federativa:', cabecera.entidad ?? ''],
     ['Jurisdicción:', cabecera.jurisdiccion ?? cabecera.entidad ?? ''],
     ['Municipio:', cabecera.municipio ?? ''],
     ['Unidad Médica:', cabecera.unidadMedica ?? ''],
+  ];
+  const totalCols = FORMA_HEADERS.length;
+  const colSpans1 = [5, 5, 5, 5, totalCols - 20]; // 5 celdas en la primera fila
+  let col = 1;
+  metaRow1.forEach(([label, value], i) => {
+    const span = colSpans1[i];
+    const cell = ws.getCell(row, col);
+    cell.value = `${label} ${value}`.trim();
+    applyCellStyle(cell, { bold: true, fontSize: 14, border: true });
+    ws.mergeCells(row, col, row, col + span - 1);
+    col += span;
+  });
+  row++;
+
+  // Fila 2: Nombre GAM, Etapa, Mes y año, Nombre Coordinador
+  const metaRow2 = [
     ['Nombre del Grupo de Ayuda Mutua EC:', cabecera.nombreGAM ?? ''],
     ['Etapa:', cabecera.etapa ?? ''],
     ['Mes y año a reportar:', `${cabecera.mesNombre ?? ''} ${cabecera.anio ?? ''}`.trim()],
     ['Nombre Coordinador del GAM EC:', cabecera.coordinador ?? ''],
   ];
-  metaLabels.forEach(([label, value]) => {
-    const cell = ws.getCell(row, 1);
+  const colSpans2 = [6, 6, 7, totalCols - 19]; // 4 celdas en la segunda fila
+  col = 1;
+  metaRow2.forEach(([label, value], i) => {
+    const span = colSpans2[i];
+    const cell = ws.getCell(row, col);
     cell.value = `${label} ${value}`.trim();
     applyCellStyle(cell, { bold: true, fontSize: 14, border: true });
-    ws.mergeCells(row, 1, row, FORMA_HEADERS.length);
-    row++;
+    ws.mergeCells(row, col, row, col + span - 1);
+    col += span;
   });
+  row++;
   row++;
 
   // --- Secciones (ODS: rojo #A50021 blanco, luego verde #B6E0BA, luego amarillo #FFD961) ---
