@@ -88,7 +88,7 @@ export async function getFormaData(params) {
   if (params.anio != null) q.set('anio', String(params.anio));
   const url = `${REPORTES_FORMA(id)}?${q.toString()}`;
   const { data } = await client.get(url, { timeout: 60000 });
-  return data;
+  return data?.data != null ? data.data : data;
 }
 
 /**

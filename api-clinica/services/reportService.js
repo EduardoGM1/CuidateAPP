@@ -1091,6 +1091,7 @@ class ReportService {
       const paciente = await Paciente.findByPk(idPaciente, {
         include: [
           { model: Modulo, attributes: ['id_modulo', 'nombre_modulo'], required: false },
+          { model: Doctor, as: 'Doctores', attributes: ['id_doctor', 'institucion_hospitalaria', 'id_modulo'], through: { attributes: [] }, required: false },
           {
             model: Comorbilidad,
             as: 'Comorbilidades',
@@ -1103,14 +1104,19 @@ class ReportService {
 
       const meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
       const p = paciente;
+      const estadoVal = p ? (p.estado != null && p.estado !== '') ? String(p.estado).trim() : '' : '';
+      const localidadVal = p ? (p.localidad != null && p.localidad !== '') ? String(p.localidad).trim() : '' : '';
+      const institucionVal = p ? (p.institucion_salud != null && p.institucion_salud !== '') ? String(p.institucion_salud).trim() : '' : '';
       const nombreModulo = p?.Modulo?.nombre_modulo ?? null;
+      const primerDoctor = p?.Doctores?.[0];
+      const institucionDoctor = primerDoctor?.institucion_hospitalaria ? String(primerDoctor.institucion_hospitalaria).trim() : '';
       const cabecera = {
-        institucion: (p && p.institucion_salud) ? String(p.institucion_salud).trim() : (process.env.FORMA_INSTITUCION || 'Institución'),
-        entidad: (p && p.estado) ? String(p.estado).trim() : (process.env.FORMA_ENTIDAD || 'Entidad Federativa'),
-        jurisdiccion: (p && p.estado) ? String(p.estado).trim() : (process.env.FORMA_JURISDICCION || process.env.FORMA_ENTIDAD || 'Jurisdicción'),
-        municipio: (p && p.localidad) ? String(p.localidad).trim() : (process.env.FORMA_MUNICIPIO || 'Municipio'),
-        unidadMedica: (p && p.institucion_salud) ? String(p.institucion_salud).trim() : (process.env.FORMA_UNIDAD_MEDICA || 'Unidad Médica'),
-        nombreGAM: nombreModulo ? String(nombreModulo).trim() : (process.env.FORMA_NOMBRE_GAM || 'Nombre del Grupo de Ayuda Mutua EC'),
+        institucion: (institucionVal && String(institucionVal).trim()) ? String(institucionVal).trim() : (institucionDoctor || process.env.FORMA_INSTITUCION || 'Institución'),
+        entidad: (estadoVal && String(estadoVal).trim()) ? String(estadoVal).trim() : (process.env.FORMA_ENTIDAD || 'Entidad Federativa'),
+        jurisdiccion: (estadoVal && String(estadoVal).trim()) ? String(estadoVal).trim() : (process.env.FORMA_JURISDICCION || process.env.FORMA_ENTIDAD || 'Jurisdicción'),
+        municipio: (localidadVal && String(localidadVal).trim()) ? String(localidadVal).trim() : (process.env.FORMA_MUNICIPIO || 'Municipio'),
+        unidadMedica: (institucionVal && String(institucionVal).trim()) ? String(institucionVal).trim() : (institucionDoctor || process.env.FORMA_UNIDAD_MEDICA || 'Unidad Médica'),
+        nombreGAM: (nombreModulo && String(nombreModulo).trim()) ? String(nombreModulo).trim() : (process.env.FORMA_NOMBRE_GAM || 'Nombre del Grupo de Ayuda Mutua EC'),
         etapa: process.env.FORMA_ETAPA || 'Etapa',
         mes,
         anio,
