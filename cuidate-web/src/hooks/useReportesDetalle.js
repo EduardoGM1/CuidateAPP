@@ -26,6 +26,8 @@ function calcularEdad(fechaNac) {
 
 /**
  * Carga pacientes, doctores y citas y calcula estadísticas para el análisis detallado (solo Admin).
+ * Solo ejecuta la carga cuando enabled es true (p. ej. después de que el resumen esté cargado) para evitar 3+1 requests simultáneos y timeouts.
+ * @param {{ enabled?: boolean }} [options]
  * @returns {{
  *   pacientesPorDoctor: Array<{ nombre: string, total: number }>,
  *   citasPorDiaSemana: Array<{ dia: string, citas: number }>,
@@ -36,14 +38,15 @@ function calcularEdad(fechaNac) {
  *   refresh: function
  * }}
  */
-export function useReportesDetalle() {
+export function useReportesDetalle(options = {}) {
+  const { enabled = true } = options;
   const [datos, setDatos] = useState({
     pacientesPorDoctor: [],
     citasPorDiaSemana: [],
     distribucionEdad: [],
     distribucionGenero: [],
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!enabled);
   const [error, setError] = useState(null);
 
   const refresh = useCallback(async () => {
@@ -144,8 +147,12 @@ export function useReportesDetalle() {
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
     refresh();
-  }, [refresh]);
+  }, [enabled, refresh]);
 
   return {
     ...datos,

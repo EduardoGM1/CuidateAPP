@@ -236,8 +236,9 @@ const MESES = [
 /**
  * Tarjeta con heatmap de comorbilidades más frecuentes.
  * Admin: carga pacientes con filtro por módulo. Doctor: usa getDoctorSummary con estado, periodo y rango de meses.
+ * Si summaryFromParent está disponible y es Doctor con filtros por defecto, reutiliza esos datos para evitar una segunda petición y timeouts.
  */
-function ReporteComorbilidadesHeatmapCard() {
+function ReporteComorbilidadesHeatmapCard({ summaryFromParent }) {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const isDoctor = useAuthStore((s) => s.isDoctor);
   const [modulos, setModulos] = useState([]);
@@ -249,6 +250,9 @@ function ReporteComorbilidadesHeatmapCard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const filtrosPorDefecto = !estadoFiltro && !periodoFiltro;
+  const puedeUsarSummaryPadre = isDoctor() && summaryFromParent?.chartData && filtrosPorDefecto;
+
   useEffect(() => {
     if (isAdmin()) {
       getModulos()
@@ -256,6 +260,21 @@ function ReporteComorbilidadesHeatmapCard() {
         .catch(() => setModulos([]));
     }
   }, [isAdmin]);
+
+  useEffect(() => {
+    if (!puedeUsarSummaryPadre) return;
+    const chartData = summaryFromParent.chartData;
+    let list = [];
+    if (Array.isArray(chartData.comorbilidadesMasFrecuentes)) {
+      list = chartData.comorbilidadesMasFrecuentes.map((c) => ({
+        nombre: c.nombre ?? c.nombre_comorbilidad ?? '—',
+        frecuencia: c.frecuencia ?? c.pacientes_afectados ?? 0,
+      }));
+    }
+    setDatos(list);
+    setLoading(false);
+    setError(null);
+  }, [puedeUsarSummaryPadre, summaryFromParent]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -315,9 +334,11 @@ function ReporteComorbilidadesHeatmapCard() {
     }
   }, [isDoctor, filtroModulo, estadoFiltro, periodoFiltro, rangoMeses.mesInicio, rangoMeses.mesFin, rangoMeses.año]);
 
+  const skipLoadParaEsperarSummary = isDoctor() && filtrosPorDefecto && (summaryFromParent == null || summaryFromParent?.chartData != null);
   useEffect(() => {
+    if (skipLoadParaEsperarSummary) return;
     load();
-  }, [load]);
+  }, [load, skipLoadParaEsperarSummary]);
 
   const descripcion = isAdmin()
     ? 'Heatmap de comorbilidades según frecuencia en pacientes activos. Filtro por módulo.'
@@ -413,7 +434,7 @@ export default function ReportesPage() {
   const isDoctor = useAuthStore((s) => s.isDoctor);
   const admin = isAdmin();
   const { summary, loading: loadingSummary, error: errorSummary, refresh: refreshSummary } = useReportesSummary({ isAdmin: admin });
-  const detalle = useReportesDetalle();
+  const detalle = useReportesDetalle({ enabled: admin && !loadingSummary && summary != null });
   const showDetalle = admin && !detalle.loading;
 
   const chartData = summary?.chartData ?? {};
@@ -618,7 +639,7 @@ export default function ReportesPage() {
           alignItems: 'flex-start',
         }}
       >
-        {(admin || isDoctor()) && <ReporteComorbilidadesHeatmapCard />}
+        {(admin || isDoctor()) && <ReporteComorbilidadesHeatmapCard summaryFromParent={summary} />}
         {(admin || isDoctor()) && <ReporteEstadisticasCard />}
         {admin && <ReportePacientesActivosCard />}
         {(admin || isDoctor()) && <ReporteCitasPorEstadoCard />}

@@ -1,12 +1,14 @@
 import client from './client';
 import { API_PATHS } from '../utils/constants';
 
+const REPORTES_TIMEOUT_MS = 60000;
+
 /**
  * Resumen del dashboard para Admin (métricas, gráficos, alertas).
  * @returns {Promise<{ metrics, chartData, charts, alertas }>}
  */
 export async function getAdminSummary() {
-  const { data } = await client.get(API_PATHS.DASHBOARD_ADMIN_SUMMARY);
+  const { data } = await client.get(API_PATHS.DASHBOARD_ADMIN_SUMMARY, { timeout: REPORTES_TIMEOUT_MS });
   const body = data?.data ?? data;
   return body ?? {};
 }
@@ -24,7 +26,7 @@ export async function getDoctorSummary(params = {}) {
   if (params.mesFin != null) q.set('mesFin', String(params.mesFin));
   if (params.año != null) q.set('año', String(params.año));
   const url = API_PATHS.DASHBOARD_DOCTOR_SUMMARY + (q.toString() ? `?${q.toString()}` : '');
-  const { data } = await client.get(url);
+  const { data } = await client.get(url, { timeout: REPORTES_TIMEOUT_MS });
   const body = data?.data ?? data;
   return body ?? {};
 }
