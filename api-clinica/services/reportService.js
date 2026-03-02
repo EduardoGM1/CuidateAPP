@@ -1103,13 +1103,20 @@ class ReportService {
       });
 
       const meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-      const p = paciente;
-      const estadoVal = p ? (p.estado != null && p.estado !== '') ? String(p.estado).trim() : '' : '';
-      const localidadVal = p ? (p.localidad != null && p.localidad !== '') ? String(p.localidad).trim() : '' : '';
-      const institucionVal = p ? (p.institucion_salud != null && p.institucion_salud !== '') ? String(p.institucion_salud).trim() : '' : '';
-      const nombreModulo = p?.Modulo?.nombre_modulo ?? null;
-      const primerDoctor = p?.Doctores?.[0];
-      const institucionDoctor = primerDoctor?.institucion_hospitalaria ? String(primerDoctor.institucion_hospitalaria).trim() : '';
+      // Usar objeto plano para leer atributos (evita problemas con getters/serialización de Sequelize)
+      const p = paciente && typeof paciente.get === 'function' ? paciente.get({ plain: true }) : paciente;
+      const estadoVal = p && p.estado != null && p.estado !== '' ? String(p.estado).trim() : '';
+      const localidadVal = p && p.localidad != null && p.localidad !== '' ? String(p.localidad).trim() : '';
+      const institucionVal = p && p.institucion_salud != null && p.institucion_salud !== '' ? String(p.institucion_salud).trim() : '';
+      const nombreModulo = p?.Modulo?.nombre_modulo ? String(p.Modulo.nombre_modulo).trim() : '';
+      const primerDoctor = Array.isArray(p?.Doctores) && p.Doctores.length > 0 ? p.Doctores[0] : null;
+      const institucionDoctor = primerDoctor?.institucion_hospitalaria != null && primerDoctor.institucion_hospitalaria !== '' ? String(primerDoctor.institucion_hospitalaria).trim() : '';
+      // Mapeo cabecera FORMA -> BD (y fallbacks):
+      // - institucion / unidadMedica: pacientes.institucion_salud; si vacío → Doctores[0].institucion_hospitalaria → env → "Institución"/"Unidad Médica"
+      // - entidad / jurisdiccion: pacientes.estado → env → "Entidad Federativa"/"Jurisdicción"
+      // - municipio: pacientes.localidad → env → "Municipio"
+      // - nombreGAM: modulos.nombre_modulo (por paciente.id_modulo) → env → "Nombre del Grupo de Ayuda Mutua EC"
+      // - etapa / coordinador: solo env (no hay campo en BD)
       const cabecera = {
         institucion: (institucionVal && String(institucionVal).trim()) ? String(institucionVal).trim() : (institucionDoctor || process.env.FORMA_INSTITUCION || 'Institución'),
         entidad: (estadoVal && String(estadoVal).trim()) ? String(estadoVal).trim() : (process.env.FORMA_ENTIDAD || 'Entidad Federativa'),
@@ -1123,6 +1130,11 @@ class ReportService {
         mesNombre: meses[mes] || '',
         coordinador: process.env.FORMA_COORDINADOR || 'Nombre Coordinador del GAM EC'
       };
+      logger.debug('FORMA cabecera (origen BD/env)', {
+        idPaciente,
+        fromDb: { estado: estadoVal || '(vacío)', localidad: localidadVal || '(vacío)', institucion_salud: institucionVal ? '(presente)' : '(vacío)', nombreModulo: nombreModulo || '(vacío)', institucionDoctor: institucionDoctor || '(vacío)' },
+        cabecera: { institucion: cabecera.institucion, entidad: cabecera.entidad, municipio: cabecera.municipio, nombreGAM: cabecera.nombreGAM }
+      });
 
       if (!paciente || !paciente.activo) {
         return { cabecera, filas: [] };

@@ -273,7 +273,23 @@ export const getFormaData = async (req, res) => {
     }
 
     const data = await reportService.getFormaData(idPaciente, mes, anio);
-    res.json(data);
+    const c = data.cabecera || {};
+    res.json({
+      cabecera: {
+        institucion: c.institucion ?? '',
+        entidad: c.entidad ?? '',
+        jurisdiccion: c.jurisdiccion ?? '',
+        municipio: c.municipio ?? '',
+        unidadMedica: c.unidadMedica ?? '',
+        nombreGAM: c.nombreGAM ?? '',
+        etapa: c.etapa ?? '',
+        mes: c.mes,
+        anio: c.anio,
+        mesNombre: c.mesNombre ?? '',
+        coordinador: c.coordinador ?? '',
+      },
+      filas: Array.isArray(data.filas) ? data.filas : [],
+    });
   } catch (error) {
     logger.error('Error getFormaData:', error);
     if (!res.headersSent) {

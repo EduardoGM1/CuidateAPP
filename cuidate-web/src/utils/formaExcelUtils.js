@@ -126,8 +126,41 @@ function thinBorder() {
  * @param {string} [nombreHoja='FORMA'] - Nombre de la hoja
  * @returns {Promise<ArrayBuffer>}
  */
+/** Claves y valores por defecto de cabecera FORMA (por si la API devuelve objeto incompleto). */
+const CABECERA_DEFAULTS = {
+  institucion: '',
+  entidad: '',
+  jurisdiccion: '',
+  municipio: '',
+  unidadMedica: '',
+  nombreGAM: '',
+  etapa: '',
+  mes: new Date().getMonth() + 1,
+  anio: new Date().getFullYear(),
+  mesNombre: '',
+  coordinador: '',
+};
+
+function normalizeCabecera(cabecera) {
+  const c = cabecera && typeof cabecera === 'object' ? cabecera : {};
+  return {
+    institucion: c.institucion ?? CABECERA_DEFAULTS.institucion,
+    entidad: c.entidad ?? CABECERA_DEFAULTS.entidad,
+    jurisdiccion: c.jurisdiccion ?? c.entidad ?? CABECERA_DEFAULTS.jurisdiccion,
+    municipio: c.municipio ?? CABECERA_DEFAULTS.municipio,
+    unidadMedica: c.unidadMedica ?? c.institucion ?? CABECERA_DEFAULTS.unidadMedica,
+    nombreGAM: c.nombreGAM ?? CABECERA_DEFAULTS.nombreGAM,
+    etapa: c.etapa ?? CABECERA_DEFAULTS.etapa,
+    mes: c.mes ?? CABECERA_DEFAULTS.mes,
+    anio: c.anio ?? CABECERA_DEFAULTS.anio,
+    mesNombre: c.mesNombre ?? CABECERA_DEFAULTS.mesNombre,
+    coordinador: c.coordinador ?? CABECERA_DEFAULTS.coordinador,
+  };
+}
+
 export async function buildFormaExcel(data, nombreHoja = 'FORMA') {
-  const { cabecera = {}, filas = [] } = data;
+  const { cabecera: rawCabecera = {}, filas = [] } = data;
+  const cabecera = normalizeCabecera(rawCabecera);
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(nombreHoja, { views: [{ state: 'frozen', ySplit: 15 }] });
 
