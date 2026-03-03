@@ -1123,6 +1123,7 @@ class ReportService {
         jurisdiccion: (estadoVal && String(estadoVal).trim()) ? String(estadoVal).trim() : (process.env.FORMA_JURISDICCION || process.env.FORMA_ENTIDAD || 'Jurisdicción'),
         municipio: (localidadVal && String(localidadVal).trim()) ? String(localidadVal).trim() : (process.env.FORMA_MUNICIPIO || 'Municipio'),
         unidadMedica: (institucionVal && String(institucionVal).trim()) ? String(institucionVal).trim() : (institucionDoctor || process.env.FORMA_UNIDAD_MEDICA || 'Unidad Médica'),
+        clues: process.env.FORMA_CLUES || '',
         nombreGAM: (nombreModulo && String(nombreModulo).trim()) ? String(nombreModulo).trim() : (process.env.FORMA_NOMBRE_GAM || 'Nombre del Grupo de Ayuda Mutua EC'),
         etapa: process.env.FORMA_ETAPA || 'Etapa',
         mes,

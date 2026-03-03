@@ -9,12 +9,24 @@ import ExcelJS from 'exceljs';
 /** Colores del formato oficial SIC (ODS - FORMATO DE REGISTRO MENSUAL agosto SIC 2025) */
 const COLORS = {
   TITLE_TEXT: '003300',        // verde oscuro, títulos institucionales (ce92)
-  HEADER_ROW: 'A50021',        // rojo SIC, fila de encabezados N°|NOMBRE|... (ce18)
-  SECTION_LIGHT_GREEN: 'B6E0BA', // verde claro, secciones DX/EDUCACIÓN/VARIABLES (ce19-ce21, ce24)
+  HEADER_ROW: 'A50021',        // rojo SIC, fila de categorías y encabezados (ce18)
+  HEADER_LIGHT_GREEN: 'B6E0BA', // verde claro, celdas de encabezado de columna (forma correcta)
+  SECTION_LIGHT_GREEN: 'B6E0BA',
   SECTION_YELLOW: 'FFD961',    // amarillo, secciones DETECCIÓN/OTRAS ACCIONES (ce22, ce23)
   WHITE: 'FFFFFF',
   BLACK: '000000',
 };
+
+/** Agrupación de columnas por categoría (forma correcta): [N°, Datos identificación, DX EC, Educación, Variables, Detección] */
+const SECTION_SPANS = [1, 3, 8, 5, 7, 2];
+const SECTION_NAMES = [
+  'N°',
+  'DATOS DE IDENTIFICACIÓN',
+  'DX ENFERMEDADES CRÓNICAS',
+  'EDUCACIÓN PARA LA SALUD',
+  'VARIABLES.',
+  'DETECCIÓN DE COMPLICACIONES',
+];
 
 /** Nombres de columnas del FORMA (orden oficial, mismos que el backend) */
 const FORMA_HEADERS = [
@@ -84,7 +96,7 @@ function filaToRow(fila) {
 }
 
 function applyCellStyle(cell, opts = {}) {
-  const { fill, fontColor, bold, fontSize = 11, alignment = 'left', fontName = 'Arial', border } = opts;
+  const { fill, fontColor, bold, fontSize = 11, alignment = 'left', fontName = 'Arial', border, textRotation } = opts;
   if (fill) {
     cell.fill = {
       type: 'pattern',
@@ -102,6 +114,7 @@ function applyCellStyle(cell, opts = {}) {
     vertical: 'middle',
     horizontal: alignment === 'center' ? 'center' : alignment === 'right' ? 'right' : 'left',
     wrapText: true,
+    textRotation: textRotation != null ? textRotation : undefined,
   };
   if (border) {
     cell.border = {
@@ -133,6 +146,7 @@ const CABECERA_DEFAULTS = {
   jurisdiccion: '',
   municipio: '',
   unidadMedica: '',
+  clues: '',
   nombreGAM: '',
   etapa: '',
   mes: new Date().getMonth() + 1,
@@ -149,6 +163,7 @@ function normalizeCabecera(cabecera) {
     jurisdiccion: c.jurisdiccion ?? c.entidad ?? CABECERA_DEFAULTS.jurisdiccion,
     municipio: c.municipio ?? CABECERA_DEFAULTS.municipio,
     unidadMedica: c.unidadMedica ?? c.institucion ?? CABECERA_DEFAULTS.unidadMedica,
+    clues: c.clues ?? c.CLUES ?? CABECERA_DEFAULTS.clues,
     nombreGAM: c.nombreGAM ?? CABECERA_DEFAULTS.nombreGAM,
     etapa: c.etapa ?? CABECERA_DEFAULTS.etapa,
     mes: c.mes ?? CABECERA_DEFAULTS.mes,
@@ -200,22 +215,22 @@ export async function buildFormaExcel(data, nombreHoja = 'FORMA') {
   row++;
   row++;
 
-  // --- Metadatos en disposición horizontal (2 filas, como formato oficial ODS) ---
-  // Fila 1: Institución, Entidad Federativa, Jurisdicción, Municipio, Unidad Médica
+  // --- Metadatos (forma correcta): fila 1 con Institución, Entidad, Jurisdicción, Municipio, Unidad Médica, CLUES ---
+  const totalCols = FORMA_HEADERS.length;
   const metaRow1 = [
     ['Institución:', cabecera.institucion ?? ''],
     ['Entidad Federativa:', cabecera.entidad ?? ''],
     ['Jurisdicción:', cabecera.jurisdiccion ?? cabecera.entidad ?? ''],
     ['Municipio:', cabecera.municipio ?? ''],
     ['Unidad Médica:', cabecera.unidadMedica ?? ''],
+    ['CLUES:', cabecera.clues ?? ''],
   ];
-  const totalCols = FORMA_HEADERS.length;
-  const colSpans1 = [5, 5, 5, 5, totalCols - 20]; // 5 celdas en la primera fila
+  const colSpans1 = [4, 4, 4, 4, 4, totalCols - 20]; // 6 bloques en la primera fila
   let col = 1;
   metaRow1.forEach(([label, value], i) => {
-    const span = colSpans1[i];
+    const span = Math.max(1, colSpans1[i] ?? 4);
     const cell = ws.getCell(row, col);
-    cell.value = `${label} ${value}`.trim();
+    cell.value = (value != null && value !== '') ? `${label} ${value}`.trim() : label;
     applyCellStyle(cell, { bold: true, fontSize: 14, border: true });
     ws.mergeCells(row, col, row, col + span - 1);
     col += span;
@@ -242,27 +257,11 @@ export async function buildFormaExcel(data, nombreHoja = 'FORMA') {
   row++;
   row++;
 
-  // --- Secciones (ODS: rojo #A50021 blanco, luego verde #B6E0BA, luego amarillo #FFD961) ---
-  const sections = [
-    { text: 'DATOS DE IDENTIFICACIÓN', fill: COLORS.HEADER_ROW, fontColor: COLORS.WHITE },
-    { text: 'DX ENFERMEDADES CRÓNICAS', fill: COLORS.SECTION_LIGHT_GREEN },
-    { text: 'EDUCACIÓN PARA LA SALUD', fill: COLORS.SECTION_LIGHT_GREEN },
-    { text: 'VARIABLES', fill: COLORS.SECTION_LIGHT_GREEN },
-    { text: 'DETECCIÓN DE COMPLICACIONES', fill: COLORS.SECTION_YELLOW },
-    { text: 'OTRAS ACCIONES DE PREVENCIÓN Y CONTROL', fill: COLORS.SECTION_YELLOW },
-  ];
-  sections.forEach(({ text, fill, fontColor }) => {
-    const cell = ws.getCell(row, 1);
-    cell.value = text;
-    applyCellStyle(cell, { fill, fontColor, bold: true, fontSize: 14, border: true });
-    ws.mergeCells(row, 1, row, FORMA_HEADERS.length);
-    row++;
-  });
-
-  // --- Fila de encabezados de columnas (ODS ce18: fondo #A50021, texto blanco, Arial 13pt bold, borde) ---
-  const headerRow = ws.getRow(row);
-  FORMA_HEADERS.forEach((text, col) => {
-    const cell = headerRow.getCell(col + 1);
+  // --- Tabla forma correcta: fila de categorías (rojo, celdas fusionadas) + fila de encabezados (verde claro, texto vertical) ---
+  let colStart = 1;
+  SECTION_NAMES.forEach((text, i) => {
+    const span = SECTION_SPANS[i] ?? 1;
+    const cell = ws.getCell(row, colStart);
     cell.value = text;
     applyCellStyle(cell, {
       fill: COLORS.HEADER_ROW,
@@ -271,6 +270,26 @@ export async function buildFormaExcel(data, nombreHoja = 'FORMA') {
       fontSize: 13,
       alignment: 'center',
       border: true,
+    });
+    if (span > 1) ws.mergeCells(row, colStart, row, colStart + span - 1);
+    colStart += span;
+  });
+  row++;
+
+  // --- Fila de encabezados de columnas (verde claro, texto vertical -90°, como forma correcta) ---
+  const headerRow = ws.getRow(row);
+  headerRow.height = 120;
+  FORMA_HEADERS.forEach((text, col) => {
+    const cell = headerRow.getCell(col + 1);
+    cell.value = text;
+    applyCellStyle(cell, {
+      fill: COLORS.HEADER_LIGHT_GREEN,
+      fontColor: COLORS.BLACK,
+      bold: true,
+      fontSize: 11,
+      alignment: 'center',
+      border: true,
+      textRotation: 255, // -90° en Excel (texto vertical)
     });
   });
   row++;
