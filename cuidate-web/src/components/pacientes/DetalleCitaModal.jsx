@@ -134,13 +134,30 @@ export default function DetalleCitaModal({
             </div>
           )}
 
-          {/* Signos vitales en esta cita */}
+          {/* Signos vitales en esta cita - todos en forma de lista */}
           <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}>Signos vitales en esta cita</h4>
           {Array.isArray(citaDetalle.SignosVitales) && citaDetalle.SignosVitales.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
               {citaDetalle.SignosVitales.map((signo, idx) => {
                 const fechaMedicion = signo.fecha_medicion || signo.fecha_creacion;
                 const imcCalculado = signo.imc ?? calcularIMC(signo.peso_kg, signo.talla_m);
+                const v = (val, suffix = '') => (val != null && val !== '') ? `${val}${suffix}` : '—';
+                const items = [
+                  { label: 'Peso', value: v(signo.peso_kg, ' kg') },
+                  { label: 'Talla', value: v(signo.talla_m, ' m') },
+                  { label: 'IMC', value: imcCalculado != null ? String(imcCalculado) : '—' },
+                  { label: 'Circunferencia de cintura', value: v(signo.medida_cintura_cm, ' cm') },
+                  { label: 'Presión arterial', value: `${v(signo.presion_sistolica)}/${v(signo.presion_diastolica)} mmHg` },
+                  { label: 'Glucosa', value: v(signo.glucosa_mg_dl, ' mg/dL') },
+                  { label: 'Colesterol total', value: v(signo.colesterol_mg_dl, ' mg/dL') },
+                  { label: 'Colesterol LDL', value: v(signo.colesterol_ldl, ' mg/dL') },
+                  { label: 'Colesterol HDL', value: v(signo.colesterol_hdl, ' mg/dL') },
+                  { label: 'Triglicéridos', value: v(signo.trigliceridos_mg_dl, ' mg/dL') },
+                  { label: 'HbA1c', value: v(signo.hba1c_porcentaje, '%') },
+                  { label: 'Edad en medición', value: signo.edad_paciente_en_medicion != null && signo.edad_paciente_en_medicion !== '' ? `${signo.edad_paciente_en_medicion} años` : '—' },
+                  { label: 'Registrado por', value: signo.registrado_por === 'doctor' ? 'Médico' : signo.registrado_por === 'paciente' ? 'Paciente' : '—' },
+                  { label: 'Observaciones', value: signo.observaciones ? sanitizeForDisplay(signo.observaciones) : '—' },
+                ];
                 return (
                   <div
                     key={signo.id_signo ?? idx}
@@ -154,24 +171,13 @@ export default function DetalleCitaModal({
                     <div style={{ fontSize: '0.85rem', color: 'var(--color-texto-secundario)', marginBottom: '0.5rem' }}>
                       {formatearFecha(fechaMedicion)}
                     </div>
-                    {(signo.peso_kg || signo.talla_m || imcCalculado || signo.medida_cintura_cm) && (
-                      <div style={{ marginBottom: '0.25rem' }}>
-                        <strong style={{ fontSize: '0.85rem' }}>Antropométricos:</strong>{' '}
-                        {[signo.peso_kg && `Peso: ${signo.peso_kg} kg`, signo.talla_m && `Talla: ${signo.talla_m} m`, imcCalculado && `IMC: ${imcCalculado}`, signo.medida_cintura_cm && `Cintura: ${signo.medida_cintura_cm} cm`].filter(Boolean).join(' · ')}
-                      </div>
-                    )}
-                    {(signo.presion_sistolica || signo.presion_diastolica) && (
-                      <div style={{ marginBottom: '0.25rem' }}>
-                        Presión: {signo.presion_sistolica}/{signo.presion_diastolica} mmHg
-                      </div>
-                    )}
-                    {(signo.glucosa_mg_dl || signo.colesterol_mg_dl || signo.trigliceridos_mg_dl || signo.hba1c_porcentaje) && (
-                      <div style={{ marginBottom: '0.25rem' }}>
-                        <strong style={{ fontSize: '0.85rem' }}>Laboratorio:</strong>{' '}
-                        {[signo.glucosa_mg_dl && `Glucosa: ${signo.glucosa_mg_dl} mg/dL`, signo.colesterol_mg_dl && `Colesterol: ${signo.colesterol_mg_dl}`, signo.trigliceridos_mg_dl && `Triglicéridos: ${signo.trigliceridos_mg_dl}`, signo.hba1c_porcentaje != null && `HbA1c: ${signo.hba1c_porcentaje}%`].filter(Boolean).join(' · ')}
-                      </div>
-                    )}
-                    {signo.observaciones && <div style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>{sanitizeForDisplay(signo.observaciones)}</div>}
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem', listStyleType: 'disc', fontSize: '0.9rem' }}>
+                      {items.map((item, i) => (
+                        <li key={i} style={{ marginBottom: '0.2rem' }}>
+                          <strong>{item.label}:</strong> {item.value}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 );
               })}
