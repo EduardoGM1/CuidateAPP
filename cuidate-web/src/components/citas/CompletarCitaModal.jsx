@@ -79,7 +79,10 @@ export default function CompletarCitaModal({ open, onClose, citaId, onSuccess, c
             ? cita.Diagnosticos.map((d) => (d.descripcion ?? '').trim()).filter(Boolean).join('\n') || ''
             : ''
         );
-        const plan = cita.PlanMedicacion ?? cita.plan_medicacion;
+        const planes = (Array.isArray(cita.PlanMedicacions) && cita.PlanMedicacions.length > 0)
+          ? cita.PlanMedicacions
+          : (cita.PlanMedicacion ? [cita.PlanMedicacion] : cita.plan_medicacion ? [cita.plan_medicacion] : []);
+        const plan = planes.length > 0 ? planes[0] : null;
         setPlanObs(plan?.observaciones ?? '');
 
         if (Array.isArray(cita.SignosVitales) && cita.SignosVitales.length > 0) {

@@ -528,10 +528,11 @@ export const getCita = async (req, res) => {
   try {
     const cita = await Cita.findByPk(req.params.id, {
       include: [
-        { model: Paciente, attributes: ['nombre', 'apellido_paterno'] },
+        { model: Paciente, attributes: ['nombre', 'apellido_paterno', 'fecha_nacimiento'] },
         { model: Doctor, attributes: ['nombre', 'apellido_paterno'] },
         { model: SignoVital, as: 'SignosVitales', required: false },
-        { model: Diagnostico, as: 'Diagnosticos', required: false }
+        { model: Diagnostico, as: 'Diagnosticos', required: false },
+        { model: PlanMedicacion, required: false }
       ],
       raw: false // Asegurar que retorne instancias de Sequelize para que los hooks funcionen
     });
@@ -729,7 +730,15 @@ export const getCita = async (req, res) => {
         descripcion: decryptFieldIfNeeded(diagnostico.descripcion)
       }));
     }
-    
+
+    // Desencriptar observaciones de PlanMedicacions si existen (para pre-llenar modal en front)
+    if (citaFormateada.PlanMedicacions && Array.isArray(citaFormateada.PlanMedicacions)) {
+      citaFormateada.PlanMedicacions = citaFormateada.PlanMedicacions.map(plan => ({
+        ...plan,
+        observaciones: decryptFieldIfNeeded(plan.observaciones)
+      }));
+    }
+
     res.json(citaFormateada);
   } catch (error) {
     logger.error('Error en getCita:', error);
