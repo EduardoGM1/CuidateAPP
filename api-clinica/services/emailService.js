@@ -1,23 +1,42 @@
 /**
- * Servicio de Email
- * 
- * Este servicio maneja el envío de emails para la aplicación usando Resend.
- * En desarrollo, también loguea los emails para facilitar pruebas.
+ * Servicio de Email para recuperación de cuentas (y notificaciones).
+ *
+ * Soporta dos opciones gratuitas (usa la primera disponible):
+ * 1. Resend (recomendado): 100 emails/día, 3000/mes gratis. Solo RESEND_API_KEY.
+ * 2. SMTP (fallback): Nodemailer con Gmail, Brevo, etc. SMTP_HOST, SMTP_USER, SMTP_PASS.
+ *
+ * @see docs/EMAIL-RECUPERACION-CUENTAS.md
  */
 
 import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import logger from '../utils/logger.js';
 
-// Inicializar Resend
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM = process.env.EMAIL_FROM || 'onboarding@resend.dev';
 
-// Validar que la API key esté configurada
-if (!RESEND_API_KEY && process.env.NODE_ENV === 'production') {
-  logger.error('❌ RESEND_API_KEY no está configurada. El envío de emails no funcionará en producción.');
-}
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const SMTP_SECURE = process.env.SMTP_SECURE === 'true';
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+
+let smtpTransporter = null;
+if (!resend && SMTP_HOST && SMTP_USER && SMTP_PASS) {
+  smtpTransporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE,
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
+  });
+}
+
+const hasEmailProvider = !!resend || !!smtpTransporter;
+if (!hasEmailProvider && process.env.NODE_ENV === 'production') {
+  logger.warn('⚠️ [EMAIL] No hay proveedor configurado (RESEND_API_KEY o SMTP). Configure uno para recuperación de contraseña.');
+}
 
 class EmailService {
   /**
@@ -52,36 +71,38 @@ class EmailService {
         console.log('============================================\n');
       }
 
-      // Verificar que Resend esté configurado
-      if (!resend) {
-        const errorMsg = 'Resend no está configurado. Configure RESEND_API_KEY en .env';
-        logger.error(`❌ [EMAIL] ${errorMsg}`);
-        throw new Error(errorMsg);
-      }
-
-      // Enviar email con Resend (el campo 'to' debe ser un array)
-      const { data, error } = await resend.emails.send({
-        from: EMAIL_FROM,
-        to: Array.isArray(to) ? to : [to], // Resend espera un array
-        subject,
-        html,
-        text
-      });
-
-      if (error) {
-        logger.error('❌ [EMAIL] Error enviando email con Resend', {
-          error: error.message,
-          errorCode: error.name,
-          to
+      if (resend) {
+        const { data, error } = await resend.emails.send({
+          from: EMAIL_FROM,
+          to: Array.isArray(to) ? to : [to],
+          subject,
+          html,
+          text
         });
-        throw new Error(`Error enviando email: ${error.message}`);
+        if (error) {
+          logger.error('❌ [EMAIL] Error Resend', { error: error.message, to });
+          throw new Error(`Error enviando email: ${error.message}`);
+        }
+        logger.info('📧 [EMAIL] Email de recuperación enviado (Resend)', { to, emailId: data?.id });
+        return { success: true, message: 'Email enviado exitosamente', emailId: data?.id };
       }
 
-      logger.info('📧 [EMAIL] Email de recuperación de contraseña enviado exitosamente', {
-        to,
-        emailId: data?.id
-      });
-      return { success: true, message: 'Email enviado exitosamente', emailId: data?.id };
+      if (smtpTransporter) {
+        const from = process.env.EMAIL_FROM || SMTP_USER;
+        const info = await smtpTransporter.sendMail({
+          from: from.includes('@') ? from : `"Clínica" <${SMTP_USER}>`,
+          to: Array.isArray(to) ? to.join(', ') : to,
+          subject,
+          html,
+          text
+        });
+        logger.info('📧 [EMAIL] Email de recuperación enviado (SMTP)', { to, messageId: info.messageId });
+        return { success: true, message: 'Email enviado exitosamente', messageId: info.messageId };
+      }
+
+      const errorMsg = 'No hay proveedor de email. Configure RESEND_API_KEY o SMTP (SMTP_HOST, SMTP_USER, SMTP_PASS) en .env';
+      logger.error(`❌ [EMAIL] ${errorMsg}`);
+      throw new Error(errorMsg);
 
     } catch (error) {
       logger.error('❌ [EMAIL] Error enviando email de recuperación', {
@@ -161,36 +182,37 @@ class EmailService {
         });
       }
 
-      // Verificar que Resend esté configurado
-      if (!resend) {
-        logger.warn('⚠️ [EMAIL] Resend no configurado, no se enviará notificación');
-        return { success: false, message: 'Resend no configurado (no crítico)' };
+      if (!resend && !smtpTransporter) {
+        logger.warn('⚠️ [EMAIL] Sin proveedor de email, no se envía notificación');
+        return { success: false, message: 'Email no configurado (no crítico)' };
       }
 
-      // Enviar email con Resend (el campo 'to' debe ser un array)
-      const { data, error } = await resend.emails.send({
-        from: EMAIL_FROM,
-        to: Array.isArray(to) ? to : [to], // Resend espera un array
+      if (resend) {
+        const { data, error } = await resend.emails.send({
+          from: EMAIL_FROM,
+          to: Array.isArray(to) ? to : [to],
+          subject,
+          html,
+          text
+        });
+        if (error) {
+          logger.error('❌ [EMAIL] Error notificación Resend', { error: error.message, to });
+          return { success: false, message: 'Error enviando notificación (no crítico)' };
+        }
+        logger.info('📧 [EMAIL] Notificación de cambio de contraseña enviada (Resend)', { to, emailId: data?.id });
+        return { success: true, message: 'Email enviado exitosamente', emailId: data?.id };
+      }
+
+      const from = process.env.EMAIL_FROM || SMTP_USER;
+      const info = await smtpTransporter.sendMail({
+        from: from.includes('@') ? from : `"Clínica" <${SMTP_USER}>`,
+        to: Array.isArray(to) ? to.join(', ') : to,
         subject,
         html,
         text
       });
-
-      if (error) {
-        logger.error('❌ [EMAIL] Error enviando notificación con Resend', {
-          error: error.message,
-          errorCode: error.name,
-          to
-        });
-        // No lanzar error, es solo una notificación
-        return { success: false, message: 'Error enviando notificación (no crítico)' };
-      }
-
-      logger.info('📧 [EMAIL] Notificación de cambio de contraseña enviada exitosamente', {
-        to,
-        emailId: data?.id
-      });
-      return { success: true, message: 'Email enviado exitosamente', emailId: data?.id };
+      logger.info('📧 [EMAIL] Notificación de cambio de contraseña enviada (SMTP)', { to, messageId: info.messageId });
+      return { success: true, message: 'Email enviado exitosamente', messageId: info.messageId };
 
     } catch (error) {
       logger.error('❌ [EMAIL] Error enviando notificación de cambio de contraseña', {
