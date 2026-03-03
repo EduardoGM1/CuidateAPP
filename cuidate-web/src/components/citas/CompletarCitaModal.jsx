@@ -16,6 +16,27 @@ const WIZARD_STEPS = [
   { id: 'finalizar', label: 'Finalizar' },
 ];
 
+/** Convierte un registro SignoVital de la API al objeto del formulario (todos string). */
+function signoVitalToForm(signo) {
+  if (!signo || typeof signo !== 'object') return INITIAL_SIGNOS_VITALES;
+  const v = (val) => (val != null && val !== '') ? String(val).trim() : '';
+  return {
+    peso_kg: v(signo.peso_kg),
+    talla_m: v(signo.talla_m),
+    medida_cintura_cm: v(signo.medida_cintura_cm),
+    presion_sistolica: v(signo.presion_sistolica),
+    presion_diastolica: v(signo.presion_diastolica),
+    glucosa_mg_dl: v(signo.glucosa_mg_dl),
+    colesterol_mg_dl: v(signo.colesterol_mg_dl),
+    colesterol_ldl: v(signo.colesterol_ldl),
+    colesterol_hdl: v(signo.colesterol_hdl),
+    trigliceridos_mg_dl: v(signo.trigliceridos_mg_dl),
+    hba1c_porcentaje: v(signo.hba1c_porcentaje),
+    edad_paciente_en_medicion: v(signo.edad_paciente_en_medicion),
+    observaciones: v(signo.observaciones),
+  };
+}
+
 /**
  * Modal para completar una cita (flujo paso a paso).
  * Pasos: asistencia → signos vitales → observaciones → diagnóstico → plan medicación → finalizar.
@@ -46,16 +67,43 @@ export default function CompletarCitaModal({ open, onClose, citaId, onSuccess, c
   useEffect(() => {
     if (open) {
       setStepIndex(0);
-      setAsistencia(true);
-      setMotivoNoAsistencia('');
-      setSignos(INITIAL_SIGNOS_VITALES);
-      setObservaciones('');
-      setDiagnostico('');
-      setPlanObs('');
       setError('');
       setDone(false);
+
+      if (cita && typeof cita === 'object') {
+        setAsistencia(cita.estado !== 'no_asistida');
+        setMotivoNoAsistencia(cita.motivo_no_asistencia ?? '');
+        setObservaciones(cita.observaciones ?? '');
+        setDiagnostico(
+          Array.isArray(cita.Diagnosticos) && cita.Diagnosticos.length > 0
+            ? cita.Diagnosticos.map((d) => (d.descripcion ?? '').trim()).filter(Boolean).join('\n') || ''
+            : ''
+        );
+        const plan = cita.PlanMedicacion ?? cita.plan_medicacion;
+        setPlanObs(plan?.observaciones ?? '');
+
+        if (Array.isArray(cita.SignosVitales) && cita.SignosVitales.length > 0) {
+          const ultimo = cita.SignosVitales.length === 1
+            ? cita.SignosVitales[0]
+            : [...cita.SignosVitales].sort((a, b) => {
+                const da = a.fecha_medicion || a.createdAt || a.created_at || '';
+                const db = b.fecha_medicion || b.createdAt || b.created_at || '';
+                return String(db).localeCompare(String(da));
+              })[0];
+          setSignos(signoVitalToForm(ultimo));
+        } else {
+          setSignos(INITIAL_SIGNOS_VITALES);
+        }
+      } else {
+        setAsistencia(true);
+        setMotivoNoAsistencia('');
+        setSignos(INITIAL_SIGNOS_VITALES);
+        setObservaciones('');
+        setDiagnostico('');
+        setPlanObs('');
+      }
     }
-  }, [open]);
+  }, [open, cita]);
 
   const handleNext = async (skipCurrent) => {
     if (!citaId) return;
