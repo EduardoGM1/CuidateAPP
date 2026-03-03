@@ -19,6 +19,13 @@ import {
 import { Title, Chip } from 'react-native-paper';
 import { formatDateTime } from '../../utils/dateUtils';
 import { ESTADOS_CITA, COLORES } from '../../utils/constantes';
+import {
+  presionFueraDeRango,
+  imcFueraDeRango,
+  glucosaFueraDeRango,
+  colesterolFueraDeRango,
+  trigliceridosFueraDeRango,
+} from '../../utils/vitalSignsRanges';
 
 /**
  * Calcula el IMC a partir de peso y talla
@@ -194,7 +201,12 @@ const DetalleCitaModal = ({
                                 <Text style={styles.modalListItemDescription}>Talla: {signo.talla_m} m</Text>
                               )}
                               {imcCalculado && (
-                                <Text style={styles.modalListItemDescription}>IMC: {imcCalculado}</Text>
+                                <Text style={[
+                                  styles.modalListItemDescription,
+                                  imcFueraDeRango(imcCalculado) && styles.signoValueOutOfRange,
+                                ]}>
+                                  IMC: {imcCalculado}
+                                </Text>
                               )}
                               {signo.medida_cintura_cm && (
                                 <Text style={styles.modalListItemDescription}>Cintura: {signo.medida_cintura_cm} cm</Text>
@@ -205,7 +217,11 @@ const DetalleCitaModal = ({
                         
                         {(signo.presion_sistolica || signo.presion_diastolica) && (
                           <View style={{ marginTop: 8 }}>
-                            <Text style={[styles.modalListItemDescription, { fontWeight: '600' }]}>
+                            <Text style={[
+                              styles.modalListItemDescription,
+                              { fontWeight: '600' },
+                              presionFueraDeRango(signo.presion_sistolica, signo.presion_diastolica) && styles.signoValueOutOfRange,
+                            ]}>
                               Presión: {signo.presion_sistolica}/{signo.presion_diastolica} mmHg
                             </Text>
                           </View>
@@ -216,19 +232,28 @@ const DetalleCitaModal = ({
                             <Text style={[styles.modalListItemDescription, { fontWeight: '600', marginBottom: 4 }]}>🧪 Exámenes de Laboratorio</Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                               {signo.glucosa_mg_dl && (
-                                <Text style={styles.modalListItemDescription}>
+                                <Text style={[
+                                  styles.modalListItemDescription,
+                                  glucosaFueraDeRango(signo.glucosa_mg_dl) && styles.signoValueOutOfRange,
+                                ]}>
                                   🩸 Glucosa: {signo.glucosa_mg_dl} mg/dL
                                 </Text>
                               )}
                               {signo.colesterol_mg_dl && (
-                                <Text style={styles.modalListItemDescription}>
+                                <Text style={[
+                                  styles.modalListItemDescription,
+                                  colesterolFueraDeRango(signo.colesterol_mg_dl) && styles.signoValueOutOfRange,
+                                ]}>
                                   🧪 Colesterol Total: {signo.colesterol_mg_dl} mg/dL
-                                  {signo.colesterol_ldl && `\n🧪 Colesterol LDL: ${signo.colesterol_ldl} mg/dL`}
-                                  {signo.colesterol_hdl && `\n🧪 Colesterol HDL: ${signo.colesterol_hdl} mg/dL`}
+                                  {signo.colesterol_ldl != null && `\n🧪 Colesterol LDL: ${signo.colesterol_ldl} mg/dL`}
+                                  {signo.colesterol_hdl != null && `\n🧪 Colesterol HDL: ${signo.colesterol_hdl} mg/dL`}
                                 </Text>
                               )}
                               {signo.trigliceridos_mg_dl && (
-                                <Text style={styles.modalListItemDescription}>
+                                <Text style={[
+                                  styles.modalListItemDescription,
+                                  trigliceridosFueraDeRango(signo.trigliceridos_mg_dl) && styles.signoValueOutOfRange,
+                                ]}>
                                   🧪 Triglicéridos: {signo.trigliceridos_mg_dl} mg/dL
                                 </Text>
                               )}
@@ -429,6 +454,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
     padding: 16,
+  },
+  signoValueOutOfRange: {
+    color: COLORES.ERROR,
+    fontWeight: '700',
   },
 });
 

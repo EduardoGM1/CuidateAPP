@@ -3,6 +3,7 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { getPresionValueStyle, getVitalSignValueStyle } from '../../utils/vitalSignsRanges';
 
 const sectionStyle = {
   background: 'var(--color-fondo-card)',
@@ -52,12 +53,18 @@ export default function AlertDetailModal({ open, onClose, alerta }) {
           <strong style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.95rem' }}>Signos vitales</strong>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.9rem' }}>
             {(alerta.glucosa != null || alerta.glucosa_mg_dl != null) && (
-              <div><span style={{ color: 'var(--color-texto-secundario)' }}>Glucosa:</span> {String(alerta.glucosa ?? alerta.glucosa_mg_dl)} mg/dL</div>
+              <div><span style={{ color: 'var(--color-texto-secundario)' }}>Glucosa:</span>{' '}
+                <span style={getVitalSignValueStyle('glucosa_mg_dl', alerta.glucosa ?? alerta.glucosa_mg_dl)}>
+                  {String(alerta.glucosa ?? alerta.glucosa_mg_dl)} mg/dL
+                </span>
+              </div>
             )}
             {(alerta.presion_sistolica != null || alerta.presion_diastolica != null) && (
               <div>
                 <span style={{ color: 'var(--color-texto-secundario)' }}>Presión:</span>{' '}
-                {[alerta.presion_sistolica, alerta.presion_diastolica].filter(Boolean).join('/')} mmHg
+                <span style={getPresionValueStyle(alerta.presion_sistolica, alerta.presion_diastolica)}>
+                  {[alerta.presion_sistolica, alerta.presion_diastolica].filter(Boolean).join('/')} mmHg
+                </span>
               </div>
             )}
             {(alerta.fecha_medicion != null) && (

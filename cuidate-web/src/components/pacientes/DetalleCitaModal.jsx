@@ -4,6 +4,7 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { getCamposFueraDeRango, getPresionValueStyle, getIMCValueStyle } from '../../utils/vitalSignsRanges';
 
 const ESTADO_CITA = {
   pendiente: 'Pendiente',
@@ -141,22 +142,25 @@ export default function DetalleCitaModal({
               {citaDetalle.SignosVitales.map((signo, idx) => {
                 const fechaMedicion = signo.fecha_medicion || signo.fecha_creacion;
                 const imcCalculado = signo.imc ?? calcularIMC(signo.peso_kg, signo.talla_m);
+                const fueraRango = getCamposFueraDeRango({ ...signo, imc: imcCalculado });
                 const v = (val, suffix = '') => (val != null && val !== '') ? `${val}${suffix}` : '—';
+                const presionStyle = getPresionValueStyle(signo.presion_sistolica, signo.presion_diastolica);
+                const imcStyle = getIMCValueStyle(imcCalculado);
                 const items = [
-                  { label: 'Peso', value: v(signo.peso_kg, ' kg') },
-                  { label: 'Talla', value: v(signo.talla_m, ' m') },
-                  { label: 'IMC', value: imcCalculado != null ? String(imcCalculado) : '—' },
-                  { label: 'Circunferencia de cintura', value: v(signo.medida_cintura_cm, ' cm') },
-                  { label: 'Presión arterial', value: `${v(signo.presion_sistolica)}/${v(signo.presion_diastolica)} mmHg` },
-                  { label: 'Glucosa', value: v(signo.glucosa_mg_dl, ' mg/dL') },
-                  { label: 'Colesterol total', value: v(signo.colesterol_mg_dl, ' mg/dL') },
-                  { label: 'Colesterol LDL', value: v(signo.colesterol_ldl, ' mg/dL') },
-                  { label: 'Colesterol HDL', value: v(signo.colesterol_hdl, ' mg/dL') },
-                  { label: 'Triglicéridos', value: v(signo.trigliceridos_mg_dl, ' mg/dL') },
-                  { label: 'HbA1c', value: v(signo.hba1c_porcentaje, '%') },
-                  { label: 'Edad en medición', value: signo.edad_paciente_en_medicion != null && signo.edad_paciente_en_medicion !== '' ? `${signo.edad_paciente_en_medicion} años` : '—' },
-                  { label: 'Registrado por', value: signo.registrado_por === 'doctor' ? 'Médico' : signo.registrado_por === 'paciente' ? 'Paciente' : '—' },
-                  { label: 'Observaciones', value: signo.observaciones ? sanitizeForDisplay(signo.observaciones) : '—' },
+                  { label: 'Peso', value: v(signo.peso_kg, ' kg'), valueStyle: {} },
+                  { label: 'Talla', value: v(signo.talla_m, ' m'), valueStyle: {} },
+                  { label: 'IMC', value: imcCalculado != null ? String(imcCalculado) : '—', valueStyle: imcStyle },
+                  { label: 'Circunferencia de cintura', value: v(signo.medida_cintura_cm, ' cm'), valueStyle: fueraRango.medida_cintura_cm ? { color: 'var(--color-error)' } : {} },
+                  { label: 'Presión arterial', value: `${v(signo.presion_sistolica)}/${v(signo.presion_diastolica)} mmHg`, valueStyle: presionStyle },
+                  { label: 'Glucosa', value: v(signo.glucosa_mg_dl, ' mg/dL'), valueStyle: fueraRango.glucosa_mg_dl ? { color: 'var(--color-error)' } : {} },
+                  { label: 'Colesterol total', value: v(signo.colesterol_mg_dl, ' mg/dL'), valueStyle: fueraRango.colesterol_mg_dl ? { color: 'var(--color-error)' } : {} },
+                  { label: 'Colesterol LDL', value: v(signo.colesterol_ldl, ' mg/dL'), valueStyle: fueraRango.colesterol_ldl ? { color: 'var(--color-error)' } : {} },
+                  { label: 'Colesterol HDL', value: v(signo.colesterol_hdl, ' mg/dL'), valueStyle: fueraRango.colesterol_hdl ? { color: 'var(--color-error)' } : {} },
+                  { label: 'Triglicéridos', value: v(signo.trigliceridos_mg_dl, ' mg/dL'), valueStyle: fueraRango.trigliceridos_mg_dl ? { color: 'var(--color-error)' } : {} },
+                  { label: 'HbA1c', value: v(signo.hba1c_porcentaje, '%'), valueStyle: fueraRango.hba1c_porcentaje ? { color: 'var(--color-error)' } : {} },
+                  { label: 'Edad en medición', value: signo.edad_paciente_en_medicion != null && signo.edad_paciente_en_medicion !== '' ? `${signo.edad_paciente_en_medicion} años` : '—', valueStyle: {} },
+                  { label: 'Registrado por', value: signo.registrado_por === 'doctor' ? 'Médico' : signo.registrado_por === 'paciente' ? 'Paciente' : '—', valueStyle: {} },
+                  { label: 'Observaciones', value: signo.observaciones ? sanitizeForDisplay(signo.observaciones) : '—', valueStyle: {} },
                 ];
                 return (
                   <div
@@ -174,7 +178,8 @@ export default function DetalleCitaModal({
                     <ul style={{ margin: 0, paddingLeft: '1.25rem', listStyleType: 'disc', fontSize: '0.9rem' }}>
                       {items.map((item, i) => (
                         <li key={i} style={{ marginBottom: '0.2rem' }}>
-                          <strong>{item.label}:</strong> {item.value}
+                          <strong>{item.label}:</strong>{' '}
+                          <span style={item.valueStyle}>{item.value}</span>
                         </li>
                       ))}
                     </ul>

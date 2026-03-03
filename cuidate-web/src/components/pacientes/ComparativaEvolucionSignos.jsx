@@ -2,9 +2,11 @@
  * Comparativa de evolución de signos vitales (primer vs último registro).
  * Paridad con la app móvil (ComparativaEvolucion).
  * Solo muestra filas para signos que tengan al menos un valor en inicio o actual.
+ * Valores fuera de rango se muestran en rojo.
  */
 
 import { useMemo } from 'react';
+import { getVitalSignValueStyle, getPresionValueStyle, getIMCValueStyle } from '../../utils/vitalSignsRanges';
 
 const NO_REGISTRADO = 'No registrado';
 
@@ -70,22 +72,24 @@ function ComparativaEvolucionSignos({ signosVitales = [] }) {
     return { sorted, primerRegistro: primer, ultimoRegistro: ultimo, fechaPrimera, fechaUltima };
   }, [signosVitales]);
 
-  const renderRow = (label, valorPrimero, valorUltimo, formateador = formatValor) => {
+  const renderRow = (label, valorPrimero, valorUltimo, formateador = formatValor, getValueStyle = () => ({})) => {
     const v1 = formateador(valorPrimero);
     const v2 = formateador(valorUltimo);
     if (v1 === NO_REGISTRADO && v2 === NO_REGISTRADO) return null;
+    const style1 = getValueStyle(valorPrimero);
+    const style2 = getValueStyle(valorUltimo);
     return (
       <div key={label} style={rowStyle}>
         <div style={labelStyle}>{label}</div>
         <div style={valoresContainerStyle}>
           <div style={valorItemStyle}>
             <div style={valorFechaStyle}>Inicio</div>
-            <div style={valorTextoStyle}>{v1}</div>
+            <div style={{ ...valorTextoStyle, ...style1 }}>{v1}</div>
           </div>
           <div style={flechaStyle}>→</div>
           <div style={valorItemStyle}>
             <div style={valorFechaStyle}>Actual</div>
-            <div style={valorTextoStyle}>{v2}</div>
+            <div style={{ ...valorTextoStyle, ...style2 }}>{v2}</div>
           </div>
         </div>
       </div>
@@ -110,25 +114,26 @@ function ComparativaEvolucionSignos({ signosVitales = [] }) {
     if (v && typeof v === 'object' && 'sistolica' in v) return formatPresion(v.sistolica, v.diastolica);
     return formatValor(v);
   };
+  const getStylePA = (v) => (v && typeof v === 'object' && ('sistolica' in v || 'diastolica' in v) ? getPresionValueStyle(v.sistolica, v.diastolica) : {});
 
   const rows = [
-    ['Presión arterial', paPrimero, paUltimo, formateadorPA],
-    ['Glucosa', primerRegistro.glucosa_mg_dl, ultimoRegistro.glucosa_mg_dl, (v) => formatValor(v, 'mg/dL')],
-    ['Peso', primerRegistro.peso_kg, ultimoRegistro.peso_kg, (v) => formatValor(v, 'kg')],
-    ['IMC', imcPrimero, imcUltimo, (v) => formatValor(v, 'kg/m²')],
-    ['Talla', primerRegistro.talla_m, ultimoRegistro.talla_m, (v) => formatValor(v, 'm')],
-    ['Circunferencia de cintura', primerRegistro.medida_cintura_cm, ultimoRegistro.medida_cintura_cm, (v) => formatValor(v, 'cm')],
-    ['Colesterol total', primerRegistro.colesterol_mg_dl, ultimoRegistro.colesterol_mg_dl, (v) => formatValor(v, 'mg/dL')],
-    ['Colesterol LDL', primerRegistro.colesterol_ldl, ultimoRegistro.colesterol_ldl, (v) => formatValor(v, 'mg/dL')],
-    ['Colesterol HDL', primerRegistro.colesterol_hdl, ultimoRegistro.colesterol_hdl, (v) => formatValor(v, 'mg/dL')],
-    ['Triglicéridos', primerRegistro.trigliceridos_mg_dl, ultimoRegistro.trigliceridos_mg_dl, (v) => formatValor(v, 'mg/dL')],
-    ['HbA1c', primerRegistro.hba1c_porcentaje, ultimoRegistro.hba1c_porcentaje, (v) => formatValor(v, '%')],
-    ['Temperatura', primerRegistro.temperatura, ultimoRegistro.temperatura, (v) => formatValor(v, '°C')],
-    ['Frecuencia cardíaca', primerRegistro.frecuencia_cardiaca, ultimoRegistro.frecuencia_cardiaca, (v) => formatValor(v, 'bpm')],
-    ['Saturación de oxígeno', primerRegistro.saturacion_oxigeno, ultimoRegistro.saturacion_oxigeno, (v) => formatValor(v, '%')],
+    ['Presión arterial', paPrimero, paUltimo, formateadorPA, getStylePA],
+    ['Glucosa', primerRegistro.glucosa_mg_dl, ultimoRegistro.glucosa_mg_dl, (v) => formatValor(v, 'mg/dL'), (v) => getVitalSignValueStyle('glucosa_mg_dl', v)],
+    ['Peso', primerRegistro.peso_kg, ultimoRegistro.peso_kg, (v) => formatValor(v, 'kg'), () => ({})],
+    ['IMC', imcPrimero, imcUltimo, (v) => formatValor(v, 'kg/m²'), (v) => getIMCValueStyle(v)],
+    ['Talla', primerRegistro.talla_m, ultimoRegistro.talla_m, (v) => formatValor(v, 'm'), () => ({})],
+    ['Circunferencia de cintura', primerRegistro.medida_cintura_cm, ultimoRegistro.medida_cintura_cm, (v) => formatValor(v, 'cm'), (v) => getVitalSignValueStyle('medida_cintura_cm', v)],
+    ['Colesterol total', primerRegistro.colesterol_mg_dl, ultimoRegistro.colesterol_mg_dl, (v) => formatValor(v, 'mg/dL'), (v) => getVitalSignValueStyle('colesterol_mg_dl', v)],
+    ['Colesterol LDL', primerRegistro.colesterol_ldl, ultimoRegistro.colesterol_ldl, (v) => formatValor(v, 'mg/dL'), (v) => getVitalSignValueStyle('colesterol_ldl', v)],
+    ['Colesterol HDL', primerRegistro.colesterol_hdl, ultimoRegistro.colesterol_hdl, (v) => formatValor(v, 'mg/dL'), (v) => getVitalSignValueStyle('colesterol_hdl', v)],
+    ['Triglicéridos', primerRegistro.trigliceridos_mg_dl, ultimoRegistro.trigliceridos_mg_dl, (v) => formatValor(v, 'mg/dL'), (v) => getVitalSignValueStyle('trigliceridos_mg_dl', v)],
+    ['HbA1c', primerRegistro.hba1c_porcentaje, ultimoRegistro.hba1c_porcentaje, (v) => formatValor(v, '%'), (v) => getVitalSignValueStyle('hba1c_porcentaje', v)],
+    ['Temperatura', primerRegistro.temperatura, ultimoRegistro.temperatura, (v) => formatValor(v, '°C'), () => ({})],
+    ['Frecuencia cardíaca', primerRegistro.frecuencia_cardiaca, ultimoRegistro.frecuencia_cardiaca, (v) => formatValor(v, 'bpm'), () => ({})],
+    ['Saturación de oxígeno', primerRegistro.saturacion_oxigeno, ultimoRegistro.saturacion_oxigeno, (v) => formatValor(v, '%'), () => ({})],
   ];
 
-  const renderedRows = rows.map(([label, v1, v2, fn]) => renderRow(label, v1, v2, fn)).filter(Boolean);
+  const renderedRows = rows.map(([label, v1, v2, fn, getStyle]) => renderRow(label, v1, v2, fn, getStyle)).filter(Boolean);
 
   return (
     <div

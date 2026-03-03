@@ -3,6 +3,7 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { getCamposFueraDeRango, getPresionValueStyle, getIMCValueStyle, getVitalSignValueStyle } from '../../utils/vitalSignsRanges';
 
 /** Valor para mostrar en celdas de expediente: valor + sufijo o "—" si vacío */
 function formatVal(value, suffix = '') {
@@ -16,13 +17,12 @@ function calcularIMC(pesoKg, tallaM) {
   return parseFloat(imc.toFixed(1));
 }
 
-/** Color del IMC según rango (igual que app móvil) */
+/** Color del IMC según rango (fuera de rango en rojo) */
 function getIMCColor(imc) {
   if (imc == null) return 'var(--color-texto-secundario)';
-  if (imc < 18.5) return 'var(--color-primario)';
+  if (imc < 18.5 || imc >= 30) return 'var(--color-error, #f87171)';
   if (imc < 25) return 'var(--color-exito, #34d399)';
-  if (imc < 30) return 'var(--color-advertencia, #fbbf24)';
-  return 'var(--color-error, #f87171)';
+  return 'var(--color-advertencia, #fbbf24)';
 }
 
 const sectionStyle = {
@@ -66,6 +66,10 @@ function VistaExpedienteSignoVital({ signo, formatearFecha, registradoPor, imcCa
   const ta = (signo.presion_sistolica != null || signo.presion_diastolica != null)
     ? `${formatVal(signo.presion_sistolica)}/${formatVal(signo.presion_diastolica)} mmHg`
     : '—';
+  const signoConImc = { ...signo, imc: imcCalculado };
+  const fueraRango = getCamposFueraDeRango(signoConImc);
+  const presionStyle = getPresionValueStyle(signo.presion_sistolica, signo.presion_diastolica);
+  const imcStyle = getIMCValueStyle(imcCalculado);
   const fechaCita = signo.Cita?.fecha_cita ?? signo.fecha_cita ?? null;
   const tieneCita = !!signo.id_cita;
   const observaciones = signo.observaciones ? sanitizeForDisplay(signo.observaciones) : '—';
@@ -134,11 +138,11 @@ function VistaExpedienteSignoVital({ signo, formatearFecha, registradoPor, imcCa
           </thead>
           <tbody>
             <tr>
-              <td className={ta === '—' ? 'empty' : ''}>{ta === '—' ? ta : ta.replace(' mmHg', '')}</td>
+              <td className={ta === '—' ? 'empty' : ''}><span style={ta !== '—' ? presionStyle : undefined}>{ta === '—' ? ta : ta.replace(' mmHg', '')}</span></td>
               <td className={signo.peso_kg == null ? 'empty' : ''}>{formatVal(signo.peso_kg, ' kg')}</td>
               <td className={signo.talla_m == null ? 'empty' : ''}>{formatVal(signo.talla_m, ' m')}</td>
-              <td className={imcCalculado == null ? 'empty' : ''}>{formatVal(imcCalculado)}</td>
-              <td className={signo.medida_cintura_cm == null ? 'empty' : ''}>{formatVal(signo.medida_cintura_cm)}</td>
+              <td className={imcCalculado == null ? 'empty' : ''}><span style={imcCalculado != null ? imcStyle : undefined}>{formatVal(imcCalculado)}</span></td>
+              <td className={signo.medida_cintura_cm == null ? 'empty' : ''}><span style={fueraRango.medida_cintura_cm ? getVitalSignValueStyle('medida_cintura_cm', signo.medida_cintura_cm) : undefined}>{formatVal(signo.medida_cintura_cm)}</span></td>
             </tr>
           </tbody>
         </table>
@@ -159,12 +163,12 @@ function VistaExpedienteSignoVital({ signo, formatearFecha, registradoPor, imcCa
           </thead>
           <tbody>
             <tr>
-              <td className={signo.glucosa_mg_dl == null ? 'empty' : ''}>{formatVal(signo.glucosa_mg_dl)}</td>
-              <td className={signo.colesterol_mg_dl == null ? 'empty' : ''}>{formatVal(signo.colesterol_mg_dl)}</td>
-              <td className={signo.colesterol_ldl == null ? 'empty' : ''}>{formatVal(signo.colesterol_ldl)}</td>
-              <td className={signo.colesterol_hdl == null ? 'empty' : ''}>{formatVal(signo.colesterol_hdl)}</td>
-              <td className={signo.trigliceridos_mg_dl == null ? 'empty' : ''}>{formatVal(signo.trigliceridos_mg_dl)}</td>
-              <td className={signo.hba1c_porcentaje == null ? 'empty' : ''}>{formatVal(signo.hba1c_porcentaje)}</td>
+              <td className={signo.glucosa_mg_dl == null ? 'empty' : ''}><span style={fueraRango.glucosa_mg_dl ? getVitalSignValueStyle('glucosa_mg_dl', signo.glucosa_mg_dl) : undefined}>{formatVal(signo.glucosa_mg_dl)}</span></td>
+              <td className={signo.colesterol_mg_dl == null ? 'empty' : ''}><span style={fueraRango.colesterol_mg_dl ? getVitalSignValueStyle('colesterol_mg_dl', signo.colesterol_mg_dl) : undefined}>{formatVal(signo.colesterol_mg_dl)}</span></td>
+              <td className={signo.colesterol_ldl == null ? 'empty' : ''}><span style={fueraRango.colesterol_ldl ? getVitalSignValueStyle('colesterol_ldl', signo.colesterol_ldl) : undefined}>{formatVal(signo.colesterol_ldl)}</span></td>
+              <td className={signo.colesterol_hdl == null ? 'empty' : ''}><span style={fueraRango.colesterol_hdl ? getVitalSignValueStyle('colesterol_hdl', signo.colesterol_hdl) : undefined}>{formatVal(signo.colesterol_hdl)}</span></td>
+              <td className={signo.trigliceridos_mg_dl == null ? 'empty' : ''}><span style={fueraRango.trigliceridos_mg_dl ? getVitalSignValueStyle('trigliceridos_mg_dl', signo.trigliceridos_mg_dl) : undefined}>{formatVal(signo.trigliceridos_mg_dl)}</span></td>
+              <td className={signo.hba1c_porcentaje == null ? 'empty' : ''}><span style={fueraRango.hba1c_porcentaje ? getVitalSignValueStyle('hba1c_porcentaje', signo.hba1c_porcentaje) : undefined}>{formatVal(signo.hba1c_porcentaje)}</span></td>
             </tr>
           </tbody>
         </table>
@@ -195,6 +199,9 @@ function VistaExpedienteSignoVital({ signo, formatearFecha, registradoPor, imcCa
  */
 function VistaResumenSignoVital({ signo, formatearFecha, registradoPor, imcCalculado }) {
   const fechaMedicion = signo?.fecha_medicion || signo?.fecha_creacion;
+  const signoConImc = { ...signo, imc: imcCalculado };
+  const fueraRango = getCamposFueraDeRango(signoConImc);
+  const presionStyle = getPresionValueStyle(signo?.presion_sistolica, signo?.presion_diastolica);
 
   return (
     <div className="patient-section-modal-body">
@@ -231,7 +238,7 @@ function VistaResumenSignoVital({ signo, formatearFecha, registradoPor, imcCalcu
             {signo.medida_cintura_cm != null && (
               <div>
                 <div style={itemStyle}>Cintura</div>
-                <div style={valueStyle}>{signo.medida_cintura_cm} cm</div>
+                <div style={fueraRango.medida_cintura_cm ? { ...valueStyle, ...getVitalSignValueStyle('medida_cintura_cm', signo.medida_cintura_cm) } : valueStyle}>{signo.medida_cintura_cm} cm</div>
               </div>
             )}
           </div>
@@ -241,7 +248,7 @@ function VistaResumenSignoVital({ signo, formatearFecha, registradoPor, imcCalcu
       {(signo.presion_sistolica != null || signo.presion_diastolica != null) && (
         <div style={sectionStyle}>
           <div style={sectionTitleStyle}>🩺 Presión arterial</div>
-          <div style={valueStyle}>
+          <div style={{ ...valueStyle, ...presionStyle }}>
             {signo.presion_sistolica ?? '—'}/{signo.presion_diastolica ?? '—'} mmHg
           </div>
         </div>
@@ -255,37 +262,37 @@ function VistaResumenSignoVital({ signo, formatearFecha, registradoPor, imcCalcu
             {signo.glucosa_mg_dl != null && (
               <div>
                 <div style={itemStyle}>Glucosa</div>
-                <div style={valueStyle}>{signo.glucosa_mg_dl} mg/dL</div>
+                <div style={fueraRango.glucosa_mg_dl ? { ...valueStyle, ...getVitalSignValueStyle('glucosa_mg_dl', signo.glucosa_mg_dl) } : valueStyle}>{signo.glucosa_mg_dl} mg/dL</div>
               </div>
             )}
             {signo.colesterol_mg_dl != null && (
               <div>
                 <div style={itemStyle}>Colesterol total</div>
-                <div style={valueStyle}>{signo.colesterol_mg_dl} mg/dL</div>
+                <div style={fueraRango.colesterol_mg_dl ? { ...valueStyle, ...getVitalSignValueStyle('colesterol_mg_dl', signo.colesterol_mg_dl) } : valueStyle}>{signo.colesterol_mg_dl} mg/dL</div>
               </div>
             )}
             {signo.colesterol_ldl != null && (
               <div>
                 <div style={itemStyle}>Colesterol LDL</div>
-                <div style={valueStyle}>{signo.colesterol_ldl} mg/dL</div>
+                <div style={fueraRango.colesterol_ldl ? { ...valueStyle, ...getVitalSignValueStyle('colesterol_ldl', signo.colesterol_ldl) } : valueStyle}>{signo.colesterol_ldl} mg/dL</div>
               </div>
             )}
             {signo.colesterol_hdl != null && (
               <div>
                 <div style={itemStyle}>Colesterol HDL</div>
-                <div style={valueStyle}>{signo.colesterol_hdl} mg/dL</div>
+                <div style={fueraRango.colesterol_hdl ? { ...valueStyle, ...getVitalSignValueStyle('colesterol_hdl', signo.colesterol_hdl) } : valueStyle}>{signo.colesterol_hdl} mg/dL</div>
               </div>
             )}
             {signo.trigliceridos_mg_dl != null && (
               <div>
                 <div style={itemStyle}>Triglicéridos</div>
-                <div style={valueStyle}>{signo.trigliceridos_mg_dl} mg/dL</div>
+                <div style={fueraRango.trigliceridos_mg_dl ? { ...valueStyle, ...getVitalSignValueStyle('trigliceridos_mg_dl', signo.trigliceridos_mg_dl) } : valueStyle}>{signo.trigliceridos_mg_dl} mg/dL</div>
               </div>
             )}
             {signo.hba1c_porcentaje != null && (
               <div>
                 <div style={itemStyle}>HbA1c</div>
-                <div style={valueStyle}>{signo.hba1c_porcentaje}%</div>
+                <div style={fueraRango.hba1c_porcentaje ? { ...valueStyle, ...getVitalSignValueStyle('hba1c_porcentaje', signo.hba1c_porcentaje) } : valueStyle}>{signo.hba1c_porcentaje}%</div>
               </div>
             )}
           </div>

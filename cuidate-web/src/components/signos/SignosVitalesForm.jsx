@@ -2,9 +2,11 @@
  * Formulario de signos vitales compartido (paridad con app móvil).
  * Mismos campos que CompletarCitaWizard y RegistrarSignosVitales en ClinicaMovil.
  * Se usa en: CompletarCitaModal (paso signos) y modal "Solo Agregar Signos Vitales" en PacienteDetail.
+ * Los valores fuera de rango se muestran en rojo.
  */
 import Input from '../ui/Input';
 import TextArea from '../ui/TextArea';
+import { getVitalSignValueStyle, getPresionValueStyle, getIMCValueStyle } from '../../utils/vitalSignsRanges';
 
 export const INITIAL_SIGNOS_VITALES = {
   peso_kg: '',
@@ -96,20 +98,23 @@ export default function SignosVitalesForm({ value, onChange, showImc = true, fec
   const edadCalculada = fechaNacimientoPaciente ? calcularEdad(fechaNacimientoPaciente) : null;
   const edadDisplay = value.edad_paciente_en_medicion !== '' ? value.edad_paciente_en_medicion : (edadCalculada != null ? String(edadCalculada) : '');
 
+  const inputStyle = (campo, val) => ({ ...INPUT_STYLE, ...getVitalSignValueStyle(campo, val != null && val !== '' ? Number(val) : null) });
+  const paSistStyle = getPresionValueStyle(value.presion_sistolica?.trim() ? Number(value.presion_sistolica) : null, value.presion_diastolica?.trim() ? Number(value.presion_diastolica) : null);
+
   return (
     <div>
       <div style={GRID_STYLE}>
         <Input type="number" placeholder="Peso (kg)" value={value.peso_kg} onChange={(e) => update('peso_kg', e.target.value)} style={INPUT_STYLE} />
         <Input type="number" placeholder="Talla (m)" value={value.talla_m} onChange={(e) => update('talla_m', e.target.value)} style={INPUT_STYLE} />
-        <Input type="number" placeholder="Cintura (cm)" value={value.medida_cintura_cm} onChange={(e) => update('medida_cintura_cm', e.target.value)} style={INPUT_STYLE} />
-        <Input type="number" placeholder="PA sist." value={value.presion_sistolica} onChange={(e) => update('presion_sistolica', e.target.value)} style={INPUT_STYLE} />
-        <Input type="number" placeholder="PA diast." value={value.presion_diastolica} onChange={(e) => update('presion_diastolica', e.target.value)} style={INPUT_STYLE} />
-        <Input type="number" placeholder="Glucosa (mg/dL)" value={value.glucosa_mg_dl} onChange={(e) => update('glucosa_mg_dl', e.target.value)} style={INPUT_STYLE} />
-        <Input type="number" placeholder="Colesterol total" value={value.colesterol_mg_dl} onChange={(e) => update('colesterol_mg_dl', e.target.value)} style={INPUT_STYLE} />
-        <Input type="number" placeholder="LDL" value={value.colesterol_ldl} onChange={(e) => update('colesterol_ldl', e.target.value)} style={INPUT_STYLE} />
-        <Input type="number" placeholder="HDL" value={value.colesterol_hdl} onChange={(e) => update('colesterol_hdl', e.target.value)} style={INPUT_STYLE} />
-        <Input type="number" placeholder="Triglicéridos" value={value.trigliceridos_mg_dl} onChange={(e) => update('trigliceridos_mg_dl', e.target.value)} style={INPUT_STYLE} />
-        <Input type="number" placeholder="HbA1c (%)" value={value.hba1c_porcentaje} onChange={(e) => update('hba1c_porcentaje', e.target.value)} style={INPUT_STYLE} />
+        <Input type="number" placeholder="Cintura (cm)" value={value.medida_cintura_cm} onChange={(e) => update('medida_cintura_cm', e.target.value)} style={inputStyle('medida_cintura_cm', value.medida_cintura_cm)} />
+        <Input type="number" placeholder="PA sist." value={value.presion_sistolica} onChange={(e) => update('presion_sistolica', e.target.value)} style={{ ...INPUT_STYLE, ...paSistStyle }} />
+        <Input type="number" placeholder="PA diast." value={value.presion_diastolica} onChange={(e) => update('presion_diastolica', e.target.value)} style={{ ...INPUT_STYLE, ...paSistStyle }} />
+        <Input type="number" placeholder="Glucosa (mg/dL)" value={value.glucosa_mg_dl} onChange={(e) => update('glucosa_mg_dl', e.target.value)} style={inputStyle('glucosa_mg_dl', value.glucosa_mg_dl)} />
+        <Input type="number" placeholder="Colesterol total" value={value.colesterol_mg_dl} onChange={(e) => update('colesterol_mg_dl', e.target.value)} style={inputStyle('colesterol_mg_dl', value.colesterol_mg_dl)} />
+        <Input type="number" placeholder="LDL" value={value.colesterol_ldl} onChange={(e) => update('colesterol_ldl', e.target.value)} style={inputStyle('colesterol_ldl', value.colesterol_ldl)} />
+        <Input type="number" placeholder="HDL" value={value.colesterol_hdl} onChange={(e) => update('colesterol_hdl', e.target.value)} style={inputStyle('colesterol_hdl', value.colesterol_hdl)} />
+        <Input type="number" placeholder="Triglicéridos" value={value.trigliceridos_mg_dl} onChange={(e) => update('trigliceridos_mg_dl', e.target.value)} style={inputStyle('trigliceridos_mg_dl', value.trigliceridos_mg_dl)} />
+        <Input type="number" placeholder="HbA1c (%)" value={value.hba1c_porcentaje} onChange={(e) => update('hba1c_porcentaje', e.target.value)} style={inputStyle('hba1c_porcentaje', value.hba1c_porcentaje)} />
         <Input
           type="number"
           placeholder="Edad en medición"
@@ -120,7 +125,7 @@ export default function SignosVitalesForm({ value, onChange, showImc = true, fec
         />
       </div>
       {imc != null && (
-        <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: 'var(--color-primario)', fontWeight: 600 }}>
+        <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', fontWeight: 600, ...getIMCValueStyle(parseFloat(imc)) }}>
           IMC: {imc}
         </p>
       )}
