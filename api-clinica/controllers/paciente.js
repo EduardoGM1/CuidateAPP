@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import sequelize from '../config/db.js';
 import { Op } from 'sequelize';
 import realtimeService from '../services/realtimeService.js';
+import emailService from '../services/emailService.js';
 import logger from '../utils/logger.js';
 import { buildPaginationOptions } from '../utils/queryHelpers.js';
 import { PAGINATION } from '../config/constants.js';
@@ -506,6 +507,18 @@ export const createPaciente = async (req, res) => {
       id_paciente: paciente.id_paciente,
       id_usuario: paciente.id_usuario 
     });
+
+    setImmediate(() => {
+      const creatorEmail = req.user?.email;
+      const pacienteNombre = [paciente.nombre, paciente.apellido_paterno, paciente.apellido_materno].filter(Boolean).join(' ').trim() || 'Paciente';
+      if (creatorEmail && creatorEmail.includes('@')) {
+        emailService.sendPatientRegisteredNotification(creatorEmail, { pacienteNombre, id_paciente: paciente.id_paciente }).catch(() => {});
+      }
+      const extraEmails = (process.env.NOTIFY_NEW_PATIENT_EMAILS || '').split(',').map(e => e.trim()).filter(e => e.includes('@'));
+      for (const to of extraEmails) {
+        emailService.sendPatientRegisteredNotification(to, { pacienteNombre, id_paciente: paciente.id_paciente }).catch(() => {});
+      }
+    });
     
     // No devolver campos sensibles
     const { password_hash, ...safeData } = paciente.toJSON();
@@ -963,6 +976,18 @@ export const createPacienteCompleto = async (req, res) => {
     if (paciente.id_modulo) {
       realtimeService.sendToRole('Doctor', 'patient_created', pacienteData);
     }
+
+    setImmediate(() => {
+      const pacienteNombre = [paciente.nombre, paciente.apellido_paterno, paciente.apellido_materno].filter(Boolean).join(' ').trim() || 'Paciente';
+      const creatorEmail = req.user?.email;
+      if (creatorEmail && creatorEmail.includes('@')) {
+        emailService.sendPatientRegisteredNotification(creatorEmail, { pacienteNombre, id_paciente: paciente.id_paciente }).catch(() => {});
+      }
+      const extraEmails = (process.env.NOTIFY_NEW_PATIENT_EMAILS || '').split(',').map(e => e.trim()).filter(e => e.includes('@'));
+      for (const to of extraEmails) {
+        emailService.sendPatientRegisteredNotification(to, { pacienteNombre, id_paciente: paciente.id_paciente }).catch(() => {});
+      }
+    });
 
     res.status(201).json({
       success: true,

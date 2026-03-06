@@ -6,6 +6,7 @@ import { Usuario, PasswordResetToken } from '../models/associations.js';
 import { SecurityValidator } from '../middlewares/securityValidator.js';
 import MassAssignmentProtection from '../middlewares/massAssignmentProtection.js';
 import logger from '../utils/logger.js';
+import emailService from '../services/emailService.js';
 
 export const register = async (req, res) => {
   try {
@@ -41,6 +42,11 @@ export const register = async (req, res) => {
       email,
       password_hash,
       rol: rol || 'Paciente'
+    });
+
+    setImmediate(() => {
+      const nombre = (email && email.split('@')[0]) ? email.split('@')[0] : 'Usuario';
+      emailService.sendWelcomeEmail(usuario.email, nombre, usuario.rol).catch(() => {});
     });
 
     // Generar par de tokens (access + refresh)
@@ -248,6 +254,11 @@ export const createUsuario = async (req, res) => {
       email: email.trim().toLowerCase(),
       password_hash,
       rol: rol
+    });
+
+    setImmediate(() => {
+      const nombre = (nuevoUsuario.email && nuevoUsuario.email.split('@')[0]) ? nuevoUsuario.email.split('@')[0] : 'Usuario';
+      emailService.sendWelcomeEmail(nuevoUsuario.email, nombre, nuevoUsuario.rol).catch(() => {});
     });
     
     logger.info(`Usuario creado: ${nuevoUsuario.email} (ID: ${nuevoUsuario.id_usuario})`);

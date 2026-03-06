@@ -21,6 +21,7 @@ import { Op } from 'sequelize';
 import logger from '../utils/logger.js';
 import alertService from '../services/alertService.js';
 import realtimeService from '../services/realtimeService.js';
+import emailService from '../services/emailService.js';
 import { crearNotificacionDoctor } from './cita.js';
 
 /**
@@ -1719,6 +1720,22 @@ export const createPacienteSignosVitales = async (req, res) => {
                   id_paciente: pacienteId,
                   severidad: alerta.severidad,
                   tipo: alerta.tipo
+                });
+
+                setImmediate(() => {
+                  Usuario.findByPk(asignacion.Doctor.id_usuario, { attributes: ['email'] })
+                    .then(u => {
+                      if (u?.email) {
+                        const pacienteNombre = `${paciente.nombre} ${paciente.apellido_paterno}`.trim();
+                        emailService.sendSignosVitalesAlertEmail(u.email, {
+                          pacienteNombre,
+                          tipo: alerta.tipo,
+                          severidad: alerta.severidad,
+                          mensaje: alerta.mensaje || `${pacienteNombre}: ${alerta.tipo} fuera de rango`
+                        }).catch(() => {});
+                      }
+                    })
+                    .catch(() => {});
                 });
               } catch (notifError) {
                 // No crítico - no debe fallar la operación principal

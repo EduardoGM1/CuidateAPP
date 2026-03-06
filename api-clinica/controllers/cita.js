@@ -6,6 +6,7 @@ import logger from '../utils/logger.js';
 import auditoriaService from '../services/auditoriaService.js';
 import realtimeService from '../services/realtimeService.js';
 import pushNotificationService from '../services/pushNotificationService.js';
+import emailService from '../services/emailService.js';
 import EncryptionService from '../services/encryptionService.js';
 import { decrypt as decryptUtils } from '../utils/encryption.js';
 
@@ -974,6 +975,25 @@ export const createCita = async (req, res) => {
 
         // Enviar notificación push al paciente
         await enviarNotificacionPushCita(citaCompleta.id_paciente, 'creada', citaData);
+
+        setImmediate(() => {
+          Usuario.findByPk(paciente.id_usuario, { attributes: ['email'] })
+            .then(u => {
+              if (u?.email) {
+                const fechaObj = new Date(citaCompleta.fecha_cita);
+                const fecha = fechaObj.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                const hora = fechaObj.toTimeString().slice(0, 5);
+                emailService.sendCitaConfirmationEmail(u.email, {
+                  fecha,
+                  hora,
+                  doctorNombre: citaData.doctor_nombre || 'El doctor',
+                  motivo: citaCompleta.motivo || 'Consulta',
+                  reprogramada: false
+                }).catch(() => {});
+              }
+            })
+            .catch(() => {});
+        });
       } catch (wsError) {
         logger.error('❌ [WS-BACKEND] Error enviando WebSocket al paciente:', {
           error: wsError.message,
@@ -1996,6 +2016,25 @@ export const reprogramarCita = async (req, res) => {
 
         // Enviar notificación push al paciente
         await enviarNotificacionPushCita(citaActualizada.id_paciente, 'reprogramada', citaData);
+
+        setImmediate(() => {
+          Usuario.findByPk(paciente.id_usuario, { attributes: ['email'] })
+            .then(u => {
+              if (u?.email) {
+                const fechaObj = new Date(citaActualizada.fecha_reprogramada || citaActualizada.fecha_cita);
+                const fecha = fechaObj.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                const hora = fechaObj.toTimeString().slice(0, 5);
+                emailService.sendCitaConfirmationEmail(u.email, {
+                  fecha,
+                  hora,
+                  doctorNombre: citaData.doctor_nombre || 'El doctor',
+                  motivo: citaActualizada.motivo || 'Consulta',
+                  reprogramada: true
+                }).catch(() => {});
+              }
+            })
+            .catch(() => {});
+        });
       } catch (wsError) {
         logger.error('❌ [WS-BACKEND] Error enviando WebSocket al paciente (no crítico):', wsError);
       }

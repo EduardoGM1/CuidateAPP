@@ -4,6 +4,7 @@ import { Op } from 'sequelize';
 import sequelize from '../config/db.js';
 import logger from '../utils/logger.js';
 import pushNotificationService from '../services/pushNotificationService.js';
+import emailService from '../services/emailService.js';
 import realtimeService from '../services/realtimeService.js';
 import { crearNotificacionDoctor } from './cita.js';
 import multer from 'multer';
@@ -487,6 +488,30 @@ export const createMensaje = async (req, res) => {
             mensajeId: mensaje.id_mensaje,
             remitente
           });
+        }
+
+        // Email al destinatario (si tiene email en Usuario)
+        try {
+          const destinatario = await Usuario.findByPk(destinatarioIdUsuario, { attributes: ['email'] });
+          const emailTo = destinatario?.email;
+          const previewTexto = (mensaje_texto || mensaje_audio_transcripcion || '').toString().trim().substring(0, 100);
+          const enlaceApp = process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL.replace(/\/$/, '')}/chat` : '';
+          logger.info('📧 [EMAIL] Nuevo mensaje: intentando envío', {
+            destinatarioIdUsuario: destinatarioIdUsuario ?? null,
+            emailTo: emailTo ? `${emailTo.substring(0, 3)}***@${(emailTo.split('@')[1] || '')}` : null,
+            remitente,
+            id_doctor: doctorId ?? null,
+            id_paciente: id_paciente ?? null
+          });
+          if (emailTo && emailTo.includes('@')) {
+            await emailService.sendNewMessageNotification(emailTo, {
+              remitenteNombre: nombreRemitente || (remitente === 'Paciente' ? 'Un paciente' : 'El doctor'),
+              previewTexto: previewTexto || 'Nuevo mensaje',
+              enlaceApp
+            });
+          }
+        } catch (emailErr) {
+          logger.error('Error enviando email de nuevo mensaje (no crítico)', { error: emailErr.message });
         }
       } catch (pushError) {
         // No fallar la creación del mensaje si falla la notificación

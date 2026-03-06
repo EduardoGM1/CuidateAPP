@@ -260,6 +260,108 @@ class EmailService {
       </html>
     `;
   }
+
+  /**
+   * Enviar email de bienvenida (tras registro o creación de usuario)
+   */
+  async sendWelcomeEmail(to, nombre, rol = 'Paciente') {
+    return this._sendGeneric('Bienvenido a CuídateApp', `Bienvenido${nombre ? ` ${nombre}` : ''}. Tu cuenta (${rol}) ha sido creada.`, to, 'bienvenida', { nombre, rol });
+  }
+
+  /**
+   * Notificación de nuevo mensaje en el chat
+   */
+  async sendNewMessageNotification(to, datos = {}) {
+    const { remitenteNombre = 'Alguien', previewTexto = '', enlaceApp = '' } = datos;
+    const subject = 'Nuevo mensaje en CuídateApp';
+    const text = `${remitenteNombre} te envió un mensaje.${previewTexto ? ` "${previewTexto.substring(0, 80)}${previewTexto.length > 80 ? '...' : ''}"` : ''}${enlaceApp ? ` Ver: ${enlaceApp}` : ''}`;
+    return this._sendGeneric(subject, text, to, 'nuevo_mensaje', datos);
+  }
+
+  /**
+   * Notificación de nuevo paciente registrado (para admin/doctor)
+   */
+  async sendPatientRegisteredNotification(to, datos = {}) {
+    const { pacienteNombre = 'Un paciente', id_paciente } = datos;
+    const subject = 'Nuevo paciente registrado - CuídateApp';
+    const text = `Se ha registrado un nuevo paciente: ${pacienteNombre}.${id_paciente ? ` ID: ${id_paciente}` : ''}`;
+    return this._sendGeneric(subject, text, to, 'nuevo_paciente', datos);
+  }
+
+  /**
+   * Confirmación de cita (agendada o reprogramada)
+   */
+  async sendCitaConfirmationEmail(to, datos = {}) {
+    const { fecha, hora, doctorNombre, motivo, reprogramada } = datos;
+    const subject = reprogramada ? 'Cita reprogramada - CuídateApp' : 'Cita agendada - CuídateApp';
+    const text = `Tu cita${reprogramada ? ' ha sido reprogramada' : ''} para el ${fecha || 'día indicado'} a las ${hora || 'hora indicada'}.${doctorNombre ? ` Doctor: ${doctorNombre}.` : ''}${motivo ? ` Motivo: ${motivo}` : ''}`;
+    return this._sendGeneric(subject, text, to, 'cita_confirmacion', datos);
+  }
+
+  /**
+   * Recordatorio de cita próxima
+   */
+  async sendCitaReminderEmail(to, datos = {}) {
+    const { fecha, hora, doctorNombre, motivo, lugar } = datos;
+    const subject = 'Recordatorio de cita - CuídateApp';
+    const text = `Tienes una cita el ${fecha || 'próximo'} a las ${hora || ''}.${doctorNombre ? ` Doctor: ${doctorNombre}.` : ''}${lugar ? ` Lugar: ${lugar}.` : ''}${motivo ? ` Motivo: ${motivo}` : ''}`;
+    return this._sendGeneric(subject, text, to, 'cita_recordatorio', datos);
+  }
+
+  /**
+   * Alerta de signos vitales (para doctor/admin; opcional por privacidad)
+   */
+  async sendSignosVitalesAlertEmail(to, datos = {}) {
+    const { pacienteNombre = 'Paciente', tipo, severidad, mensaje } = datos;
+    const subject = `Alerta de signos vitales (${severidad || 'alerta'}) - CuídateApp`;
+    const text = `${pacienteNombre}: ${mensaje || tipo || 'Signos vitales fuera del rango normal.'}`;
+    return this._sendGeneric(subject, text, to, 'alerta_signos', datos);
+  }
+
+  /**
+   * Envío genérico (Resend o SMTP); no lanza si falla (para notificaciones no críticas).
+   */
+  async _sendGeneric(subject, text, to, tipo, datos = {}) {
+    if (!to || typeof to !== 'string' || !to.includes('@')) {
+      logger.warn(`[EMAIL] _sendGeneric: destino inválido (${tipo})`, { to: to ? '***' : null });
+      return { success: false, message: 'Email destino inválido' };
+    }
+    if (!resend && !smtpTransporter) {
+      logger.warn('⚠️ [EMAIL] Sin proveedor de email, no se envía notificación', { tipo });
+      return { success: false, message: 'Email no configurado (no crítico)' };
+    }
+    const html = `<div style="font-family:Arial,sans-serif;max-width:600px;"><h2>${subject}</h2><p>${text.replace(/\n/g, '</p><p>')}</p><p style="color:#666;font-size:12px;">CuídateApp - Notificación automática</p></div>`;
+    try {
+      if (resend) {
+        const { data, error } = await resend.emails.send({
+          from: EMAIL_FROM,
+          to: [to],
+          subject,
+          html,
+          text
+        });
+        if (error) {
+          logger.error('❌ [EMAIL]', { tipo, error: error.message, to: to.substring(0, 3) + '***' });
+          return { success: false, message: error.message };
+        }
+        logger.info('📧 [EMAIL] Enviado', { tipo, to: to.substring(0, 3) + '***', emailId: data?.id });
+        return { success: true, emailId: data?.id };
+      }
+      const from = process.env.EMAIL_FROM || SMTP_USER;
+      const info = await smtpTransporter.sendMail({
+        from: from.includes('@') ? from : `"CuídateApp" <${SMTP_USER}>`,
+        to,
+        subject,
+        html,
+        text
+      });
+      logger.info('📧 [EMAIL] Enviado (SMTP)', { tipo, to: to.substring(0, 3) + '***', messageId: info.messageId });
+      return { success: true, messageId: info.messageId };
+    } catch (error) {
+      logger.error('❌ [EMAIL] Error enviando', { tipo, error: error.message, to: to.substring(0, 3) + '***' });
+      return { success: false, message: error.message };
+    }
+  }
 }
 
 export default new EmailService();
