@@ -87,6 +87,7 @@ export default function DoctorDetail() {
   const [reprogramarModal, setReprogramarModal] = useState({ open: false, cita: null, fecha: '', motivo: '' });
   const [passwordModal, setPasswordModal] = useState({ open: false, newPassword: '', confirmPassword: '' });
   const [asignarModalOpen, setAsignarModalOpen] = useState(false);
+  const [asignarModalSearch, setAsignarModalSearch] = useState('');
   const [availablePatients, setAvailablePatients] = useState([]);
   const [asignarLoading, setAsignarLoading] = useState(false);
   const [searchPacientesQuery, setSearchPacientesQuery] = useState('');
@@ -757,21 +758,38 @@ export default function DoctorDetail() {
       {/* Modal Asignar paciente */}
       <Modal
         open={asignarModalOpen}
-        onClose={() => setAsignarModalOpen(false)}
+        onClose={() => { setAsignarModalOpen(false); setAsignarModalSearch(''); }}
         title="Asignar paciente al doctor"
         footer={null}
         width={520}
       >
-        <p style={{ marginBottom: '1rem', color: 'var(--color-texto-secundario)' }}>
+        <p style={{ marginBottom: '0.5rem', color: 'var(--color-texto-secundario)' }}>
           Selecciona un paciente para asignar a {nombreCompleto}
         </p>
+        <Input
+          placeholder="Buscar por nombre o edad..."
+          value={asignarModalSearch}
+          onChange={(e) => setAsignarModalSearch(e.target.value)}
+          style={{ marginBottom: '1rem' }}
+        />
         {asignarLoading && availablePatients.length === 0 ? (
           <LoadingSpinner />
         ) : availablePatients.length === 0 ? (
           <EmptyState message="No hay pacientes disponibles para asignar (todos están asignados o no hay pacientes)" />
-        ) : (
+        ) : (() => {
+          const q = asignarModalSearch?.trim().toLowerCase() || '';
+          const filtered = q
+            ? availablePatients.filter((p) => {
+                const nombre = [p.nombre, p.apellido_paterno, p.apellido_materno].filter(Boolean).join(' ').toLowerCase();
+                const edadStr = p.edad != null ? String(p.edad) : '';
+                return nombre.includes(q) || edadStr.includes(q);
+              })
+            : availablePatients;
+          return filtered.length === 0 ? (
+            <EmptyState message="No hay resultados para la búsqueda" />
+          ) : (
           <div style={{ maxHeight: 360, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {availablePatients.map((p) => {
+            {filtered.map((p) => {
               const pid = p.id_paciente ?? p.id;
               const nombre = [p.nombre, p.apellido_paterno, p.apellido_materno].filter(Boolean).join(' ');
               return (
@@ -795,7 +813,8 @@ export default function DoctorDetail() {
               );
             })}
           </div>
-        )}
+          );
+        })()}
       </Modal>
     </div>
   );
