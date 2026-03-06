@@ -994,6 +994,7 @@ export const getPacienteMedicamentos = async (req, res) => {
             
             medicamentosFormateados.push({
               id_plan: planData.id_plan,
+              id_detalle: detalleData.id_detalle ?? detalleData.id_plan_detalle ?? null,
               id_medicamento: detalleData.Medicamento?.id_medicamento || null,
               nombre_medicamento: detalleData.Medicamento?.nombre_medicamento || 'Medicamento desconocido',
               descripcion: detalleData.Medicamento?.descripcion || null,

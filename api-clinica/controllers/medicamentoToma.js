@@ -83,8 +83,12 @@ export const getTomasByPaciente = async (req, res) => {
     }
 
     if (fechaInicio && fechaFin) {
+      const inicio = new Date(fechaInicio);
+      inicio.setUTCHours(0, 0, 0, 0);
+      const fin = new Date(fechaFin);
+      fin.setUTCHours(23, 59, 59, 999);
       where.fecha_toma = {
-        [Op.between]: [new Date(fechaInicio), new Date(fechaFin)]
+        [Op.between]: [inicio, fin]
       };
     }
 

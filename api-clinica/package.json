@@ -23,6 +23,7 @@
     "test:email": "node scripts/test-resend-email.js",
     "test:email:reset": "node scripts/test-email-password-reset.js",
     "test:notificaciones": "node scripts/test-notificaciones-email.js",
+    "test:tomas-medicamento": "node scripts/test-tomas-medicamento.js",
     "test:performance": "set NODE_OPTIONS=--experimental-vm-modules && jest tests/performance/",
     "test:security": "set NODE_OPTIONS=--experimental-vm-modules && jest tests/security/",
     "test:mobile": "set NODE_OPTIONS=--experimental-vm-modules && jest tests/mobile/",

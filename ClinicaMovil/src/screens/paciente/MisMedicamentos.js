@@ -107,7 +107,7 @@ const MisMedicamentos = () => {
         
         // Verificar si fue tomado hoy consultando las tomas
         const idPlanMedicacion = med.id_plan_medicacion || med.id_plan;
-        const idPlanDetalle = planDetalle.id_detalle || planDetalle.id_plan_detalle;
+        const idPlanDetalle = planDetalle.id_detalle || planDetalle.id_plan_detalle || med.id_detalle;
         const fueTomadoHoy = tomasHoyData.some(toma => {
           // Verificar si hay una toma para este plan de medicación hoy
           if (toma.id_plan_medicacion === idPlanMedicacion) {
