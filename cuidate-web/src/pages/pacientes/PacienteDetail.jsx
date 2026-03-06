@@ -3044,6 +3044,9 @@ export default function PacienteDetail() {
             >
               Descargar Notas Médicas (PDF)
             </Button>
+            <Button variant="outline" onClick={() => navigate(`/chat/${parsedId}`)}>
+              Enviar mensaje
+            </Button>
             <Button variant="outline" onClick={() => navigate(`/pacientes/${parsedId}/editar`)}>
               Editar paciente
             </Button>
