@@ -14,6 +14,7 @@ import {
   getPacienteSignosVitales,
   getPacienteDiagnosticos,
   getPacienteMedicamentos,
+  getPacienteTomasMedicamento,
   getPacienteRedApoyo,
   getPacienteEsquemaVacunacion,
   getPacienteComorbilidades,
@@ -123,6 +124,9 @@ export default function PacienteDetail() {
   const [diagnosticosLoading, setDiagnosticosLoading] = useState(false);
   const [medicamentos, setMedicamentos] = useState({ data: [], total: 0 });
   const [medicamentosLoading, setMedicamentosLoading] = useState(false);
+  const [tomasMedicamento, setTomasMedicamento] = useState({ data: [], total: 0 });
+  const [tomasMedicamentoLoading, setTomasMedicamentoLoading] = useState(false);
+  const [tomasMedicamentoRango, setTomasMedicamentoRango] = useState('30'); // días: 7, 30, 90
   const [resumenMedico, setResumenMedico] = useState(null);
   const [resumenMedicoLoading, setResumenMedicoLoading] = useState(false);
   const [redApoyo, setRedApoyo] = useState({ data: [], total: 0 });
@@ -475,6 +479,26 @@ export default function PacienteDetail() {
     }
   }, [parsedId]);
 
+  const loadTomasMedicamento = useCallback(async (dias = null) => {
+    if (parsedId === 0) return;
+    const rango = dias ?? tomasMedicamentoRango;
+    setTomasMedicamentoLoading(true);
+    try {
+      const fin = new Date();
+      const inicio = new Date();
+      inicio.setDate(inicio.getDate() - Number(rango));
+      const res = await getPacienteTomasMedicamento(parsedId, {
+        fechaInicio: inicio.toISOString().split('T')[0],
+        fechaFin: fin.toISOString().split('T')[0],
+      });
+      setTomasMedicamento(res);
+    } catch {
+      setTomasMedicamento({ data: [], total: 0 });
+    } finally {
+      setTomasMedicamentoLoading(false);
+    }
+  }, [parsedId, tomasMedicamentoRango]);
+
   const loadRedApoyo = useCallback(async () => {
     if (parsedId === 0) return;
     setRedApoyoLoading(true);
@@ -584,7 +608,10 @@ export default function PacienteDetail() {
     if (modalSection === 'citas' || modalSection === 'diagnosticos' || modalSection === 'historial-consultas') loadCitas();
     if (modalSection === 'diagnosticos') loadDiagnosticos();
     else if (modalSection === 'signos' || modalSection === 'graficos' || modalSection === 'monitoreo') loadSignos();
-    else if (modalSection === 'medicacion') loadMedicamentos();
+    else if (modalSection === 'medicacion') {
+      loadMedicamentos();
+      loadTomasMedicamento();
+    }
     else if (modalSection === 'red-apoyo') loadRedApoyo();
     else if (modalSection === 'vacunacion') loadVacunacion();
     else if (modalSection === 'comorbilidades') loadComorbilidades();
@@ -596,7 +623,7 @@ export default function PacienteDetail() {
       loadDoctoresAsignados();
       if (isAdmin()) getDoctores({ limit: 200 }).then((l) => setListaDoctores(Array.isArray(l) ? l : [])).catch(() => setListaDoctores([]));
     }
-  }, [modalSection, loadCitas, loadSignos, loadDiagnosticos, loadMedicamentos, loadRedApoyo, loadVacunacion, loadComorbilidades, loadDeteccionesComplicaciones, loadSesionesEducativas, loadSaludBucal, loadDeteccionesTuberculosis, loadDoctoresAsignados, isAdmin]);
+  }, [modalSection, loadCitas, loadSignos, loadDiagnosticos, loadMedicamentos, loadTomasMedicamento, loadRedApoyo, loadVacunacion, loadComorbilidades, loadDeteccionesComplicaciones, loadSesionesEducativas, loadSaludBucal, loadDeteccionesTuberculosis, loadDoctoresAsignados, isAdmin]);
 
   useEffect(() => {
     if (!formaModalOpen || parsedId === 0) return;
@@ -1443,6 +1470,58 @@ export default function PacienteDetail() {
                 ))}
               </ul>
             )}
+            <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--color-borde-claro)' }}>
+              <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>Registro de tomas</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                <span style={{ color: 'var(--color-texto-secundario)', fontSize: 'var(--text-sm)' }}>Últimos</span>
+                <Select
+                  value={tomasMedicamentoRango}
+                  onChange={(v) => {
+                    setTomasMedicamentoRango(v ?? '30');
+                    loadTomasMedicamento(v ?? '30');
+                  }}
+                  options={[
+                    { value: '7', label: '7 días' },
+                    { value: '30', label: '30 días' },
+                    { value: '90', label: '90 días' },
+                  ]}
+                  style={{ width: 120 }}
+                />
+              </div>
+              {tomasMedicamentoLoading ? (
+                <LoadingSpinner />
+              ) : tomasMedicamento.data.length === 0 ? (
+                <EmptyState message="No hay tomas registradas en este periodo" />
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--color-borde-claro)', textAlign: 'left' }}>
+                        <th style={{ padding: '0.5rem 0.5rem 0.5rem 0' }}>Fecha</th>
+                        <th style={{ padding: '0.5rem' }}>Hora</th>
+                        <th style={{ padding: '0.5rem' }}>Medicación / Plan</th>
+                        <th style={{ padding: '0.5rem' }}>Observaciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tomasMedicamento.data.map((toma) => {
+                        const planLabel = (medicamentos.data.find((m) => (m.id_plan ?? m.id) === toma.id_plan_medicacion)?.nombre_medicamento ?? medicamentos.data.find((m) => (m.id_plan ?? m.id) === toma.id_plan_medicacion)?.medicamento) || (toma.PlanDetalle?.Medicamento?.nombre_medicamento) || `Plan #${toma.id_plan_medicacion}`;
+                        const fechaToma = toma.fecha_toma ? formatDate(toma.fecha_toma) : '—';
+                        const horaToma = toma.hora_toma != null ? (typeof toma.hora_toma === 'string' ? toma.hora_toma.slice(0, 5) : String(toma.hora_toma).slice(0, 5)) : '—';
+                        return (
+                          <tr key={toma.id_toma} style={{ borderBottom: '1px solid var(--color-borde-claro)' }}>
+                            <td style={{ padding: '0.5rem 0.5rem 0.5rem 0' }}>{fechaToma}</td>
+                            <td style={{ padding: '0.5rem' }}>{horaToma}</td>
+                            <td style={{ padding: '0.5rem' }}>{sanitizeForDisplay(planLabel)}</td>
+                            <td style={{ padding: '0.5rem', color: 'var(--color-texto-secundario)' }}>{toma.observaciones ? sanitizeForDisplay(toma.observaciones) : '—'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
             {planDetalleSeleccionado && (
               <Modal
                 open={!!planDetalleSeleccionado}

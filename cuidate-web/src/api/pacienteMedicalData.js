@@ -84,6 +84,26 @@ export async function getPacienteMedicamentos(pacienteId, params = {}) {
 }
 
 /**
+ * Registro de tomas de medicamento del paciente.
+ * GET /api/medicamentos-toma/paciente/:idPaciente
+ * @param {number|string} pacienteId
+ * @param {{ fechaInicio?: string, fechaFin?: string, idPlan?: number }} [params]
+ * @returns {Promise<{ data: Array }>}
+ */
+export async function getPacienteTomasMedicamento(pacienteId, params = {}) {
+  const id = parsePositiveInt(pacienteId, 0);
+  if (id === 0) throw new Error('ID de paciente inválido');
+  const q = new URLSearchParams();
+  if (params.fechaInicio) q.set('fechaInicio', String(params.fechaInicio).slice(0, 10));
+  if (params.fechaFin) q.set('fechaFin', String(params.fechaFin).slice(0, 10));
+  if (params.idPlan != null) q.set('idPlan', String(params.idPlan));
+  const path = `/api/medicamentos-toma/paciente/${id}${q.toString() ? `?${q.toString()}` : ''}`;
+  const { data } = await client.get(path);
+  const arr = Array.isArray(data?.data) ? data.data : [];
+  return { data: arr, total: arr.length };
+}
+
+/**
  * Red de apoyo del paciente.
  */
 export async function getPacienteRedApoyo(pacienteId, params = {}) {
