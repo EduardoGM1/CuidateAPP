@@ -138,7 +138,8 @@ export const getMensajesNoLeidos = async (idPaciente) => {
 };
 
 /**
- * Enviar mensaje de texto
+ * Enviar mensaje de texto.
+ * El servidor notifica al destinatario por push y por email (p. ej. paciente → doctor recibe email).
  */
 export const enviarMensajeTexto = async (idPaciente, idDoctor, remitente, mensajeTexto) => {
   try {
@@ -152,7 +153,8 @@ export const enviarMensajeTexto = async (idPaciente, idDoctor, remitente, mensaj
       throw new Error('El mensaje no puede estar vacío');
     }
     
-    // NOTA: No incluir /api porque apiClient ya lo tiene en baseURL
+    // NOTA: No incluir /api porque apiClient ya lo tiene en baseURL.
+    // El backend envía notificación push + email al destinatario (doctor o paciente).
     const response = await apiClient.post('/mensajes-chat', {
       id_paciente: idPaciente,
       id_doctor: idDoctor,
@@ -317,7 +319,8 @@ export const uploadAudioFile = async (audioFilePath, options = {}) => {
 };
 
 /**
- * Enviar mensaje de audio
+ * Enviar mensaje de audio.
+ * El servidor notifica al destinatario por push y por email (p. ej. paciente → doctor recibe email).
  */
 export const enviarMensajeAudio = async (idPaciente, idDoctor, remitente, audioUrl, duracion, transcripcion = null) => {
   try {

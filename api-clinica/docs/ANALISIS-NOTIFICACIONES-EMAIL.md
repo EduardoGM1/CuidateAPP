@@ -7,7 +7,7 @@ Estado de implementación de las notificaciones por email en la API (CuídateApp
 | Tipo | Descripción | Dónde se dispara |
 |------|-------------|------------------|
 | **Bienvenida** | Email al crear cuenta (registro o creación por admin) | `auth.js`: `register`, `createUsuario` |
-| **Nuevo mensaje** | Aviso al destinatario del chat (doctor o paciente) | `mensajeChat.js`: al crear mensaje, se envía al destinatario (por `Usuario.email`) |
+| **Nuevo mensaje** | Aviso al destinatario del chat (doctor o paciente) | `mensajeChat.js`: al crear mensaje (POST /api/mensajes-chat), se envía al destinatario (por `Usuario.email`). Aplica tanto a mensajes enviados desde la **app web** como desde la **app móvil** (mismo endpoint). |
 | **Nuevo paciente** | Aviso a quien creó el paciente y a lista opcional | `paciente.js`: `createPaciente`, `createPacienteCompleto`. Se envía a `req.user.email` y a `NOTIFY_NEW_PATIENT_EMAILS` (.env) |
 | **Cita agendada** | Confirmación al paciente al crear cita | `cita.js`: `createCita` → email al `Usuario` del paciente |
 | **Cita reprogramada** | Confirmación al paciente al reprogramar | `cita.js`: `reprogramarCita` → email al `Usuario` del paciente |
@@ -37,6 +37,15 @@ Estado de implementación de las notificaciones por email en la API (CuídateApp
     → Envía las 7 notificaciones de prueba al email indicado (por defecto `eduardolalito99@hotmail.com`).
   - `node scripts/test-notificaciones-email.js --diagnostico [email]` (o `-d`)  
     → Comprueba en BD: Usuario con ese email, Doctor con ese `id_usuario`, y cuántos pacientes tiene asignados (útil para depurar por qué un doctor no recibe el email de “nuevo mensaje”).
+
+## App móvil
+
+Cuando un **paciente** envía un mensaje al doctor desde la app móvil (texto o audio), la app llama a `POST /api/mensajes-chat` igual que la web. El backend (`createMensaje` en `mensajeChat.js`) envía automáticamente:
+
+- Notificación **push** al doctor (si tiene la app y token registrado).
+- Email al doctor (si el `Usuario` del doctor tiene `email` en BD).
+
+No hace falta ninguna lógica adicional en la app móvil: el envío de email lo hace siempre el servidor al crear el mensaje.
 
 ## Log de diagnóstico (nuevo mensaje)
 
