@@ -5844,7 +5844,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       onPress={() => handleOpenWizard(citaDetalle.id_cita)}
                     >
                       <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '700', fontSize: 16 }}>
-                        Completar Cita (Wizard)
+                        Completar Cita
                       </Text>
                     </TouchableOpacity>
                     <Text style={{ fontSize: 11, color: COLORES.TEXTO_SECUNDARIO, textAlign: 'center', marginBottom: 8 }}>

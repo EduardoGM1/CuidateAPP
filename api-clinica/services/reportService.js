@@ -190,9 +190,9 @@ class ReportService {
       
       const rows = signos.map(signo => [
         signo.fecha_medicion || '',
-        signo.presion_sistolica || '',
-        signo.presion_diastolica || '',
-        signo.glucosa_mg_dl || '',
+        decryptForReport(signo.presion_sistolica) ?? '',
+        decryptForReport(signo.presion_diastolica) ?? '',
+        decryptForReport(signo.glucosa_mg_dl) ?? '',
         signo.peso_kg || '',
         signo.imc || '',
         signo.temperatura_c || '',
@@ -477,18 +477,22 @@ class ReportService {
         <table border="1">
           <tr><th>Signo Vital</th><th>Valor</th></tr>
           ${cita.SignosVitales.map(signo => {
+            const presionSistolica = decryptForReport(signo.presion_sistolica);
+            const presionDiastolica = decryptForReport(signo.presion_diastolica);
+            const glucosa = decryptForReport(signo.glucosa_mg_dl);
+            const colesterol = decryptForReport(signo.colesterol_mg_dl);
             let rows = '';
-            if (signo.peso_kg) rows += `<tr><td>Peso</td><td>${signo.peso_kg} kg</td></tr>`;
-            if (signo.talla_m) rows += `<tr><td>Talla</td><td>${signo.talla_m} m</td></tr>`;
+            if (signo.peso_kg) rows += `<tr><td>Peso</td><td>${escapeHtml(String(signo.peso_kg))} kg</td></tr>`;
+            if (signo.talla_m) rows += `<tr><td>Talla</td><td>${escapeHtml(String(signo.talla_m))} m</td></tr>`;
             if (signo.peso_kg && signo.talla_m) {
               const imc = (signo.peso_kg / (signo.talla_m * signo.talla_m)).toFixed(1);
               rows += `<tr><td>IMC</td><td>${imc}</td></tr>`;
             }
-            if (signo.presion_sistolica && signo.presion_diastolica) {
-              rows += `<tr><td>Presión arterial</td><td>${signo.presion_sistolica}/${signo.presion_diastolica} mmHg</td></tr>`;
+            if (presionSistolica !== '' && presionSistolica != null && presionDiastolica !== '' && presionDiastolica != null) {
+              rows += `<tr><td>Presión arterial</td><td>${escapeHtml(String(presionSistolica))}/${escapeHtml(String(presionDiastolica))} mmHg</td></tr>`;
             }
-            if (signo.glucosa_mg_dl) rows += `<tr><td>Glucosa</td><td>${signo.glucosa_mg_dl} mg/dL</td></tr>`;
-            if (signo.colesterol_mg_dl) rows += `<tr><td>Colesterol</td><td>${signo.colesterol_mg_dl} mg/dL</td></tr>`;
+            if (glucosa !== '' && glucosa != null) rows += `<tr><td>Glucosa</td><td>${escapeHtml(String(glucosa))} mg/dL</td></tr>`;
+            if (colesterol !== '' && colesterol != null) rows += `<tr><td>Colesterol</td><td>${escapeHtml(String(colesterol))} mg/dL</td></tr>`;
             return rows;
           }).join('')}
         </table>
@@ -543,18 +547,23 @@ class ReportService {
         <th>Triglicéridos</th>
       </tr>
       ${signosVitalesContinuo.map(signo => {
+        const presionSistolica = decryptForReport(signo.presion_sistolica);
+        const presionDiastolica = decryptForReport(signo.presion_diastolica);
+        const glucosaDec = decryptForReport(signo.glucosa_mg_dl);
+        const colesterolDec = decryptForReport(signo.colesterol_mg_dl);
+        const trigliceridosDec = decryptForReport(signo.trigliceridos_mg_dl);
         const fechaMedicion = formatDateShort(signo.fecha_medicion);
         const peso = signo.peso_kg ? `${signo.peso_kg} kg` : '-';
         const talla = signo.talla_m ? `${signo.talla_m} m` : '-';
         const imc = (signo.peso_kg && signo.talla_m) 
           ? (signo.peso_kg / (signo.talla_m * signo.talla_m)).toFixed(1) 
           : '-';
-        const presion = (signo.presion_sistolica && signo.presion_diastolica) 
-          ? `${signo.presion_sistolica}/${signo.presion_diastolica}` 
+        const presion = (presionSistolica !== '' && presionSistolica != null && presionDiastolica !== '' && presionDiastolica != null) 
+          ? `${presionSistolica}/${presionDiastolica}` 
           : '-';
-        const glucosa = signo.glucosa_mg_dl ? `${signo.glucosa_mg_dl} mg/dL` : '-';
-        const colesterol = signo.colesterol_mg_dl ? `${signo.colesterol_mg_dl} mg/dL` : '-';
-        const trigliceridos = signo.trigliceridos_mg_dl ? `${signo.trigliceridos_mg_dl} mg/dL` : '-';
+        const glucosa = (glucosaDec !== '' && glucosaDec != null) ? `${glucosaDec} mg/dL` : '-';
+        const colesterol = (colesterolDec !== '' && colesterolDec != null) ? `${colesterolDec} mg/dL` : '-';
+        const trigliceridos = (trigliceridosDec !== '' && trigliceridosDec != null) ? `${trigliceridosDec} mg/dL` : '-';
         
         return `
           <tr>
@@ -645,12 +654,17 @@ class ReportService {
       ? `Dr. ${[cita.Doctor.nombre, cita.Doctor.apellido_paterno, cita.Doctor.apellido_materno].filter(Boolean).join(' ')}`
       : '—';
 
-    const ta = (signo?.presion_sistolica != null && signo?.presion_diastolica != null) ? `${signo.presion_sistolica}/${signo.presion_diastolica}` : '—';
+    const presionSistolica = decryptForReport(signo?.presion_sistolica);
+    const presionDiastolica = decryptForReport(signo?.presion_diastolica);
+    const ta = (presionSistolica !== '' && presionSistolica != null && presionDiastolica !== '' && presionDiastolica != null) ? `${presionSistolica}/${presionDiastolica}` : '—';
     const peso = signo?.peso_kg != null ? `${signo.peso_kg} kg` : '—';
     const talla = signo?.talla_m != null ? `${(signo.talla_m * 100).toFixed(0)} cm` : '—';
-    const glucosa = signo?.glucosa_mg_dl != null ? `${signo.glucosa_mg_dl} MG/DL` : '—';
-    const colesterol = signo?.colesterol_mg_dl != null ? `${signo.colesterol_mg_dl} MG/DL` : '—';
-    const trigliceridos = signo?.trigliceridos_mg_dl != null ? `${signo.trigliceridos_mg_dl} MG/DL` : '—';
+    const glucosaDec = decryptForReport(signo?.glucosa_mg_dl);
+    const colesterolDec = decryptForReport(signo?.colesterol_mg_dl);
+    const trigliceridosDec = decryptForReport(signo?.trigliceridos_mg_dl);
+    const glucosa = (glucosaDec !== '' && glucosaDec != null) ? `${glucosaDec} MG/DL` : '—';
+    const colesterol = (colesterolDec !== '' && colesterolDec != null) ? `${colesterolDec} MG/DL` : '—';
+    const trigliceridos = (trigliceridosDec !== '' && trigliceridosDec != null) ? `${trigliceridosDec} MG/DL` : '—';
 
     const comorbText = (paciente.Comorbilidades || []).map(c => c.nombre_comorbilidad).filter(Boolean).join('; ') || '—';
     const diagText = diagnosticos.map(d => decryptForReport(d.descripcion)).filter(Boolean).join('; ') || '—';
@@ -1191,6 +1205,8 @@ class ReportService {
       const sexo = p.sexo === 'Mujer' ? 'F' : p.sexo === 'Hombre' ? 'M' : '';
       const nombreCompleto = [p.nombre, p.apellido_paterno, p.apellido_materno].filter(Boolean).join(' ').trim();
 
+      const toNumSigno = (val) => { const d = decryptForReport(val); return (d !== '' && d != null && !Number.isNaN(Number(d))) ? Number(d) : ''; };
+
       const filas = [{
         n: 1,
         nombre: nombreCompleto,
@@ -1211,11 +1227,11 @@ class ReportService {
         odontologica: tiposSesion.has('odontologica') || tieneSaludBucal ? 1 : '',
         talla: signo && signo.talla_m != null ? Number(signo.talla_m) : '',
         imc: signo && signo.imc != null ? Number(signo.imc) : '',
-        colesterol: signo && signo.colesterol_mg_dl != null ? Number(signo.colesterol_mg_dl) : '',
-        trigliceridos: signo && signo.trigliceridos_mg_dl != null ? Number(signo.trigliceridos_mg_dl) : '',
-        glucosa: signo && signo.glucosa_mg_dl != null ? Number(signo.glucosa_mg_dl) : '',
-        presionSistolica: signo && signo.presion_sistolica != null ? Number(signo.presion_sistolica) : '',
-        presionDiastolica: signo && signo.presion_diastolica != null ? Number(signo.presion_diastolica) : '',
+        colesterol: signo ? toNumSigno(signo.colesterol_mg_dl) : '',
+        trigliceridos: signo ? toNumSigno(signo.trigliceridos_mg_dl) : '',
+        glucosa: signo ? toNumSigno(signo.glucosa_mg_dl) : '',
+        presionSistolica: signo ? toNumSigno(signo.presion_sistolica) : '',
+        presionDiastolica: signo ? toNumSigno(signo.presion_diastolica) : '',
         microalbuminuria: '',
         fondoOjo: ''
       }];

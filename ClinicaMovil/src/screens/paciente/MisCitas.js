@@ -468,6 +468,13 @@ const MisCitas = () => {
     }
   };
 
+  // Semaforología: color de la barra y del card según proximidad (rojo = Hoy, amarillo = Mañana, verde = En X días)
+  const getColorSemaforo = (diasTexto) => {
+    if (diasTexto === 'Hoy') return COLORES.ERROR_LIGHT;      // Rojo - urgente
+    if (diasTexto === 'Mañana') return COLORES.ADVERTENCIA_LIGHT; // Amarillo/ámbar - próximo
+    return COLORES.EXITO; // Verde - tranquilo (En X días o Pasada)
+  };
+
   const handleCardPress = async (cita) => {
     hapticService.medium();
     
@@ -782,6 +789,7 @@ const MisCitas = () => {
             const diasTexto = diasHastaCita(cita.fecha_cita);
             const esHoy = diasTexto === 'Hoy';
             const esMañana = diasTexto === 'Mañana';
+            const colorSemaforo = getColorSemaforo(diasTexto);
             
             return (
               <TouchableOpacity
@@ -797,13 +805,17 @@ const MisCitas = () => {
                 accessibilityRole="button"
                 accessibilityLabel={`Cita ${formatFecha(cita.fecha_cita)}. ${cita.motivo || ''}`}
               >
-                <View style={styles.citaHeader}>
-                  {esHoy && <View style={styles.badgeToday}><Text style={styles.badgeText}>HOY</Text></View>}
-                  {esMañana && <View style={styles.badgeTomorrow}><Text style={styles.badgeText}>MAÑANA</Text></View>}
-                  <Text style={styles.citaDias}>{diasTexto}</Text>
-                </View>
+                <View style={styles.citaCardInner}>
+                  <View style={[styles.citaCardBarra, { backgroundColor: colorSemaforo }]} />
+                  <View style={styles.citaCardContent}>
+                    <View style={styles.citaHeader}>
+                      {esHoy && <View style={[styles.badgeToday, { backgroundColor: colorSemaforo }]}><Text style={styles.badgeText}>HOY</Text></View>}
+                      {esMañana && <View style={[styles.badgeTomorrow, { backgroundColor: colorSemaforo }]}><Text style={styles.badgeText}>MAÑANA</Text></View>}
+                      {!esHoy && !esMañana && <View style={[styles.badgeDias, { backgroundColor: colorSemaforo }]}><Text style={styles.badgeText}>{diasTexto}</Text></View>}
+                      {(esHoy || esMañana) && <Text style={styles.citaDias}>{diasTexto}</Text>}
+                    </View>
 
-                <Text style={styles.citaFecha}>{formatFecha(cita.fecha_cita)}</Text>
+                    <Text style={styles.citaFecha}>{formatFecha(cita.fecha_cita)}</Text>
 
                 {cita.motivo && (
                   <View style={styles.citaMotivoContainer}>
@@ -845,10 +857,12 @@ const MisCitas = () => {
                   );
                 })()}
 
-                <View style={styles.citaFooter}>
-                  <Text style={styles.citaHint}>
-                    Presiona para escuchar detalles • Mantén presionado para escuchar fecha y hora
-                  </Text>
+                    <View style={styles.citaFooter}>
+                      <Text style={styles.citaHint}>
+                        Presiona para escuchar detalles • Mantén presionado para escuchar fecha y hora
+                      </Text>
+                    </View>
+                  </View>
                 </View>
               </TouchableOpacity>
             );
@@ -1128,7 +1142,7 @@ const styles = StyleSheet.create({
   citaCard: {
     backgroundColor: COLORES.FONDO_CARD,
     borderRadius: 16,
-    padding: 20,
+    padding: 0,
     marginBottom: 16,
     borderWidth: 2,
     borderColor: COLORES.NAV_PACIENTE,
@@ -1140,6 +1154,7 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.2,
     shadowRadius: 4,
+    overflow: 'hidden',
   },
   citaCardToday: {
     borderColor: COLORES.ERROR_LIGHT,
@@ -1148,6 +1163,19 @@ const styles = StyleSheet.create({
   citaCardTomorrow: {
     borderColor: COLORES.ADVERTENCIA_LIGHT,
     backgroundColor: COLORES.FONDO_ADVERTENCIA_CLARO,
+  },
+  citaCardInner: {
+    flexDirection: 'row',
+    minHeight: 80,
+  },
+  citaCardBarra: {
+    width: 6,
+    borderTopLeftRadius: 14,
+    borderBottomLeftRadius: 14,
+  },
+  citaCardContent: {
+    flex: 1,
+    padding: 20,
   },
   citaHeader: {
     flexDirection: 'row',
@@ -1169,12 +1197,24 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginRight: 8,
   },
+  badgeDias: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginRight: 8,
+  },
   badgeText: {
     color: COLORES.TEXTO_EN_PRIMARIO,
     fontSize: 12,
     fontWeight: 'bold',
   },
   citaDias: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORES.TEXTO_SECUNDARIO,
+    marginLeft: 'auto',
+  },
+  citaDiasRight: {
     fontSize: 14,
     fontWeight: '600',
     color: COLORES.TEXTO_SECUNDARIO,
