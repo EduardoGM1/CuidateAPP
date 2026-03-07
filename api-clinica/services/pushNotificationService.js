@@ -359,6 +359,10 @@ class PushNotificationService {
         type: notification.type
       });
 
+      // Alertas de salud usan canal con sonido tipo alarma; el resto usa recordatorios
+      const isAlertType = /alerta_signos_vitales|alerta_paciente|alerta_salud|alerta/.test(notification.type || '');
+      const androidChannelId = isAlertType ? 'clinica-movil-alerts' : 'clinica-movil-reminders';
+
       const message = {
         token: cleanToken, // Usar token sin prefijo
         notification: {
@@ -374,7 +378,9 @@ class PushNotificationService {
           priority: 'high',
           notification: {
             sound: 'default',
-            channel_id: 'clinica-movil-reminders', // Usar el canal de recordatorios
+            channel_id: androidChannelId,
+            defaultSound: true,
+            defaultVibrateTimings: true,
             visibility: 'public', // Mostrar en pantalla bloqueada
           },
           // Configuración para Huawei y otros dispositivos restrictivos

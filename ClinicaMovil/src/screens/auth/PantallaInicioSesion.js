@@ -86,16 +86,18 @@ const PantallaInicioSesion = ({ navigation }) => {
                 🩺 Soy Doctor/Administrador
               </Button>
 
-              {/* Botón temporal de diagnóstico */}
-              <Button
-                mode="outlined"
-                onPress={() => navigation.navigate('DiagnosticScreen')}
-                style={[styles.button, styles.diagnosticButton]}
-                contentStyle={styles.buttonContent}
-                labelStyle={styles.buttonLabel}
-              >
-                🔧 Diagnóstico de Conexión
-              </Button>
+              {/* Botón de diagnóstico: solo visible en desarrollo (oculto en APK de producción) */}
+              {__DEV__ && (
+                <Button
+                  mode="outlined"
+                  onPress={() => navigation.navigate('DiagnosticScreen')}
+                  style={[styles.button, styles.diagnosticButton]}
+                  contentStyle={styles.buttonContent}
+                  labelStyle={styles.buttonLabel}
+                >
+                  🔧 Diagnóstico de Conexión
+                </Button>
+              )}
             </View>
       </View>
     </SafeAreaView>

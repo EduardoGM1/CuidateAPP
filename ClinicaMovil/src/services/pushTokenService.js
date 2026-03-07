@@ -188,24 +188,25 @@ class PushTokenService {
           });
         }
         
-        // ========== MOSTRAR NOTIFICACIÓN VISUALMENTE ==========
+        // ========== MOSTRAR NOTIFICACIÓN VISUALMENTE (con sonido y vibración) ==========
         try {
-          // Usar localNotificationService para asegurar que el canal existe y está configurado
           const localNotificationService = (await import('./localNotificationService.js')).default;
-          
+          const notifType = (remoteMessage.data || {}).type || '';
+          const isAlertType = /alerta_signos_vitales|alerta_paciente|alerta_salud|alerta/.test(notifType);
+
           const notificationOptions = {
             title: notificationTitle,
             message: notificationBody,
-            channelId: 'clinica-movil-reminders',
-            data: remoteMessage.data || {},
-            tag: remoteMessage.messageId || `notif-${Date.now()}`,
-              soundName: 'default',
+            channelId: isAlertType ? 'clinica-movil-alerts' : 'clinica-movil-reminders',
+            soundName: isAlertType ? 'alarm' : 'default',
             playSound: true,
-              vibrate: true,
+            vibrate: true,
             priority: 'high',
             importance: 4,
+            data: remoteMessage.data || {},
+            tag: remoteMessage.messageId || `notif-${Date.now()}`,
           };
-          
+
           await localNotificationService.showNotification(notificationOptions);
           Logger.success('✅ Notificación mostrada visualmente');
           } catch (notificationError) {
