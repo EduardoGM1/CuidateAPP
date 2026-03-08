@@ -27,3 +27,6 @@
 -keep class com.google.android.gms.** { *; }
 -dontwarn com.google.firebase.**
 -dontwarn com.google.android.gms.**
+
+# PDF/JPX (tom_roush pdfbox): clase opcional JP2 no incluida
+-dontwarn com.gemalto.jp2.**

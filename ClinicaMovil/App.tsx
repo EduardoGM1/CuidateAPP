@@ -120,123 +120,58 @@ const App = () => {
 
     checkFirebase();
 
-    // Solicitar permisos de notificaciones y micrófono al iniciar la app
-    const requestNotificationPermissions = async () => {
+    // Solicitar permisos de notificaciones y micrófono al iniciar la app (en secuencia para que se muestren ambos diálogos)
+    const runPermissionsOnStartup = async () => {
+      const permissionsService = await import('./src/services/permissionsService').then(m => m.default);
+      // Pequeña espera para que la app y Firebase se inicialicen
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // 1) Primero notificaciones (Android 13+ muestra el diálogo del sistema con PermissionsAndroid)
       try {
         Logger.info('📱 Solicitando permisos de notificaciones al iniciar la app...');
-        
-        // Esperar un momento para que Firebase se inicialice
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
         if (Platform.OS === 'android') {
-          // Android: Usar react-native-push-notification
-          try {
-            const PushNotification = require('react-native-push-notification').default;
-            
-            if (typeof PushNotification.requestPermissions === 'function') {
-              const permissionsResult = PushNotification.requestPermissions();
-              
-              if (permissionsResult && typeof permissionsResult.then === 'function') {
-                const permissions = await permissionsResult;
-                Logger.info('✅ Permisos de notificación obtenidos (Android):', permissions);
-                
-                if (permissions.alert && permissions.badge && permissions.sound) {
-                  Logger.success('✅ Todos los permisos de notificación otorgados');
-                } else {
-                  Logger.warn('⚠️ Algunos permisos de notificación no fueron otorgados:', permissions);
-                }
-              } else {
-                // Verificar permisos existentes
-                PushNotification.checkPermissions((checkResult: any) => {
-                  Logger.info('📱 Estado de permisos (Android):', checkResult);
-                });
-              }
-            } else {
-              Logger.warn('⚠️ PushNotification.requestPermissions no está disponible');
-            }
-          } catch (error) {
-            Logger.error('❌ Error solicitando permisos con PushNotification:', error);
+          await permissionsService.requestNotificationPermission();
+        }
+        const PushNotification = require('react-native-push-notification').default;
+        if (typeof PushNotification.requestPermissions === 'function') {
+          const permissionsResult = PushNotification.requestPermissions();
+          if (permissionsResult && typeof permissionsResult.then === 'function') {
+            const permissions = await permissionsResult;
+            Logger.info('✅ Permisos de notificación (PushNotification):', permissions);
           }
         }
-
-        // También solicitar permisos con Firebase Messaging (funciona en iOS y Android)
-        try {
-          const messagingModule = await import('@react-native-firebase/messaging');
-          const messaging = messagingModule.default;
-          
-          if (messaging && typeof messaging === 'function') {
-            const messagingInstance = messaging();
-            
-            if (messagingInstance && typeof messagingInstance.requestPermission === 'function') {
-              const authStatus = await messagingInstance.requestPermission();
-              Logger.info('📱 Estado de permisos (Firebase Messaging):', { authStatus });
-              
-              // 0 = denied, 1 = authorized, 2 = provisional (iOS)
-              const enabled = authStatus === 1 || authStatus === 2;
-              
-              if (enabled) {
-                Logger.success('✅ Permisos de notificación otorgados (Firebase Messaging)');
-              } else {
-                Logger.warn('⚠️ Permisos de notificación no otorgados (Firebase Messaging)');
-                
-                // Mostrar alerta al usuario solo si es la primera vez
-                if (Platform.OS === 'ios') {
-                  Alert.alert(
-                    'Permisos de Notificaciones',
-                    'Para recibir notificaciones importantes, por favor activa los permisos de notificaciones en Configuración.',
-                    [
-                      { text: 'Cancelar', style: 'cancel' },
-                      { 
-                        text: 'Ir a Configuración', 
-                        onPress: () => {
-                          // En iOS, no podemos abrir configuración directamente desde aquí
-                          // El usuario debe ir manualmente
-                          Logger.info('Usuario debe ir a Configuración manualmente');
-                        }
-                      }
-                    ]
-                  );
-                }
-              }
+        const messagingModule = await import('@react-native-firebase/messaging');
+        const messaging = messagingModule.default;
+        if (messaging && typeof messaging === 'function') {
+          const messagingInstance = messaging();
+          if (messagingInstance?.requestPermission) {
+            const authStatus = await messagingInstance.requestPermission();
+            Logger.info('📱 Estado permisos (Firebase Messaging):', { authStatus });
+            if (Platform.OS === 'ios' && authStatus !== 1 && authStatus !== 2) {
+              Alert.alert(
+                'Permisos de Notificaciones',
+                'Para recibir notificaciones importantes, activa los permisos en Configuración.',
+                [{ text: 'Entendido', style: 'cancel' }]
+              );
             }
           }
-        } catch (error) {
-          Logger.warn('⚠️ Error solicitando permisos con Firebase Messaging:', error);
-          // No es crítico, continuar
         }
       } catch (error) {
-        Logger.error('❌ Error general solicitando permisos de notificaciones:', error);
-        // No bloquear la app si falla
+        Logger.error('❌ Error solicitando permisos de notificaciones:', error);
       }
-    };
 
-    // Solicitar permiso de micrófono al iniciar la app
-    const requestMicrophonePermission = async () => {
+      // 2) Después micrófono (así no se solapan los diálogos y ambos se muestran)
       try {
         Logger.info('🎤 Solicitando permiso de micrófono al iniciar la app...');
-        
-        // Esperar un momento para que la app se inicialice
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        const permissionsService = await import('./src/services/permissionsService');
-        const hasPermission = await permissionsService.default.requestMicrophonePermission();
-        
-        if (hasPermission) {
-          Logger.success('✅ Permiso de micrófono otorgado');
-        } else {
-          Logger.warn('⚠️ Permiso de micrófono no otorgado');
-        }
+        const hasPermission = await permissionsService.requestMicrophonePermission();
+        if (hasPermission) Logger.success('✅ Permiso de micrófono otorgado');
+        else Logger.warn('⚠️ Permiso de micrófono no otorgado');
       } catch (error) {
         Logger.error('❌ Error solicitando permiso de micrófono:', error);
-        // No bloquear la app si falla
       }
     };
 
-    // Solicitar permisos después de un breve delay para que la app se inicialice
-    setTimeout(() => {
-      requestNotificationPermissions();
-      requestMicrophonePermission();
-    }, 3000);
+    setTimeout(() => { runPermissionsOnStartup(); }, 3000);
   }, []);
 
   return (

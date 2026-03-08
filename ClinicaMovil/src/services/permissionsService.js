@@ -51,6 +51,46 @@ class PermissionsService {
   }
 
   /**
+   * Solicitar permiso de notificaciones (Android 13+).
+   * En API 33+ el sistema muestra el diálogo; en versiones anteriores no es necesario.
+   * @returns {Promise<boolean>} true si se otorgó o no aplica, false si se denegó
+   */
+  async requestNotificationPermission() {
+    try {
+      if (Platform.OS !== 'android') {
+        return true;
+      }
+      const apiLevel = typeof Platform.Version === 'number' ? Platform.Version : parseInt(Platform.Version, 10) || 0;
+      if (apiLevel < 33) {
+        Logger.info('PermissionsService: Android < 13, no se solicita POST_NOTIFICATIONS');
+        return true;
+      }
+      const perm = PermissionsAndroid.PERMISSIONS?.POST_NOTIFICATIONS ?? 'android.permission.POST_NOTIFICATIONS';
+      const granted = await PermissionsAndroid.request(perm, {
+        title: 'Permiso de notificaciones',
+        message: 'CuidaTeApp necesita enviarte notificaciones para recordatorios de medicación, citas y mensajes importantes.',
+        buttonNeutral: 'Preguntar después',
+        buttonNegative: 'Cancelar',
+        buttonPositive: 'Permitir',
+      });
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        Logger.info('PermissionsService: Permiso de notificaciones otorgado');
+        return true;
+      }
+      if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+        Logger.warn('PermissionsService: Permiso de notificaciones denegado permanentemente');
+        this.showPermissionDeniedAlert('notificaciones');
+        return false;
+      }
+      Logger.warn('PermissionsService: Permiso de notificaciones denegado');
+      return false;
+    } catch (error) {
+      Logger.error('PermissionsService: Error solicitando permiso de notificaciones', error);
+      return false;
+    }
+  }
+
+  /**
    * Verificar si el permiso de micrófono está otorgado
    * @returns {Promise<boolean>} true si está otorgado, false si no
    */
@@ -111,6 +151,9 @@ class PermissionsService {
       case 'microphone':
       case 'RECORD_AUDIO':
         return await this.requestMicrophonePermission();
+      case 'notifications':
+      case 'POST_NOTIFICATIONS':
+        return await this.requestNotificationPermission();
       default:
         Logger.warn('PermissionsService: Tipo de permiso no reconocido', { permission });
         return false;
