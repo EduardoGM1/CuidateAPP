@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { formatDateTime } from '../../utils/format';
-import { sanitizeForDisplay } from '../../utils/sanitize';
+import { normalizeString } from '../../utils/sanitize';
 import { getPresionValueStyle, getVitalSignValueStyle } from '../../utils/vitalSignsRanges';
 
 const sectionStyle = {
@@ -54,8 +54,8 @@ export default function AdminAlertDetailModal({ open, onClose, alerta }) {
     return (
       <Modal open={open} onClose={onClose} title="Alerta: valor crítico" footer={null} width={460}>
         <div style={sectionStyle}>
-          <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Paciente:</span> <span style={valueStyle}>{sanitizeForDisplay(pacienteNombre)}</span></div>
-          <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Tipo de alerta:</span> <span style={valueStyle}>{sanitizeForDisplay(alerta.tipo_alerta ?? 'Valor crítico')}</span></div>
+          <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Paciente:</span> <span style={valueStyle}>{normalizeString(pacienteNombre)}</span></div>
+          <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Tipo de alerta:</span> <span style={valueStyle}>{normalizeString(alerta.tipo_alerta ?? 'Valor crítico')}</span></div>
           {(alerta.glucosa != null || alerta.glucosa_mg_dl != null) && (
             <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Glucosa:</span>{' '}
               <span style={getVitalSignValueStyle('glucosa_mg_dl', alerta.glucosa ?? alerta.glucosa_mg_dl)}>{String(alerta.glucosa ?? alerta.glucosa_mg_dl)} mg/dL</span>
@@ -84,9 +84,9 @@ export default function AdminAlertDetailModal({ open, onClose, alerta }) {
     return (
       <Modal open={open} onClose={onClose} title="Alerta: cita perdida" footer={null} width={460}>
         <div style={sectionStyle}>
-          <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Paciente:</span> <span style={valueStyle}>{sanitizeForDisplay(pacienteNombre)}</span></div>
+          <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Paciente:</span> <span style={valueStyle}>{normalizeString(pacienteNombre)}</span></div>
           <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Fecha:</span> {formatDateTime(alerta.fecha ?? alerta.fecha_cita)}</div>
-          {alerta.motivo != null && <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Motivo:</span> {sanitizeForDisplay(alerta.motivo)}</div>}
+          {alerta.motivo != null && <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Motivo:</span> {normalizeString(alerta.motivo)}</div>}
           {alerta.id_cita != null && <div><span style={labelStyle}>ID cita:</span> {alerta.id_cita}</div>}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -101,10 +101,10 @@ export default function AdminAlertDetailModal({ open, onClose, alerta }) {
     return (
       <Modal open={open} onClose={onClose} title="Alerta: auditoría" footer={null} width={460}>
         <div style={sectionStyle}>
-          <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Descripción:</span> <span style={valueStyle}>{sanitizeForDisplay(alerta.descripcion ?? '—')}</span></div>
-          <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Tipo de acción:</span> {sanitizeForDisplay(alerta.tipo_accion ?? '—')}</div>
-          <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Entidad:</span> {sanitizeForDisplay(alerta.entidad_afectada ?? '—')}</div>
-          <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Severidad:</span> {sanitizeForDisplay(alerta.severidad ?? '—')}</div>
+          <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Descripción:</span> <span style={valueStyle}>{normalizeString(alerta.descripcion ?? '—')}</span></div>
+          <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Tipo de acción:</span> {normalizeString(alerta.tipo_accion ?? '—')}</div>
+          <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Entidad:</span> {normalizeString(alerta.entidad_afectada ?? '—')}</div>
+          <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Severidad:</span> {normalizeString(alerta.severidad ?? '—')}</div>
           {alerta.fecha_creacion != null && <div><span style={labelStyle}>Fecha:</span> {formatDateTime(alerta.fecha_creacion)}</div>}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -125,7 +125,7 @@ export default function AdminAlertDetailModal({ open, onClose, alerta }) {
 
   return (
     <Modal open={open} onClose={onClose} title="Detalle de alerta" footer={null} width={440}>
-      <p style={{ margin: 0, color: 'var(--color-texto-primario)' }}>{sanitizeForDisplay(alerta.descripcion ?? alerta.mensaje ?? 'Alerta')}</p>
+      <p style={{ margin: 0, color: 'var(--color-texto-primario)' }}>{normalizeString(alerta.descripcion ?? alerta.mensaje ?? 'Alerta')}</p>
     </Modal>
   );
 }
