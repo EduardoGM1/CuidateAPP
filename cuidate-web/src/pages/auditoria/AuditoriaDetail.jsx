@@ -4,7 +4,7 @@ import { getAuditoriaById } from '../../api/auditoria';
 import { PageHeader, DataCard } from '../../components/shared';
 import { LoadingSpinner, Button } from '../../components/ui';
 import { parsePositiveInt } from '../../utils/params';
-import { sanitizeForDisplay } from '../../utils/sanitize';
+import { sanitizeForDisplay, displayText } from '../../utils/sanitize';
 import { formatDateTime } from '../../utils/format';
 
 export default function AuditoriaDetail() {
@@ -84,7 +84,7 @@ export default function AuditoriaDetail() {
     { label: 'Usuario', value: sanitizeForDisplay(r.usuario_nombre ?? r.Usuario?.email) || '—' },
     { label: 'Severidad', value: sanitizeForDisplay(r.severidad) || '—' },
     { label: 'IP', value: sanitizeForDisplay(r.ip_address) || '—' },
-    { label: 'Descripción', value: sanitizeForDisplay(r.descripcion) || '—' },
+    { label: 'Descripción', value: displayText(r.descripcion) || '—' },
   ];
 
   return (

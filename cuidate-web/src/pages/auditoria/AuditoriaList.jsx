@@ -4,7 +4,7 @@ import { getAuditoria, getAuditoriaUsuarios } from '../../api/auditoria';
 import { Table, Button, Input } from '../../components/ui';
 import { downloadAsFile } from '../../utils/reportUtils';
 import { PageHeader, SearchFilterBar } from '../../components/shared';
-import { sanitizeForDisplay } from '../../utils/sanitize';
+import { sanitizeForDisplay, displayText } from '../../utils/sanitize';
 import { formatDateTime } from '../../utils/format';
 import { PAGE_SIZE_DEFAULT } from '../../utils/constants';
 
@@ -24,7 +24,7 @@ const COLUMNS = [
       const d = row.descripcion;
       if (!d) return '—';
       const s = String(d).slice(0, 80);
-      return sanitizeForDisplay(s) + (String(d).length > 80 ? '…' : '');
+      return displayText(s) + (String(d).length > 80 ? '…' : '');
     },
   },
   { key: 'severidad', label: 'Severidad', render: (row) => sanitizeForDisplay(row.severidad) || '—' },

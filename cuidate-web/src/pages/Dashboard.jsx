@@ -8,7 +8,7 @@ import { connect, on, off } from '../api/socket';
 import { STORAGE_KEYS } from '../utils/constants';
 import { useCurrentDoctorId } from '../hooks/useCurrentDoctorId';
 import { formatDateWithWeekday, formatTime } from '../utils/format';
-import { sanitizeForDisplay, normalizeString } from '../utils/sanitize';
+import { sanitizeForDisplay, displayText } from '../utils/sanitize';
 import AlertDetailModal from '../components/dashboard/AlertDetailModal';
 import AdminAlertDetailModal from '../components/dashboard/AdminAlertDetailModal';
 import DetalleNotificacionModal from '../components/doctor/DetalleNotificacionModal';
@@ -282,7 +282,7 @@ export default function Dashboard() {
                               onClick={() => setAlertaSeleccionada(a)}
                               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', color: 'inherit', textDecoration: 'underline' }}
                             >
-                              {normalizeString(getAlertaDescripcion(a))}
+                              {displayText(getAlertaDescripcion(a))}
                             </button>
                           </li>
                         ))}
