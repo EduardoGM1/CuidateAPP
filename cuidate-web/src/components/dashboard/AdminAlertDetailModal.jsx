@@ -50,7 +50,7 @@ export default function AdminAlertDetailModal({ open, onClose, alerta }) {
   };
 
   if (tipo === 'valor_critico') {
-    const pacienteNombre = alerta.paciente ?? [alerta.nombre, alerta.apellido_paterno].filter(Boolean).join(' ') || '—';
+    const pacienteNombre = alerta.paciente ?? ([alerta.nombre, alerta.apellido_paterno].filter(Boolean).join(' ') || '—');
     return (
       <Modal open={open} onClose={onClose} title="Alerta: valor crítico" footer={null} width={460}>
         <div style={sectionStyle}>
