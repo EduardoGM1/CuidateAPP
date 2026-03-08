@@ -1638,15 +1638,32 @@ export const createPacienteSignosVitales = async (req, res) => {
         realtimeService.sendToUser(paciente.id_usuario, 'signos_vitales_registrados', signosData);
       }
 
-      // Notificar al doctor asignado
+      // Notificar al doctor asignado (WebSocket + email de registro)
       const asignaciones = await DoctorPaciente.findAll({
         where: { id_paciente: pacienteId },
         include: [{ model: Doctor, attributes: ['id_doctor', 'id_usuario'] }]
       });
 
+      const pacienteNombre = `${paciente.nombre} ${paciente.apellido_paterno}`.trim();
+      const registradoPor = signoVital.registrado_por === 'paciente' ? 'Paciente' : 'Doctor/Admin';
+
       for (const asignacion of asignaciones) {
         if (asignacion.Doctor?.id_usuario) {
           realtimeService.sendToUser(asignacion.Doctor.id_usuario, 'signos_vitales_registrados', signosData);
+          // Email a cada doctor asignado en cada registro de signos vitales
+          setImmediate(() => {
+            Usuario.findByPk(asignacion.Doctor.id_usuario, { attributes: ['email'] })
+              .then(u => {
+                if (u?.email) {
+                  return emailService.sendSignosVitalesRegistroEmail(u.email, {
+                    pacienteNombre,
+                    fechaMedicion: signoVital.fecha_medicion,
+                    registradoPor
+                  });
+                }
+              })
+              .catch(() => {});
+          });
         }
       }
 

@@ -12,13 +12,14 @@ Estado de implementación de las notificaciones por email en la API (CuídateApp
 | **Cita agendada** | Confirmación al paciente al crear cita | `cita.js`: `createCita` → email al `Usuario` del paciente |
 | **Cita reprogramada** | Confirmación al paciente al reprogramar | `cita.js`: `reprogramarCita` → email al `Usuario` del paciente |
 | **Alerta signos vitales** | Aviso a cada doctor asignado al paciente | `pacienteMedicalData.js`: al generar alertas en `createPacienteSignosVitales`, email al `Usuario` de cada doctor asignado |
+| **Registro de signos vitales** | Aviso a cada doctor asignado al paciente | `pacienteMedicalData.js`: en cada registro en `createPacienteSignosVitales`, email al `Usuario` de cada doctor asignado (no solo cuando hay alerta) |
 
 ## Servicio de email
 
 - **Archivo:** `api-clinica/services/emailService.js`
 - **Métodos públicos:**  
   `sendWelcomeEmail`, `sendNewMessageNotification`, `sendPatientRegisteredNotification`,  
-  `sendCitaConfirmationEmail`, `sendCitaReminderEmail`, `sendSignosVitalesAlertEmail`
+  `sendCitaConfirmationEmail`, `sendCitaReminderEmail`, `sendSignosVitalesAlertEmail`, `sendSignosVitalesRegistroEmail`
 - **Helper interno:** `_sendGeneric(subject, text, to, tipo, datos)` — usa Resend o SMTP; no lanza si falla (notificaciones no críticas).
 
 ## Variable de entorno opcional

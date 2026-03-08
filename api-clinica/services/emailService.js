@@ -319,6 +319,18 @@ class EmailService {
   }
 
   /**
+   * Notificación de nuevo registro de signos vitales (para doctores asignados al paciente)
+   * Se envía en cada registro, no solo cuando hay alerta.
+   */
+  async sendSignosVitalesRegistroEmail(to, datos = {}) {
+    const { pacienteNombre = 'Paciente', fechaMedicion, registradoPor } = datos;
+    const fecha = fechaMedicion ? new Date(fechaMedicion).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) : 'recientemente';
+    const subject = 'Nuevo registro de signos vitales - CuídateApp';
+    const text = `${pacienteNombre} registró nuevos signos vitales el ${fecha}.${registradoPor ? ` Registrado por: ${registradoPor}.` : ''} Puedes revisarlos en la ficha del paciente.`;
+    return this._sendGeneric(subject, text, to, 'registro_signos_vitales', datos);
+  }
+
+  /**
    * Envío genérico (Resend o SMTP); no lanza si falla (para notificaciones no críticas).
    */
   async _sendGeneric(subject, text, to, tipo, datos = {}) {
