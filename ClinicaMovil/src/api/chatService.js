@@ -172,15 +172,26 @@ export const enviarMensajeTexto = async (idPaciente, idDoctor, remitente, mensaj
 /**
  * Realizar upload usando XMLHttpRequest (soporta onUploadProgress)
  */
+// Timeout generoso para subida de audio (archivos mayores tardan más; en Android el default puede ser ~10s)
+const UPLOAD_AUDIO_TIMEOUT_MS = 120000; // 2 minutos
+
 const performUploadWithXHR = (formData, uploadUrl, token, deviceId, options = {}) => {
   const { onProgress } = options;
-  
+
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     let timeoutId = setTimeout(() => {
       xhr.abort();
-      reject(new Error('Timeout: La petición tardó demasiado'));
-    }, 60000);
+      reject(new Error('Timeout: La subida tardó demasiado. Comprueba la conexión e intenta de nuevo.'));
+    }, UPLOAD_AUDIO_TIMEOUT_MS);
+
+    // Timeout nativo: en Android/iOS el XHR puede tener un límite por defecto corto (~10s).
+    // Sin esto, audios de mayor duración fallan en red lenta.
+    try {
+      xhr.timeout = UPLOAD_AUDIO_TIMEOUT_MS;
+    } catch (e) {
+      // Algunas versiones de RN pueden no soportar .timeout
+    }
 
     // Progreso de upload
     if (onProgress) {
