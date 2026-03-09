@@ -12,8 +12,8 @@ class MainApplication : Application(), ReactApplication {
 
   override val reactHost: ReactHost by lazy {
     val packages = PackageList(this).packages.toMutableList()
-    // Registrar VoicePackage manualmente para asegurar que esté disponible
     packages.add(0, VoicePackage())
+    packages.add(TTSSettingsPackage())
     getDefaultReactHost(
       context = applicationContext,
       packageList = packages,

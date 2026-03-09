@@ -515,10 +515,13 @@ const MisMedicamentos = () => {
           </View>
         ) : (
           medicamentos.map((medicamento, index) => {
-            const esHora = esHoraDeTomar(medicamento.horario);
-            const necesitaTomar = !medicamento.tomado && esHora;
+            // Si tiene varios horarios, es "hora" si alguno está en la ventana de 30 min
+            const horariosARevisar = (medicamento.horarios && medicamento.horarios.length > 0)
+              ? medicamento.horarios
+              : [medicamento.horario];
+            const esHora = horariosARevisar.some(h => esHoraDeTomar(h));
+            const pendienteHoy = !medicamento.tomado;
             
-            // Asegurar key única usando id o índice como fallback
             const uniqueKey = medicamento.id || `medicamento-${index}`;
             
             return (
@@ -530,7 +533,8 @@ const MisMedicamentos = () => {
                 horarios={medicamento.horarios && Array.isArray(medicamento.horarios) ? medicamento.horarios : undefined}
                 frecuencia={medicamento.frecuencia}
                 tomado={medicamento.tomado}
-                onPress={necesitaTomar ? () => handleMedicamentoTomado(medicamento) : undefined}
+                esHoraAhora={esHora}
+                onPress={pendienteHoy ? () => handleMedicamentoTomado(medicamento) : undefined}
               />
             );
           })

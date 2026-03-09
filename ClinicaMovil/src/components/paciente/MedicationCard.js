@@ -17,15 +17,17 @@ import audioFeedbackService from '../../services/audioFeedbackService';
  * @param {string} props.nombre - Nombre del medicamento
  * @param {string} props.dosis - Dosis (ej: "500mg")
  * @param {string} props.horario - Horario (ej: "08:00")
- * @param {boolean} props.tomado - Si ya fue tomado
- * @param {Function} props.onPress - Función al presionar "Tomé este medicamento"
+ * @param {boolean} props.tomado - Si ya fue tomado hoy
+ * @param {boolean} [props.esHoraAhora] - Si estamos en la ventana de hora de toma (destaca el botón)
+ * @param {Function} props.onPress - Función al presionar "Registrar toma"
  */
 const MedicationCard = memo(({
   nombre,
   dosis,
   horario,
-  horarios, // Nuevo prop para múltiples horarios
+  horarios,
   tomado = false,
+  esHoraAhora = false,
   onPress,
   frecuencia,
 }) => {
@@ -119,11 +121,13 @@ const MedicationCard = memo(({
 
       {!tomado && onPress && (
         <TouchableOpacity
-          style={styles.button}
+          style={[styles.button, esHoraAhora && styles.buttonUrgent]}
           onPress={handlePress}
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>Tomé este medicamento</Text>
+          <Text style={styles.buttonText}>
+            {esHoraAhora ? 'Registrar toma (ahora)' : 'Registrar toma'}
+          </Text>
         </TouchableOpacity>
       )}
     </TouchableOpacity>
@@ -230,6 +234,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 8,
     alignItems: 'center',
+  },
+  buttonUrgent: {
+    backgroundColor: '#E65100',
+    borderWidth: 2,
+    borderColor: '#BF360C',
   },
   buttonText: {
     color: '#FFFFFF',

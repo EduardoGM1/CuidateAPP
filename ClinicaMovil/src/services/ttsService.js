@@ -1,14 +1,28 @@
 /**
  * Servicio de Texto a Voz (TTS)
- * 
+ *
  * Proporciona funcionalidad de síntesis de voz para pacientes
  * con limitaciones de lectura o visuales.
- * 
- * Idioma: Español mexicano
+ *
+ * Idioma: Español mexicano (con fallback es-ES, es e idioma del sistema).
+ *
+ * Permisos y activación:
+ * - No se requiere ningún permiso de runtime para TTS (ni en Android ni en iOS).
+ * - No es posible activar TTS automáticamente: el sistema exige que el usuario instale/active
+ *   el motor en Ajustes. Para reducir pasos: openInstallTTSData() abre la instalación de
+ *   datos de voz; openTTSSettings() abre Ajustes > Texto a voz.
+ * - iOS: no suele requerir configuración adicional.
+ *
+ * Compatibilidad:
+ * - Algunos dispositivos cargan el motor TTS con retraso: se hace reintento de engines()
+ *   y getInitStatus() con timeouts 5s + 10s antes de dar por fallida la inicialización.
+ * - Velocidad demasiado rápida: se usa rate bajo (0.45–0.55) y setDefaultRate antes de
+ *   cada speak(); en Android se añade un pequeño delay tras setDefaultRate para que el
+ *   motor aplique el valor. El usuario puede ajustar con setDefaultRate() si lo desea.
  */
 
 import Tts from 'react-native-tts';
-import { Platform } from 'react-native';
+import { Platform, Linking, NativeModules } from 'react-native';
 import Logger from './logger';
 
 class TTSService {
@@ -31,25 +45,24 @@ class TTSService {
     this.cacheMaxSize = 5;
     this.cacheMaxAge = 10000; // 10 segundos
     
-    // Configuración adaptativa
-    // NOTA: Los emuladores suelen reproducir TTS más rápido, usar velocidad más lenta
-    this.defaultRate = 0.9;
-    this.emulatorRate = 0.6; // Velocidad más lenta para emuladores
+    // Configuración adaptativa (en react-native-tts: 0.01 = más lento, 0.99 = más rápido)
+    // Valores más bajos = más lento y comprensible en todos los dispositivos
+    this.defaultRate = 0.55; // Velocidad lenta por defecto para buena comprensión en todos los dispositivos
+    this.emulatorRate = 0.45; // Aún más lenta en emuladores
     this.defaultVolume = 1.0; // Volumen por defecto (0.0-1.0)
     this.adaptiveRates = {
-      instruction: 0.85,    // Instrucciones: más lento
-      confirmation: 0.9,    // Confirmaciones: normal
-      information: 0.9,     // Información: normal
-      alert: 0.95,          // Alertas: más rápido pero claro
-      error: 0.85,          // Errores: más lento para claridad
+      instruction: 0.5,     // Instrucciones: más lento
+      confirmation: 0.55,   // Confirmaciones: lento
+      information: 0.55,    // Información: lento
+      alert: 0.6,           // Alertas: un poco más rápido pero claro
+      error: 0.5,           // Errores: más lento para claridad
     };
-    // Velocidades adaptativas para emuladores (más lentas)
     this.emulatorAdaptiveRates = {
-      instruction: 0.5,    // Instrucciones: muy lento en emulador
-      confirmation: 0.6,   // Confirmaciones: lento en emulador
-      information: 0.6,     // Información: lento en emulador
-      alert: 0.65,          // Alertas: lento pero claro en emulador
-      error: 0.5,           // Errores: muy lento para claridad en emulador
+      instruction: 0.4,
+      confirmation: 0.45,
+      information: 0.45,
+      alert: 0.5,
+      error: 0.4,
     };
   }
 
@@ -117,12 +130,13 @@ class TTSService {
 
   /**
    * Establecer velocidad por defecto (para toda la app)
-   * @param {number} rate - Velocidad (ej. 0.5-2.0; típico 0.7 lenta, 0.9 normal, 1.1 rápida)
+   * @param {number} rate - Velocidad (0.01-0.99; ej. 0.45 lenta, 0.55 normal, 0.7 rápida)
    */
   async setDefaultRate(rate) {
     const r = typeof rate === 'number' ? rate : parseFloat(rate);
     if (!Number.isNaN(r)) {
-      const clampedRate = Math.max(0.5, Math.min(2, r));
+      // react-native-tts: 0.01 = más lento, 0.99 = más rápido
+      const clampedRate = Math.max(0.2, Math.min(0.9, r));
       this.defaultRate = clampedRate;
       
       // Aplicar inmediatamente al motor TTS nativo si está inicializado
@@ -165,6 +179,72 @@ class TTSService {
   }
 
   /**
+   * Abre la pantalla de ajustes de Texto a voz del sistema (Android).
+   * @returns {Promise<boolean>} true si se abrió la pantalla, false si no (p. ej. en iOS)
+   */
+  async openTTSSettings() {
+    if (Platform.OS !== 'android') {
+      Logger.debug('TTS: openTTSSettings solo disponible en Android');
+      return false;
+    }
+    try {
+      const TTSSettings = NativeModules.TTSSettingsModule;
+      if (TTSSettings && typeof TTSSettings.openTTSSettings === 'function') {
+        TTSSettings.openTTSSettings();
+        Logger.debug('TTS: Ajustes de TTS abiertos');
+        return true;
+      }
+      await Linking.openSettings();
+      return true;
+    } catch (e) {
+      Logger.warn('TTS: No se pudo abrir ajustes de TTS', e?.message);
+      try {
+        await Linking.openSettings();
+        return true;
+      } catch (e2) {
+        return false;
+      }
+    }
+  }
+
+  /**
+   * Abre la pantalla de instalación de datos de voz (Android).
+   * Lleva al usuario directo a instalar/descargar voces sin buscar en Accesibilidad.
+   * Si este intent no está disponible en el dispositivo, conviene usar openTTSSettings().
+   * @returns {Promise<boolean>} true si se lanzó el intent, false en iOS o si falla
+   */
+  async openInstallTTSData() {
+    if (Platform.OS !== 'android') {
+      Logger.debug('TTS: openInstallTTSData solo disponible en Android');
+      return false;
+    }
+    try {
+      const TTSSettings = NativeModules.TTSSettingsModule;
+      if (TTSSettings && typeof TTSSettings.openInstallTTSData === 'function') {
+        TTSSettings.openInstallTTSData();
+        Logger.debug('TTS: Pantalla de instalación de voces abierta');
+        return true;
+      }
+      return false;
+    } catch (e) {
+      Logger.warn('TTS: No se pudo abrir instalación de voces', e?.message);
+      return false;
+    }
+  }
+
+  /**
+   * Lleva al usuario a configurar TTS con el menor número de pasos (Android).
+   * Prueba primero la pantalla de instalación de voces; si no está disponible, abre Ajustes > Texto a voz.
+   * @returns {Promise<boolean>} true si se abrió alguna pantalla
+   */
+  async openTTSSetup() {
+    if (Platform.OS !== 'android') return false;
+    const opened = await this.openInstallTTSData();
+    if (opened) return true;
+    return this.openTTSSettings();
+  }
+
+  /**
    * Inicializar el servicio TTS
    */
   async initialize() {
@@ -176,7 +256,7 @@ class TTSService {
 
       Logger.debug('TTS: Iniciando inicialización...');
 
-      // Verificar disponibilidad
+      // En iOS/Windows, engines() devuelve [] — no exigir motores en esas plataformas
       let engines = [];
       try {
         engines = await Tts.engines();
@@ -188,10 +268,37 @@ class TTSService {
         Logger.error('TTS: Error obteniendo motores', enginesError);
       }
 
-      if (!engines || engines.length === 0) {
-        Logger.warn('TTS: No hay motores de TTS disponibles. Verifica que el dispositivo tenga voces instaladas.');
-        this.isInitialized = false;
-        return;
+      if (Platform.OS === 'android' && (!engines || engines.length === 0)) {
+        Logger.warn('TTS: No hay motores aún, reintentando en 1.5s...');
+        await new Promise(r => setTimeout(r, 1500));
+        try {
+          engines = await Tts.engines();
+          Logger.debug('TTS: Motores tras reintento', { count: engines?.length || 0 });
+        } catch (e) {
+          Logger.warn('TTS: Error en reintento de motores', e);
+        }
+      }
+
+      if (Platform.OS === 'android' && (!engines || engines.length === 0)) {
+        let initOk = false;
+        for (const timeoutMs of [5000, 10000]) {
+          try {
+            await Promise.race([
+              Tts.getInitStatus(),
+              new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), timeoutMs))
+            ]);
+            Logger.info('TTS: Motor listo vía getInitStatus(), continuando.');
+            initOk = true;
+            break;
+          } catch (initErr) {
+            Logger.warn(`TTS: getInitStatus no listo (${timeoutMs}ms), reintentando...`, initErr?.message);
+          }
+        }
+        if (!initOk) {
+          Logger.warn('TTS: No hay motores de TTS disponibles. Activa voces en Ajustes > Accesibilidad > Texto a voz.');
+          this.isInitialized = false;
+          return;
+        }
       }
 
       // Verificar voces disponibles
@@ -250,6 +357,19 @@ class TTSService {
       
       // Configurar pitch (0.5 a 2.0, 1.0 = normal)
       await Tts.setDefaultPitch(1.0);
+
+      // En Android, esperar a que el motor esté listo antes de marcar inicializado (evita speak() fallido)
+      if (Platform.OS === 'android') {
+        try {
+          await Promise.race([
+            Tts.getInitStatus(),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
+          ]);
+          Logger.debug('TTS: Motor listo (getInitStatus).');
+        } catch (e) {
+          Logger.warn('TTS: getInitStatus timeout o error, continuando de todos modos.', e?.message);
+        }
+      }
 
       // Nota: setDefaultVolume() no existe en react-native-tts
       // El volumen se controla por utterance usando androidParams en speak()
@@ -421,7 +541,7 @@ class TTSService {
    * Hablar un texto (método público con cola inteligente)
    * @param {string} text - Texto a pronunciar
    * @param {Object} options - Opciones adicionales
-   * @param {number} options.rate - Velocidad (0.5-2.0)
+   * @param {number} options.rate - Velocidad (0.01-0.99)
    * @param {number} options.pitch - Tono (0.5-2.0)
    * @param {number} options.volume - Volumen (0.0-1.0)
    * @param {string} options.priority - Prioridad: 'high', 'medium', 'low'
@@ -449,10 +569,8 @@ class TTSService {
     // Determinar prioridad
     const priority = this._determinePriority(text, options);
 
-    // Aplicar velocidad: priorizar velocidad del usuario configurada sobre detección de emulador
-    // Si el usuario configuró una velocidad (defaultRate != 0.9 inicial), usarla siempre
-    // Solo usar velocidades adaptativas/emulador si el usuario no ha configurado velocidad personalizada
-    const userHasCustomRate = this.defaultRate !== 0.9; // 0.9 es el valor inicial por defecto
+    // Aplicar velocidad: priorizar velocidad del usuario sobre detección de emulador
+    const userHasCustomRate = this.defaultRate !== 0.55; // 0.55 es el valor por defecto (lento y estable)
     
     if (!options.rate && options.variant && !userHasCustomRate) {
       // Usar velocidades adaptativas solo si el usuario no configuró velocidad personalizada
@@ -546,31 +664,35 @@ class TTSService {
       }
 
       // Aplicar opciones - asegurar que siempre se aplique la velocidad (del usuario o la calculada)
+      // Limitar rate a [0.2, 0.85]: evita que en algunos OEMs se reproduzca demasiado rápido
+      let rateToApply = options.rate ?? (this.isEmulator ? this.emulatorRate : this.defaultRate);
+      rateToApply = Math.max(0.2, Math.min(0.85, Number(rateToApply) || 0.55));
       try {
-        // Siempre aplicar rate (ya sea del usuario o calculada)
-        const rateToApply = options.rate || this.defaultRate;
         await Tts.setDefaultRate(rateToApply);
-        
         if (options.pitch) {
           await Tts.setDefaultPitch(options.pitch);
         }
-        
-        Logger.debug('TTS: Velocidad aplicada antes de hablar', { 
-          rate: rateToApply, 
-          source: options.rate ? 'explicit' : 'default',
-          userCustomRate: this.defaultRate !== 0.9
-        });
+        Logger.debug('TTS: Velocidad aplicada antes de hablar', { rate: rateToApply });
+        // En Android, algunos fabricantes necesitan un momento para aplicar el rate
+        if (Platform.OS === 'android') {
+          await new Promise(r => setTimeout(r, 80));
+        }
       } catch (optionsError) {
         Logger.warn('TTS: Error configurando rate/pitch, continuando con valores por defecto', optionsError);
       }
 
       // Preparar opciones para speak()
       const speakOptions = {};
-      
+      // iOS: pasar rate en cada speak() para que se respete en todos los dispositivos
+      if (Platform.OS === 'ios') {
+        speakOptions.rate = rateToApply;
+      }
       // Control de volumen (solo en Android via androidParams)
-      if (Platform.OS === 'android' && options.volume !== undefined) {
+      if (Platform.OS === 'android') {
         speakOptions.androidParams = {
-          KEY_PARAM_VOLUME: Math.max(0, Math.min(1, options.volume)), // Clamp entre 0 y 1
+          KEY_PARAM_VOLUME: options.volume !== undefined
+            ? Math.max(0, Math.min(1, options.volume))
+            : 1,
         };
       }
 
@@ -592,26 +714,16 @@ class TTSService {
         // En Android, Tts.speak() puede no devolver una promesa
         // Llamarlo directamente y esperar eventos
         if (Platform.OS === 'android') {
-          // En Android, llamar directamente sin await
-          Tts.speak(text.trim(), speakOptions.androidParams ? {
-            androidParams: speakOptions.androidParams
-          } : undefined);
-          
-          Logger.debug('TTS: Llamada a speak() realizada (Android)', { 
-            text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
-            length: text.length,
-            hasAndroidParams: !!speakOptions.androidParams
-          });
+          Tts.speak(text.trim(), speakOptions.androidParams ? { androidParams: speakOptions.androidParams } : undefined);
+          Logger.debug('TTS: Llamada a speak() realizada (Android)', { text: text.substring(0, 50) + (text.length > 50 ? '...' : ''), length: text.length });
         } else {
-          // iOS
-          const speakResult = Tts.speak(text.trim());
+          // iOS: pasar rate en opciones para que se respete en todos los dispositivos
+          const iosOptions = speakOptions.rate !== undefined ? { rate: speakOptions.rate } : {};
+          const speakResult = Tts.speak(text.trim(), iosOptions);
           if (speakResult && typeof speakResult.then === 'function') {
             await speakResult;
           }
-          Logger.debug('TTS: Llamada a speak() realizada (iOS)', { 
-            text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
-            length: text.length
-          });
+          Logger.debug('TTS: Llamada a speak() realizada (iOS)', { text: text.substring(0, 50) + (text.length > 50 ? '...' : ''), length: text.length, rate: speakOptions.rate });
         }
 
         // Esperar eventos (máximo 2 segundos)
