@@ -4,9 +4,9 @@ import { resetPassword } from '../api/auth';
 import { Button, Input, Card } from '../components/ui';
 
 /**
- * Página pública: confirmar cuenta y crear contraseña.
- * Se accede desde el enlace enviado por email cuando un admin añade un doctor/administrador.
- * Reutiliza el endpoint reset-password del backend (mismo token en password_reset_tokens).
+ * Página pública para confirmar cuenta y crear contraseña (invitación Doctor/Admin).
+ * Recibe token por query: /confirmar-cuenta?token=xxx
+ * Reutiliza el endpoint reset-password del backend.
  */
 export default function ConfirmarCuenta() {
   const [searchParams] = useSearchParams();
@@ -49,7 +49,7 @@ export default function ConfirmarCuenta() {
       setError(
         err?.response?.data?.error ||
           err?.message ||
-          'Error al crear la contraseña. El enlace pudo haber expirado; solicita uno nuevo al administrador.'
+          'Error al crear la contraseña. El enlace pudo haber expirado (válido 24 h). Solicita uno nuevo al administrador.'
       );
     } finally {
       setLoading(false);
@@ -70,7 +70,8 @@ export default function ConfirmarCuenta() {
       >
         <Card style={{ width: '100%', maxWidth: '400px' }}>
           <p style={{ color: 'var(--color-primario)', marginBottom: '1rem' }}>
-            Cuenta confirmada correctamente. Ya puedes iniciar sesión con tu nueva contraseña. Redirigiendo…
+            Cuenta confirmada correctamente. Ya puedes iniciar sesión con tu correo y tu nueva contraseña.
+            Redirigiendo al inicio de sesión…
           </p>
           <Link to="/login">Ir al inicio de sesión</Link>
         </Card>
@@ -94,7 +95,7 @@ export default function ConfirmarCuenta() {
           Confirma tu cuenta
         </h1>
         <p style={{ color: 'var(--color-texto-secundario)', marginBottom: '1.5rem', fontSize: '0.95rem' }}>
-          Crea tu contraseña para activar tu cuenta (mínimo 8 caracteres).
+          Crea tu contraseña para activar tu cuenta (mínimo 8 caracteres). Este enlace expira en 24 horas.
         </p>
 
         <form onSubmit={handleSubmit} noValidate>

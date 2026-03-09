@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getUsuarios, updateUsuario, deleteUsuario } from '../../api/auth';
+import { getUsuarios, updateUsuario, deleteUsuario, createUsuario } from '../../api/auth';
 import { PageHeader } from '../../components/shared';
 import { message } from 'antd';
 import { Button, Input, Select, Table, LoadingSpinner, EmptyState, Badge, Modal } from '../../components/ui';
@@ -16,6 +16,11 @@ export default function UsuariosList() {
   const [formActivo, setFormActivo] = useState(true);
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteSubmitting, setInviteSubmitting] = useState(false);
+  const [inviteError, setInviteError] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -86,6 +91,30 @@ export default function UsuariosList() {
     }
   };
 
+  const handleInviteSubmit = async (e) => {
+    e.preventDefault();
+    setInviteError('');
+    const email = inviteEmail?.trim();
+    if (!email) {
+      setInviteError('El correo es obligatorio');
+      return;
+    }
+    setInviteSubmitting(true);
+    try {
+      await createUsuario({ email, rol: ROLES.ADMIN, invite: true });
+      setShowInviteModal(false);
+      setInviteEmail('');
+      load();
+      message.success(`Se envió un correo a ${email} para que confirme su cuenta y cree su contraseña.`);
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || 'Error al invitar usuario';
+      setInviteError(msg);
+      message.error(msg);
+    } finally {
+      setInviteSubmitting(false);
+    }
+  };
+
   const columns = [
     { key: 'email', label: 'Correo', render: (row) => sanitizeForDisplay(row.email) || '—' },
     { key: 'rol', label: 'Rol', render: (row) => sanitizeForDisplay(row.rol) || '—' },
@@ -110,7 +139,44 @@ export default function UsuariosList() {
 
   return (
     <div>
-      <PageHeader title="Usuarios (Admin)" />
+      <PageHeader
+        title="Usuarios (Admin)"
+        action={
+          <Button type="button" variant="primary" onClick={() => { setShowInviteModal(true); setInviteError(''); setInviteEmail(''); }}>
+            Invitar administrador
+          </Button>
+        }
+      />
+      <Modal
+        open={showInviteModal}
+        onClose={() => { if (!inviteSubmitting) setShowInviteModal(false); }}
+        title="Invitar administrador"
+        width={480}
+        footer={null}
+      >
+        <form onSubmit={handleInviteSubmit}>
+          <p style={{ marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
+            Se enviará un correo para que la persona confirme su cuenta y cree su propia contraseña. Para invitar a un doctor, usa Doctores → Nuevo doctor.
+          </p>
+          {inviteError && <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{inviteError}</p>}
+          <Input
+            label="Correo electrónico"
+            type="email"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            placeholder="ejemplo@correo.com"
+            required
+          />
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+            <Button type="submit" variant="primary" disabled={inviteSubmitting}>
+              {inviteSubmitting ? 'Enviando…' : 'Enviar invitación'}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setShowInviteModal(false)} disabled={inviteSubmitting}>
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      </Modal>
       <Modal
         open={Boolean(editingId)}
         onClose={() => { if (!submitting) setEditingId(null); }}
