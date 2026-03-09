@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { getUsuarios, updateUsuario, deleteUsuario, createUsuario } from '../../api/auth';
 import { createDoctor } from '../../api/doctores';
 import { getModulos } from '../../api/modulos';
@@ -7,8 +9,7 @@ import { message } from 'antd';
 import { Button, Input, Select, Table, LoadingSpinner, EmptyState, Badge, Modal } from '../../components/ui';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { ROLES } from '../../utils/constants';
-
-const MODO_CREAR = { PASSWORD: 'password', INVITE: 'invite' };
+import { nuevoUsuarioSchema } from '../../lib/validations/usuarioSchema';
 
 export default function UsuariosList() {
   const [list, setList] = useState([]);
@@ -21,19 +22,33 @@ export default function UsuariosList() {
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createEmail, setCreateEmail] = useState('');
-  const [createRol, setCreateRol] = useState(ROLES.ADMIN);
-  const [createModo, setCreateModo] = useState(MODO_CREAR.INVITE);
-  const [createPassword, setCreatePassword] = useState('');
-  const [createConfirmPassword, setCreateConfirmPassword] = useState('');
-  const [createNombre, setCreateNombre] = useState('');
-  const [createApellidoPaterno, setCreateApellidoPaterno] = useState('');
-  const [createApellidoMaterno, setCreateApellidoMaterno] = useState('');
-  const [createIdModulo, setCreateIdModulo] = useState('');
+  const [showNewUserModal, setShowNewUserModal] = useState(false);
   const [modulos, setModulos] = useState([]);
-  const [createSubmitting, setCreateSubmitting] = useState(false);
-  const [createError, setCreateError] = useState('');
+
+  const {
+    control: newUserControl,
+    handleSubmit: handleNewUserSubmit,
+    watch: watchNewUser,
+    reset: resetNewUser,
+    formState: { errors: newUserErrors, isSubmitting: newUserSubmitting },
+    setError: setNewUserError,
+    clearErrors: clearNewUserErrors,
+  } = useForm({
+    resolver: zodResolver(nuevoUsuarioSchema),
+    defaultValues: {
+      email: '',
+      rol: ROLES.ADMIN,
+      modo: 'invite',
+      password: '',
+      nombre: '',
+      apellido_paterno: '',
+      apellido_materno: '',
+      id_modulo: '',
+    },
+  });
+
+  const newUserRol = watchNewUser('rol');
+  const newUserModo = watchNewUser('modo');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -53,76 +68,13 @@ export default function UsuariosList() {
     load();
   }, [load]);
 
-  const openCreateModal = () => {
-    setCreateEmail('');
-    setCreateRol(ROLES.ADMIN);
-    setCreateModo(MODO_CREAR.INVITE);
-    setCreatePassword('');
-    setCreateConfirmPassword('');
-    setCreateNombre('');
-    setCreateApellidoPaterno('');
-    setCreateApellidoMaterno('');
-    setCreateIdModulo('');
-    setCreateError('');
-    setShowCreateModal(true);
-    getModulos().then((data) => setModulos(Array.isArray(data) ? data : [])).catch(() => setModulos([]));
-  };
-
-  const handleCreateUser = async (e) => {
-    e?.preventDefault?.();
-    setCreateError('');
-    const email = (createEmail || '').trim();
-    if (!email) {
-      setCreateError('El correo es obligatorio.');
-      return;
+  useEffect(() => {
+    if (showNewUserModal && newUserRol === ROLES.DOCTOR) {
+      getModulos().then((data) => setModulos(Array.isArray(data) ? data : [])).catch(() => setModulos([]));
+    } else {
+      setModulos([]);
     }
-    if (createModo === MODO_CREAR.PASSWORD) {
-      if (!createPassword || createPassword.length < 6) {
-        setCreateError('La contraseña debe tener al menos 6 caracteres.');
-        return;
-      }
-      if (createPassword !== createConfirmPassword) {
-        setCreateError('Las contraseñas no coinciden.');
-        return;
-      }
-    }
-    const isDoctor = createRol === ROLES.DOCTOR;
-    if (isDoctor && (createNombre?.trim() || createApellidoPaterno?.trim() || createApellidoMaterno?.trim())) {
-      if (!createNombre?.trim()) {
-        setCreateError('Si indica datos de doctor, el nombre es obligatorio.');
-        return;
-      }
-      if (!createApellidoPaterno?.trim()) {
-        setCreateError('Si indica datos de doctor, el apellido paterno es obligatorio.');
-        return;
-      }
-    }
-    setCreateSubmitting(true);
-    try {
-      const payload = createModo === MODO_CREAR.INVITE
-        ? { email, rol: createRol, invite: true }
-        : { email, rol: createRol, password: createPassword };
-      const created = await createUsuario(payload);
-      const idUsuario = created?.usuario?.id_usuario ?? created?.id ?? created?.id_usuario;
-      if (isDoctor && idUsuario && createNombre?.trim() && createApellidoPaterno?.trim()) {
-        await createDoctor({
-          nombre: createNombre.trim(),
-          apellido_paterno: createApellidoPaterno.trim(),
-          apellido_materno: (createApellidoMaterno || '').trim(),
-          id_usuario: idUsuario,
-          id_modulo: createIdModulo ? Number(createIdModulo) : undefined,
-        });
-      }
-      message.success(createModo === MODO_CREAR.INVITE ? 'Invitación enviada por correo.' : 'Usuario creado correctamente.');
-      setShowCreateModal(false);
-      load();
-    } catch (err) {
-      const msg = err?.response?.data?.message ?? err?.response?.data?.error ?? err?.message ?? 'Error al crear usuario';
-      setCreateError(msg);
-    } finally {
-      setCreateSubmitting(false);
-    }
-  };
+  }, [showNewUserModal, newUserRol]);
 
   const handleEdit = (row) => {
     setEditingId(row.id_usuario ?? row.id);
@@ -175,6 +127,57 @@ export default function UsuariosList() {
     }
   };
 
+  const onSubmitNewUser = async (data) => {
+    clearNewUserErrors();
+    const email = (data.email || '').trim();
+    const rol = data.rol === ROLES.DOCTOR ? ROLES.DOCTOR : ROLES.ADMIN;
+    const useInvite = data.modo === 'invite';
+
+    try {
+      const payload = { email, rol };
+      if (useInvite) {
+        payload.invite = true;
+      } else {
+        payload.password = (data.password || '').trim();
+      }
+      const res = await createUsuario(payload);
+      const usuario = res?.usuario;
+      const id_usuario = usuario?.id_usuario != null ? Number(usuario.id_usuario) : null;
+
+      if (rol === ROLES.DOCTOR && id_usuario) {
+        const idModuloRaw = data.id_modulo;
+        const id_modulo = idModuloRaw != null && String(idModuloRaw).trim() !== '' ? (Number(idModuloRaw) || null) : null;
+        await createDoctor({
+          nombre: (data.nombre || '').trim(),
+          apellido_paterno: (data.apellido_paterno || '').trim(),
+          apellido_materno: (data.apellido_materno || '').trim() || null,
+          id_usuario,
+          id_modulo,
+        });
+      }
+
+      setShowNewUserModal(false);
+      resetNewUser();
+      load();
+      if (useInvite) {
+        message.success(`Se envió un correo a ${email} para que confirme su cuenta y cree su contraseña.`);
+      } else {
+        message.success(rol === ROLES.DOCTOR ? 'Usuario y perfil de doctor creados correctamente.' : 'Usuario creado correctamente.');
+      }
+    } catch (err) {
+      const status = err?.response?.status;
+      const resData = err?.response?.data;
+      let msg = resData?.error || resData?.message || err?.message || 'Error al crear usuario';
+      if (status === 409) msg = 'El correo ya está registrado.';
+      if (status === 400 && Array.isArray(resData?.details) && resData.details.length > 0) {
+        const first = resData.details[0];
+        if (first.msg || first.message) msg = first.msg || first.message;
+      }
+      setNewUserError('root', { type: 'server', message: msg });
+      message.error(msg);
+    }
+  };
+
   const columns = [
     { key: 'email', label: 'Correo', render: (row) => sanitizeForDisplay(row.email) || '—' },
     { key: 'rol', label: 'Rol', render: (row) => sanitizeForDisplay(row.rol) || '—' },
@@ -202,92 +205,123 @@ export default function UsuariosList() {
       <PageHeader
         title="Usuarios (Admin)"
         action={
-          <Button type="button" variant="primary" onClick={openCreateModal}>
-            Crear usuario
+          <Button type="button" variant="primary" onClick={() => { setShowNewUserModal(true); clearNewUserErrors(); resetNewUser(); }}>
+            Nuevo usuario
           </Button>
         }
       />
       <Modal
-        open={showCreateModal}
-        onClose={() => { if (!createSubmitting) setShowCreateModal(false); }}
-        title="Crear usuario"
+        open={showNewUserModal}
+        onClose={() => { if (!newUserSubmitting) { setShowNewUserModal(false); resetNewUser(); } }}
+        title="Nuevo usuario"
         width={520}
         footer={null}
       >
-        <form onSubmit={handleCreateUser}>
-          {createError && <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{createError}</p>}
-          <Input
-            label="Correo electrónico"
-            type="email"
-            value={createEmail}
-            onChange={(e) => setCreateEmail(e.target.value)}
-            placeholder="ejemplo@correo.com"
-            required
+        <form onSubmit={handleNewUserSubmit(onSubmitNewUser)} noValidate>
+          {newUserErrors?.root?.message && (
+            <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{newUserErrors.root.message}</p>
+          )}
+          <Controller
+            name="email"
+            control={newUserControl}
+            render={({ field }) => (
+              <Input label="Correo electrónico" type="email" error={newUserErrors.email?.message} {...field} placeholder="ejemplo@correo.com" required />
+            )}
           />
-          <Select
-            label="Rol"
-            value={createRol}
-            onChange={(v) => setCreateRol(v ?? ROLES.ADMIN)}
-            options={[
-              { value: ROLES.ADMIN, label: 'Admin' },
-              { value: ROLES.DOCTOR, label: 'Doctor' },
-            ]}
-          />
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>Acceso</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                <input type="radio" name="createModo" checked={createModo === MODO_CREAR.INVITE} onChange={() => setCreateModo(MODO_CREAR.INVITE)} />
-                Enviar invitación por correo (la persona creará su contraseña al confirmar)
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                <input type="radio" name="createModo" checked={createModo === MODO_CREAR.PASSWORD} onChange={() => setCreateModo(MODO_CREAR.PASSWORD)} />
-                Establecer contraseña ahora
-              </label>
-            </div>
-          </div>
-          {createModo === MODO_CREAR.PASSWORD && (
-            <>
-              <Input
-                label="Contraseña"
-                type="password"
-                value={createPassword}
-                onChange={(e) => setCreatePassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
-                autoComplete="new-password"
+          <Controller
+            name="rol"
+            control={newUserControl}
+            render={({ field }) => (
+              <Select
+                label="Rol"
+                value={field.value}
+                onChange={field.onChange}
+                options={[
+                  { value: ROLES.ADMIN, label: 'Admin' },
+                  { value: ROLES.DOCTOR, label: 'Doctor' },
+                ]}
               />
-              <Input
-                label="Confirmar contraseña"
-                type="password"
-                value={createConfirmPassword}
-                onChange={(e) => setCreateConfirmPassword(e.target.value)}
-                placeholder="Repetir contraseña"
-                autoComplete="new-password"
+            )}
+          />
+          {newUserRol === ROLES.DOCTOR && (
+            <>
+              <Controller
+                name="nombre"
+                control={newUserControl}
+                render={({ field }) => (
+                  <Input label="Nombre" error={newUserErrors.nombre?.message} {...field} required />
+                )}
+              />
+              <Controller
+                name="apellido_paterno"
+                control={newUserControl}
+                render={({ field }) => (
+                  <Input label="Apellido paterno" error={newUserErrors.apellido_paterno?.message} {...field} required />
+                )}
+              />
+              <Controller
+                name="apellido_materno"
+                control={newUserControl}
+                render={({ field }) => (
+                  <Input label="Apellido materno" error={newUserErrors.apellido_materno?.message} {...field} />
+                )}
+              />
+              <Controller
+                name="id_modulo"
+                control={newUserControl}
+                render={({ field }) => (
+                  <Select
+                    label="Módulo"
+                    placeholder="Seleccionar módulo"
+                    value={field.value ?? undefined}
+                    onChange={field.onChange}
+                    options={[{ value: '', label: '— Sin módulo —' }, ...modulos.map((m) => ({ value: String(m.id_modulo ?? m.id), label: m.nombre || String(m.id_modulo ?? m.id) }))]}
+                  />
+                )}
               />
             </>
           )}
-          {createRol === ROLES.DOCTOR && (
-            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--color-borde, #eee)' }}>
-              <p style={{ marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
-                Opcional: complete los datos del doctor para crear también su perfil.
-              </p>
-              <Input label="Nombre" value={createNombre} onChange={(e) => setCreateNombre(e.target.value)} placeholder="Nombre" />
-              <Input label="Apellido paterno" value={createApellidoPaterno} onChange={(e) => setCreateApellidoPaterno(e.target.value)} placeholder="Apellido paterno" />
-              <Input label="Apellido materno" value={createApellidoMaterno} onChange={(e) => setCreateApellidoMaterno(e.target.value)} placeholder="Apellido materno" />
+          <div style={{ marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.9rem' }}>Acceso</div>
+          <Controller
+            name="modo"
+            control={newUserControl}
+            render={({ field }) => (
               <Select
-                label="Módulo"
-                placeholder="— Seleccionar —"
-                value={createIdModulo || undefined}
-                onChange={(v) => setCreateIdModulo(v ?? '')}
-                options={[{ value: '', label: '— Ninguno —' }, ...modulos.map((m) => ({ value: String(m.id_modulo ?? m.id), label: m.nombre ?? m.name ?? `Módulo ${m.id_modulo ?? m.id}` }))]}
+                value={field.value}
+                onChange={field.onChange}
+                options={[
+                  { value: 'invite', label: 'Enviar invitación por correo (creará su contraseña en el enlace)' },
+                  { value: 'password', label: 'Establecer contraseña ahora' },
+                ]}
               />
-            </div>
+            )}
+          />
+          {newUserModo === 'invite' && (
+            <p style={{ margin: '0.25rem 0 0.75rem', fontSize: '0.85rem', color: 'var(--color-texto-secundario)' }}>
+              Se enviará un correo para que confirme su cuenta y cree su propia contraseña.
+            </p>
+          )}
+          {newUserModo === 'password' && (
+            <Controller
+              name="password"
+              control={newUserControl}
+              render={({ field }) => (
+                <Input
+                  label="Contraseña"
+                  type="password"
+                  error={newUserErrors.password?.message}
+                  {...field}
+                  placeholder="Mínimo 8 caracteres"
+                  required
+                />
+              )}
+            />
           )}
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
-            <Button type="submit" variant="primary" disabled={createSubmitting}>
-              {createSubmitting ? 'Creando…' : createModo === MODO_CREAR.INVITE ? 'Enviar invitación' : 'Crear usuario'}
+            <Button type="submit" variant="primary" disabled={newUserSubmitting}>
+              {newUserSubmitting ? 'Creando…' : 'Crear usuario'}
             </Button>
-            <Button type="button" variant="outline" onClick={() => setShowCreateModal(false)} disabled={createSubmitting}>
+            <Button type="button" variant="outline" onClick={() => { setShowNewUserModal(false); resetNewUser(); }} disabled={newUserSubmitting}>
               Cancelar
             </Button>
           </div>
