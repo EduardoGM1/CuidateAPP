@@ -3283,6 +3283,7 @@ export default function PacienteDetail() {
 
       {/* Modal FORMA (solo web): periodos con registros del paciente */}
       <Modal
+        className="modal-forma-periodo"
         open={formaModalOpen}
         onClose={() => { setFormaModalOpen(false); setPeriodoSeleccionado(''); }}
         title="Descargar FORMA (Registro Mensual GAM)"

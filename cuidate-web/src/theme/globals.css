@@ -362,6 +362,17 @@ select:focus-visible {
 .vacuna-modal-form-wrap label {
   color: var(--color-texto-primario) !important;
 }
+/* Modal Descargar FORMA: select Periodo con texto legible (contraste fijo) */
+.modal-forma-periodo .ant-select-selector {
+  background-color: #ffffff !important;
+}
+.modal-forma-periodo .ant-select-selection-item {
+  color: #1a1a2e !important;
+  background-color: transparent !important;
+}
+.modal-forma-periodo .ant-select-selection-placeholder {
+  color: #718096 !important;
+}
 .ant-empty-description,
 .ant-result-title,
 .ant-result-subtitle {
