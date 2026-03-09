@@ -31,6 +31,10 @@ export default function ConfirmarCuenta() {
       setError('La contraseña debe tener al menos 8 caracteres');
       return;
     }
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+      setError('La contraseña debe contener al menos una mayúscula, una minúscula y un número');
+      return;
+    }
     if (newPassword !== confirmPassword) {
       setError('Las contraseñas no coinciden');
       return;
@@ -98,7 +102,7 @@ export default function ConfirmarCuenta() {
           Confirma tu cuenta
         </h1>
         <p style={{ color: 'var(--color-texto-secundario)', marginBottom: '1.5rem', fontSize: '0.95rem' }}>
-          Crea tu contraseña para activar tu cuenta (mínimo 8 caracteres). Este enlace expira en 24 horas.
+          Crea tu contraseña para activar tu cuenta: mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número. Este enlace expira en 24 horas.
         </p>
 
         <form onSubmit={handleSubmit} noValidate>
