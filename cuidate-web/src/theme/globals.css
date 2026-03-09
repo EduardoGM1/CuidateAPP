@@ -313,7 +313,6 @@ select:focus-visible {
 .ant-drawer-body input,
 .ant-drawer-body select,
 .ant-drawer-body textarea {
-  background-color: var(--color-fondo) !important;
   color: var(--color-texto-primario) !important;
   border-color: var(--color-borde-claro) !important;
 }
