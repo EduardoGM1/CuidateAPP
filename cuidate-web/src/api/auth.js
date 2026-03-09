@@ -18,15 +18,23 @@ export async function login(credentials) {
 }
 
 /**
- * Crear usuario (solo Admin). Para vincular a un doctor.
- * @param {{ email: string, password: string, rol: string }} payload - rol: 'Doctor' | 'Admin' | 'Paciente'
+ * Crear usuario (solo Admin). Para vincular a un doctor o admin.
+ * Con invite: true no se envía password; el backend envía correo para confirmar cuenta y crear contraseña.
+ * @param {{ email: string, password?: string, rol: string, invite?: boolean }} payload
  * @returns {Promise<{ usuario: { id_usuario, email, rol } }>}
  */
 export async function createUsuario(payload) {
   const email = sanitizeEmail(payload.email);
-  const password = normalizeString(payload.password, { maxLength: 128 });
   const rol = payload.rol === ROLES.DOCTOR ? ROLES.DOCTOR : payload.rol === ROLES.ADMIN ? ROLES.ADMIN : 'Paciente';
-  const { data } = await client.post(API_PATHS.AUTH_USUARIOS, { email, password, rol });
+  const invite = payload.invite === true;
+
+  const body = { email, rol };
+  if (invite) {
+    body.invite = true;
+  } else {
+    body.password = normalizeString(payload.password, { maxLength: 128 });
+  }
+  const { data } = await client.post(API_PATHS.AUTH_USUARIOS, body);
   return data;
 }
 

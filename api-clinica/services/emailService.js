@@ -165,6 +165,123 @@ class EmailService {
   }
 
   /**
+   * Enviar email de invitación para confirmar cuenta y crear contraseña (Doctor/Admin).
+   * @param {string} to - Email del destinatario
+   * @param {string} nombre - Nombre para el saludo
+   * @param {string} rol - Rol (Doctor, Admin)
+   * @param {string} confirmUrl - URL completa para confirmar cuenta (confirmar-cuenta?token=xxx)
+   */
+  async sendInviteConfirmEmail(to, nombre, rol, confirmUrl) {
+    try {
+      const subject = 'Confirma tu cuenta - Clínica';
+      const html = this.getInviteConfirmEmailTemplate(nombre, rol, confirmUrl);
+      const text = `Te han invitado a unirte a la plataforma de la clínica como ${rol}. Confirma tu cuenta y crea tu contraseña en: ${confirmUrl}`;
+
+      if (process.env.NODE_ENV === 'development') {
+        logger.info('📧 [EMAIL] Enviando email de invitación a confirmar cuenta', {
+          to,
+          subject,
+          confirmUrl: confirmUrl.substring(0, 50) + '...',
+        });
+        console.log('\n📧 ============================================');
+        console.log('EMAIL DE INVITACIÓN (CONFIRMAR CUENTA)');
+        console.log('============================================');
+        console.log(`Para: ${to}`);
+        console.log(`Asunto: ${subject}`);
+        console.log(`URL: ${confirmUrl}`);
+        console.log('============================================\n');
+      }
+
+      if (resend) {
+        const { data, error } = await resend.emails.send({
+          from: EMAIL_FROM,
+          to: Array.isArray(to) ? to : [to],
+          subject,
+          html,
+          text,
+        });
+        if (error) {
+          logger.error('❌ [EMAIL] Error Resend (invite)', { error: error.message, to });
+          throw new Error(`Error enviando email: ${error.message}`);
+        }
+        logger.info('📧 [EMAIL] Email de invitación enviado (Resend)', { to, emailId: data?.id });
+        return { success: true, message: 'Email enviado exitosamente', emailId: data?.id };
+      }
+
+      if (smtpTransporter) {
+        const from = process.env.EMAIL_FROM || SMTP_USER;
+        const info = await smtpTransporter.sendMail({
+          from: from.includes('@') ? from : `"Clínica" <${SMTP_USER}>`,
+          to: Array.isArray(to) ? to.join(', ') : to,
+          subject,
+          html,
+          text,
+        });
+        logger.info('📧 [EMAIL] Email de invitación enviado (SMTP)', { to, messageId: info.messageId });
+        return { success: true, message: 'Email enviado exitosamente', messageId: info.messageId };
+      }
+
+      const errorMsg = 'No hay proveedor de email. Configure RESEND_API_KEY o SMTP en .env';
+      logger.error(`❌ [EMAIL] ${errorMsg}`);
+      throw new Error(errorMsg);
+    } catch (error) {
+      logger.error('❌ [EMAIL] Error enviando email de invitación', {
+        error: error.message,
+        to,
+      });
+      throw error;
+    }
+  }
+
+  getInviteConfirmEmailTemplate(nombre, rol, confirmUrl) {
+    const rolLabel = rol === 'Doctor' ? 'doctor' : rol === 'Admin' ? 'administrador' : rol;
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }
+          .content { padding: 20px; background-color: #f9f9f9; }
+          .button { display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+          .warning { background-color: #e8f5e9; border-left: 4px solid #4CAF50; padding: 10px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Confirma tu cuenta</h1>
+          </div>
+          <div class="content">
+            <p>Hola${nombre ? ` ${nombre}` : ''},</p>
+            <p>Te han registrado como <strong>${rolLabel}</strong> en la plataforma de la clínica. Para activar tu cuenta, debes crear tu contraseña haciendo clic en el siguiente enlace:</p>
+            <div style="text-align: center;">
+              <a href="${confirmUrl}" class="button">Confirmar cuenta y crear contraseña</a>
+            </div>
+            <p>O copia y pega este enlace en tu navegador:</p>
+            <p style="word-break: break-all; color: #4CAF50;">${confirmUrl}</p>
+            <div class="warning">
+              <strong>Importante:</strong>
+              <ul>
+                <li>Este enlace expira en 24 horas</li>
+                <li>Solo tú debes usar este enlace para crear tu contraseña</li>
+              </ul>
+            </div>
+          </div>
+          <div class="footer">
+            <p>Este es un email automático, por favor no respondas.</p>
+            <p>&copy; ${new Date().getFullYear()} Clínica - Todos los derechos reservados</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
    * Enviar notificación de cambio de contraseña exitoso
    */
   async sendPasswordChangedNotification(to, changedAt, ipAddress) {

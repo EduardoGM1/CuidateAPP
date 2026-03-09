@@ -8,6 +8,7 @@ import { createDoctor } from '../../api/doctores';
 import { getModulos } from '../../api/modulos';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, Input } from '../../components/ui';
+import { message } from 'antd';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 
 export default function AgregarDoctor() {
@@ -23,7 +24,6 @@ export default function AgregarDoctor() {
     resolver: zodResolver(doctorCreateSchema),
     defaultValues: {
       email: '',
-      password: '',
       nombre: '',
       apellido_paterno: '',
       apellido_materno: '',
@@ -40,8 +40,8 @@ export default function AgregarDoctor() {
     try {
       const { usuario } = await createUsuario({
         email: data.email,
-        password: data.password,
         rol: 'Doctor',
+        invite: true,
       });
       const id_usuario = usuario?.id_usuario;
       if (!id_usuario) throw new Error('No se obtuvo el ID del usuario');
@@ -53,6 +53,8 @@ export default function AgregarDoctor() {
         id_usuario,
         id_modulo: data.id_modulo ?? null,
       });
+      const emailDisplay = (data.email || '').trim() ? ` Se envió un correo a ${data.email.trim()} para que confirme su cuenta y cree su contraseña.` : '';
+      message.success(`Doctor creado correctamente.${emailDisplay}`);
       navigate('/doctores', { replace: true });
     } catch (err) {
       setSubmitError(
@@ -76,14 +78,9 @@ export default function AgregarDoctor() {
             {...register('email')}
             required
           />
-          <Input
-            label="Contraseña"
-            type="password"
-            autoComplete="new-password"
-            error={errors.password?.message}
-            {...register('password')}
-            required
-          />
+          <p style={{ margin: '-0.5rem 0 1rem', fontSize: '0.85rem', color: 'var(--color-texto-secundario)' }}>
+            Se enviará un correo al doctor para que confirme su cuenta y cree su propia contraseña.
+          </p>
           <Input label="Nombre" error={errors.nombre?.message} {...register('nombre')} required />
           <Input label="Apellido paterno" error={errors.apellido_paterno?.message} {...register('apellido_paterno')} required />
           <Input label="Apellido materno" error={errors.apellido_materno?.message} {...register('apellido_materno')} />

@@ -1,17 +1,13 @@
 import { z } from 'zod';
 import { LIMITS } from '../../utils/constants';
 
+/** Schema para crear doctor con invitación: sin contraseña; se envía correo para confirmar y crear contraseña */
 export const doctorCreateSchema = z.object({
   email: z
     .string()
     .min(1, 'El correo es obligatorio')
     .max(LIMITS.EMAIL_MAX, 'Correo demasiado largo')
     .email('Correo no válido'),
-  password: z
-    .string()
-    .min(1, 'La contraseña es obligatoria')
-    .min(LIMITS.PASSWORD_MIN, `Mínimo ${LIMITS.PASSWORD_MIN} caracteres`)
-    .max(LIMITS.PASSWORD_MAX, 'Contraseña demasiado larga'),
   nombre: z.string().min(1, 'El nombre es obligatorio').max(100, 'Nombre demasiado largo'),
   apellido_paterno: z.string().min(1, 'El apellido paterno es obligatorio').max(100, 'Demasiado largo'),
   apellido_materno: z.string().max(100, 'Demasiado largo').optional().or(z.literal('')),

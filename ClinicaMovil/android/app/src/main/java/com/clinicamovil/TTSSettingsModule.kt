@@ -11,7 +11,7 @@ import com.facebook.react.bridge.ReactMethod
  * No se puede activar TTS automáticamente; el usuario debe instalar/activar en Ajustes.
  * Estos métodos llevan al usuario directo a la pantalla adecuada para reducir pasos.
  */
-class TTSSettingsModule(reactContext: ReactApplicationContext) :
+class TTSSettingsModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
 
     override fun getName(): String = "TTSSettingsModule"
@@ -19,7 +19,7 @@ class TTSSettingsModule(reactContext: ReactApplicationContext) :
     /** Abre Ajustes > Texto a voz (motor preferido, idioma, etc.). */
     @ReactMethod
     fun openTTSSettings() {
-        val activity = currentActivity ?: return
+        val activity = reactContext.currentActivity ?: return
         try {
             val intent = Intent().apply {
                 action = "com.android.settings.TTS_SETTINGS"
@@ -38,7 +38,7 @@ class TTSSettingsModule(reactContext: ReactApplicationContext) :
      */
     @ReactMethod
     fun openInstallTTSData() {
-        val activity = currentActivity ?: return
+        val activity = reactContext.currentActivity ?: return
         try {
             val intent = Intent().apply {
                 action = TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA

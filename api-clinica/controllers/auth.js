@@ -198,71 +198,134 @@ export const getUsuarioById = async (req, res) => {
 /**
  * Crear nuevo usuario (solo Admin)
  * POST /api/auth/usuarios
+ * Body: { email, rol [, password ] } o { email, rol, invite: true } (sin contraseña; se envía correo para confirmar y crear contraseña)
  */
 export const createUsuario = async (req, res) => {
   try {
-    const { email, password, rol } = req.body;
-    
-    // Validaciones
-    if (!email || !password || !rol) {
-      return res.status(400).json({ 
+    const { email, password, rol, invite } = req.body;
+    const isInvite = invite === true || invite === 'true';
+
+    if (!email || !rol) {
+      return res.status(400).json({
         success: false,
-        error: 'Email, contraseña y rol son requeridos' 
+        error: 'Email y rol son requeridos',
       });
     }
-    
+
     if (!['Paciente', 'Doctor', 'Admin'].includes(rol)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        error: 'Rol inválido. Debe ser: Paciente, Doctor o Admin' 
+        error: 'Rol inválido. Debe ser: Paciente, Doctor o Admin',
       });
     }
-    
-    // Validar formato de email
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        error: 'Formato de email inválido' 
+        error: 'Formato de email inválido',
       });
     }
-    
-    // Validar contraseña
-    if (password.length < 6) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'La contraseña debe tener al menos 6 caracteres' 
-      });
+
+    if (!isInvite) {
+      if (!password) {
+        return res.status(400).json({
+          success: false,
+          error: 'La contraseña es requerida cuando no se usa invitación',
+        });
+      }
+      if (password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          error: 'La contraseña debe tener al menos 6 caracteres',
+        });
+      }
     }
-    
-    logger.info(`Creando usuario administrativo: ${email}, rol: ${rol}`);
-    
-    // Verificar si ya existe
-    const usuarioExistente = await Usuario.findOne({ where: { email } });
+
+    const emailNormalized = email.trim().toLowerCase();
+    logger.info(`Creando usuario: ${emailNormalized}, rol: ${rol}, invite: ${isInvite}`);
+
+    const usuarioExistente = await Usuario.findOne({ where: { email: emailNormalized } });
     if (usuarioExistente) {
-      return res.status(409).json({ 
+      return res.status(409).json({
         success: false,
-        error: 'El email ya está registrado' 
+        error: 'El email ya está registrado',
       });
     }
-    
-    // Hashear contraseña
-    const password_hash = await bcrypt.hash(password, 10);
-    
-    // Crear usuario
+
+    let password_hash;
+    if (isInvite) {
+      const randomSecret = crypto.randomBytes(32).toString('hex');
+      password_hash = await bcrypt.hash(randomSecret, 10);
+    } else {
+      password_hash = await bcrypt.hash(password, 10);
+    }
+
     const nuevoUsuario = await Usuario.create({
-      email: email.trim().toLowerCase(),
+      email: emailNormalized,
       password_hash,
-      rol: rol
+      rol,
     });
+
+    if (isInvite) {
+      const token = crypto.randomBytes(32).toString('hex');
+      const fechaExpiracion = new Date();
+      fechaExpiracion.setHours(fechaExpiracion.getHours() + 24);
+
+      await PasswordResetToken.update(
+        { usado: true },
+        {
+          where: {
+            id_usuario: nuevoUsuario.id_usuario,
+            usado: false,
+            fecha_expiracion: { [Op.gt]: new Date() },
+          },
+        }
+      );
+
+      await PasswordResetToken.create({
+        id_usuario: nuevoUsuario.id_usuario,
+        token,
+        fecha_expiracion: fechaExpiracion,
+        ip_address: req.ip || req.connection?.remoteAddress,
+        user_agent: req.get('User-Agent'),
+      });
+
+      const baseUrl = process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:3000';
+      const confirmUrl = `${baseUrl}/confirmar-cuenta?token=${token}`;
+      const nombre = (nuevoUsuario.email && nuevoUsuario.email.split('@')[0]) ? nuevoUsuario.email.split('@')[0] : 'Usuario';
+
+      setImmediate(async () => {
+        try {
+          await emailService.sendInviteConfirmEmail(nuevoUsuario.email, nombre, nuevoUsuario.rol, confirmUrl);
+        } catch (emailErr) {
+          logger.error('Error enviando email de invitación (no crítico)', {
+            error: emailErr.message,
+            userId: nuevoUsuario.id_usuario,
+          });
+        }
+      });
+
+      logger.info(`Usuario creado por invitación: ${nuevoUsuario.email} (ID: ${nuevoUsuario.id_usuario}), email enviado`);
+      return res.status(201).json({
+        success: true,
+        message: 'Usuario creado. Se envió un correo para que confirme su cuenta y cree su contraseña.',
+        usuario: {
+          id_usuario: nuevoUsuario.id_usuario,
+          email: nuevoUsuario.email,
+          rol: nuevoUsuario.rol,
+          activo: nuevoUsuario.activo,
+          fecha_creacion: nuevoUsuario.fecha_creacion,
+        },
+      });
+    }
 
     setImmediate(() => {
       const nombre = (nuevoUsuario.email && nuevoUsuario.email.split('@')[0]) ? nuevoUsuario.email.split('@')[0] : 'Usuario';
       emailService.sendWelcomeEmail(nuevoUsuario.email, nombre, nuevoUsuario.rol).catch(() => {});
     });
-    
+
     logger.info(`Usuario creado: ${nuevoUsuario.email} (ID: ${nuevoUsuario.id_usuario})`);
-    
     return res.status(201).json({
       success: true,
       message: 'Usuario creado exitosamente',
@@ -271,14 +334,14 @@ export const createUsuario = async (req, res) => {
         email: nuevoUsuario.email,
         rol: nuevoUsuario.rol,
         activo: nuevoUsuario.activo,
-        fecha_creacion: nuevoUsuario.fecha_creacion
-      }
+        fecha_creacion: nuevoUsuario.fecha_creacion,
+      },
     });
   } catch (error) {
     logger.error('Error creando usuario', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: error.message 
+      error: error.message,
     });
   }
 };

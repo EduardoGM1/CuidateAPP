@@ -5,6 +5,7 @@ import AdminRoute from '../components/auth/AdminRoute';
 import Login from '../pages/Login';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
+import ConfirmarCuenta from '../pages/ConfirmarCuenta';
 import Dashboard from '../pages/Dashboard';
 import PacientesList from '../pages/pacientes/PacientesList';
 import PacienteDetail from '../pages/pacientes/PacienteDetail';
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
   { path: '/forgot-password', element: <ForgotPassword /> },
   { path: '/reset-password', element: <ResetPassword /> },
+  { path: '/confirmar-cuenta', element: <ConfirmarCuenta /> },
   /* Rutas protegidas: requieren sesión iniciada. Todas las children pasan por ProtectedRoute. */
   {
     path: '/',
