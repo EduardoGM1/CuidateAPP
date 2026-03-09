@@ -39,28 +39,53 @@ export default function AgregarDoctor() {
   async function onSubmit(data) {
     setSubmitError('');
     try {
-      const { usuario } = await createUsuario({
-        email: data.email,
-        rol: 'Doctor',
-        invite: true,
-      });
-      const id_usuario = usuario?.id_usuario;
-      if (!id_usuario) throw new Error('No se obtuvo el ID del usuario');
+      let usuario;
+      try {
+        const res = await createUsuario({
+          email: data.email,
+          rol: 'Doctor',
+          invite: true,
+        });
+        usuario = res?.usuario;
+      } catch (err) {
+        if (err?.response?.status === 409) {
+          setSubmitError('El correo ya está registrado. Si es un usuario existente, puedes asignarle el perfil de doctor desde la lista de usuarios.');
+          return;
+        }
+        throw err;
+      }
+
+      const id_usuario = usuario?.id_usuario != null ? Number(usuario.id_usuario) : null;
+      if (!id_usuario || !Number.isInteger(id_usuario) || id_usuario < 1) {
+        throw new Error('No se obtuvo un ID de usuario válido del servidor');
+      }
+
+      const idModuloRaw = data.id_modulo;
+      const id_modulo =
+        idModuloRaw != null && String(idModuloRaw).trim() !== ''
+          ? (Number(idModuloRaw) || null)
+          : null;
 
       await createDoctor({
-        nombre: data.nombre.trim(),
-        apellido_paterno: data.apellido_paterno.trim(),
-        apellido_materno: data.apellido_materno?.trim() || null,
+        nombre: (data.nombre || '').trim(),
+        apellido_paterno: (data.apellido_paterno || '').trim(),
+        apellido_materno: (data.apellido_materno || '').trim() || null,
         id_usuario,
-        id_modulo: data.id_modulo ?? null,
+        id_modulo,
       });
       const emailDisplay = (data.email || '').trim() ? ` Se envió un correo a ${data.email.trim()} para que confirme su cuenta y cree su contraseña.` : '';
       message.success(`Doctor creado correctamente.${emailDisplay}`);
       navigate('/doctores', { replace: true });
     } catch (err) {
-      setSubmitError(
-        err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Error al crear el doctor'
-      );
+      const status = err?.response?.status;
+      const resData = err?.response?.data;
+      let msg = resData?.error || resData?.message || err?.message || 'Error al crear el doctor';
+      if (status === 400 && Array.isArray(resData?.details) && resData.details.length > 0) {
+        const first = resData.details[0];
+        const fieldMsg = first.msg || first.message;
+        if (fieldMsg) msg = fieldMsg;
+      }
+      setSubmitError(msg);
     }
   }
 
