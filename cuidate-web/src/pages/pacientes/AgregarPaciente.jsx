@@ -17,6 +17,14 @@ import { Card, Button, Input } from '../../components/ui';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { getComorbilidades } from '../../api/comorbilidades';
 import { registerInitialMedicalData } from '../../utils/registerInitialMedicalData';
+import {
+  ENFERMEDADES_CRONICAS_KEYS,
+  ENFERMEDADES_CRONICAS_LABELS,
+  getInitialEnfermedadesCronicas,
+  getInitialComorbilidadIds,
+} from '../../constants/enfermedadesCronicas';
+import { createEmptyRedApoyoItem } from '../../constants/redApoyo';
+import RedApoyoFormFields from '../../components/pacientes/RedApoyoFormFields';
 
 const OPCIONES_SEXO = [{ value: '', label: '—' }, { value: 'Hombre', label: 'Hombre' }, { value: 'Mujer', label: 'Mujer' }, { value: 'Otro', label: 'Otro' }];
 
@@ -28,13 +36,8 @@ export default function AgregarPaciente() {
   const [doctores, setDoctores] = useState([]);
   const [loadingDoctores, setLoadingDoctores] = useState(false);
 
-  // Red de apoyo: lista de contactos (paridad con app móvil: múltiples contactos con email, dirección, localidad)
-  const [redApoyoList, setRedApoyoList] = useState([
-    { nombre_contacto: '', numero_celular: '', email: '', direccion: '', localidad: '', parentesco: '' },
-  ]);
-  const addRedApoyo = () => {
-    setRedApoyoList((prev) => [...prev, { nombre_contacto: '', numero_celular: '', email: '', direccion: '', localidad: '', parentesco: '' }]);
-  };
+  const [redApoyoList, setRedApoyoList] = useState([createEmptyRedApoyoItem()]);
+  const addRedApoyo = () => setRedApoyoList((prev) => [...prev, createEmptyRedApoyoItem()]);
   const removeRedApoyo = (index) => {
     if (redApoyoList.length <= 1) return;
     setRedApoyoList((prev) => prev.filter((_, i) => i !== index));
@@ -62,24 +65,12 @@ export default function AgregarPaciente() {
     medida_cintura_cm: '',
     observaciones: '',
   });
-  const ENFERMEDADES_CRONICAS_KEYS = [
-    'diabetes', 'hipertension', 'obesidad', 'dislipidemia', 'enfermedad_renal_cronica',
-    'epoc', 'enfermedad_cardiovascular', 'tuberculosis', 'asma', 'tabaquismo', 'otro',
-  ];
-  const [enfermedadesCronicas, setEnfermedadesCronicas] = useState(() => {
-    const o = {};
-    ENFERMEDADES_CRONICAS_KEYS.forEach((k) => { o[k] = false; });
-    return o;
-  });
+  const [enfermedadesCronicas, setEnfermedadesCronicas] = useState(getInitialEnfermedadesCronicas);
   const [tratamientoNoFarmaco, setTratamientoNoFarmaco] = useState(false);
   const [tratamientoFarmaco, setTratamientoFarmaco] = useState(false);
   const [anioDiagnostico, setAnioDiagnostico] = useState('');
   const [catalogoComorbilidades, setCatalogoComorbilidades] = useState([]);
-  const [comorbilidadIds, setComorbilidadIds] = useState(() => {
-    const o = {};
-    ENFERMEDADES_CRONICAS_KEYS.forEach((k) => { o[k] = null; });
-    return o;
-  });
+  const [comorbilidadIds, setComorbilidadIds] = useState(getInitialComorbilidadIds);
 
   const {
     control,
@@ -387,94 +378,18 @@ export default function AgregarPaciente() {
               ))}
             </select>
           </div>
-          {/* Red de apoyo: múltiples contactos con email, dirección, localidad (paridad con app móvil) */}
+          {/* Red de apoyo: componente reutilizable (paridad con app móvil) */}
           <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--color-borde-claro)' }} />
           <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: 'var(--color-primario)' }}>
             Red de apoyo (opcional)
           </h3>
-          <p style={{ margin: '0 0 0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
-            Puedes registrar uno o más contactos de red de apoyo. Podrás agregar más después desde el detalle del paciente.
-          </p>
-          {redApoyoList.map((contacto, index) => (
-            <div
-              key={index}
-              style={{
-                marginBottom: '1.25rem',
-                padding: '1rem',
-                border: '1px solid var(--color-borde-claro)',
-                borderRadius: 'var(--radius)',
-                backgroundColor: 'var(--color-fondo-body)',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <span style={{ fontWeight: 600, color: 'var(--color-texto-primario)' }}>Contacto {index + 1}</span>
-                {redApoyoList.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeRedApoyo(index)}
-                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.875rem', color: 'var(--color-error)', background: 'none', border: 'none', cursor: 'pointer' }}
-                  >
-                    Quitar
-                  </button>
-                )}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
-                <Input
-                  label="Nombre del contacto"
-                  value={contacto.nombre_contacto}
-                  onChange={(e) => updateRedApoyo(index, 'nombre_contacto', e.target.value)}
-                  placeholder="Ej: María García"
-                />
-                <Input
-                  label="Teléfono del contacto"
-                  type="tel"
-                  value={contacto.numero_celular}
-                  onChange={(e) => updateRedApoyo(index, 'numero_celular', e.target.value)}
-                />
-                <Input
-                  label="Email"
-                  type="email"
-                  value={contacto.email}
-                  onChange={(e) => updateRedApoyo(index, 'email', e.target.value)}
-                  placeholder="opcional"
-                />
-                <Input
-                  label="Dirección"
-                  value={contacto.direccion}
-                  onChange={(e) => updateRedApoyo(index, 'direccion', e.target.value)}
-                  placeholder="opcional"
-                />
-                <Input
-                  label="Localidad"
-                  value={contacto.localidad}
-                  onChange={(e) => updateRedApoyo(index, 'localidad', e.target.value)}
-                  placeholder="opcional"
-                />
-                <Input
-                  label="Parentesco"
-                  value={contacto.parentesco}
-                  onChange={(e) => updateRedApoyo(index, 'parentesco', e.target.value)}
-                  placeholder="Ej: Esposa, Hijo"
-                />
-              </div>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addRedApoyo}
-            style={{
-              marginBottom: '1rem',
-              padding: '0.5rem 1rem',
-              fontSize: '0.9rem',
-              color: 'var(--color-primario)',
-              background: 'none',
-              border: '1px dashed var(--color-borde-claro)',
-              borderRadius: 'var(--radius)',
-              cursor: 'pointer',
-            }}
-          >
-            + Agregar otro contacto
-          </button>
+          <RedApoyoFormFields
+            list={redApoyoList}
+            onAdd={addRedApoyo}
+            onRemove={removeRedApoyo}
+            onUpdate={updateRedApoyo}
+            disabled={isSubmitting}
+          />
 
           {/* Sección opcional: Primera consulta rápida */}
           <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--color-borde-claro)' }} />

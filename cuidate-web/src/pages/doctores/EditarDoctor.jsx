@@ -41,6 +41,10 @@ export default function EditarDoctor() {
       apellido_materno: '',
       id_modulo: '',
       telefono: '',
+      institucion_hospitalaria: '',
+      grado_estudio: '',
+      anos_servicio: '',
+      activo: true,
     },
   });
 
@@ -58,8 +62,12 @@ export default function EditarDoctor() {
       const apellido_materno = doc.apellido_materno ?? '';
       const id_modulo = doc.id_modulo != null ? String(doc.id_modulo) : '';
       const telefono = doc.telefono ?? '';
+      const institucion_hospitalaria = doc.institucion_hospitalaria ?? '';
+      const grado_estudio = doc.grado_estudio ?? '';
+      const anos_servicio = doc.anos_servicio != null ? String(doc.anos_servicio) : '';
+      const activo = doc.activo !== false;
 
-      setDoctor({ ...doc, email, nombre, apellido_paterno, apellido_materno, id_modulo: doc.id_modulo, telefono });
+      setDoctor({ ...doc, email, nombre, apellido_paterno, apellido_materno, id_modulo: doc.id_modulo, telefono, institucion_hospitalaria, grado_estudio, anos_servicio, activo });
       setModulos(Array.isArray(mods) ? mods : []);
 
       reset({
@@ -69,6 +77,10 @@ export default function EditarDoctor() {
         apellido_materno: String(apellido_materno ?? ''),
         id_modulo,
         telefono: String(telefono ?? ''),
+        institucion_hospitalaria: String(institucion_hospitalaria ?? ''),
+        grado_estudio: String(grado_estudio ?? ''),
+        anos_servicio: String(anos_servicio ?? ''),
+        activo,
       });
     } catch {
       setDoctor(null);
@@ -92,6 +104,10 @@ export default function EditarDoctor() {
         apellido_materno: data.apellido_materno?.trim() || null,
         id_modulo: idModulo != null && idModulo !== '' ? Number(idModulo) : null,
         telefono: data.telefono?.trim() || null,
+        institucion_hospitalaria: data.institucion_hospitalaria?.trim() || null,
+        grado_estudio: data.grado_estudio?.trim() || null,
+        anos_servicio: data.anos_servicio != null && String(data.anos_servicio).trim() !== '' ? parseInt(String(data.anos_servicio), 10) : null,
+        activo: isAdmin() && data.activo !== undefined ? Boolean(data.activo) : undefined,
       });
       navigate(`/doctores/${parsedId}`, { replace: true });
     } catch (err) {
@@ -194,6 +210,52 @@ export default function EditarDoctor() {
               />
             )}
           />
+          <Controller
+            name="institucion_hospitalaria"
+            control={control}
+            render={({ field }) => (
+              <Input
+                label="Institución hospitalaria"
+                placeholder="Ej. IMSS Bienestar"
+                error={errors.institucion_hospitalaria?.message}
+                {...field}
+              />
+            )}
+          />
+          <Controller
+            name="grado_estudio"
+            control={control}
+            render={({ field }) => (
+              <Input
+                label="Grado de estudio"
+                placeholder="Ej. Licenciatura en Medicina"
+                error={errors.grado_estudio?.message}
+                {...field}
+              />
+            )}
+          />
+          <Controller
+            name="anos_servicio"
+            control={control}
+            render={({ field }) => (
+              <Input
+                label="Años de servicio"
+                type="number"
+                min={0}
+                placeholder="Ej. 5"
+                error={errors.anos_servicio?.message}
+                {...field}
+              />
+            )}
+          />
+          {isAdmin() && (
+            <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input type="checkbox" id="activo-edit" {...register('activo')} />
+              <label htmlFor="activo-edit" style={{ fontWeight: 500, color: 'var(--color-texto-primario)' }}>
+                Doctor activo
+              </label>
+            </div>
+          )}
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}>
               Módulo

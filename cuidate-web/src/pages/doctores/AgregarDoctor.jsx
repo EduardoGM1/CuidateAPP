@@ -20,6 +20,7 @@ export default function AgregarDoctor() {
     control,
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(doctorCreateSchema),
@@ -29,8 +30,18 @@ export default function AgregarDoctor() {
       apellido_paterno: '',
       apellido_materno: '',
       id_modulo: '',
+      telefono: '',
+      institucion_hospitalaria: '',
+      grado_estudio: '',
+      anos_servicio: '',
+      activo: true,
+      usePassword: false,
+      password: '',
+      confirmPassword: '',
     },
   });
+
+  const usePassword = watch('usePassword');
 
   useEffect(() => {
     getModulos().then((data) => setModulos(Array.isArray(data) ? data : [])).catch(() => setModulos([]));
@@ -39,13 +50,15 @@ export default function AgregarDoctor() {
   async function onSubmit(data) {
     setSubmitError('');
     try {
+      const invite = !data.usePassword;
       let usuario;
       try {
-        const res = await createUsuario({
+        const payload = {
           email: data.email,
           rol: 'Doctor',
-          invite: true,
-        });
+          ...(invite ? { invite: true } : { password: (data.password || '').trim() }),
+        };
+        const res = await createUsuario(payload);
         usuario = res?.usuario;
       } catch (err) {
         if (err?.response?.status === 409) {
@@ -72,8 +85,13 @@ export default function AgregarDoctor() {
         apellido_materno: (data.apellido_materno || '').trim() || null,
         id_usuario,
         id_modulo,
+        telefono: (data.telefono || '').trim() || null,
+        institucion_hospitalaria: (data.institucion_hospitalaria || '').trim() || null,
+        grado_estudio: (data.grado_estudio || '').trim() || null,
+        anos_servicio: data.anos_servicio != null && String(data.anos_servicio).trim() !== '' ? parseInt(String(data.anos_servicio), 10) : null,
+        activo: data.activo !== undefined ? Boolean(data.activo) : true,
       });
-      const emailDisplay = (data.email || '').trim() ? ` Se envió un correo a ${data.email.trim()} para que confirme su cuenta y cree su contraseña.` : '';
+      const emailDisplay = invite && (data.email || '').trim() ? ` Se envió un correo a ${data.email.trim()} para que confirme su cuenta y cree su contraseña.` : '';
       message.success(`Doctor creado correctamente.${emailDisplay}`);
       navigate('/doctores', { replace: true });
     } catch (err) {
@@ -110,9 +128,49 @@ export default function AgregarDoctor() {
               />
             )}
           />
-          <p style={{ margin: '-0.5rem 0 1rem', fontSize: '0.85rem', color: 'var(--color-texto-secundario)' }}>
-            Se enviará un correo al doctor para que confirme su cuenta y cree su propia contraseña.
-          </p>
+          <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input type="checkbox" id="usePassword" {...register('usePassword')} />
+            <label htmlFor="usePassword" style={{ fontWeight: 500, color: 'var(--color-texto-primario)' }}>
+              Establecer contraseña ahora (si no, se enviará invitación por correo)
+            </label>
+          </div>
+          {usePassword && (
+            <>
+              <Controller
+                name="password"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    label="Contraseña"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="Mínimo 8 caracteres"
+                    error={errors.password?.message}
+                    {...field}
+                  />
+                )}
+              />
+              <Controller
+                name="confirmPassword"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    label="Confirmar contraseña"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="Repetir contraseña"
+                    error={errors.confirmPassword?.message}
+                    {...field}
+                  />
+                )}
+              />
+            </>
+          )}
+          {!usePassword && (
+            <p style={{ margin: '-0.5rem 0 1rem', fontSize: '0.85rem', color: 'var(--color-texto-secundario)' }}>
+              Se enviará un correo al doctor para que confirme su cuenta y cree su propia contraseña.
+            </p>
+          )}
           <Controller
             name="nombre"
             control={control}
@@ -134,6 +192,40 @@ export default function AgregarDoctor() {
               <Input label="Apellido materno" error={errors.apellido_materno?.message} {...field} />
             )}
           />
+          <Controller
+            name="telefono"
+            control={control}
+            render={({ field }) => (
+              <Input label="Teléfono" type="tel" placeholder="Ej. 55 1234 5678" error={errors.telefono?.message} {...field} />
+            )}
+          />
+          <Controller
+            name="institucion_hospitalaria"
+            control={control}
+            render={({ field }) => (
+              <Input label="Institución hospitalaria" placeholder="Ej. IMSS Bienestar" error={errors.institucion_hospitalaria?.message} {...field} />
+            )}
+          />
+          <Controller
+            name="grado_estudio"
+            control={control}
+            render={({ field }) => (
+              <Input label="Grado de estudio" placeholder="Ej. Licenciatura en Medicina" error={errors.grado_estudio?.message} {...field} />
+            )}
+          />
+          <Controller
+            name="anos_servicio"
+            control={control}
+            render={({ field }) => (
+              <Input label="Años de servicio" type="number" min={0} placeholder="Ej. 5" error={errors.anos_servicio?.message} {...field} />
+            )}
+          />
+          <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input type="checkbox" id="activo" {...register('activo')} />
+            <label htmlFor="activo" style={{ fontWeight: 500, color: 'var(--color-texto-primario)' }}>
+              Doctor activo
+            </label>
+          </div>
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}>
               Módulo

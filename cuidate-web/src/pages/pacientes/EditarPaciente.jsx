@@ -7,8 +7,21 @@ import { getPacienteById, updatePaciente } from '../../api/pacientes';
 import { getModulos } from '../../api/modulos';
 import { getInstitucionesSalud } from '../../api/institucionesSalud';
 import { getDoctores } from '../../api/doctores';
-import { createPacienteRedApoyo } from '../../api/pacienteMedicalData';
+import {
+  getPacienteRedApoyo,
+  createPacienteRedApoyo,
+  updatePacienteRedApoyo,
+  deletePacienteRedApoyo,
+} from '../../api/pacienteMedicalData';
 import { getComorbilidades } from '../../api/comorbilidades';
+import {
+  ENFERMEDADES_CRONICAS_KEYS,
+  ENFERMEDADES_CRONICAS_LABELS,
+  getInitialEnfermedadesCronicas,
+  getInitialComorbilidadIds,
+} from '../../constants/enfermedadesCronicas';
+import { createEmptyRedApoyoItem } from '../../constants/redApoyo';
+import RedApoyoFormFields from '../../components/pacientes/RedApoyoFormFields';
 import { registerInitialMedicalData } from '../../utils/registerInitialMedicalData';
 import { useAuthStore } from '../../stores/authStore';
 import { estadosMexico } from '../../data/estadosMexico';
@@ -40,11 +53,7 @@ export default function EditarPaciente() {
   const [submitError, setSubmitError] = useState('');
   const [doctores, setDoctores] = useState([]);
   const [loadingDoctores, setLoadingDoctores] = useState(false);
-  const [redApoyo, setRedApoyo] = useState({
-    nombre_contacto: '',
-    numero_celular: '',
-    parentesco: '',
-  });
+  const [redApoyoList, setRedApoyoList] = useState([createEmptyRedApoyoItem()]);
   const [primeraConsultaEnabled, setPrimeraConsultaEnabled] = useState(false);
   const [primeraConsulta, setPrimeraConsulta] = useState({
     id_doctor: '',
@@ -57,20 +66,12 @@ export default function EditarPaciente() {
     presion_diastolica: '',
     glucosa_mg_dl: '',
   });
-  const [enfermedadesCronicas, setEnfermedadesCronicas] = useState({
-    diabetes: false,
-    hipertension: false,
-    obesidad: false,
-  });
+  const [enfermedadesCronicas, setEnfermedadesCronicas] = useState(getInitialEnfermedadesCronicas);
   const [tratamientoNoFarmaco, setTratamientoNoFarmaco] = useState(false);
   const [tratamientoFarmaco, setTratamientoFarmaco] = useState(false);
   const [anioDiagnostico, setAnioDiagnostico] = useState('');
   const [catalogoComorbilidades, setCatalogoComorbilidades] = useState([]);
-  const [comorbilidadIds, setComorbilidadIds] = useState({
-    diabetes: null,
-    hipertension: null,
-    obesidad: null,
-  });
+  const [comorbilidadIds, setComorbilidadIds] = useState(getInitialComorbilidadIds);
 
   const {
     register,
@@ -105,7 +106,12 @@ export default function EditarPaciente() {
     if (parsedId === 0) return;
     setLoading(true);
     try {
-      const [p, mods, insts] = await Promise.all([getPacienteById(parsedId), getModulos(), getInstitucionesSalud()]);
+      const [p, mods, insts, redRes] = await Promise.all([
+        getPacienteById(parsedId),
+        getModulos(),
+        getInstitucionesSalud(),
+        getPacienteRedApoyo(parsedId, { limit: 50 }).catch(() => ({ data: [], total: 0 })),
+      ]);
       if (!p || typeof p !== 'object') {
         setPaciente(null);
         return;
@@ -113,6 +119,23 @@ export default function EditarPaciente() {
       setPaciente(p);
       setModulos(Array.isArray(mods) ? mods : []);
       setInstitucionesSalud(Array.isArray(insts) ? insts : []);
+
+      const redList = Array.isArray(redRes?.data) ? redRes.data : [];
+      if (redList.length > 0) {
+        setRedApoyoList(
+          redList.map((c) => ({
+            id_contacto: c.id_contacto ?? c.id,
+            nombre_contacto: String(c.nombre_contacto ?? '').trim(),
+            numero_celular: String(c.numero_celular ?? '').trim(),
+            email: String(c.email ?? '').trim(),
+            direccion: String(c.direccion ?? '').trim(),
+            localidad: String(c.localidad ?? '').trim(),
+            parentesco: String(c.parentesco ?? '').trim(),
+          }))
+        );
+      } else {
+        setRedApoyoList([createEmptyRedApoyoItem()]);
+      }
 
       const tel = p.numero_celular ?? p.telefono ?? '';
       const formValues = {
@@ -164,6 +187,14 @@ export default function EditarPaciente() {
           diabetes: findByKeyword('diab'),
           hipertension: findByKeyword('hipertens'),
           obesidad: findByKeyword('obes'),
+          dislipidemia: findByKeyword('dislipid') || findByKeyword('colesterol'),
+          enfermedad_renal_cronica: findByKeyword('renal') || findByKeyword('erc'),
+          epoc: findByKeyword('epoc'),
+          enfermedad_cardiovascular: findByKeyword('cardiovascular') || findByKeyword('corazón'),
+          tuberculosis: findByKeyword('tubercul'),
+          asma: findByKeyword('asma'),
+          tabaquismo: findByKeyword('tabaqu'),
+          otro: null,
         });
       })
       .catch(() => {
@@ -191,37 +222,42 @@ export default function EditarPaciente() {
       if (isAdmin() && typeof data.activo === 'boolean') payload.activo = data.activo;
       await updatePaciente(parsedId, payload);
 
-      // Red de apoyo básica adicional (opcional)
-      const nombreRed = redApoyo.nombre_contacto.trim();
-      const telRed = redApoyo.numero_celular.trim();
-      if (parsedId > 0 && (nombreRed || telRed)) {
+      // Red de apoyo: actualizar existentes y crear nuevos (paridad con app móvil)
+      for (const contacto of redApoyoList) {
+        const nombreRed = (contacto.nombre_contacto ?? '').trim();
+        const telRed = (contacto.numero_celular ?? '').trim();
+        if (!nombreRed && !telRed) continue;
+        const body = {
+          nombre_contacto: nombreRed || 'Contacto',
+          numero_celular: telRed || undefined,
+          email: (contacto.email ?? '').trim() || undefined,
+          direccion: (contacto.direccion ?? '').trim() || undefined,
+          localidad: (contacto.localidad ?? '').trim() || undefined,
+          parentesco: (contacto.parentesco ?? '').trim() || undefined,
+        };
         try {
-          await createPacienteRedApoyo(parsedId, {
-            nombre_contacto: nombreRed || 'Contacto principal',
-            numero_celular: telRed || undefined,
-            parentesco: redApoyo.parentesco.trim() || undefined,
-          });
+          if (contacto.id_contacto != null) {
+            await updatePacienteRedApoyo(parsedId, contacto.id_contacto, body);
+          } else {
+            await createPacienteRedApoyo(parsedId, body);
+          }
         } catch (e) {
-          console.error('Error al crear red de apoyo en edición', e);
+          console.error('Error al guardar contacto de red de apoyo', e);
         }
       }
 
       // Primera consulta + comorbilidades iniciales (opcional)
-      const hasEnfermedadesCronicas = Object.values(enfermedadesCronicas).some(Boolean);
+      const hasEnfermedadesCronicas = ENFERMEDADES_CRONICAS_KEYS.some((k) => enfermedadesCronicas[k]);
       if (primeraConsultaEnabled || hasEnfermedadesCronicas) {
         const doctorId = parseInt(primeraConsulta.id_doctor, 10) || undefined;
         const fecha = (primeraConsulta.fecha_cita || '').trim() || undefined;
 
         const selectedComorbilidadIds = [];
-        if (enfermedadesCronicas.diabetes && comorbilidadIds.diabetes) {
-          selectedComorbilidadIds.push(comorbilidadIds.diabetes);
-        }
-        if (enfermedadesCronicas.hipertension && comorbilidadIds.hipertension) {
-          selectedComorbilidadIds.push(comorbilidadIds.hipertension);
-        }
-        if (enfermedadesCronicas.obesidad && comorbilidadIds.obesidad) {
-          selectedComorbilidadIds.push(comorbilidadIds.obesidad);
-        }
+        ENFERMEDADES_CRONICAS_KEYS.forEach((key) => {
+          if (enfermedadesCronicas[key] && comorbilidadIds[key]) {
+            selectedComorbilidadIds.push(comorbilidadIds[key]);
+          }
+        });
 
         try {
           await registerInitialMedicalData({
@@ -433,34 +469,22 @@ export default function EditarPaciente() {
               </label>
             </div>
           )}
-          {/* Red de apoyo básica en edición */}
+          {/* Red de apoyo: lista de contactos (paridad con app móvil) */}
           <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--color-borde-claro)' }} />
           <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: 'var(--color-primario)' }}>
             Red de apoyo (opcional)
           </h3>
-          <p style={{ margin: '0 0 0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
-            Puedes agregar un nuevo contacto principal de red de apoyo para este paciente.
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
-            <Input
-              label="Nombre del contacto"
-              placeholder="Ej. María López"
-              value={redApoyo.nombre_contacto}
-              onChange={(e) => setRedApoyo((prev) => ({ ...prev, nombre_contacto: e.target.value }))}
-            />
-            <Input
-              label="Teléfono del contacto"
-              placeholder="Ej. 55 9876 5432"
-              value={redApoyo.numero_celular}
-              onChange={(e) => setRedApoyo((prev) => ({ ...prev, numero_celular: e.target.value }))}
-            />
-            <Input
-              label="Parentesco"
-              placeholder="Ej. Cónyuge, hijo/a, hermano/a"
-              value={redApoyo.parentesco}
-              onChange={(e) => setRedApoyo((prev) => ({ ...prev, parentesco: e.target.value }))}
-            />
-          </div>
+          <RedApoyoFormFields
+            list={redApoyoList}
+            onAdd={() => setRedApoyoList((prev) => [...prev, createEmptyRedApoyoItem()])}
+            onRemove={(index) =>
+              setRedApoyoList((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)))
+            }
+            onUpdate={(index, field, value) =>
+              setRedApoyoList((prev) => prev.map((c, i) => (i === index ? { ...c, [field]: value } : c)))
+            }
+            disabled={isSubmitting}
+          />
 
           {/* Primera consulta rápida en edición */}
           <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--color-borde-claro)' }} />
@@ -571,7 +595,7 @@ export default function EditarPaciente() {
             </div>
           )}
 
-          {/* Enfermedades crónicas y tratamiento en edición */}
+          {/* Enfermedades crónicas (misma lista que AgregarPaciente y app móvil) */}
           <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--color-borde-claro)' }} />
           <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: 'var(--color-primario)' }}>
             Enfermedades crónicas (opcional)
@@ -580,30 +604,18 @@ export default function EditarPaciente() {
             Marca las enfermedades crónicas principales para registrar comorbilidades adicionales de este paciente.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.75rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={enfermedadesCronicas.diabetes}
-                onChange={(e) => setEnfermedadesCronicas((prev) => ({ ...prev, diabetes: e.target.checked }))}
-              />
-              <span>Diabetes</span>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={enfermedadesCronicas.hipertension}
-                onChange={(e) => setEnfermedadesCronicas((prev) => ({ ...prev, hipertension: e.target.checked }))}
-              />
-              <span>Hipertensión</span>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={enfermedadesCronicas.obesidad}
-                onChange={(e) => setEnfermedadesCronicas((prev) => ({ ...prev, obesidad: e.target.checked }))}
-              />
-              <span>Obesidad</span>
-            </label>
+            {ENFERMEDADES_CRONICAS_KEYS.map((key) => (
+              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={!!enfermedadesCronicas[key]}
+                  onChange={(e) =>
+                    setEnfermedadesCronicas((prev) => ({ ...prev, [key]: e.target.checked }))
+                  }
+                />
+                <span>{ENFERMEDADES_CRONICAS_LABELS[key] ?? key}</span>
+              </label>
+            ))}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.75rem' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>

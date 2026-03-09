@@ -85,18 +85,29 @@ export function calcularEdad(fechaNacimiento) {
 
 /**
  * Formulario de signos vitales (mismos campos que la app móvil).
- * @param {{ value: Record<string, string>, onChange: (v: Record<string, string>) => void, showImc?: boolean, fechaNacimientoPaciente?: string }}
+ * Paridad: opción "edad editable" para desbloquear y editar la edad en medición cuando no coincida con la calculada.
+ * @param {{ value: Record<string, string>, onChange: (v: Record<string, string>) => void, showImc?: boolean, fechaNacimientoPaciente?: string, showEdadEditableCheckbox?: boolean }}
  */
-export default function SignosVitalesForm({ value, onChange, showImc = true, fechaNacimientoPaciente }) {
+export default function SignosVitalesForm({ value, onChange, showImc = true, fechaNacimientoPaciente, showEdadEditableCheckbox = true }) {
   const update = (key, val) => onChange({ ...value, [key]: val });
 
   const peso = value.peso_kg?.trim() ? parseFloat(value.peso_kg) : null;
   const talla = value.talla_m?.trim() ? parseFloat(value.talla_m) : null;
   const imc = showImc && peso != null && talla != null && talla > 0 ? (peso / (talla * talla)).toFixed(2) : null;
 
-  // Rellenar edad desde fecha de nacimiento si no está editada
   const edadCalculada = fechaNacimientoPaciente ? calcularEdad(fechaNacimientoPaciente) : null;
-  const edadDisplay = value.edad_paciente_en_medicion !== '' ? value.edad_paciente_en_medicion : (edadCalculada != null ? String(edadCalculada) : '');
+  const usuarioEditoEdad = value.edad_paciente_en_medicion !== '' && value.edad_paciente_en_medicion !== (edadCalculada != null ? String(edadCalculada) : '');
+  const edadEditable = showEdadEditableCheckbox && usuarioEditoEdad ? true : (value._edadEditable === true);
+  const puedeMostrarCheckbox = showEdadEditableCheckbox && fechaNacimientoPaciente && edadCalculada != null;
+  const edadBloqueada = puedeMostrarCheckbox && !edadEditable;
+  const edadDisplay = edadBloqueada
+    ? String(edadCalculada)
+    : (value.edad_paciente_en_medicion !== '' ? value.edad_paciente_en_medicion : (edadCalculada != null ? String(edadCalculada) : ''));
+
+  const toggleEdadEditable = () => {
+    const next = !edadEditable;
+    onChange({ ...value, _edadEditable: next, edad_paciente_en_medicion: next ? edadDisplay : '' });
+  };
 
   const inputStyle = (campo, val) => ({ ...INPUT_STYLE, ...getVitalSignValueStyle(campo, val != null && val !== '' ? Number(val) : null) });
   const paSistStyle = getPresionValueStyle(value.presion_sistolica?.trim() ? Number(value.presion_sistolica) : null, value.presion_diastolica?.trim() ? Number(value.presion_diastolica) : null);
@@ -115,14 +126,23 @@ export default function SignosVitalesForm({ value, onChange, showImc = true, fec
         <Input type="number" placeholder="HDL" value={value.colesterol_hdl} onChange={(e) => update('colesterol_hdl', e.target.value)} style={inputStyle('colesterol_hdl', value.colesterol_hdl)} />
         <Input type="number" placeholder="Triglicéridos" value={value.trigliceridos_mg_dl} onChange={(e) => update('trigliceridos_mg_dl', e.target.value)} style={inputStyle('trigliceridos_mg_dl', value.trigliceridos_mg_dl)} />
         <Input type="number" placeholder="HbA1c (%)" value={value.hba1c_porcentaje} onChange={(e) => update('hba1c_porcentaje', e.target.value)} style={inputStyle('hba1c_porcentaje', value.hba1c_porcentaje)} />
-        <Input
-          type="number"
-          placeholder="Edad en medición"
-          value={edadDisplay}
-          onChange={(e) => update('edad_paciente_en_medicion', e.target.value)}
-          style={INPUT_STYLE}
-          title={fechaNacimientoPaciente ? 'Calculado desde fecha de nacimiento' : 'Años para validar rangos HbA1c'}
-        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <Input
+            type="number"
+            placeholder="Edad en medición"
+            value={edadDisplay}
+            onChange={(e) => update('edad_paciente_en_medicion', e.target.value)}
+            style={INPUT_STYLE}
+            title={fechaNacimientoPaciente ? (edadBloqueada ? 'Desmarca "Edad editable" para usar la calculada' : 'Años para validar rangos HbA1c') : 'Años para validar rangos HbA1c'}
+            disabled={edadBloqueada}
+          />
+          {puedeMostrarCheckbox && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: 'var(--color-texto-secundario)', cursor: 'pointer' }}>
+              <input type="checkbox" checked={!!edadEditable} onChange={toggleEdadEditable} />
+              <span>Edad en medición editable</span>
+            </label>
+          )}
+        </div>
       </div>
       {imc != null && (
         <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', fontWeight: 600, ...getIMCValueStyle(parseFloat(imc)) }}>
