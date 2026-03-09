@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { doctorCreateSchema } from '../../lib/validations/doctorSchema';
 import { createUsuario } from '../../api/auth';
@@ -17,6 +17,7 @@ export default function AgregarDoctor() {
   const [submitError, setSubmitError] = useState('');
 
   const {
+    control,
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
@@ -71,19 +72,43 @@ export default function AgregarDoctor() {
           {submitError && (
             <p style={{ margin: '0 0 1rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{submitError}</p>
           )}
-          <Input
-            label="Correo electrónico"
-            type="email"
-            error={errors.email?.message}
-            {...register('email')}
-            required
+          <Controller
+            name="email"
+            control={control}
+            render={({ field }) => (
+              <Input
+                label="Correo electrónico"
+                type="email"
+                error={errors.email?.message}
+                {...field}
+                required
+              />
+            )}
           />
           <p style={{ margin: '-0.5rem 0 1rem', fontSize: '0.85rem', color: 'var(--color-texto-secundario)' }}>
             Se enviará un correo al doctor para que confirme su cuenta y cree su propia contraseña.
           </p>
-          <Input label="Nombre" error={errors.nombre?.message} {...register('nombre')} required />
-          <Input label="Apellido paterno" error={errors.apellido_paterno?.message} {...register('apellido_paterno')} required />
-          <Input label="Apellido materno" error={errors.apellido_materno?.message} {...register('apellido_materno')} />
+          <Controller
+            name="nombre"
+            control={control}
+            render={({ field }) => (
+              <Input label="Nombre" error={errors.nombre?.message} {...field} required />
+            )}
+          />
+          <Controller
+            name="apellido_paterno"
+            control={control}
+            render={({ field }) => (
+              <Input label="Apellido paterno" error={errors.apellido_paterno?.message} {...field} required />
+            )}
+          />
+          <Controller
+            name="apellido_materno"
+            control={control}
+            render={({ field }) => (
+              <Input label="Apellido materno" error={errors.apellido_materno?.message} {...field} />
+            )}
+          />
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}>
               Módulo

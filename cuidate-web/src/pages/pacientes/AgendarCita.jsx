@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { getPacienteById } from '../../api/pacientes';
 import { getDoctores } from '../../api/doctores';
 import { createCita } from '../../api/citas';
@@ -20,7 +20,7 @@ export default function AgendarCita() {
   const [loading, setLoading] = useState(true);
   const [submitError, setSubmitError] = useState('');
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+  const { control, register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     defaultValues: { id_doctor: '', fecha_cita: '', motivo: '' },
   });
 
@@ -139,17 +139,20 @@ export default function AgendarCita() {
               <p style={{ margin: '0.25rem 0 0', color: 'var(--color-error)', fontSize: '0.85rem' }}>{errors.id_doctor.message}</p>
             )}
           </div>
-          <Input
-            label="Fecha y hora"
-            type="datetime-local"
-            error={errors.fecha_cita?.message}
-            {...register('fecha_cita', { required: 'La fecha y hora son obligatorias' })}
-            required
+          <Controller
+            name="fecha_cita"
+            control={control}
+            rules={{ required: 'La fecha y hora son obligatorias' }}
+            render={({ field }) => (
+              <Input label="Fecha y hora" type="datetime-local" error={errors.fecha_cita?.message} {...field} required />
+            )}
           />
-          <Input
-            label="Motivo (opcional)"
-            error={errors.motivo?.message}
-            {...register('motivo')}
+          <Controller
+            name="motivo"
+            control={control}
+            render={({ field }) => (
+              <Input label="Motivo (opcional)" error={errors.motivo?.message} {...field} />
+            )}
           />
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1rem' }}>
             <Button type="submit" variant="primary" disabled={isSubmitting}>

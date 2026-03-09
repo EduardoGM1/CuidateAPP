@@ -28,7 +28,7 @@ export default function Perfil() {
   const [perfilSuccess, setPerfilSuccess] = useState('');
 
   const {
-    register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
@@ -277,26 +277,26 @@ export default function Perfil() {
           <p style={{ margin: '0 0 1rem', color: 'var(--color-error)' }}>{submitError}</p>
         )}
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          <Input
-            label="Contraseña actual"
-            type="password"
-            autoComplete="current-password"
-            error={errors.currentPassword?.message}
-            {...register('currentPassword')}
+          <Controller
+            name="currentPassword"
+            control={control}
+            render={({ field }) => (
+              <Input label="Contraseña actual" type="password" autoComplete="current-password" error={errors.currentPassword?.message} {...field} />
+            )}
           />
-          <Input
-            label="Nueva contraseña"
-            type="password"
-            autoComplete="new-password"
-            error={errors.newPassword?.message}
-            {...register('newPassword')}
+          <Controller
+            name="newPassword"
+            control={control}
+            render={({ field }) => (
+              <Input label="Nueva contraseña" type="password" autoComplete="new-password" error={errors.newPassword?.message} {...field} />
+            )}
           />
-          <Input
-            label="Confirmar nueva contraseña"
-            type="password"
-            autoComplete="new-password"
-            error={errors.confirmNewPassword?.message}
-            {...register('confirmNewPassword')}
+          <Controller
+            name="confirmNewPassword"
+            control={control}
+            render={({ field }) => (
+              <Input label="Confirmar nueva contraseña" type="password" autoComplete="new-password" error={errors.confirmNewPassword?.message} {...field} />
+            )}
           />
           <Button type="submit" variant="primary" disabled={isSubmitting}>
             {isSubmitting ? 'Guardando…' : 'Cambiar contraseña'}

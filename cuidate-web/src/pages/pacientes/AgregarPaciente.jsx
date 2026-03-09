@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { pacienteCreateSchema } from '../../lib/validations/pacienteSchema';
 import { createPaciente } from '../../api/pacientes';
@@ -82,6 +82,7 @@ export default function AgregarPaciente() {
   });
 
   const {
+    control,
     register,
     handleSubmit,
     watch,
@@ -272,33 +273,55 @@ export default function AgregarPaciente() {
           {submitError && (
             <p style={{ margin: '0 0 1rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{submitError}</p>
           )}
-          <Input label="Nombre" error={errors.nombre?.message} {...register('nombre')} required />
-          <Input
-            label="Apellido paterno"
-            error={errors.apellido_paterno?.message}
-            {...register('apellido_paterno')}
-            required
+          <Controller
+            name="nombre"
+            control={control}
+            render={({ field }) => (
+              <Input label="Nombre" error={errors.nombre?.message} {...field} required />
+            )}
           />
-          <Input
-            label="Apellido materno"
-            error={errors.apellido_materno?.message}
-            {...register('apellido_materno')}
+          <Controller
+            name="apellido_paterno"
+            control={control}
+            render={({ field }) => (
+              <Input label="Apellido paterno" error={errors.apellido_paterno?.message} {...field} required />
+            )}
           />
-          <Input
-            label="Fecha de nacimiento"
-            type="date"
-            error={errors.fecha_nacimiento?.message}
-            {...register('fecha_nacimiento')}
-            required
+          <Controller
+            name="apellido_materno"
+            control={control}
+            render={({ field }) => (
+              <Input label="Apellido materno" error={errors.apellido_materno?.message} {...field} />
+            )}
           />
-          <Input label="CURP" error={errors.curp?.message} {...register('curp')} required placeholder="18 caracteres, formato oficial" />
-          <Input
-            label="Teléfono / Celular"
-            type="tel"
-            error={errors.numero_celular?.message}
-            {...register('numero_celular')}
+          <Controller
+            name="fecha_nacimiento"
+            control={control}
+            render={({ field }) => (
+              <Input label="Fecha de nacimiento" type="date" error={errors.fecha_nacimiento?.message} {...field} required />
+            )}
           />
-          <Input label="Dirección" error={errors.direccion?.message} {...register('direccion')} />
+          <Controller
+            name="curp"
+            control={control}
+            render={({ field }) => (
+              <Input label="CURP" error={errors.curp?.message} {...field} required placeholder="18 caracteres, formato oficial" />
+            )}
+          />
+          <Controller
+            name="numero_celular"
+            control={control}
+            render={({ field }) => (
+              <Input label="Teléfono / Celular" type="tel" error={errors.numero_celular?.message} {...field} />
+            )}
+          />
+          <Controller
+            name="direccion"
+            control={control}
+            render={({ field }) => (
+              <Input label="Dirección" error={errors.direccion?.message} {...field} />
+            )}
+          />
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}>Estado (entidad federativa)</label>
             <select

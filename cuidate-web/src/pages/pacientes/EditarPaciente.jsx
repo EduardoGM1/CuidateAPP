@@ -283,52 +283,54 @@ export default function EditarPaciente() {
           {submitError && (
             <p style={{ margin: '0 0 1rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{submitError}</p>
           )}
-          <Input
-            label="Nombre"
-            placeholder="Ej. Juan"
-            error={errors.nombre?.message}
-            {...register('nombre')}
-            required
+          <Controller
+            name="nombre"
+            control={control}
+            render={({ field }) => (
+              <Input label="Nombre" placeholder="Ej. Juan" error={errors.nombre?.message} {...field} required />
+            )}
           />
-          <Input
-            label="Apellido paterno"
-            placeholder="Ej. García"
-            error={errors.apellido_paterno?.message}
-            {...register('apellido_paterno')}
-            required
+          <Controller
+            name="apellido_paterno"
+            control={control}
+            render={({ field }) => (
+              <Input label="Apellido paterno" placeholder="Ej. García" error={errors.apellido_paterno?.message} {...field} required />
+            )}
           />
-          <Input
-            label="Apellido materno"
-            placeholder="Ej. López"
-            error={errors.apellido_materno?.message}
-            {...register('apellido_materno')}
+          <Controller
+            name="apellido_materno"
+            control={control}
+            render={({ field }) => (
+              <Input label="Apellido materno" placeholder="Ej. López" error={errors.apellido_materno?.message} {...field} />
+            )}
           />
-          <Input
-            label="Fecha de nacimiento"
-            type="date"
-            placeholder="dd/mm/aaaa"
-            error={errors.fecha_nacimiento?.message}
-            {...register('fecha_nacimiento')}
-            required
+          <Controller
+            name="fecha_nacimiento"
+            control={control}
+            render={({ field }) => (
+              <Input label="Fecha de nacimiento" type="date" placeholder="dd/mm/aaaa" error={errors.fecha_nacimiento?.message} {...field} required />
+            )}
           />
-          <Input
-            label="CURP"
-            placeholder="Ej. XXXX000000HDFXXX00"
-            error={errors.curp?.message}
-            {...register('curp')}
+          <Controller
+            name="curp"
+            control={control}
+            render={({ field }) => (
+              <Input label="CURP" placeholder="Ej. XXXX000000HDFXXX00" error={errors.curp?.message} {...field} />
+            )}
           />
-          <Input
-            label="Teléfono / Celular"
-            type="tel"
-            placeholder="Ej. 55 1234 5678"
-            error={errors.numero_celular?.message}
-            {...register('numero_celular')}
+          <Controller
+            name="numero_celular"
+            control={control}
+            render={({ field }) => (
+              <Input label="Teléfono / Celular" type="tel" placeholder="Ej. 55 1234 5678" error={errors.numero_celular?.message} {...field} />
+            )}
           />
-          <Input
-            label="Dirección"
-            placeholder="Ej. Calle, número, colonia, CP"
-            error={errors.direccion?.message}
-            {...register('direccion')}
+          <Controller
+            name="direccion"
+            control={control}
+            render={({ field }) => (
+              <Input label="Dirección" placeholder="Ej. Calle, número, colonia, CP" error={errors.direccion?.message} {...field} />
+            )}
           />
           <Controller
             name="estado"
