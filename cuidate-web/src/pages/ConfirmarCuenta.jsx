@@ -46,8 +46,11 @@ export default function ConfirmarCuenta() {
       setSuccess(true);
       setTimeout(() => navigate('/login', { replace: true }), 3000);
     } catch (err) {
+      const data = err?.response?.data;
+      const detailMsg = data?.details?.[0]?.msg;
       setError(
-        err?.response?.data?.error ||
+        detailMsg ||
+          data?.error ||
           err?.message ||
           'Error al crear la contraseña. El enlace pudo haber expirado (válido 24 h). Solicita uno nuevo al administrador.'
       );

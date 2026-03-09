@@ -158,14 +158,14 @@ router.post('/forgot-password',
   forgotPassword
 );
 
-// Recuperación de contraseña - Resetear con token (público)
+// Recuperación de contraseña - Resetear con token (público). Body: { token, newPassword }
 router.post('/reset-password',
   // Rate limiting estricto
   AdvancedRateLimiting.authLimiter(),
   authRateLimit,
-  // Middlewares de seguridad
+  // Middlewares de seguridad (valida newPassword, no password)
   ...(process.env.NODE_ENV === 'production' ? [
-    SecurityValidator.validatePassword(),
+    SecurityValidator.validateNewPassword(),
     SecurityValidator.handleValidationErrors
   ] : []),
   resetPassword

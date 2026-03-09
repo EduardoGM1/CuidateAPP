@@ -90,6 +90,35 @@ class SecurityValidator {
   }
 
   /**
+   * Valida newPassword (reset-password / confirmar cuenta). Mismas reglas que validatePassword.
+   * POST /reset-password envía { token, newPassword }, no { password }.
+   */
+  static validateNewPassword() {
+    return body('newPassword')
+      .isLength({ min: 8, max: 128 })
+      .withMessage('La contraseña debe tener entre 8-128 caracteres')
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+      .withMessage('La contraseña debe contener al menos una mayúscula, una minúscula y un número')
+      .custom((value) => {
+        const dangerousPatterns = [
+          /['"`;\\]/,
+          /--/,
+          /\/\*/,
+          /union\s+select/i,
+          /drop\s+table/i,
+          /delete\s+from/i,
+          /<script/i,
+          /javascript:/i,
+          /on\w+\s*=/i
+        ];
+        if (dangerousPatterns.some(pattern => pattern.test(value))) {
+          throw new Error('La contraseña contiene caracteres no permitidos');
+        }
+        return true;
+      });
+  }
+
+  /**
    * Valida nombres con protección contra injection
    */
   static validateName() {
@@ -266,13 +295,15 @@ class SecurityValidator {
    */
   static validateDoctorCreateFields() {
     return [
-      // Validar email
+      // Email opcional: solo se envía en flujo legacy; en flujo invitación el usuario se crea antes vía POST /auth/usuarios
       body('email')
+        .optional({ values: 'falsy' })
         .isEmail()
         .normalizeEmail()
         .isLength({ min: 5, max: 150 })
         .withMessage('Email debe ser válido y tener entre 5-150 caracteres')
         .custom((value) => {
+          if (!value) return true;
           const dangerousPatterns = [
             /['"`;\\]/,
             /--/,
@@ -283,28 +314,40 @@ class SecurityValidator {
             /insert\s+into/i,
             /update\s+set/i
           ];
-          
           if (dangerousPatterns.some(pattern => pattern.test(value))) {
             throw new Error('Email contiene caracteres no permitidos');
           }
           return true;
         }),
 
-      // Validar contraseña
+      // Contraseña opcional (flujo invitación: no se envía; el doctor crea contraseña por correo)
       body('password')
+        .optional({ values: 'falsy' })
         .isLength({ min: 6, max: 100 })
         .withMessage('Contraseña debe tener entre 6-100 caracteres')
         .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
         .withMessage('Contraseña debe contener al menos una mayúscula, una minúscula y un número'),
 
-      // Validar confirmación de contraseña
+      // Confirmación de contraseña opcional; si password viene, debe coincidir
       body('confirmPassword')
+        .optional({ values: 'falsy' })
         .custom((value, { req }) => {
-          if (value !== req.body.password) {
+          if (req.body.password && value !== req.body.password) {
             throw new Error('Las contraseñas no coinciden');
           }
           return true;
         }),
+
+      // id_usuario requerido cuando no se envía email (flujo invitación)
+      body('id_usuario')
+        .optional({ values: 'falsy' })
+        .custom((value, { req }) => {
+          if (req.body.email) return true;
+          const n = value != null ? parseInt(value, 10) : NaN;
+          if (isNaN(n) || n < 1) throw new Error('id_usuario debe ser un número entero positivo');
+          return true;
+        })
+        .toInt(),
 
       // Validar nombre
       body('nombre')
@@ -340,8 +383,9 @@ class SecurityValidator {
           return value;
         }),
 
-      // Validar apellido materno
+      // Validar apellido materno (opcional; flujo web puede enviar vacío)
       body('apellido_materno')
+        .optional({ values: 'falsy' })
         .isLength({ min: 2, max: 100 })
         .withMessage('Apellido materno debe tener entre 2-100 caracteres')
         .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.]+$/)
@@ -357,8 +401,9 @@ class SecurityValidator {
           return value;
         }),
 
-      // Validar teléfono
+      // Validar teléfono (opcional)
       body('telefono')
+        .optional({ values: 'falsy' })
         .isLength({ min: 7, max: 20 })
         .withMessage('Teléfono debe tener entre 7-20 caracteres')
         .matches(/^[\d\s\-\+\(\)]{7,20}$/)
@@ -370,8 +415,9 @@ class SecurityValidator {
           return value;
         }),
 
-      // Validar institución hospitalaria
+      // Validar institución hospitalaria (opcional)
       body('institucion_hospitalaria')
+        .optional({ values: 'falsy' })
         .isLength({ min: 2, max: 200 })
         .withMessage('Institución hospitalaria debe tener entre 2-200 caracteres')
         .customSanitizer((value) => {
@@ -385,8 +431,9 @@ class SecurityValidator {
           return value;
         }),
 
-      // Validar grado de estudio
+      // Validar grado de estudio (opcional)
       body('grado_estudio')
+        .optional({ values: 'falsy' })
         .isLength({ min: 2, max: 100 })
         .withMessage('Grado de estudio debe tener entre 2-100 caracteres')
         .customSanitizer((value) => {
@@ -400,17 +447,27 @@ class SecurityValidator {
           return value;
         }),
 
-      // Validar años de servicio
+      // Validar años de servicio (opcional)
       body('anos_servicio')
+        .optional({ values: 'falsy' })
         .isInt({ min: 0, max: 50 })
         .withMessage('Años de servicio debe ser un número entre 0-50')
         .toInt(),
 
-      // Validar ID de módulo
+      // ID de módulo opcional (flujo web puede enviar vacío / "Sin módulo")
       body('id_modulo')
-        .isInt({ min: 1 })
-        .withMessage('ID de módulo debe ser un número entero positivo')
-        .toInt(),
+        .optional({ values: 'falsy' })
+        .custom((value) => {
+          if (value === '' || value == null || value === undefined) return true;
+          const n = parseInt(value, 10);
+          if (isNaN(n) || n < 1) throw new Error('ID de módulo debe ser un número entero positivo');
+          return true;
+        })
+        .customSanitizer((value) => {
+          if (value === '' || value == null || value === undefined) return null;
+          const n = parseInt(value, 10);
+          return isNaN(n) || n < 1 ? null : n;
+        }),
 
       // Validar estado activo
       body('activo')
