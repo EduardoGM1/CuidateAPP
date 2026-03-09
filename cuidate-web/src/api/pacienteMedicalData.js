@@ -1,4 +1,4 @@
-ï»¿import client from './client';
+import client from './client';
 import { API_PATHS } from '../utils/constants';
 import { parsePositiveInt } from '../utils/params';
 import { normalizeString } from '../utils/sanitize';
@@ -18,7 +18,7 @@ function toListAndTotal(response) {
  */
 export async function getPacienteCitas(pacienteId, params = {}) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const limit = parsePositiveInt(params.limit, 10);
   const offset = parsePositiveInt(params.offset, 0);
   const sort = normalizeString(params.sort, { maxLength: 10 }) || 'DESC';
@@ -28,12 +28,12 @@ export async function getPacienteCitas(pacienteId, params = {}) {
 }
 
 /**
- * Resumen mÃÿÂ©dico del paciente (contadores y ÃÿÂºltimos registros).
+ * Resumen m??©dico del paciente (contadores y ??ºltimos registros).
  * GET /api/pacientes/:id/resumen-medico
  */
 export async function getPacienteResumenMedico(pacienteId) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const { data } = await client.get(`${BASE}/${id}/resumen-medico`);
   return data?.data ?? data;
 }
@@ -45,7 +45,7 @@ export async function getPacienteResumenMedico(pacienteId) {
  */
 export async function getPacienteSignosVitales(pacienteId, params = {}) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const q = new URLSearchParams();
   if (params.limit != null) q.set('limit', String(params.limit));
   if (params.offset != null) q.set('offset', String(params.offset));
@@ -57,11 +57,11 @@ export async function getPacienteSignosVitales(pacienteId, params = {}) {
 }
 
 /**
- * DiagnÃÿÂ³sticos del paciente.
+ * Diagn??³sticos del paciente.
  */
 export async function getPacienteDiagnosticos(pacienteId, params = {}) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const q = new URLSearchParams();
   if (params.limit != null) q.set('limit', String(params.limit));
   if (params.offset != null) q.set('offset', String(params.offset));
@@ -71,11 +71,11 @@ export async function getPacienteDiagnosticos(pacienteId, params = {}) {
 }
 
 /**
- * Planes de medicaciÃÿÂ³n / medicamentos del paciente.
+ * Planes de medicaci??³n / medicamentos del paciente.
  */
 export async function getPacienteMedicamentos(pacienteId, params = {}) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const q = new URLSearchParams();
   if (params.limit != null) q.set('limit', String(params.limit));
   if (params.offset != null) q.set('offset', String(params.offset));
@@ -92,7 +92,7 @@ export async function getPacienteMedicamentos(pacienteId, params = {}) {
  */
 export async function getPacienteTomasMedicamento(pacienteId, params = {}) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente inválido');
+  if (id === 0) throw new Error('ID de paciente inv?lido');
   const q = new URLSearchParams();
   if (params.fechaInicio) q.set('fechaInicio', String(params.fechaInicio).slice(0, 10));
   if (params.fechaFin) q.set('fechaFin', String(params.fechaFin).slice(0, 10));
@@ -108,7 +108,7 @@ export async function getPacienteTomasMedicamento(pacienteId, params = {}) {
  */
 export async function getPacienteRedApoyo(pacienteId, params = {}) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const q = params.limit != null ? `?limit=${params.limit}&offset=${params.offset || 0}` : '';
   const { data } = await client.get(`${BASE}/${id}/red-apoyo${q}`);
   return toListAndTotal(data);
@@ -121,7 +121,7 @@ export async function getPacienteRedApoyo(pacienteId, params = {}) {
  */
 export async function createPacienteRedApoyo(pacienteId, body) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const { data } = await client.post(`${BASE}/${id}/red-apoyo`, body);
   return data?.data ?? data;
 }
@@ -135,7 +135,7 @@ export async function createPacienteRedApoyo(pacienteId, body) {
 export async function updatePacienteRedApoyo(pacienteId, contactoId, body) {
   const pid = parsePositiveInt(pacienteId, 0);
   const cid = parsePositiveInt(contactoId, 0);
-  if (pid === 0 || cid === 0) throw new Error('IDs invÃÿÂ¡lidos');
+  if (pid === 0 || cid === 0) throw new Error('IDs inv??¡lidos');
   const { data } = await client.put(`${BASE}/${pid}/red-apoyo/${cid}`, body);
   return data?.data ?? data;
 }
@@ -148,35 +148,35 @@ export async function updatePacienteRedApoyo(pacienteId, contactoId, body) {
 export async function deletePacienteRedApoyo(pacienteId, contactoId) {
   const pid = parsePositiveInt(pacienteId, 0);
   const cid = parsePositiveInt(contactoId, 0);
-  if (pid === 0 || cid === 0) throw new Error('IDs invÃÿÂ¡lidos');
+  if (pid === 0 || cid === 0) throw new Error('IDs inv??¡lidos');
   await client.delete(`${BASE}/${pid}/red-apoyo/${cid}`);
 }
 
 /**
- * Esquema de vacunaciÃÿÂ³n del paciente.
+ * Esquema de vacunaci??³n del paciente.
  */
 export async function getPacienteEsquemaVacunacion(pacienteId, params = {}) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const q = params.limit != null ? `?limit=${params.limit}&offset=${params.offset || 0}` : '';
   const { data } = await client.get(`${BASE}/${id}/esquema-vacunacion${q}`);
   return toListAndTotal(data);
 }
 
 /**
- * Crear registro de esquema de vacunaciÃÿÂ³n para un paciente.
+ * Crear registro de esquema de vacunaci??³n para un paciente.
  * @param {number|string} pacienteId
  * @param {{ vacuna: string, fecha_aplicacion: string, lote?: string, observaciones?: string }} body
  */
 export async function createPacienteEsquemaVacunacion(pacienteId, body) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const { data } = await client.post(`${BASE}/${id}/esquema-vacunacion`, body);
   return data?.data ?? data;
 }
 
 /**
- * Actualizar registro de esquema de vacunaciÃÿÂ³n.
+ * Actualizar registro de esquema de vacunaci??³n.
  * @param {number|string} pacienteId
  * @param {number|string} esquemaId
  * @param {{ vacuna?: string, fecha_aplicacion?: string, lote?: string, observaciones?: string }} body
@@ -184,29 +184,29 @@ export async function createPacienteEsquemaVacunacion(pacienteId, body) {
 export async function updatePacienteEsquemaVacunacion(pacienteId, esquemaId, body) {
   const pid = parsePositiveInt(pacienteId, 0);
   const eid = parsePositiveInt(esquemaId, 0);
-  if (pid === 0 || eid === 0) throw new Error('IDs invÃÿÂ¡lidos');
+  if (pid === 0 || eid === 0) throw new Error('IDs inv??¡lidos');
   const { data } = await client.put(`${BASE}/${pid}/esquema-vacunacion/${eid}`, body);
   return data?.data ?? data;
 }
 
 /**
- * Eliminar registro de esquema de vacunaciÃÿÂ³n.
+ * Eliminar registro de esquema de vacunaci??³n.
  * @param {number|string} pacienteId
  * @param {number|string} esquemaId
  */
 export async function deletePacienteEsquemaVacunacion(pacienteId, esquemaId) {
   const pid = parsePositiveInt(pacienteId, 0);
   const eid = parsePositiveInt(esquemaId, 0);
-  if (pid === 0 || eid === 0) throw new Error('IDs invÃÿÂ¡lidos');
+  if (pid === 0 || eid === 0) throw new Error('IDs inv??¡lidos');
   await client.delete(`${BASE}/${pid}/esquema-vacunacion/${eid}`);
 }
 
 /**
- * Comorbilidades del paciente (desde datos mÃÿÂ©dicos).
+ * Comorbilidades del paciente (desde datos m??©dicos).
  */
 export async function getPacienteComorbilidades(pacienteId) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const { data } = await client.get(`${BASE}/${id}/comorbilidades`);
   return toListAndTotal(data);
 }
@@ -215,11 +215,11 @@ export async function getPacienteComorbilidades(pacienteId) {
  * Agregar comorbilidad a un paciente.
  * POST /api/pacientes/:id/comorbilidades
  * @param {number|string} pacienteId
- * @param {{ id_comorbilidad: number|string, fecha_deteccion?: string, observaciones?: string, anos_padecimiento?: number|string, es_diagnostico_basal?: boolean, es_agregado_posterior?: boolean, aÃÿÂ±o_diagnostico?: number|string, recibe_tratamiento_no_farmacologico?: boolean, recibe_tratamiento_farmacologico?: boolean }} body
+ * @param {{ id_comorbilidad: number|string, fecha_deteccion?: string, observaciones?: string, anos_padecimiento?: number|string, es_diagnostico_basal?: boolean, es_agregado_posterior?: boolean, a??±o_diagnostico?: number|string, recibe_tratamiento_no_farmacologico?: boolean, recibe_tratamiento_farmacologico?: boolean }} body
  */
 export async function addPacienteComorbilidad(pacienteId, body) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const { data } = await client.post(`${BASE}/${id}/comorbilidades`, body);
   return data?.data ?? data;
 }
@@ -244,7 +244,7 @@ export async function updatePacienteComorbilidad(pacienteId, comorbilidadId, bod
 export async function deletePacienteComorbilidad(pacienteId, comorbilidadId) {
   const pid = parsePositiveInt(pacienteId, 0);
   const cid = parsePositiveInt(comorbilidadId, 0);
-  if (pid === 0 || cid === 0) throw new Error('IDs invÃÿÂ¡lidos');
+  if (pid === 0 || cid === 0) throw new Error('IDs inv??¡lidos');
   await client.delete(`${BASE}/${pid}/comorbilidades/${cid}`);
 }
 
@@ -271,7 +271,7 @@ export async function deleteDeteccionComplicacion(pacienteId, deteccionId) {
  */
 export async function getPacienteDeteccionesComplicaciones(pacienteId, params = {}) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const q = new URLSearchParams();
   if (params.limit != null) q.set('limit', String(params.limit));
   if (params.offset != null) q.set('offset', String(params.offset));
@@ -285,7 +285,7 @@ export async function getPacienteDeteccionesComplicaciones(pacienteId, params = 
  */
 export async function getPacienteSesionesEducativas(pacienteId, params = {}) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const q = new URLSearchParams();
   if (params.limit != null) q.set('limit', String(params.limit));
   if (params.offset != null) q.set('offset', String(params.offset));
@@ -295,19 +295,19 @@ export async function getPacienteSesionesEducativas(pacienteId, params = {}) {
 }
 
 /**
- * Crear sesiÃÿÂ³n educativa.
+ * Crear sesi??³n educativa.
  * @param {number|string} pacienteId
  * @param {{ id_cita?: number|string, fecha_sesion: string, asistio?: boolean, tipo_sesion: string, numero_intervenciones?: number|string, observaciones?: string }} body
  */
 export async function createSesionEducativa(pacienteId, body) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const { data } = await client.post(`${BASE}/${id}/sesiones-educativas`, body);
   return data?.data ?? data;
 }
 
 /**
- * Eliminar sesiÃÿÂ³n educativa.
+ * Eliminar sesi??³n educativa.
  * @param {number|string} pacienteId
  * @param {number|string} sesionId
  */
@@ -325,7 +325,7 @@ export async function updateSesionEducativa(pacienteId, sesionId, body) {
 export async function deleteSesionEducativa(pacienteId, sesionId) {
   const pid = parsePositiveInt(pacienteId, 0);
   const sid = parsePositiveInt(sesionId, 0);
-  if (pid === 0 || sid === 0) throw new Error('IDs invÃÿÂ¡lidos');
+  if (pid === 0 || sid === 0) throw new Error('IDs inv??¡lidos');
   await client.delete(`${BASE}/${pid}/sesiones-educativas/${sid}`);
 }
 
@@ -334,7 +334,7 @@ export async function deleteSesionEducativa(pacienteId, sesionId) {
  */
 export async function getPacienteSaludBucal(pacienteId, params = {}) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const q = new URLSearchParams();
   if (params.limit != null) q.set('limit', String(params.limit));
   if (params.offset != null) q.set('offset', String(params.offset));
@@ -350,7 +350,7 @@ export async function getPacienteSaludBucal(pacienteId, params = {}) {
  */
 export async function createSaludBucal(pacienteId, body) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const { data } = await client.post(`${BASE}/${id}/salud-bucal`, body);
   return data?.data ?? data;
 }
@@ -374,7 +374,7 @@ export async function updateSaludBucal(pacienteId, registroId, body) {
 export async function deleteSaludBucal(pacienteId, saludId) {
   const pid = parsePositiveInt(pacienteId, 0);
   const sid = parsePositiveInt(saludId, 0);
-  if (pid === 0 || sid === 0) throw new Error('IDs invÃÿÂ¡lidos');
+  if (pid === 0 || sid === 0) throw new Error('IDs inv??¡lidos');
   await client.delete(`${BASE}/${pid}/salud-bucal/${sid}`);
 }
 
@@ -383,7 +383,7 @@ export async function deleteSaludBucal(pacienteId, saludId) {
  */
 export async function getPacienteDeteccionesTuberculosis(pacienteId, params = {}) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const q = new URLSearchParams();
   if (params.limit != null) q.set('limit', String(params.limit));
   if (params.offset != null) q.set('offset', String(params.offset));
@@ -393,19 +393,19 @@ export async function getPacienteDeteccionesTuberculosis(pacienteId, params = {}
 }
 
 /**
- * Crear detecciÃÿÂ³n de tuberculosis.
+ * Crear detecci??³n de tuberculosis.
  * @param {number|string} pacienteId
  * @param {{ id_cita?: number|string, fecha_deteccion: string, aplicacion_encuesta?: boolean, baciloscopia_realizada?: boolean, baciloscopia_resultado?: string, ingreso_tratamiento?: boolean, observaciones?: string }} body
  */
 export async function createDeteccionTuberculosis(pacienteId, body) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const { data } = await client.post(`${BASE}/${id}/detecciones-tuberculosis`, body);
   return data?.data ?? data;
 }
 
 /**
- * Eliminar detecciÃÿÂ³n de tuberculosis.
+ * Eliminar detecci??³n de tuberculosis.
  * @param {number|string} pacienteId
  * @param {number|string} detId
  */
@@ -423,7 +423,7 @@ export async function updateDeteccionTuberculosis(pacienteId, deteccionId, body)
 export async function deleteDeteccionTuberculosis(pacienteId, detId) {
   const pid = parsePositiveInt(pacienteId, 0);
   const did = parsePositiveInt(detId, 0);
-  if (pid === 0 || did === 0) throw new Error('IDs invÃÿÂ¡lidos');
+  if (pid === 0 || did === 0) throw new Error('IDs inv??¡lidos');
   await client.delete(`${BASE}/${pid}/detecciones-tuberculosis/${did}`);
 }
 
@@ -436,7 +436,7 @@ export async function deleteDeteccionTuberculosis(pacienteId, detId) {
  */
 export async function createSignosVitales(pacienteId, body) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const { data } = await client.post(`${BASE}/${id}/signos-vitales`, body);
   return data?.data ?? data;
 }
@@ -447,7 +447,7 @@ export async function createSignosVitales(pacienteId, body) {
 export async function updateSignosVitales(pacienteId, signoId, body) {
   const pid = parsePositiveInt(pacienteId, 0);
   const sid = parsePositiveInt(signoId, 0);
-  if (pid === 0 || sid === 0) throw new Error('IDs invÃÿÂ¡lidos');
+  if (pid === 0 || sid === 0) throw new Error('IDs inv??¡lidos');
   const { data } = await client.put(`${BASE}/${pid}/signos-vitales/${sid}`, body);
   return data?.data ?? data;
 }
@@ -458,54 +458,54 @@ export async function updateSignosVitales(pacienteId, signoId, body) {
 export async function deleteSignosVitales(pacienteId, signoId) {
   const pid = parsePositiveInt(pacienteId, 0);
   const sid = parsePositiveInt(signoId, 0);
-  if (pid === 0 || sid === 0) throw new Error('IDs invÃÿÂ¡lidos');
+  if (pid === 0 || sid === 0) throw new Error('IDs inv??¡lidos');
   await client.delete(`${BASE}/${pid}/signos-vitales/${sid}`);
 }
 
-// --- DiagnÃÿÂ³sticos CRUD ---
+// --- Diagn??³sticos CRUD ---
 
 /**
- * Crear diagnÃÿÂ³stico.
+ * Crear diagn??³stico.
  * @param {number|string} pacienteId
  * @param {{ descripcion: string, id_cita?: number }} body
  */
 export async function createDiagnostico(pacienteId, body) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const { data } = await client.post(`${BASE}/${id}/diagnosticos`, body);
   return data?.data ?? data;
 }
 
 /**
- * Actualizar diagnÃÿÂ³stico.
+ * Actualizar diagn??³stico.
  */
 export async function updateDiagnostico(pacienteId, diagnosticoId, body) {
   const pid = parsePositiveInt(pacienteId, 0);
   const did = parsePositiveInt(diagnosticoId, 0);
-  if (pid === 0 || did === 0) throw new Error('IDs invÃÿÂ¡lidos');
+  if (pid === 0 || did === 0) throw new Error('IDs inv??¡lidos');
   const { data } = await client.put(`${BASE}/${pid}/diagnosticos/${did}`, body);
   return data?.data ?? data;
 }
 
 /**
- * Eliminar diagnÃÿÂ³stico.
+ * Eliminar diagn??³stico.
  */
 export async function deleteDiagnostico(pacienteId, diagnosticoId) {
   const pid = parsePositiveInt(pacienteId, 0);
   const did = parsePositiveInt(diagnosticoId, 0);
-  if (pid === 0 || did === 0) throw new Error('IDs invÃÿÂ¡lidos');
+  if (pid === 0 || did === 0) throw new Error('IDs inv??¡lidos');
   await client.delete(`${BASE}/${pid}/diagnosticos/${did}`);
 }
 
 /**
- * Crear plan de medicaciÃÿÂ³n para un paciente.
+ * Crear plan de medicaci??³n para un paciente.
  * POST /api/pacientes/:id/planes-medicacion
  * @param {number|string} pacienteId
  * @param {{ id_cita?: number|string, fecha_inicio?: string, fecha_fin?: string, observaciones?: string, medicamentos: Array<{ id_medicamento: number|string, dosis?: string, frecuencia?: string, horario?: string, via_administracion?: string, observaciones?: string }> }} body
  */
 export async function createPacientePlanMedicacion(pacienteId, body) {
   const id = parsePositiveInt(pacienteId, 0);
-  if (id === 0) throw new Error('ID de paciente invÃÿÂ¡lido');
+  if (id === 0) throw new Error('ID de paciente inv??¡lido');
   const medicamentos = Array.isArray(body?.medicamentos) ? body.medicamentos : [];
   if (medicamentos.length === 0) throw new Error('Debe incluir al menos un medicamento');
   const payload = {
@@ -513,14 +513,19 @@ export async function createPacientePlanMedicacion(pacienteId, body) {
     fecha_inicio: (body?.fecha_inicio || '').toString().trim() || undefined,
     fecha_fin: (body?.fecha_fin || '').toString().trim() || undefined,
     observaciones: (body?.observaciones || '').toString().trim().slice(0, 2000) || undefined,
-    medicamentos: medicamentos.map((m) => ({
-      id_medicamento: parsePositiveInt(m.id_medicamento, 0),
-      dosis: (m.dosis || '').toString().trim().slice(0, 200) || undefined,
-      frecuencia: (m.frecuencia || '').toString().trim().slice(0, 200) || undefined,
-      horario: (m.horario || '').toString().trim().slice(0, 200) || undefined,
-      via_administracion: (m.via_administracion || '').toString().trim().slice(0, 100) || undefined,
-      observaciones: (m.observaciones || '').toString().trim().slice(0, 500) || undefined,
-    })),
+    medicamentos: medicamentos.map((m) => {
+      const horariosArr = Array.isArray(m.horarios) ? m.horarios.filter((h) => h != null && String(h).trim()) : [];
+      const primerHorario = (m.horario || '').toString().trim().slice(0, 20) || (horariosArr[0] || '').toString().trim().slice(0, 20) || undefined;
+      return {
+        id_medicamento: parsePositiveInt(m.id_medicamento, 0),
+        dosis: (m.dosis || '').toString().trim().slice(0, 200) || undefined,
+        frecuencia: (m.frecuencia || '').toString().trim().slice(0, 200) || undefined,
+        horario: primerHorario,
+        horarios: horariosArr.length > 0 ? horariosArr.map((h) => String(h).trim().slice(0, 20)) : undefined,
+        via_administracion: (m.via_administracion || '').toString().trim().slice(0, 100) || undefined,
+        observaciones: (m.observaciones || '').toString().trim().slice(0, 500) || undefined,
+      };
+    }),
   };
   const { data } = await client.post(`${BASE}/${id}/planes-medicacion`, payload);
   return data?.data ?? data;
@@ -540,26 +545,31 @@ export async function updatePacientePlanMedicacion(pacienteId, planId, body) {
     fecha_inicio: (body?.fecha_inicio || '').toString().trim() || undefined,
     fecha_fin: (body?.fecha_fin || '').toString().trim() || undefined,
     observaciones: (body?.observaciones || '').toString().trim().slice(0, 2000) || undefined,
-    medicamentos: medicamentos.map((m) => ({
-      id_medicamento: parsePositiveInt(m.id_medicamento, 0),
-      dosis: (m.dosis || '').toString().trim().slice(0, 200) || undefined,
-      frecuencia: (m.frecuencia || '').toString().trim().slice(0, 200) || undefined,
-      horario: (m.horario || '').toString().trim().slice(0, 200) || undefined,
-      via_administracion: (m.via_administracion || '').toString().trim().slice(0, 100) || undefined,
-      observaciones: (m.observaciones || '').toString().trim().slice(0, 500) || undefined,
-    })),
+    medicamentos: medicamentos.map((m) => {
+      const horariosArr = Array.isArray(m.horarios) ? m.horarios.filter((h) => h != null && String(h).trim()) : [];
+      const primerHorario = (m.horario || '').toString().trim().slice(0, 20) || (horariosArr[0] || '').toString().trim().slice(0, 20) || undefined;
+      return {
+        id_medicamento: parsePositiveInt(m.id_medicamento, 0),
+        dosis: (m.dosis || '').toString().trim().slice(0, 200) || undefined,
+        frecuencia: (m.frecuencia || '').toString().trim().slice(0, 200) || undefined,
+        horario: primerHorario,
+        horarios: horariosArr.length > 0 ? horariosArr.map((h) => String(h).trim().slice(0, 20)) : undefined,
+        via_administracion: (m.via_administracion || '').toString().trim().slice(0, 100) || undefined,
+        observaciones: (m.observaciones || '').toString().trim().slice(0, 500) || undefined,
+      };
+    }),
   };
   const { data } = await client.put(`${BASE}/${pid}/planes-medicacion/${plan}`, payload);
   return data?.data ?? data;
 }
 
 /**
- * Eliminar plan de medicaciÃÿÂ³n.
+ * Eliminar plan de medicaci??³n.
  * DELETE /api/pacientes/:id/planes-medicacion/:planId
  */
 export async function deletePacientePlanMedicacion(pacienteId, planId) {
   const pid = parsePositiveInt(pacienteId, 0);
   const plan = parsePositiveInt(planId, 0);
-  if (pid === 0 || plan === 0) throw new Error('IDs invÃÿÂ¡lidos');
+  if (pid === 0 || plan === 0) throw new Error('IDs inv??¡lidos');
   await client.delete(`${BASE}/${pid}/planes-medicacion/${plan}`);
 }

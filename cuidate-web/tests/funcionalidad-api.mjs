@@ -81,6 +81,43 @@ async function runTests() {
 
     const rAuditoria = await request('GET', '/api/admin/auditoria?limit=3', null, adminToken);
     log('GET /api/admin/auditoria', rAuditoria.ok, rAuditoria.ok ? '' : (rAuditoria.data?.error || `status ${rAuditoria.status}`));
+
+    // Plan de medicación (campos completos: fecha_fin, horarios, vía, observaciones)
+    const rPacientesForPlan = await request('GET', '/api/pacientes?limit=1&offset=0', null, adminToken);
+    const pacientesList = Array.isArray(rPacientesForPlan.data?.data) ? rPacientesForPlan.data.data : (Array.isArray(rPacientesForPlan.data?.pacientes) ? rPacientesForPlan.data.pacientes : (Array.isArray(rPacientesForPlan.data) ? rPacientesForPlan.data : []));
+    const rMedicamentos = await request('GET', '/api/medicamentos?limit=5', null, adminToken);
+    const medicamentosList = Array.isArray(rMedicamentos.data?.data) ? rMedicamentos.data.data : (Array.isArray(rMedicamentos.data?.medicamentos) ? rMedicamentos.data.medicamentos : (Array.isArray(rMedicamentos.data) ? rMedicamentos.data : []));
+    if (pacientesList.length > 0 && medicamentosList.length > 0) {
+      const pacienteId = pacientesList[0].id_paciente ?? pacientesList[0].id;
+      const idMed = medicamentosList[0].id_medicamento ?? medicamentosList[0].id;
+      const hoy = new Date().toISOString().slice(0, 10);
+      const planPayload = {
+        fecha_inicio: hoy,
+        fecha_fin: undefined,
+        observaciones: 'Prueba funcionalidad API',
+        medicamentos: [
+          {
+            id_medicamento: idMed,
+            dosis: '500 mg',
+            frecuencia: 'cada 8 h',
+            horarios: ['08:00', '14:00', '20:00'],
+            via_administracion: 'Oral',
+            observaciones: 'En ayunas',
+          },
+        ],
+      };
+      const rCreatePlan = await request('POST', `/api/pacientes/${pacienteId}/planes-medicacion`, planPayload, adminToken);
+      const planCreado = rCreatePlan.ok && rCreatePlan.data?.data?.id_plan;
+      log('POST /api/pacientes/:id/planes-medicacion (con horarios, vía, observaciones)', rCreatePlan.ok, planCreado ? `id_plan: ${rCreatePlan.data?.data?.id_plan}` : (rCreatePlan.data?.error || `status ${rCreatePlan.status}`));
+      if (planCreado) {
+        const idPlan = rCreatePlan.data.data.id_plan;
+        const rUpdatePlan = await request('PUT', `/api/pacientes/${pacienteId}/planes-medicacion/${idPlan}`, { ...planPayload, observaciones: 'Plan actualizado' }, adminToken);
+        log('PUT /api/pacientes/:id/planes-medicacion/:planId', rUpdatePlan.ok, rUpdatePlan.ok ? '' : (rUpdatePlan.data?.error || `status ${rUpdatePlan.status}`));
+        await request('DELETE', `/api/pacientes/${pacienteId}/planes-medicacion/${idPlan}`, null, adminToken);
+      }
+    } else {
+      log('POST plan medicación (skip)', true, 'Sin pacientes o medicamentos en catálogo');
+    }
   }
 
   // —— Login Doctor ——
