@@ -10,9 +10,10 @@ import { Table, Button } from '../../components/ui';
 import { PageHeader, SearchFilterBar, Pagination } from '../../components/shared';
 import { Badge } from '../../components/ui';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { formatNombreCompleto } from '../../utils/format';
 
 const COLUMNS = [
-  { key: 'nombre_completo', label: 'Nombre', render: (row) => sanitizeForDisplay(row.nombre_completo) },
+  { key: 'nombre_completo', label: 'Nombre', render: (row) => sanitizeForDisplay(formatNombreCompleto(row) || row.nombre_completo) || '—' },
   { key: 'doctor_nombre', label: 'Doctor', render: (row) => sanitizeForDisplay(row.doctor_nombre ?? '—') },
   { key: 'edad', label: 'Edad', render: (row) => row.edad != null ? String(row.edad) : '—' },
   {
