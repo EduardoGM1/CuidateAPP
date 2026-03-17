@@ -28,6 +28,19 @@ import {
 import logger from '../utils/logger.js';
 import EncryptionService from './encryptionService.js';
 
+/**
+ * Formato de nombre completo: "Apellido paterno Apellido materno Nombre" (ej. González Morales José).
+ * @param {Object} obj - { apellido_paterno?, apellido_materno?, nombre?, apellido? } (apellido = alias de apellido_paterno)
+ * @returns {string}
+ */
+function formatNombreCompleto(obj) {
+  if (obj == null || typeof obj !== 'object') return '';
+  const ap = String(obj.apellido_paterno ?? obj.apellido ?? '').trim();
+  const am = String(obj.apellido_materno ?? '').trim();
+  const n = String(obj.nombre ?? '').trim();
+  return [ap, am, n].filter(Boolean).join(' ') || '';
+}
+
 /** Desencripta un campo para mostrar en reportes (p. ej. descripcion de Diagnostico). Si no está encriptado, devuelve el valor. */
 function decryptForReport(value) {
   if (value == null || value === '') return value;
@@ -248,7 +261,7 @@ class ReportService {
         cita.fecha_cita || '',
         cita.estado || '',
         decryptForReport(cita.motivo) || '',
-        cita.Doctor ? `${cita.Doctor.nombre} ${cita.Doctor.apellido_paterno || ''}` : '',
+        cita.Doctor ? formatNombreCompleto(cita.Doctor) : '',
         decryptForReport(cita.observaciones) || ''
       ]);
       
@@ -377,7 +390,7 @@ class ReportService {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Expediente Médico - ${escapeHtml(paciente.nombre)} ${escapeHtml(paciente.apellido_paterno || '')}</title>
+  <title>Expediente Médico - ${escapeHtml(formatNombreCompleto(paciente))}</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -469,7 +482,7 @@ class ReportService {
       
       <p><strong>Fecha:</strong> ${formatDate(cita.fecha_cita)}</p>
       <p><strong>Estado:</strong> ${escapeHtml(cita.estado || 'N/A')}</p>
-      ${cita.Doctor ? `<p><strong>Doctor:</strong> Dr. ${escapeHtml(cita.Doctor.nombre)} ${escapeHtml(cita.Doctor.apellido_paterno || '')} ${escapeHtml(cita.Doctor.apellido_materno || '')}</p>` : ''}
+      ${cita.Doctor ? `<p><strong>Doctor:</strong> Dr. ${escapeHtml(formatNombreCompleto(cita.Doctor))}</p>` : ''}
       ${cita.motivo ? `<p><strong>Motivo:</strong> ${escapeHtml(decryptForReport(cita.motivo))}</p>` : ''}
       ${cita.observaciones ? `<p><strong>Observaciones:</strong> ${escapeHtml(decryptForReport(cita.observaciones))}</p>` : ''}
       
@@ -526,7 +539,7 @@ class ReportService {
           if (detalle.frecuencia) detalles.push(escapeHtml(detalle.frecuencia));
           if (detalle.via_administracion) detalles.push(escapeHtml(detalle.via_administracion));
           const detallesStr = detalles.length > 0 ? ` | ${detalles.join(' | ')}` : '';
-          const doctorStr = plan.Doctor ? ` | Prescrito por Dr. ${escapeHtml(plan.Doctor.nombre)} ${escapeHtml(plan.Doctor.apellido_paterno || '')}` : '';
+          const doctorStr = plan.Doctor ? ` | Prescrito por Dr. ${escapeHtml(formatNombreCompleto(plan.Doctor))}` : '';
           return `<li>${escapeHtml(medicamento?.nombre_medicamento || 'Medicamento')}${detallesStr}${doctorStr}</li>`;
         }).join('') : ''
       ).join('')}
@@ -641,7 +654,7 @@ class ReportService {
       ? cita.PlanMedicacions.flatMap(p => (p.PlanDetalles || []).map(d => ({ nombre: d.Medicamento?.nombre_medicamento, dosis: d.dosis, frecuencia: d.frecuencia, via: d.via_administracion })))
       : planesActivos.flatMap(p => (p.PlanDetalles || []).map(d => ({ nombre: d.Medicamento?.nombre_medicamento, dosis: d.dosis, frecuencia: d.frecuencia, via: d.via_administracion })));
 
-    const nombreCompleto = [paciente.nombre, paciente.apellido_paterno, paciente.apellido_materno].filter(Boolean).join(' ').trim() || '—';
+    const nombreCompleto = formatNombreCompleto(paciente) || '—';
     const edad = paciente.fecha_nacimiento
       ? Math.floor((new Date() - new Date(paciente.fecha_nacimiento)) / (365.25 * 24 * 60 * 60 * 1000))
       : '—';
@@ -651,7 +664,7 @@ class ReportService {
       ? new Date(cita.fecha_cita).toLocaleString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '')
       : new Date().toLocaleString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
     const nombreDoctor = cita?.Doctor
-      ? `Dr. ${[cita.Doctor.nombre, cita.Doctor.apellido_paterno, cita.Doctor.apellido_materno].filter(Boolean).join(' ')}`
+      ? `Dr. ${formatNombreCompleto(cita.Doctor)}`
       : '—';
 
     const presionSistolica = decryptForReport(signo?.presion_sistolica);
@@ -1203,7 +1216,7 @@ class ReportService {
       const fechaNac = p.fecha_nacimiento ? new Date(p.fecha_nacimiento) : null;
       const edad = fechaNac ? Math.floor((new Date() - fechaNac) / (365.25 * 24 * 60 * 60 * 1000)) : '';
       const sexo = p.sexo === 'Mujer' ? 'F' : p.sexo === 'Hombre' ? 'M' : '';
-      const nombreCompleto = [p.nombre, p.apellido_paterno, p.apellido_materno].filter(Boolean).join(' ').trim();
+      const nombreCompleto = formatNombreCompleto(p);
 
       const toNumSigno = (val) => { const d = decryptForReport(val); return (d !== '' && d != null && !Number.isNaN(Number(d))) ? Number(d) : ''; };
 

@@ -381,7 +381,7 @@ export class DashboardRepository {
         include: [
           {
             model: Doctor,
-            attributes: ['nombre', 'apellido_paterno', 'grado_estudio'],
+            attributes: ['nombre', 'apellido_paterno', 'apellido_materno', 'grado_estudio'],
             include: [
               {
                 model: Usuario,
@@ -400,7 +400,7 @@ export class DashboardRepository {
         .filter(cita => cita.Doctor) // Filtrar citas sin doctor
         .map(cita => ({
           id_doctor: cita.id_doctor,
-          nombre: `${cita.Doctor.nombre} ${cita.Doctor.apellido_paterno}`,
+          nombre: [cita.Doctor.apellido_paterno, cita.Doctor.apellido_materno, cita.Doctor.nombre].filter(Boolean).join(' '),
           especialidad: cita.Doctor.grado_estudio || 'No especificada',
           total_citas: parseInt(cita.dataValues.total_citas),
           email: cita.Doctor.Usuario?.email || 'No disponible'
