@@ -167,7 +167,7 @@ export default function MainLayout() {
 
   // Conexión WebSocket para tiempo real (chat, notificaciones, citas, pacientes, etc.)
   useEffect(() => {
-    if (token) connect(token);
+    if (token && typeof connect === 'function') connect(token);
   }, [token]);
 
   const isAdminFn = typeof isAdmin === 'function' ? isAdmin : () => false;

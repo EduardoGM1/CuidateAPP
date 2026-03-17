@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import Logger from '../services/logger';
 import { storageService } from '../services/storageService';
+import sessionService from '../services/sessionService';
 
 // Estados de autenticación
 const AuthState = {
@@ -198,6 +199,8 @@ export const AuthProvider = ({ children }) => {
           refreshToken,
         },
       });
+
+      sessionService.resetSessionExpiredHandling();
 
       Logger.success('Login exitoso', { 
         userRole, 

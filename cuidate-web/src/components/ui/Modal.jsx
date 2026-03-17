@@ -23,11 +23,14 @@ export default function Modal({
   width,
   ...rest
 }) {
+  const handleCancel = typeof onClose === 'function' ? onClose : () => {};
+  const handleOk = typeof onOk === 'function' ? onOk : undefined;
+
   return (
     <AntModal
       open={open}
-      onCancel={onClose}
-      onOk={onOk}
+      onCancel={handleCancel}
+      onOk={handleOk}
       title={title}
       okText={okText}
       cancelText={cancelText}

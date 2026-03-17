@@ -44,11 +44,12 @@ export default function DetalleCitaModal({
   onSoloSignosVitales,
 }) {
   const formatearFecha = formatDateTime;
+  const safeClose = () => { if (typeof onClose === 'function') onClose(); };
   const idCita = citaDetalle?.id_cita ?? citaDetalle?.id;
   const puedeCompletar = canEditMedical && idCita && (citaDetalle?.estado === 'pendiente' || citaDetalle?.estado === 'no_asistida');
 
   return (
-    <Modal open={open} onClose={onClose} title="Detalle de cita" footer={null} width={560} destroyOnClose>
+    <Modal open={open} onClose={safeClose} title="Detalle de cita" footer={null} width={560} destroyOnClose>
       {loading ? (
         <LoadingSpinner />
       ) : !citaDetalle ? (
@@ -112,7 +113,7 @@ export default function DetalleCitaModal({
                   <Button
                     type="button"
                     variant="primary"
-                    onClick={() => { onClose(); onCompletarWizard(idCita); }}
+                    onClick={() => { safeClose(); onCompletarWizard(idCita); }}
                     style={{ width: '100%', marginBottom: '0.25rem' }}
                   >
                     Registrar datos de la cita
@@ -126,7 +127,7 @@ export default function DetalleCitaModal({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => { onClose(); onSoloSignosVitales(idCita); }}
+                  onClick={() => { safeClose(); onSoloSignosVitales(idCita); }}
                   style={{ width: '100%' }}
                 >
                   Solo Agregar Signos Vitales
@@ -223,7 +224,7 @@ export default function DetalleCitaModal({
           {/* Acción: ver en página */}
           {onVerEnPagina && (citaDetalle.id_cita ?? citaDetalle.id) && (
             <div style={{ borderTop: '1px solid var(--color-borde-claro)', paddingTop: '1rem', marginTop: '0.5rem' }}>
-              <Button type="button" variant="outline" onClick={() => { onClose(); onVerEnPagina(citaDetalle.id_cita ?? citaDetalle.id); }}>
+              <Button type="button" variant="outline" onClick={() => { safeClose(); onVerEnPagina(citaDetalle.id_cita ?? citaDetalle.id); }}>
                 Ver en página de citas
               </Button>
             </div>

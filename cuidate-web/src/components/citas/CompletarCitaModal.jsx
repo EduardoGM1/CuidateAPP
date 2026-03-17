@@ -144,7 +144,7 @@ export default function CompletarCitaModal({ open, onClose, citaId, onSuccess, c
         setDone(true);
         message.success('Cita completada correctamente');
         onSuccess?.();
-        onClose();
+        if (typeof onClose === 'function') onClose();
       } else {
         setStepIndex((i) => Math.min(i + 1, WIZARD_STEPS.length - 1));
       }

@@ -153,7 +153,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
   const handleNav = (path) => {
     navigate(path);
-    if (onClose) onClose();
+    if (typeof onClose === 'function') onClose();
   };
 
   const handleLogout = () => {
@@ -163,7 +163,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
   return (
     <>
-      <div className={`sidebar-overlay ${isOpen ? 'is-open' : ''}`} onClick={onClose} aria-hidden="true" />
+      <div className={`sidebar-overlay ${isOpen ? 'is-open' : ''}`} onClick={() => { if (typeof onClose === 'function') onClose(); }} aria-hidden="true" />
       <aside className={`sidebar ${isOpen ? 'is-open' : ''}`}>
         <div className="sidebar-inner">
           <div className="sidebar-brand" onClick={() => handleNav('/')} onKeyDown={(e) => e.key === 'Enter' && handleNav('/')} role="button" tabIndex={0}>

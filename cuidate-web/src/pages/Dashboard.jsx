@@ -59,8 +59,10 @@ function getAlertaDescripcion(item) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const getDisplayName = useAuthStore((s) => s.getDisplayName);
-  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const getDisplayNameRaw = useAuthStore((s) => s.getDisplayName);
+  const isAdminRaw = useAuthStore((s) => s.isAdmin);
+  const getDisplayName = typeof getDisplayNameRaw === 'function' ? getDisplayNameRaw : () => '';
+  const isAdmin = typeof isAdminRaw === 'function' ? isAdminRaw : () => false;
   const { idDoctor } = useCurrentDoctorId();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

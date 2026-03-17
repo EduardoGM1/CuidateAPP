@@ -22,8 +22,12 @@ function isTokenInvalidResponse(error) {
   return status === 401 || (status === 403 && tokenInvalidMessage);
 }
 
-/** Limpia sesión en localStorage (token, user, persist) y redirige a login con motivo de sesión caducada. */
+let isClearingSession = false;
+
+/** Limpia sesión en localStorage (token, user, persist) y redirige a login con motivo de sesión caducada. Solo se ejecuta una vez aunque varios interceptores reciban 401 a la vez. */
 function clearSessionAndRedirectToLogin() {
+  if (isClearingSession) return;
+  isClearingSession = true;
   localStorage.removeItem(STORAGE_KEYS.TOKEN);
   localStorage.removeItem(STORAGE_KEYS.USER);
   localStorage.removeItem(AUTH_PERSIST_KEY);

@@ -54,10 +54,11 @@ export default function DetalleNotificacionModal({
   actingId,
 }) {
   const navigate = useNavigate();
+  const safeClose = () => { if (typeof onClose === 'function') onClose(); };
 
   if (!notificacion) {
     return (
-      <Modal open={open} onClose={onClose} title="Detalle de notificación" footer={null} width={520} destroyOnClose>
+      <Modal open={open} onClose={safeClose} title="Detalle de notificación" footer={null} width={520} destroyOnClose>
         <p style={{ color: 'var(--color-texto-secundario)', textAlign: 'center', padding: '1.5rem' }}>
           No hay datos de la notificación.
         </p>
@@ -74,17 +75,17 @@ export default function DetalleNotificacionModal({
 
   const idPaciente = notificacion.id_paciente ?? notificacion.datos_adicionales?.id_paciente;
   const handleIrAlChat = () => {
-    onClose();
+    safeClose();
     if (idPaciente) navigate(`/chat/${idPaciente}`);
   };
   const handleIrASolicitudes = () => {
-    onClose();
+    safeClose();
     navigate('/solicitudes-reprogramacion');
   };
 
   const footer = (
     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-      <Button variant="secondary" size="small" onClick={onClose}>
+      <Button variant="secondary" size="small" onClick={safeClose}>
         Cerrar
       </Button>
       {idPaciente && (
@@ -121,7 +122,7 @@ export default function DetalleNotificacionModal({
   );
 
   return (
-    <Modal open={open} onClose={onClose} title="Detalle de notificación" footer={footer} width={520} destroyOnClose>
+    <Modal open={open} onClose={safeClose} title="Detalle de notificación" footer={footer} width={520} destroyOnClose>
       <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
         {/* Tipo y estado */}
         <div style={sectionStyle}>

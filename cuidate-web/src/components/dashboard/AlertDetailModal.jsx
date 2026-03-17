@@ -27,25 +27,26 @@ export default function AlertDetailModal({ open, onClose, alerta }) {
   const texto = sanitizeForDisplay(alerta.descripcion ?? alerta.mensaje ?? alerta.tipo_alerta ?? 'Alerta');
   const tieneSignos = alerta.glucosa != null || alerta.presion_sistolica != null || alerta.presion_diastolica != null || alerta.fecha_medicion != null;
 
+  const safeClose = () => { if (typeof onClose === 'function') onClose(); };
   const handleVerPaciente = () => {
-    onClose();
+    safeClose();
     if (idPaciente) navigate(`/pacientes/${idPaciente}`);
   };
   const handleVerCita = () => {
-    onClose();
+    safeClose();
     if (idCita) navigate(`/citas/${idCita}`);
   };
   const handleVerDoctor = () => {
-    onClose();
+    safeClose();
     if (idDoctor) navigate(`/doctores/${idDoctor}`);
   };
   const handleEnviarMensaje = () => {
-    onClose();
+    safeClose();
     if (idPaciente) navigate(`/chat/${idPaciente}`);
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Detalle de alerta" footer={null} width={440}>
+    <Modal open={open} onClose={safeClose} title="Detalle de alerta" footer={null} width={440}>
       <p style={{ margin: '0 0 1rem', color: 'var(--color-texto-primario)' }}>{texto}</p>
 
       {tieneSignos && (

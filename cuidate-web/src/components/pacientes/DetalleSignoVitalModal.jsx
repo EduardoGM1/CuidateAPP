@@ -340,8 +340,10 @@ export default function DetalleSignoVitalModal({
     window.print();
   };
 
+  const safeClose = () => { if (typeof onClose === 'function') onClose(); };
+
   return (
-    <Modal open={open} onClose={onClose} title="Detalle de signo vital" footer={null} width={640} destroyOnClose>
+    <Modal open={open} onClose={safeClose} title="Detalle de signo vital" footer={null} width={640} destroyOnClose>
       {!signo ? (
         <p style={{ color: 'var(--color-texto-secundario)', textAlign: 'center', padding: '1.5rem' }}>
           No hay datos del registro.
@@ -401,14 +403,14 @@ export default function DetalleSignoVitalModal({
               borderTop: '1px solid var(--color-borde-claro)',
             }}
           >
-            <Button variant="secondary" size="small" onClick={onClose}>
+            <Button variant="secondary" size="small" onClick={safeClose}>
               Cerrar
             </Button>
             <Button variant="secondary" size="small" onClick={handlePrint}>
               Imprimir
             </Button>
             {canEdit && typeof onEdit === 'function' && (
-              <Button variant="primary" size="small" onClick={() => { onEdit(signo); onClose(); }}>
+              <Button variant="primary" size="small" onClick={() => { onEdit(signo); safeClose(); }}>
                 Editar
               </Button>
             )}

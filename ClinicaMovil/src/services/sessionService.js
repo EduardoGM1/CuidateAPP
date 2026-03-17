@@ -24,6 +24,8 @@ class SessionService {
     this.CHECK_CACHE_DURATION = 10 * 1000; // 10 segundos de cache
     // ✅ Período de gracia para tokens nuevos (10 minutos)
     this.TOKEN_GRACE_PERIOD = 10 * 60 * 1000; // 10 minutos
+    // ✅ Evitar mostrar la alerta "Sesión Expirada" varias veces (varios interceptores 401 a la vez)
+    this.isHandlingSessionExpired = false;
   }
 
   /**
@@ -32,6 +34,14 @@ class SessionService {
    */
   setOnSessionExpired(callback) {
     this.onSessionExpiredCallback = callback;
+  }
+
+  /**
+   * Reiniciar el estado de "sesión expirada en curso".
+   * Útil tras un login exitoso para que la próxima expiración pueda mostrar la alerta de nuevo.
+   */
+  resetSessionExpiredHandling() {
+    this.isHandlingSessionExpired = false;
   }
 
   /**
@@ -197,13 +207,21 @@ class SessionService {
    * - Ejecutar callback de expiración
    */
   async handleSessionExpired() {
+    // Evitar múltiples alertas cuando varios interceptores (servicioApi, dashboardService, gestionService)
+    // reciben 401 a la vez y cada uno llama a handleSessionExpired
+    if (this.isHandlingSessionExpired) {
+      Logger.debug('handleSessionExpired: ya en curso, omitiendo alerta duplicada');
+      return;
+    }
+    this.isHandlingSessionExpired = true;
+
     try {
       Logger.warn('Sesión expirada, limpiando datos de autenticación...');
       
       // Limpiar datos de autenticación
       await storageService.clearAuthData();
       
-      // Mostrar alerta al usuario
+      // Mostrar alerta al usuario (solo una vez)
       Alert.alert(
         'Sesión Expirada',
         'Tu sesión ha caducado por seguridad. Por favor, inicia sesión nuevamente.',
@@ -211,7 +229,7 @@ class SessionService {
           {
             text: 'Entendido',
             onPress: () => {
-              // Ejecutar callback para redirigir al login
+              this.isHandlingSessionExpired = false;
               if (this.onSessionExpiredCallback) {
                 this.onSessionExpiredCallback();
               }
@@ -224,8 +242,7 @@ class SessionService {
       Logger.info('Sesión expirada manejada correctamente');
     } catch (error) {
       Logger.error('Error manejando sesión expirada', error);
-      
-      // Aún así, ejecutar callback para asegurar redirección
+      this.isHandlingSessionExpired = false;
       if (this.onSessionExpiredCallback) {
         this.onSessionExpiredCallback();
       }

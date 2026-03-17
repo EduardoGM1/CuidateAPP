@@ -28,31 +28,32 @@ export default function AdminAlertDetailModal({ open, onClose, alerta }) {
   const idCita = alerta.id_cita ?? alerta.idCita;
   const idDoctor = alerta.id_doctor ?? alerta.idDoctor;
 
+  const safeClose = () => { if (typeof onClose === 'function') onClose(); };
   const handleVerPaciente = () => {
-    onClose();
+    safeClose();
     if (idPaciente) navigate(`/pacientes/${idPaciente}`);
   };
   const handleVerCita = () => {
-    onClose();
+    safeClose();
     if (idCita) navigate(`/citas/${idCita}`);
   };
   const handleVerDoctor = () => {
-    onClose();
+    safeClose();
     if (idDoctor) navigate(`/doctores/${idDoctor}`);
   };
   const handleEnviarMensaje = () => {
-    onClose();
+    safeClose();
     if (idPaciente) navigate(`/chat/${idPaciente}`);
   };
   const handleIrAuditoria = () => {
-    onClose();
+    safeClose();
     navigate('/admin/auditoria');
   };
 
   if (tipo === 'valor_critico') {
     const pacienteNombre = alerta.paciente ?? (formatNombreCompleto(alerta) || '—');
     return (
-      <Modal open={open} onClose={onClose} title="Alerta: valor crítico" footer={null} width={460}>
+      <Modal open={open} onClose={safeClose} title="Alerta: valor crítico" footer={null} width={460}>
         <div style={sectionStyle}>
           <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Paciente:</span> <span style={valueStyle}>{displayText(pacienteNombre)}</span></div>
           <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Tipo de alerta:</span> <span style={valueStyle}>{displayText(alerta.tipo_alerta ?? 'Valor crítico')}</span></div>
@@ -82,7 +83,7 @@ export default function AdminAlertDetailModal({ open, onClose, alerta }) {
   if (tipo === 'cita_perdida') {
     const pacienteNombre = alerta.paciente ?? '—';
     return (
-      <Modal open={open} onClose={onClose} title="Alerta: cita perdida" footer={null} width={460}>
+      <Modal open={open} onClose={safeClose} title="Alerta: cita perdida" footer={null} width={460}>
         <div style={sectionStyle}>
           <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Paciente:</span> <span style={valueStyle}>{displayText(pacienteNombre)}</span></div>
           <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Fecha:</span> {formatDateTime(alerta.fecha ?? alerta.fecha_cita)}</div>
@@ -99,7 +100,7 @@ export default function AdminAlertDetailModal({ open, onClose, alerta }) {
 
   if (tipo === 'auditoria') {
     return (
-      <Modal open={open} onClose={onClose} title="Alerta: auditoría" footer={null} width={460}>
+      <Modal open={open} onClose={safeClose} title="Alerta: auditoría" footer={null} width={460}>
         <div style={sectionStyle}>
           <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Descripción:</span> <span style={valueStyle}>{displayText(alerta.descripcion ?? '—')}</span></div>
           <div style={{ marginBottom: '0.5rem' }}><span style={labelStyle}>Tipo de acción:</span> {displayText(alerta.tipo_accion ?? '—')}</div>
@@ -109,13 +110,13 @@ export default function AdminAlertDetailModal({ open, onClose, alerta }) {
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
           {alerta.entidad_afectada === 'paciente' && alerta.id_entidad && (
-            <Button variant="primary" size="small" onClick={() => { onClose(); navigate(`/pacientes/${alerta.id_entidad}`); }}>Ver paciente</Button>
+            <Button variant="primary" size="small" onClick={() => { safeClose(); navigate(`/pacientes/${alerta.id_entidad}`); }}>Ver paciente</Button>
           )}
           {alerta.entidad_afectada === 'cita' && alerta.id_entidad && (
-            <Button variant="primary" size="small" onClick={() => { onClose(); navigate(`/citas/${alerta.id_entidad}`); }}>Ver cita</Button>
+            <Button variant="primary" size="small" onClick={() => { safeClose(); navigate(`/citas/${alerta.id_entidad}`); }}>Ver cita</Button>
           )}
           {alerta.entidad_afectada === 'doctor' && alerta.id_entidad && (
-            <Button variant="primary" size="small" onClick={() => { onClose(); navigate(`/doctores/${alerta.id_entidad}`); }}>Ver doctor</Button>
+            <Button variant="primary" size="small" onClick={() => { safeClose(); navigate(`/doctores/${alerta.id_entidad}`); }}>Ver doctor</Button>
           )}
           <Button variant="outline" size="small" onClick={handleIrAuditoria}>Ir a auditoría</Button>
         </div>
@@ -124,7 +125,7 @@ export default function AdminAlertDetailModal({ open, onClose, alerta }) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Detalle de alerta" footer={null} width={440}>
+    <Modal open={open} onClose={safeClose} title="Detalle de alerta" footer={null} width={440}>
       <p style={{ margin: 0, color: 'var(--color-texto-primario)' }}>{displayText(alerta.descripcion ?? alerta.mensaje ?? 'Alerta')}</p>
     </Modal>
   );
