@@ -18,6 +18,7 @@ import Logger from '../../services/logger';
 import { useDoctorDetails, useDoctorPatientData } from '../../hooks/useGestion';
 import useDoctorForm from '../../hooks/useDoctorForm';
 import { formatDate, formatDateTime, formatAppointmentDate, formatTodayAppointment } from '../../utils/dateUtils';
+import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 import { ESTADOS_CITA, COLORES } from '../../utils/constantes';
 import OptionsModal from '../../components/DetallePaciente/shared/OptionsModal';
 import DetalleCitaModal from '../../components/DetalleCitaModal/DetalleCitaModal';
@@ -94,7 +95,7 @@ const DetalleDoctor = ({ route, navigation }) => {
 
     Logger.info('DetalleDoctor: Datos del doctor recibidos correctamente', {
       doctorId: doctorId,
-      doctorName: `${initialDoctor.nombre} ${initialDoctor.apellido}`
+      doctorName: formatNombreCompleto(initialDoctor)
     });
   }, [initialDoctor]);
 
@@ -251,7 +252,7 @@ const DetalleDoctor = ({ route, navigation }) => {
     
     Alert.alert(
       'Desactivar Doctor',
-      `¿Estás seguro de que quieres desactivar a ${currentDoctor.nombre} ${currentDoctor.apellido}?\n\nEl doctor será desactivado pero podrá ser reactivado posteriormente.`,
+      `¿Estás seguro de que quieres desactivar a ${formatNombreCompleto(currentDoctor)}?\n\nEl doctor será desactivado pero podrá ser reactivado posteriormente.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         { 
@@ -271,7 +272,7 @@ const DetalleDoctor = ({ route, navigation }) => {
               
               Logger.info('DetalleDoctor: Iniciando desactivación de doctor', { 
                 doctorId: currentDoctor.id_doctor, 
-                name: `${currentDoctor.nombre} ${currentDoctor.apellido}`
+                name: formatNombreCompleto(currentDoctor)
               });
               
               const result = await deleteDoctor(currentDoctor.id_doctor);
@@ -324,7 +325,7 @@ const DetalleDoctor = ({ route, navigation }) => {
     
     Alert.alert(
       'Reactivar Doctor',
-      `¿Estás seguro de que quieres reactivar a ${currentDoctor.nombre} ${currentDoctor.apellido}?`,
+      `¿Estás seguro de que quieres reactivar a ${formatNombreCompleto(currentDoctor)}?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         { 
@@ -338,7 +339,7 @@ const DetalleDoctor = ({ route, navigation }) => {
               
               Logger.info('DetalleDoctor: Iniciando reactivación de doctor', { 
                 doctorId: currentDoctor.id_doctor, 
-                name: `${currentDoctor.nombre} ${currentDoctor.apellido}`
+                name: formatNombreCompleto(currentDoctor)
               });
               
               const result = await reactivateDoctor(currentDoctor.id_doctor);
@@ -391,7 +392,7 @@ const DetalleDoctor = ({ route, navigation }) => {
     
     Alert.alert(
       'Eliminar Permanentemente',
-      `⚠️ ADVERTENCIA ⚠️\n\n¿Estás seguro de que quieres eliminar PERMANENTEMENTE a ${currentDoctor.nombre} ${currentDoctor.apellido}?\n\nEsta acción NO se puede deshacer y eliminará todos los datos del doctor.`,
+      `⚠️ ADVERTENCIA ⚠️\n\n¿Estás seguro de que quieres eliminar PERMANENTEMENTE a ${formatNombreCompleto(currentDoctor)}?\n\nEsta acción NO se puede deshacer y eliminará todos los datos del doctor.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         { 
@@ -405,7 +406,7 @@ const DetalleDoctor = ({ route, navigation }) => {
               
               Logger.info('DetalleDoctor: Iniciando eliminación permanente de doctor', { 
                 doctorId: currentDoctor.id_doctor, 
-                name: `${currentDoctor.nombre} ${currentDoctor.apellido}`
+                name: formatNombreCompleto(currentDoctor)
               });
               
               const result = await hardDeleteDoctor(currentDoctor.id_doctor);
@@ -480,7 +481,7 @@ const DetalleDoctor = ({ route, navigation }) => {
 
     Alert.alert(
       'Cambiar Contraseña',
-      `¿Estás seguro de que quieres cambiar la contraseña de ${currentDoctor.nombre} ${currentDoctor.apellido}?`,
+      `¿Estás seguro de que quieres cambiar la contraseña de ${formatNombreCompleto(currentDoctor)}?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         { 
@@ -493,7 +494,7 @@ const DetalleDoctor = ({ route, navigation }) => {
               Logger.info('DetalleDoctor: Cambiando contraseña del doctor', { 
                 doctorId: currentDoctor.id_doctor, 
                 email: currentDoctor.email,
-                name: `${currentDoctor.nombre} ${currentDoctor.apellido}`
+                name: formatNombreCompleto(currentDoctor)
               });
 
               // Importar gestionService dinámicamente para evitar problemas de importación
@@ -561,7 +562,7 @@ const DetalleDoctor = ({ route, navigation }) => {
       setFilteredPacientes(pacientesAsignados);
     } else {
       const filtered = pacientesAsignados.filter(paciente => {
-        const nombreCompleto = `${paciente.nombre} ${paciente.apellido}`.toLowerCase();
+        const nombreCompleto = formatNombreCompleto(paciente).toLowerCase();
         return nombreCompleto.includes(query.toLowerCase());
       });
       setFilteredPacientes(filtered);
@@ -634,7 +635,7 @@ const DetalleDoctor = ({ route, navigation }) => {
       Logger.info('DetalleDoctor: Asignando paciente a doctor', { 
         doctorId: currentDoctor.id_doctor,
         patientId: patient.id_paciente,
-        patientName: `${patient.nombre} ${patient.apellido_paterno}`
+        patientName: formatNombreCompleto(patient)
       });
 
       const gestionService = (await import('../../api/gestionService.js')).default;
@@ -656,7 +657,7 @@ const DetalleDoctor = ({ route, navigation }) => {
         
         Alert.alert(
           'Paciente Asignado', 
-          `${patient.nombre} ${patient.apellido_paterno} ha sido asignado exitosamente al doctor.`,
+          `${formatNombreCompleto(patient)} ha sido asignado exitosamente al doctor.`,
           [{ text: 'OK' }]
         );
         
@@ -687,7 +688,7 @@ const DetalleDoctor = ({ route, navigation }) => {
   const handleUnassignPatient = async (patient) => {
     Alert.alert(
       'Desasignar Paciente',
-      `¿Estás seguro de que quieres desasignar a ${patient.nombre} ${patient.apellido_paterno} de este doctor?`,
+      `¿Estás seguro de que quieres desasignar a ${formatNombreCompleto(patient)} de este doctor?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         { 
@@ -709,7 +710,7 @@ const DetalleDoctor = ({ route, navigation }) => {
               Logger.info('DetalleDoctor: Desasignando paciente de doctor', { 
                 doctorId: currentDoctor.id_doctor,
                 patientId: patient.id,
-                patientName: `${patient.nombre} ${patient.apellido}`
+                patientName: formatNombreCompleto(patient)
               });
 
               const gestionService = (await import('../../api/gestionService.js')).default;
@@ -726,7 +727,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                 
                 Alert.alert(
                   'Paciente Desasignado', 
-                  `${patient.nombre} ${patient.apellido} ha sido desasignado exitosamente del doctor.`,
+                  `${formatNombreCompleto(patient)} ha sido desasignado exitosamente del doctor.`,
                   [{ text: 'OK' }]
                 );
                 
@@ -768,7 +769,7 @@ const DetalleDoctor = ({ route, navigation }) => {
     if (!cita) return 'Paciente';
     if (cita.paciente_nombre) return cita.paciente_nombre;
     const p = cita.paciente || cita.Paciente;
-    if (p) return `${p.nombre || ''} ${p.apellido || p.apellido_paterno || ''} ${p.apellido_materno || ''}`.trim();
+    if (p) return formatNombreCompleto(p) || 'Paciente';
     return 'Paciente';
   };
 
@@ -885,7 +886,7 @@ const DetalleDoctor = ({ route, navigation }) => {
           <View style={styles.patientHeader}>
             <View style={styles.patientInfo}>
               <Title style={styles.patientName}>
-                {paciente.nombre} {paciente.apellido}
+                {formatNombreCompleto(paciente)}
               </Title>
               <Text style={styles.patientDetails}>
                 {paciente.edad} años • {paciente.telefono || 'Sin teléfono'}
@@ -947,7 +948,7 @@ const DetalleDoctor = ({ route, navigation }) => {
         <Card.Content>
           <View style={styles.appointmentHeader}>
             <Title style={styles.appointmentTitle}>
-              {cita.paciente.nombre} {cita.paciente.apellido}
+              {formatNombreCompleto(cita.paciente)}
             </Title>
             <Text style={styles.appointmentTime}>
               {formatAppointmentDate(cita.fecha_cita)}
@@ -1005,7 +1006,7 @@ const DetalleDoctor = ({ route, navigation }) => {
           </View>
           
           <Title style={styles.todayAppointmentTitle}>
-            {cita.paciente.nombre} {cita.paciente.apellido}
+            {formatNombreCompleto(cita.paciente)}
           </Title>
           
           <Paragraph style={styles.todayAppointmentMotivo}>
@@ -1088,7 +1089,7 @@ const DetalleDoctor = ({ route, navigation }) => {
   const tituloModalCitaReciente = React.useMemo(() => {
     if (!citaRecienteSeleccionada) return 'Opciones';
     const c = citaRecienteSeleccionada;
-    const nombre = c.paciente ? `${c.paciente.nombre || ''} ${c.paciente.apellido || ''}`.trim() || 'Paciente' : 'Paciente';
+    const nombre = c.paciente ? (formatNombreCompleto(c.paciente) || 'Paciente') : 'Paciente';
     const fecha = formatAppointmentDate(c.fecha_cita);
     const estadoTexto = getEstadoCitaTexto(c.estado || ESTADOS_CITA.PENDIENTE);
     return `Cita: ${nombre} - ${fecha} - ${estadoTexto}`;
@@ -1204,7 +1205,7 @@ const DetalleDoctor = ({ route, navigation }) => {
           <View style={styles.headerContent}>
             <View style={styles.headerInfo}>
               <Text style={styles.headerTitle}>
-                {currentDoctor.nombre} {currentDoctor.apellido_paterno} {currentDoctor.apellido_materno}
+                {formatNombreCompleto(currentDoctor)}
               </Text>
               <Text style={styles.headerSubtitle}>
                 {currentDoctor.grado_estudio} • {currentDoctor.modulo ? ` ${currentDoctor.modulo}` : 'Sin módulo asignado'}
@@ -1423,7 +1424,7 @@ const DetalleDoctor = ({ route, navigation }) => {
         visible={!!citaHoySeleccionada}
         onClose={() => setCitaHoySeleccionada(null)}
         title={citaHoySeleccionada
-          ? `Cita: ${citaHoySeleccionada.paciente?.nombre || ''} ${citaHoySeleccionada.paciente?.apellido || ''} - ${formatTodayAppointment(citaHoySeleccionada.fecha_cita)}`
+          ? `Cita: ${formatNombreCompleto(citaHoySeleccionada.paciente) || 'Paciente'} - ${formatTodayAppointment(citaHoySeleccionada.fecha_cita)}`
           : 'Opciones'}
         options={opcionesCitaHoy}
       />
@@ -1637,7 +1638,7 @@ const DetalleDoctor = ({ route, navigation }) => {
             
             <View style={styles.modalBody}>
               <Text style={styles.modalSubtitle}>
-                Cambiar contraseña para: {currentDoctor?.nombre} {currentDoctor?.apellido}
+                Cambiar contraseña para: {formatNombreCompleto(currentDoctor)}
               </Text>
               
               <View style={styles.inputContainer}>
@@ -1732,7 +1733,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                     >
                       <View style={styles.searchResultInfo}>
                         <Text style={styles.searchResultName}>
-                          {paciente.nombre} {paciente.apellido}
+                          {formatNombreCompleto(paciente)}
                         </Text>
                         <Text style={styles.searchResultDetails}>
                           {paciente.edad} años • {paciente.telefono || 'Sin teléfono'}
@@ -1772,7 +1773,7 @@ const DetalleDoctor = ({ route, navigation }) => {
             
             <View style={styles.modalBody}>
               <Text style={styles.modalSubtitle}>
-                Selecciona un paciente para asignar a {currentDoctor?.nombre} {currentDoctor?.apellido}
+                Selecciona un paciente para asignar a {formatNombreCompleto(currentDoctor)}
               </Text>
               
               {availablePatients.length > 0 ? (
@@ -1786,7 +1787,7 @@ const DetalleDoctor = ({ route, navigation }) => {
                     >
                       <View style={styles.patientOptionInfo}>
                         <Text style={styles.patientOptionName}>
-                          {patient.nombre} {patient.apellido_paterno} {patient.apellido_materno || ''}
+                          {formatNombreCompleto(patient)}
                         </Text>
                         <Text style={styles.patientOptionDetails}>
                           {patient.edad} años • {patient.sexo} • {patient.numero_celular || 'Sin teléfono'}

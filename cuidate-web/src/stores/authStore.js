@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { STORAGE_KEYS, AUTH_PERSIST_KEY, ROLES } from '../utils/constants';
+import { formatNombreCompleto } from '../utils/format';
 import * as authApi from '../api/auth';
 import { disconnect } from '../api/socket';
 
@@ -66,9 +67,8 @@ export const useAuthStore = create(
       getDisplayName: () => {
         const user = get().user ?? getStoredUser();
         if (!user) return '';
-        if (user.nombre && user.apellido_paterno) {
-          return `${user.nombre} ${user.apellido_paterno}`.trim();
-        }
+        const full = formatNombreCompleto(user);
+        if (full) return full;
         return user.email ?? user.nombre ?? 'Usuario';
       },
     }),

@@ -32,6 +32,7 @@ import gestionService from '../../api/gestionService';
 import { usePacientes } from '../../hooks/useGestion';
 import useDebounce from '../../hooks/useDebounce';
 import { formatDate } from '../../utils/dateUtils';
+import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 import { COLORES } from '../../utils/constantes';
 import { listActionButtonStyles } from '../../utils/sharedStyles';
 
@@ -105,9 +106,7 @@ const ListaPacientesDoctor = ({ navigation }) => {
       filtered = pacientes.filter(paciente => {
         if (!paciente || typeof paciente !== 'object') return false;
         
-        const nombre = paciente.nombre || '';
-        const apellido = `${paciente.apellido_paterno || ''} ${paciente.apellido_materno || ''}`.trim();
-        const nombreCompleto = paciente.nombreCompleto || `${nombre} ${apellido}`.trim();
+        const nombreCompleto = paciente.nombreCompleto || formatNombreCompleto(paciente);
         const curp = paciente.curp || '';
         const telefono = paciente.numero_celular || '';
         
@@ -208,7 +207,7 @@ const ListaPacientesDoctor = ({ navigation }) => {
               <View style={styles.cardTitleContainer}>
                 <View style={styles.titleRow}>
                   <Title style={[styles.cardTitle, !paciente.activo && styles.inactiveText]}>
-                    {paciente.nombreCompleto || `${paciente.nombre} ${paciente.apellido_paterno}`.trim()}
+                    {paciente.nombreCompleto || formatNombreCompleto(paciente)}
                   </Title>
                   <View style={[styles.statusBadge, paciente.activo ? styles.activeBadge : styles.inactiveBadge]}>
                     <Text style={styles.statusText}>

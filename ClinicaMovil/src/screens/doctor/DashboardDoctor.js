@@ -22,6 +22,7 @@ import useWebSocket from '../../hooks/useWebSocket';
 import gestionService from '../../api/gestionService';
 import { estaFueraDeRango, RANGOS_NORMALES } from '../../utils/vitalSignsRanges';
 import { COLORES, getDisplayMotivo } from '../../utils/constantes';
+import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 import { useResponsiveDimensions } from '../../utils/responsive';
 
 const DashboardDoctor = ({ navigation }) => {
@@ -632,7 +633,7 @@ const DashboardDoctor = ({ navigation }) => {
           <View style={styles.pacienteHeader}>
             <View style={styles.pacienteInfo}>
               <Text style={styles.pacienteNombre}>
-                {paciente.nombre_completo || `${paciente.nombre} ${paciente.apellido_paterno}`}
+                {paciente.nombre_completo || formatNombreCompleto(paciente)}
               </Text>
               {paciente.numero_celular && (
                 <Text style={styles.pacienteTelefono}>{paciente.numero_celular}</Text>

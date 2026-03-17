@@ -15,6 +15,7 @@ import { getMunicipiosByEstado } from '../../data/municipiosMexico';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, Input } from '../../components/ui';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { formatNombreCompleto } from '../../utils/format';
 import { getComorbilidades } from '../../api/comorbilidades';
 import { registerInitialMedicalData } from '../../utils/registerInitialMedicalData';
 import {
@@ -265,24 +266,24 @@ export default function AgregarPaciente() {
             <p style={{ margin: '0 0 1rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{submitError}</p>
           )}
           <Controller
-            name="nombre"
-            control={control}
-            render={({ field }) => (
-              <Input label="Nombre" error={errors.nombre?.message} {...field} required />
-            )}
-          />
-          <Controller
             name="apellido_paterno"
             control={control}
             render={({ field }) => (
-              <Input label="Apellido paterno" error={errors.apellido_paterno?.message} {...field} required />
+              <Input label="Apellido paterno" placeholder="Ej. González" error={errors.apellido_paterno?.message} {...field} required />
             )}
           />
           <Controller
             name="apellido_materno"
             control={control}
             render={({ field }) => (
-              <Input label="Apellido materno" error={errors.apellido_materno?.message} {...field} />
+              <Input label="Apellido materno" placeholder="Ej. Morales" error={errors.apellido_materno?.message} {...field} />
+            )}
+          />
+          <Controller
+            name="nombre"
+            control={control}
+            render={({ field }) => (
+              <Input label="Nombre" placeholder="Ej. José" error={errors.nombre?.message} {...field} required />
             )}
           />
           <Controller
@@ -419,7 +420,7 @@ export default function AgregarPaciente() {
                   <option value="">— Seleccionar doctor —</option>
                   {doctores.map((d) => (
                     <option key={d.id_doctor ?? d.id} value={d.id_doctor ?? d.id}>
-                      {sanitizeForDisplay([d.nombre, d.apellido_paterno, d.apellido_materno].filter(Boolean).join(' ')) || '—'}
+                      {sanitizeForDisplay(formatNombreCompleto(d)) || '—'}
                     </option>
                   ))}
                 </select>

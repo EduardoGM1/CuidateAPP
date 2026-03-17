@@ -160,25 +160,12 @@ export default function EditarDoctor() {
             )}
           />
           <Controller
-            name="nombre"
-            control={control}
-            render={({ field }) => (
-              <Input
-                label="Nombre"
-                placeholder={doctor?.nombre ?? authUser?.nombre ?? 'Nombre (API o usuario logueado)'}
-                error={errors.nombre?.message}
-                {...field}
-                required
-              />
-            )}
-          />
-          <Controller
             name="apellido_paterno"
             control={control}
             render={({ field }) => (
               <Input
                 label="Apellido paterno"
-                placeholder={doctor?.apellido_paterno ?? authUser?.apellido_paterno ?? 'Apellido paterno (API o usuario logueado)'}
+                placeholder={doctor?.apellido_paterno ?? authUser?.apellido_paterno ?? 'Ej. González'}
                 error={errors.apellido_paterno?.message}
                 {...field}
                 required
@@ -191,9 +178,22 @@ export default function EditarDoctor() {
             render={({ field }) => (
               <Input
                 label="Apellido materno"
-                placeholder={doctor?.apellido_materno ?? 'Apellido materno (API)'}
+                placeholder={doctor?.apellido_materno ?? 'Ej. Morales'}
                 error={errors.apellido_materno?.message}
                 {...field}
+              />
+            )}
+          />
+          <Controller
+            name="nombre"
+            control={control}
+            render={({ field }) => (
+              <Input
+                label="Nombre"
+                placeholder={doctor?.nombre ?? authUser?.nombre ?? 'Ej. José'}
+                error={errors.nombre?.message}
+                {...field}
+                required
               />
             )}
           />

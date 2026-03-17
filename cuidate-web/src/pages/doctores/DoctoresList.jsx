@@ -8,15 +8,14 @@ import { PageHeader, SearchFilterBar } from '../../components/shared';
 import { Badge } from '../../components/ui';
 import { useAuthStore } from '../../stores/authStore';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { formatNombreCompleto } from '../../utils/format';
 import { STORAGE_KEYS, PAGE_SIZE_DEFAULT } from '../../utils/constants';
 
 const COLUMNS = [
   {
     key: 'nombre_completo',
     label: 'Nombre',
-    render: (row) => sanitizeForDisplay(
-      [row.nombre, row.apellido_paterno, row.apellido_materno].filter(Boolean).join(' ')
-    ) || '—',
+    render: (row) => sanitizeForDisplay(formatNombreCompleto(row)) || '—',
   },
   { key: 'email', label: 'Email', render: (row) => sanitizeForDisplay(row.email) || '—' },
   { key: 'modulo_nombre', label: 'Módulo', render: (row) => sanitizeForDisplay(row.modulo_nombre) || '—' },

@@ -31,6 +31,7 @@ import { validateCita, validateSignosVitales } from '../../utils/citaValidator';
 import { generarDatosSignosVitales, generarDatosDiagnostico, generarDatosCita } from '../../services/testDataService';
 import { canExecute } from '../../utils/validation';
 import { ESTADOS_CITA, COLORES } from '../../utils/constantes';
+import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 import { downloadFile, downloadAndOpenFile, downloadCSV, downloadPDF } from '../../utils/fileDownloader';
 import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
@@ -728,7 +729,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
     // Si viene con Doctors array
     if (paciente.Doctors && paciente.Doctors.length > 0) {
       const doctor = paciente.Doctors[0];
-      return `${doctor.nombre} ${doctor.apellido_paterno} ${doctor.apellido_materno || ''}`.trim();
+      return formatNombreCompleto(doctor);
     }
     
     // Si viene con doctor_asignado
@@ -825,12 +826,12 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const nombresDoctoresAsignados = useMemo(() => {
     if (doctoresPaciente && doctoresPaciente.length > 0) {
       return doctoresPaciente.map(d => 
-        d.nombre_completo || `${d.nombre || ''} ${d.apellido_paterno || ''} ${d.apellido_materno || ''}`.trim()
+        d.nombre_completo || formatNombreCompleto(d)
       ).filter(Boolean);
     }
     if (paciente?.Doctors && paciente.Doctors.length > 0) {
       return paciente.Doctors.map(d =>
-        `${d.nombre || ''} ${d.apellido_paterno || ''} ${d.apellido_materno || ''}`.trim()
+        formatNombreCompleto(d)
       ).filter(Boolean);
     }
     const uno = obtenerDoctorAsignado();
@@ -3105,7 +3106,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
     }
 
     const doctorId = doctor.id_doctor || doctor.id;
-    const doctorNombre = doctor.nombre_completo || `${doctor.nombre} ${doctor.apellido_paterno}`.trim();
+    const doctorNombre = doctor.nombre_completo || formatNombreCompleto(doctor);
 
     Alert.alert(
       'Desasignar Doctor',
@@ -3153,7 +3154,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
       return;
     }
     
-    const nombreCompleto = `${paciente.nombre} ${paciente.apellido_paterno} ${paciente.apellido_materno || ''}`.trim();
+    const nombreCompleto = formatNombreCompleto(paciente);
     
     Alert.alert(
       'Eliminar Paciente',
@@ -3204,7 +3205,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
       return;
     }
     
-    const nombreCompleto = `${paciente.nombre} ${paciente.apellido_paterno} ${paciente.apellido_materno || ''}`.trim();
+    const nombreCompleto = formatNombreCompleto(paciente);
     const accion = paciente.activo ? 'desactivar' : 'activar';
     const nuevoEstado = !paciente.activo;
     
@@ -5802,7 +5803,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                   
                   {citaDetalle.Doctor && (
                     <Text style={styles.modalListItemSubtitle}>
-                      Dr. {citaDetalle.Doctor.nombre} {citaDetalle.Doctor.apellido_paterno || ''}
+                      Dr. {formatNombreCompleto(citaDetalle.Doctor)}
                     </Text>
                   )}
                   
@@ -6150,7 +6151,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       ? (() => {
                           const doc = doctoresList?.find(d => d.id_doctor === formDataCita.id_doctor || d.id_doctor === Number(formDataCita.id_doctor));
                           if (!doc) return 'Doctor seleccionado';
-                          const nombreCompleto = `${doc.nombre} ${doc.apellido_paterno || ''} ${doc.apellido_materno || ''}`.trim();
+                          const nombreCompleto = formatNombreCompleto(doc);
                           const modulo = doc.Modulo?.nombre_modulo || doc.modulo || '';
                           return modulo ? `${nombreCompleto} - ${modulo}` : nombreCompleto;
                         })()
@@ -6191,7 +6192,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         .map((doctor) => {
                           const isSelected = formDataCita.id_doctor === doctor.id_doctor || 
                                              Number(formDataCita.id_doctor) === doctor.id_doctor;
-                          const nombreCompleto = `${doctor.nombre} ${doctor.apellido_paterno || ''} ${doctor.apellido_materno || ''}`.trim();
+                          const nombreCompleto = formatNombreCompleto(doctor);
                           const modulo = doctor.Modulo?.nombre_modulo || doctor.modulo || '';
                           return (
                             <TouchableOpacity
@@ -6603,7 +6604,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                             styles.doctorChipText,
                             formDataConsultaCompleta.cita.id_doctor === String(doctor.id_doctor) && styles.doctorChipTextActive
                           ]}>
-                            {doctor.nombre} {doctor.apellido_paterno || ''}
+                            {formatNombreCompleto(doctor)}
                           </Text>
                         </TouchableOpacity>
                       ))}
@@ -7908,7 +7909,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
               )}
               {det.Doctor && (
                 <Text style={styles.listItemNotes}>
-                  Doctor: {`${det.Doctor.nombre || ''} ${det.Doctor.apellido_paterno || ''}`.trim()}
+                  Doctor: {formatNombreCompleto(det.Doctor)}
                 </Text>
               )}
               {det.exploracion_pies || det.exploracion_fondo_ojo ? (
@@ -8994,7 +8995,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
             <Card.Content>
               <View style={styles.listItemHeader}>
                 <Text style={styles.listItemTitle}>
-                  {doctor.nombre_completo || `${doctor.nombre} ${doctor.apellido_paterno}`.trim()}
+                  {doctor.nombre_completo || formatNombreCompleto(doctor)}
                 </Text>
                 <Chip 
                   mode="outlined" 
@@ -9092,7 +9093,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                     {formDataDoctor.id_doctor
                       ? (() => {
                           const doc = doctoresList?.find(d => (d.id_doctor || d.id) === formDataDoctor.id_doctor || Number(formDataDoctor.id_doctor) === (d.id_doctor || d.id));
-                          return doc ? `${doc.nombre} ${doc.apellido_paterno || ''}`.trim() : 'Doctor seleccionado';
+                          return doc ? formatNombreCompleto(doc) : 'Doctor seleccionado';
                         })()
                       : 'Seleccionar doctor'}
                   </Text>
@@ -9105,7 +9106,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                     <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
                       {doctoresList && doctoresList.map((doctor) => {
                         const isSelected = formDataDoctor.id_doctor === (doctor.id_doctor || doctor.id) || Number(formDataDoctor.id_doctor) === (doctor.id_doctor || doctor.id);
-                        const nombreCompleto = `${doctor.nombre} ${doctor.apellido_paterno || ''}`.trim();
+                        const nombreCompleto = formatNombreCompleto(doctor);
                         return (
                           <TouchableOpacity
                             key={doctor.id_doctor || doctor.id}
@@ -9201,7 +9202,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                   <Card style={{ marginBottom: 15 }}>
                     <Card.Content>
                       <Text style={styles.listItemTitle}>
-                        {doctorSeleccionado.nombre_completo || `${doctorSeleccionado.nombre} ${doctorSeleccionado.apellido_paterno}`.trim()}
+                        {doctorSeleccionado.nombre_completo || formatNombreCompleto(doctorSeleccionado)}
                       </Text>
                       {doctorSeleccionado.fecha_asignacion && (
                         <Text style={styles.listItemSubtitle}>
@@ -9236,7 +9237,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                         styles.doctorChipText,
                         formDataDoctor.id_doctor === (doctor.id_doctor || doctor.id) && styles.doctorChipTextActive
                       ]}>
-                        {`${doctor.nombre} ${doctor.apellido_paterno}`.trim()}
+                        {formatNombreCompleto(doctor)}
                       </Text>
                     </TouchableOpacity>
                   ))}

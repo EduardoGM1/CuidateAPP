@@ -2,7 +2,7 @@ import Modal from '../ui/Modal';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
-import { formatDateTime } from '../../utils/format';
+import { formatDateTime, formatNombreCompleto } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { getCamposFueraDeRango, getPresionValueStyle, getIMCValueStyle } from '../../utils/vitalSignsRanges';
 
@@ -75,7 +75,7 @@ export default function DetalleCitaModal({
             </div>
             {citaDetalle.Doctor && (
               <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
-                Dr. {sanitizeForDisplay(citaDetalle.Doctor.nombre)} {sanitizeForDisplay(citaDetalle.Doctor.apellido_paterno || '')}
+                Dr. {sanitizeForDisplay(formatNombreCompleto(citaDetalle.Doctor))}
               </p>
             )}
             {citaDetalle.motivo && (

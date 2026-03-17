@@ -25,6 +25,7 @@ import { useAuth } from '../../context/AuthContext';
 // Servicios
 import Logger from '../../services/logger';
 import { COLORES } from '../../utils/constantes';
+import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 
 /**
  * Pantalla para editar un paciente existente
@@ -262,7 +263,7 @@ const EditarPaciente = () => {
             <View style={styles.infoText}>
               <Text style={styles.infoTitle}>Editar Paciente</Text>
               <Text style={styles.infoDescription}>
-                Modifica la información del paciente {paciente.nombre} {paciente.apellido_paterno}.
+                Modifica la información del paciente {formatNombreCompleto(paciente)}.
               </Text>
             </View>
           </View>

@@ -3,6 +3,7 @@ import { dashboardService } from '../api/dashboardService';
 import Logger from '../services/logger';
 import { useAuth } from '../context/AuthContext';
 import { formatRelativeTime, formatDate } from '../utils/dateUtils';
+import { formatNombreCompleto } from '../utils/formatNombreCompleto';
 
 // Hook para datos del dashboard administrativo
 export const useAdminDashboard = () => {
@@ -114,7 +115,7 @@ export const useAdminDashboard = () => {
         alertasFormateadas.push({
           id: `critico_${alert.nombre}_${alert.fecha_medicion}_${index}`,
           type: 'symptom',
-          message: `${alert.nombre} ${alert.apellido_paterno} - ${alert.tipo_alerta}`,
+          message: `${formatNombreCompleto(alert)} - ${alert.tipo_alerta}`,
           time: formatRelativeTime(alert.fecha_medicion),
           priority: 'high',
           fecha: alert.fecha_medicion,

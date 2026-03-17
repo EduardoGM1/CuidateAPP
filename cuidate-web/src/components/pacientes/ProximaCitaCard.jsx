@@ -1,5 +1,5 @@
 import { Card, Button, Badge } from '../ui';
-import { formatDateTime } from '../../utils/format';
+import { formatDateTime, formatNombreCompleto } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 
 /**
@@ -32,11 +32,7 @@ export default function ProximaCitaCard({ citas = [], onVerCita, onVerTodas }) {
 
   const doctorNombre =
     seleccionada.doctor_nombre ||
-    sanitizeForDisplay(
-      [seleccionada.Doctor?.nombre, seleccionada.Doctor?.apellido_paterno, seleccionada.Doctor?.apellido_materno]
-        .filter(Boolean)
-        .join(' ')
-    ) ||
+    sanitizeForDisplay(formatNombreCompleto(seleccionada.Doctor)) ||
     '—';
 
   const estado = (seleccionada.estado || '').toLowerCase();

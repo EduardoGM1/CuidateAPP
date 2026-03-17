@@ -30,6 +30,7 @@ import { PageHeader } from '../../components/shared';
 import { Card, Button, Input, Select, LoadingSpinner } from '../../components/ui';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { formatNombreCompleto } from '../../utils/format';
 
 const OPCIONES_SEXO = [{ value: '', label: '—' }, { value: 'Hombre', label: 'Hombre' }, { value: 'Mujer', label: 'Mujer' }, { value: 'Otro', label: 'Otro' }];
 
@@ -320,24 +321,24 @@ export default function EditarPaciente() {
             <p style={{ margin: '0 0 1rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{submitError}</p>
           )}
           <Controller
-            name="nombre"
-            control={control}
-            render={({ field }) => (
-              <Input label="Nombre" placeholder="Ej. Juan" error={errors.nombre?.message} {...field} required />
-            )}
-          />
-          <Controller
             name="apellido_paterno"
             control={control}
             render={({ field }) => (
-              <Input label="Apellido paterno" placeholder="Ej. García" error={errors.apellido_paterno?.message} {...field} required />
+              <Input label="Apellido paterno" placeholder="Ej. González" error={errors.apellido_paterno?.message} {...field} required />
             )}
           />
           <Controller
             name="apellido_materno"
             control={control}
             render={({ field }) => (
-              <Input label="Apellido materno" placeholder="Ej. López" error={errors.apellido_materno?.message} {...field} />
+              <Input label="Apellido materno" placeholder="Ej. Morales" error={errors.apellido_materno?.message} {...field} />
+            )}
+          />
+          <Controller
+            name="nombre"
+            control={control}
+            render={({ field }) => (
+              <Input label="Nombre" placeholder="Ej. José" error={errors.nombre?.message} {...field} required />
             )}
           />
           <Controller
@@ -517,12 +518,7 @@ export default function EditarPaciente() {
                     { value: '', label: '— Seleccionar doctor —' },
                     ...doctores.map((d) => ({
                       value: String(d.id_doctor ?? d.id),
-                      label:
-                        sanitizeForDisplay(
-                          [d.nombre, d.apellido_paterno, d.apellido_materno]
-                            .filter(Boolean)
-                            .join(' '),
-                        ) || '—',
+                      label: sanitizeForDisplay(formatNombreCompleto(d)) || '—',
                     })),
                   ]}
                 />

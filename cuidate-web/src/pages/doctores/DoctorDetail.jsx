@@ -30,7 +30,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useCurrentDoctorId } from '../../hooks/useCurrentDoctorId';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
-import { formatDate, formatDateTime } from '../../utils/format';
+import { formatDate, formatDateTime, formatNombreCompleto } from '../../utils/format';
 
 const ESTADO_CITA = {
   pendiente: 'Pendiente',
@@ -50,10 +50,7 @@ const BADGE_ESTADO = {
 
 function getNombrePaciente(paciente) {
   if (!paciente) return 'Paciente';
-  const n = paciente.nombre ?? '';
-  const a = paciente.apellido ?? paciente.apellido_paterno ?? '';
-  const a2 = paciente.apellido_materno ?? '';
-  return [n, a, a2].filter(Boolean).join(' ').trim() || 'Paciente';
+  return formatNombreCompleto(paciente) || 'Paciente';
 }
 
 function getNombreCita(cita) {
@@ -340,7 +337,7 @@ export default function DoctorDetail() {
     if (!searchPacientesQuery?.trim()) return pacientesAsignados;
     const q = searchPacientesQuery.toLowerCase();
     return pacientesAsignados.filter((p) => {
-      const nombre = `${p.nombre ?? ''} ${p.apellido ?? p.apellido_paterno ?? ''} ${p.apellido_materno ?? ''}`.toLowerCase();
+      const nombre = formatNombreCompleto(p).toLowerCase();
       return nombre.includes(q);
     });
   }, [pacientesAsignados, searchPacientesQuery]);
@@ -375,7 +372,7 @@ export default function DoctorDetail() {
   }
 
   const d = doctor;
-  const nombreCompleto = [d.nombre, d.apellido_paterno, d.apellido_materno].filter(Boolean).join(' ') || '—';
+  const nombreCompleto = formatNombreCompleto(d) || '—';
   const activo = d.activo !== false;
 
   const infoItems = [
@@ -529,7 +526,7 @@ export default function DoctorDetail() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {filteredPacientes.map((p) => {
                 const pid = p.id_paciente ?? p.id;
-                const nombre = [p.nombre, p.apellido ?? p.apellido_paterno, p.apellido_materno].filter(Boolean).join(' ');
+                const nombre = formatNombreCompleto(p);
                 return (
                   <div
                     key={pid}
@@ -780,7 +777,7 @@ export default function DoctorDetail() {
           const q = asignarModalSearch?.trim().toLowerCase() || '';
           const filtered = q
             ? availablePatients.filter((p) => {
-                const nombre = [p.nombre, p.apellido_paterno, p.apellido_materno].filter(Boolean).join(' ').toLowerCase();
+                const nombre = formatNombreCompleto(p).toLowerCase();
                 const edadStr = p.edad != null ? String(p.edad) : '';
                 return nombre.includes(q) || edadStr.includes(q);
               })
@@ -791,7 +788,7 @@ export default function DoctorDetail() {
           <div style={{ maxHeight: 360, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {filtered.map((p) => {
               const pid = p.id_paciente ?? p.id;
-              const nombre = [p.nombre, p.apellido_paterno, p.apellido_materno].filter(Boolean).join(' ');
+              const nombre = formatNombreCompleto(p);
               return (
                 <div
                   key={pid}

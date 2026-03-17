@@ -1,7 +1,22 @@
 /**
- * Formateo de fechas y números para mostrar en UI.
+ * Formateo de fechas, números y nombres para mostrar en UI.
  * Fechas en formato dd/mmm/yyyy (mes abreviado en español).
+ * Nombre completo en orden: Apellido paterno + Apellido materno + Nombre (ej. "González Morales José").
  */
+
+/**
+ * Devuelve el nombre completo en formato "Apellido paterno Apellido materno Nombre".
+ * @param {Object} obj - Objeto con apellido_paterno, apellido_materno, nombre (o apellido como alias de apellido_paterno).
+ * @returns {string} Ej. "González Morales José", o string vacío si no hay datos.
+ */
+export function formatNombreCompleto(obj) {
+  if (obj == null || typeof obj !== 'object') return '';
+  const ap = (obj.apellido_paterno ?? obj.apellido ?? '').trim();
+  const am = (obj.apellido_materno ?? '').trim();
+  const n = (obj.nombre ?? '').trim();
+  const parts = [ap, am, n].filter(Boolean);
+  return parts.join(' ') || '';
+}
 
 const MESES_ABREV = [
   'ene', 'feb', 'mar', 'abr', 'may', 'jun',

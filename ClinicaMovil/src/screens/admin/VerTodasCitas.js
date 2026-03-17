@@ -22,6 +22,7 @@ import { useDoctores, usePacientes, useModulos } from '../../hooks/useGestion';
 import { formatDateTime } from '../../utils/dateUtils';
 import { gestionService } from '../../api/gestionService';
 import { ESTADOS_CITA, COLORES, NETWORK_STAGGER, getDisplayMotivo } from '../../utils/constantes';
+import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 import DateTimePickerButton from '../../components/DateTimePickerButton';
 import CompletarCitaWizard from '../../components/CompletarCitaWizard';
 import DetalleCitaModal from '../../components/DetalleCitaModal/DetalleCitaModal';
@@ -112,11 +113,11 @@ const VerTodasCitas = ({ navigation }) => {
             id: citaData.id_cita,
             id_paciente: citaData.id_paciente || citaData.Paciente?.id_paciente,
             id_doctor: citaData.id_doctor || citaData.Doctor?.id_doctor,
-            paciente_nombre: citaData.Paciente 
-              ? `${citaData.Paciente.nombre} ${citaData.Paciente.apellido_paterno || ''} ${citaData.Paciente.apellido_materno || ''}`.trim()
+            paciente_nombre: citaData.Paciente
+              ? (formatNombreCompleto(citaData.Paciente) || citaData.paciente_nombre)
               : citaData.paciente_nombre || 'Paciente no disponible',
             doctor_nombre: citaData.Doctor
-              ? `${citaData.Doctor.nombre} ${citaData.Doctor.apellido_paterno || ''} ${citaData.Doctor.apellido_materno || ''}`.trim()
+              ? (formatNombreCompleto(citaData.Doctor) || citaData.doctor_nombre)
               : citaData.doctor_nombre || 'Doctor no disponible',
             fecha_cita: citaData.fecha_cita,
             estado: citaData.estado,
@@ -588,7 +589,7 @@ const VerTodasCitas = ({ navigation }) => {
                   <Text>Doctor: {(() => {
                     const doc = doctores.find(d => d.id_doctor === filterDoctor);
                     if (!doc) return 'ID ' + filterDoctor;
-                    return `${doc.nombre} ${doc.apellido_paterno || ''}`.trim();
+                    return formatNombreCompleto(doc) || '—';
                   })()}</Text>
                 </Chip>
               )}
@@ -982,7 +983,7 @@ const VerTodasCitas = ({ navigation }) => {
                         ? (() => {
                             const doc = doctores.find(d => d.id_doctor === filterDoctor);
                             if (!doc) return 'Doctor seleccionado';
-                            const nombreCompleto = `${doc.nombre} ${doc.apellido_paterno || ''} ${doc.apellido_materno || ''}`.trim();
+                            const nombreCompleto = formatNombreCompleto(doc);
                             const modulo = doc.Modulo?.nombre_modulo || doc.modulo || '';
                             return modulo ? `${nombreCompleto} - ${modulo}` : nombreCompleto;
                           })()
@@ -1013,7 +1014,7 @@ const VerTodasCitas = ({ navigation }) => {
                           </Text>
                         </TouchableOpacity>
                         {doctores.map((doctor) => {
-                          const nombreCompleto = `${doctor.nombre} ${doctor.apellido_paterno || ''} ${doctor.apellido_materno || ''}`.trim();
+                          const nombreCompleto = formatNombreCompleto(doctor);
                           const modulo = doctor.Modulo?.nombre_modulo || doctor.modulo || '';
                           return (
                             <TouchableOpacity

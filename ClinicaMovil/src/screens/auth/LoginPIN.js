@@ -17,6 +17,7 @@ import { validationService } from '../../services/validationService';
 import { useAuth } from '../../context/AuthContext';
 import { sanitizePatientId } from '../../utils/patientIdValidator';
 import { COLORES } from '../../utils/constantes';
+import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 
 const { width, height } = Dimensions.get('window');
 
@@ -153,8 +154,7 @@ const LoginPIN = ({ navigation, route }) => {
           id: pacienteInfo.id || pacienteInfo.id_paciente,
           id_paciente: pacienteInfo.id_paciente || pacienteInfo.id,
           // Asegurar que nombre_completo esté disponible
-          nombre_completo: pacienteInfo.nombre_completo || 
-                          `${pacienteInfo.nombre || ''} ${pacienteInfo.apellido_paterno || ''} ${pacienteInfo.apellido_materno || ''}`.trim()
+          nombre_completo: pacienteInfo.nombre_completo || formatNombreCompleto(pacienteInfo)
         };
         
         Logger.debug('Datos del paciente preparados para contexto', {

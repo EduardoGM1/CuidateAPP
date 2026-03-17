@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { formatRelativeTime } from '../../utils/dateUtils';
+import { formatNombreCompleto, inicialesDesdeNombreCompleto } from '../../utils/formatNombreCompleto';
 import Logger from '../../services/logger';
 
 /**
@@ -17,15 +18,8 @@ import Logger from '../../services/logger';
 const ListChatItem = ({ conversacion, onPress }) => {
   const { paciente, ultimo_mensaje, mensajes_no_leidos, ultima_fecha } = conversacion;
 
-  // Obtener iniciales del paciente para el avatar
-  const obtenerIniciales = (nombre, apellido) => {
-    const inicialNombre = nombre ? nombre.charAt(0).toUpperCase() : '';
-    const inicialApellido = apellido ? apellido.charAt(0).toUpperCase() : '';
-    return `${inicialNombre}${inicialApellido}` || '?';
-  };
-
-  const iniciales = obtenerIniciales(paciente.nombre, paciente.apellido_paterno);
-  const nombreCompleto = paciente.nombre_completo || `${paciente.nombre} ${paciente.apellido_paterno}`.trim();
+  const iniciales = inicialesDesdeNombreCompleto(paciente);
+  const nombreCompleto = paciente.nombre_completo || formatNombreCompleto(paciente) || '';
   const previewMensaje = ultimo_mensaje?.preview || 'Sin mensajes';
   
   // Asegurar que mensajes_no_leidos sea un número válido

@@ -7,7 +7,7 @@ import { connect, on, off } from '../../api/socket';
 import { PageHeader } from '../../components/shared';
 import { STORAGE_KEYS } from '../../utils/constants';
 import { Card, LoadingSpinner, EmptyState, Badge } from '../../components/ui';
-import { formatDateTime } from '../../utils/format';
+import { formatDateTime, formatNombreCompleto } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 
 export default function ChatList() {
@@ -73,7 +73,7 @@ export default function ChatList() {
   const filtro = (filterNombre || '').trim().toLowerCase();
   const listFiltrada = filtro
     ? list.filter((c) => {
-        const nombre = (c.paciente?.nombre_completo ?? c.paciente_nombre ?? [c.nombre, c.apellido_paterno, c.apellido_materno].filter(Boolean).join(' ')) || '';
+        const nombre = (c.paciente?.nombre_completo ?? c.paciente_nombre ?? formatNombreCompleto(c.paciente || c)) || '';
         return nombre.toLowerCase().includes(filtro);
       })
     : list;
@@ -118,7 +118,7 @@ export default function ChatList() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {listFiltrada.map((c) => {
             const pid = c.id_paciente ?? c.paciente_id;
-            const nombre = (c.paciente?.nombre_completo ?? c.paciente_nombre ?? [c.nombre, c.apellido_paterno, c.apellido_materno].filter(Boolean).join(' ')) || 'Paciente';
+            const nombre = (c.paciente?.nombre_completo ?? c.paciente_nombre ?? formatNombreCompleto(c.paciente || c)) || 'Paciente';
             const preview = c.ultimo_mensaje?.preview ?? c.preview_mensaje;
             const fecha = c.ultimo_mensaje?.fecha_envio ?? c.ultima_fecha ?? c.ultimo_mensaje_fecha;
             return (

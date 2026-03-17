@@ -7,7 +7,7 @@ import { getConversacion, createMensaje, marcarConversacionLeida, marcarMensajeC
 import { connect, on, off } from '../../api/socket';
 import { PageHeader } from '../../components/shared';
 import { Button, Input, LoadingSpinner, EmptyState } from '../../components/ui';
-import { formatDateTime } from '../../utils/format';
+import { formatDateTime, formatNombreCompleto } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { parsePositiveInt } from '../../utils/params';
 import { STORAGE_KEYS } from '../../utils/constants';
@@ -176,9 +176,7 @@ export default function ChatConversacion() {
     );
   }
 
-  const nombrePaciente = paciente
-    ? [paciente.nombre, paciente.apellido_paterno, paciente.apellido_materno].filter(Boolean).join(' ')
-    : `Paciente #${pacienteId}`;
+  const nombrePaciente = paciente ? (formatNombreCompleto(paciente) || `Paciente #${pacienteId}`) : `Paciente #${pacienteId}`;
 
   return (
     <div className="chat-conversacion">

@@ -71,7 +71,7 @@ import { getVacunas } from '../../api/vacunas';
 import { getComorbilidades } from '../../api/comorbilidades';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
-import { formatDate, formatDateTime } from '../../utils/format';
+import { formatDate, formatDateTime, formatNombreCompleto } from '../../utils/format';
 import { openHTMLInNewWindow } from '../../utils/reportUtils';
 import {
   BarChart,
@@ -685,7 +685,7 @@ export default function PacienteDetail() {
   }
 
   const p = paciente;
-  const nombreCompleto = [p.nombre, p.apellido_paterno, p.apellido_materno].filter(Boolean).join(' ') || '—';
+  const nombreCompleto = formatNombreCompleto(p) || '—';
 
   const renderTabContent = (tabId) => {
     if (!tabId) return null;
@@ -918,7 +918,7 @@ export default function PacienteDetail() {
                   onChange={(v) => setCitaForm((f) => ({ ...f, id_doctor: v ?? '' }))}
                   options={citaDoctores.map((d) => ({
                     value: String(d.id_doctor),
-                    label: [d.nombre, d.apellido_paterno, d.apellido_materno].filter(Boolean).join(' '),
+                    label: formatNombreCompleto(d),
                   }))}
                 />
                 <Input
@@ -3128,11 +3128,7 @@ export default function PacienteDetail() {
                       ...doctoresDisponibles.map((doc) => ({
                         value: String(doc.id_doctor),
                         label:
-                          sanitizeForDisplay(
-                            [doc.nombre, doc.apellido_paterno, doc.apellido_materno]
-                              .filter(Boolean)
-                              .join(' '),
-                          ) || String(doc.id_doctor),
+                          sanitizeForDisplay(formatNombreCompleto(doc)) || String(doc.id_doctor),
                       })),
                     ]}
                     style={{ marginBottom: 0 }}
@@ -3155,7 +3151,12 @@ export default function PacienteDetail() {
     }
   };
 
-  const initials = [p.nombre, p.apellido_paterno].filter(Boolean).map((x) => (x || '').charAt(0)).join('').toUpperCase().slice(0, 2) || '?';
+  const initials = (() => {
+    const full = formatNombreCompleto(p);
+    if (!full) return '?';
+    const parts = full.split(/\s+/).filter(Boolean);
+    return parts.slice(0, 2).map((x) => (x || '').charAt(0)).join('').toUpperCase() || '?';
+  })();
 
   return (
     <div className="patient-detail-page">

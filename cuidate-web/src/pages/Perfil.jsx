@@ -204,25 +204,12 @@ export default function Perfil() {
                 )}
               />
               <Controller
-                name="nombre"
-                control={perfilForm.control}
-                render={({ field }) => (
-                  <Input
-                    label="Nombre"
-                    placeholder={doctor?.nombre ?? user?.nombre ?? 'Nombre (API o usuario logueado)'}
-                    error={perfilForm.formState.errors.nombre?.message}
-                    {...field}
-                    required
-                  />
-                )}
-              />
-              <Controller
                 name="apellido_paterno"
                 control={perfilForm.control}
                 render={({ field }) => (
                   <Input
                     label="Apellido paterno"
-                    placeholder={doctor?.apellido_paterno ?? user?.apellido_paterno ?? 'Apellido paterno (API o usuario logueado)'}
+                    placeholder={doctor?.apellido_paterno ?? user?.apellido_paterno ?? 'Ej. González'}
                     error={perfilForm.formState.errors.apellido_paterno?.message}
                     {...field}
                     required
@@ -235,9 +222,22 @@ export default function Perfil() {
                 render={({ field }) => (
                   <Input
                     label="Apellido materno"
-                    placeholder={doctor?.apellido_materno ?? 'Apellido materno (API)'}
+                    placeholder={doctor?.apellido_materno ?? 'Ej. Morales'}
                     error={perfilForm.formState.errors.apellido_materno?.message}
                     {...field}
+                  />
+                )}
+              />
+              <Controller
+                name="nombre"
+                control={perfilForm.control}
+                render={({ field }) => (
+                  <Input
+                    label="Nombre"
+                    placeholder={doctor?.nombre ?? user?.nombre ?? 'Ej. José'}
+                    error={perfilForm.formState.errors.nombre?.message}
+                    {...field}
+                    required
                   />
                 )}
               />

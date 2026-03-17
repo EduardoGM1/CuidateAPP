@@ -172,24 +172,24 @@ export default function AgregarDoctor() {
             </p>
           )}
           <Controller
-            name="nombre"
-            control={control}
-            render={({ field }) => (
-              <Input label="Nombre" error={errors.nombre?.message} {...field} required />
-            )}
-          />
-          <Controller
             name="apellido_paterno"
             control={control}
             render={({ field }) => (
-              <Input label="Apellido paterno" error={errors.apellido_paterno?.message} {...field} required />
+              <Input label="Apellido paterno" placeholder="Ej. González" error={errors.apellido_paterno?.message} {...field} required />
             )}
           />
           <Controller
             name="apellido_materno"
             control={control}
             render={({ field }) => (
-              <Input label="Apellido materno" error={errors.apellido_materno?.message} {...field} />
+              <Input label="Apellido materno" placeholder="Ej. Morales" error={errors.apellido_materno?.message} {...field} />
+            )}
+          />
+          <Controller
+            name="nombre"
+            control={control}
+            render={({ field }) => (
+              <Input label="Nombre" placeholder="Ej. José" error={errors.nombre?.message} {...field} required />
             )}
           />
           <Controller

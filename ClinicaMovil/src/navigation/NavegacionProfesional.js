@@ -6,6 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import Logger from '../services/logger';
 import { COLORES } from '../utils/constantes';
+import { formatNombreCompleto } from '../utils/formatNombreCompleto';
 import useConversacionesDoctor from '../hooks/useConversacionesDoctor';
 import DashboardAdmin from '../screens/admin/DashboardAdmin';
 import DashboardDoctor from '../screens/doctor/DashboardDoctor';
@@ -85,7 +86,7 @@ const PerfilScreen = ({ navigation }) => {
                 <>
                   <Text style={styles.userInfoLabel}>Nombre:</Text>
                   <Text style={styles.userInfoValue}>
-                    {userData.nombre} {userData.apellido_paterno || ''} {userData.apellido_materno || ''}
+                    {formatNombreCompleto(userData)}
                   </Text>
                 </>
               )}

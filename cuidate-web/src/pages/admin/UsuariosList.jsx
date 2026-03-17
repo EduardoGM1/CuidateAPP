@@ -246,24 +246,24 @@ export default function UsuariosList() {
           {newUserRol === ROLES.DOCTOR && (
             <>
               <Controller
-                name="nombre"
-                control={newUserControl}
-                render={({ field }) => (
-                  <Input label="Nombre" error={newUserErrors.nombre?.message} {...field} required />
-                )}
-              />
-              <Controller
                 name="apellido_paterno"
                 control={newUserControl}
                 render={({ field }) => (
-                  <Input label="Apellido paterno" error={newUserErrors.apellido_paterno?.message} {...field} required />
+                  <Input label="Apellido paterno" placeholder="Ej. González" error={newUserErrors.apellido_paterno?.message} {...field} required />
                 )}
               />
               <Controller
                 name="apellido_materno"
                 control={newUserControl}
                 render={({ field }) => (
-                  <Input label="Apellido materno" error={newUserErrors.apellido_materno?.message} {...field} />
+                  <Input label="Apellido materno" placeholder="Ej. Morales" error={newUserErrors.apellido_materno?.message} {...field} />
+                )}
+              />
+              <Controller
+                name="nombre"
+                control={newUserControl}
+                render={({ field }) => (
+                  <Input label="Nombre" placeholder="Ej. José" error={newUserErrors.nombre?.message} {...field} required />
                 )}
               />
               <Controller

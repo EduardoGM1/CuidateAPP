@@ -27,6 +27,7 @@ import { useAdminDashboard } from '../../hooks/useDashboard';
 import { usePacientes, useDoctores, useModulos } from '../../hooks/useGestion';
 import gestionService from '../../api/gestionService';
 import { generatePdfFromHtml } from '../../utils/fileDownloader';
+import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 import FileViewer from 'react-native-file-viewer';
 import ModalBase from '../../components/DetallePaciente/shared/ModalBase';
 import RangoMesesSelector from '../../components/forms/RangoMesesSelector';
@@ -157,7 +158,7 @@ const ReportesAdmin = ({ navigation }) => {
       const doctoresMap = {};
       
       doctores?.forEach(doctor => {
-        doctoresMap[doctor.id_doctor] = `${doctor.nombre} ${doctor.apellido_paterno || ''}`.trim();
+        doctoresMap[doctor.id_doctor] = formatNombreCompleto(doctor);
         pacientesPorDoctorMap[doctor.id_doctor] = 0;
       });
       

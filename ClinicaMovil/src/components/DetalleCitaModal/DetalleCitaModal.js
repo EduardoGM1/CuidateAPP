@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { Title, Chip } from 'react-native-paper';
 import { formatDateTime } from '../../utils/dateUtils';
+import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 import { ESTADOS_CITA, COLORES } from '../../utils/constantes';
 import {
   presionFueraDeRango,
@@ -149,7 +150,7 @@ const DetalleCitaModal = ({
                 
                 {citaDetalle.Doctor && (
                   <Text style={styles.modalListItemSubtitle}>
-                    Dr. {citaDetalle.Doctor.nombre} {citaDetalle.Doctor.apellido_paterno || ''}
+                    Dr. {formatNombreCompleto(citaDetalle.Doctor)}
                   </Text>
                 )}
                 

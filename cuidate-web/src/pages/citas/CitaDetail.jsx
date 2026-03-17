@@ -11,7 +11,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { STORAGE_KEYS } from '../../utils/constants';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
-import { formatDateTime } from '../../utils/format';
+import { formatDateTime, formatNombreCompleto } from '../../utils/format';
 
 const ESTADOS_OPCIONES = [
   { value: 'pendiente', label: 'Pendiente' },
@@ -187,14 +187,8 @@ export default function CitaDetail() {
   }
 
   const c = cita;
-  const pacienteNombre =
-    c.Paciente
-      ? [c.Paciente.nombre, c.Paciente.apellido_paterno, c.Paciente.apellido_materno].filter(Boolean).join(' ')
-      : c.paciente_nombre ?? '—';
-  const doctorNombre =
-    c.Doctor
-      ? [c.Doctor.nombre, c.Doctor.apellido_paterno, c.Doctor.apellido_materno].filter(Boolean).join(' ')
-      : c.doctor_nombre ?? '—';
+  const pacienteNombre = c.Paciente ? (formatNombreCompleto(c.Paciente) || c.paciente_nombre) : c.paciente_nombre ?? '—';
+  const doctorNombre = c.Doctor ? (formatNombreCompleto(c.Doctor) || c.doctor_nombre) : c.doctor_nombre ?? '—';
 
   const items = [
     { label: 'Fecha y hora', value: formatDateTime(c.fecha_cita) },

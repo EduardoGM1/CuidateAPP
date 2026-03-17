@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { gestionService } from '../api/gestionService';
 import Logger from '../services/logger';
+import { formatNombreCompleto } from '../utils/formatNombreCompleto';
 
 // Cache en memoria para los hooks
 const cache = {
@@ -304,7 +305,7 @@ export const usePacientes = (estado = 'activos', sort = 'recent', comorbilidad =
       const pacientesConDoctor = pacientesData.map(paciente => ({
         ...paciente,
         // Usar campos calculados del backend si están disponibles, sino calcular en frontend
-        nombreCompleto: paciente.nombre_completo || `${paciente.nombre} ${paciente.apellido_paterno} ${paciente.apellido_materno || ''}`.trim(),
+        nombreCompleto: paciente.nombre_completo || formatNombreCompleto(paciente),
         doctorNombre: paciente.doctor_nombre || 'Sin doctor asignado',
         edad: paciente.edad || (new Date().getFullYear() - new Date(paciente.fecha_nacimiento).getFullYear())
       }));
@@ -790,7 +791,7 @@ export const usePacientesInfinite = (filters = {}) => {
       // Procesar datos del doctor
       const pacientesConDoctor = pacientesData.map(paciente => ({
         ...paciente,
-        nombreCompleto: paciente.nombre_completo || `${paciente.nombre} ${paciente.apellido_paterno} ${paciente.apellido_materno || ''}`.trim(),
+        nombreCompleto: paciente.nombre_completo || formatNombreCompleto(paciente),
         doctorNombre: paciente.doctor_nombre || 'Sin doctor asignado',
         edad: paciente.edad || (new Date().getFullYear() - new Date(paciente.fecha_nacimiento).getFullYear())
       }));

@@ -25,6 +25,7 @@ import useDebounce from '../../hooks/useDebounce';
 import { COLORES } from '../../utils/constantes';
 import { listActionButtonStyles } from '../../utils/sharedStyles';
 import { formatDate } from '../../utils/dateUtils';
+import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 
 const GestionAdmin = ({ navigation }) => {
   const { userData, userRole } = useAuth();
@@ -392,7 +393,7 @@ const GestionAdmin = ({ navigation }) => {
       fecha_nacimiento: paciente.fecha_nacimiento || new Date().toISOString(),
       activo: paciente.activo !== undefined ? paciente.activo : true,
       // Datos adicionales desde el backend
-      nombre_completo: paciente.nombreCompleto || `${paciente.nombre} ${paciente.apellido_paterno}`.trim(),
+      nombre_completo: paciente.nombreCompleto || formatNombreCompleto(paciente),
       doctorNombre: paciente.doctorNombre || 'Sin doctor asignado',
       edad: paciente.edad,
       institucion_salud: paciente.institucion_salud || 'No especificada'
@@ -432,7 +433,7 @@ const GestionAdmin = ({ navigation }) => {
     }
 
     const pacienteId = paciente.id_paciente || paciente.id || paciente.pacienteId || paciente.paciente_id;
-    const fullName = paciente.nombreCompleto || `${paciente.nombre} ${paciente.apellido_paterno}`.trim() || 'Sin nombre';
+    const fullName = paciente.nombreCompleto || formatNombreCompleto(paciente) || 'Sin nombre';
     
     if (!pacienteId) {
       Logger.error('handleDeletePatient: Paciente sin ID válido', { 
@@ -505,7 +506,7 @@ const GestionAdmin = ({ navigation }) => {
 
     const action = item.activo ? 'desactivar' : 'activar';
     const itemName = type === 'doctor' ? 'doctor' : 'paciente';
-    const fullName = `${item.nombre || 'Sin nombre'} ${item.apellido || ''}`.trim();
+    const fullName = formatNombreCompleto(item) || (item.nombre || 'Sin nombre');
     const itemId = item.id_doctor || item.id_paciente;
     
     if (!itemId) {
@@ -619,7 +620,7 @@ const GestionAdmin = ({ navigation }) => {
 
     Logger.navigation('GestionAdmin', 'ViewDoctor', { 
       doctorId: doctorData.id_doctor,
-      doctorName: `${doctorData.nombre} ${doctorData.apellido}`
+      doctorName: formatNombreCompleto(doctorData)
     });
     
     try {
@@ -682,7 +683,7 @@ const GestionAdmin = ({ navigation }) => {
           <View style={styles.simpleCardHeader}>
             <View style={styles.simpleCardInfo}>
               <Text style={[styles.simpleCardTitle, !safeDoctor.activo && styles.inactiveText]}>
-                {safeDoctor.nombre} {safeDoctor.apellido}
+                {formatNombreCompleto(safeDoctor)}
               </Text>
               <Text style={[styles.simpleCardSubtitle, !safeDoctor.activo && styles.inactiveText]}>
                 {safeDoctor.especialidad}
@@ -723,7 +724,7 @@ const GestionAdmin = ({ navigation }) => {
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleContainer}>
               <Title style={[styles.cardTitle, !paciente.activo && styles.inactiveText]}>
-                {paciente.nombreCompleto || `${paciente.nombre} ${paciente.apellido_paterno}`.trim()}
+                {paciente.nombreCompleto || formatNombreCompleto(paciente)}
               </Title>
               <Text style={[styles.cardSubtitle, !paciente.activo && styles.inactiveText]}>
                 {paciente.sexo === 'Mujer' ? '👩' : '👨'} • {paciente.edad || (new Date().getFullYear() - new Date(paciente.fecha_nacimiento).getFullYear())} años

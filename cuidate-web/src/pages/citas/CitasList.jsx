@@ -8,7 +8,7 @@ import { Table, Button, Badge } from '../../components/ui';
 import { PageHeader, SearchFilterBar, Pagination } from '../../components/shared';
 import { useAuthStore } from '../../stores/authStore';
 import { sanitizeForDisplay } from '../../utils/sanitize';
-import { formatDateTime } from '../../utils/format';
+import { formatDateTime, formatNombreCompleto } from '../../utils/format';
 import { STORAGE_KEYS, PAGE_SIZE_DEFAULT } from '../../utils/constants';
 
 const ESTADO_LABELS = {
@@ -216,9 +216,7 @@ export default function CitasList() {
               { value: '', label: 'Todos' },
               ...doctoresList.map((d) => ({
                 value: String(d.id_doctor ?? d.id ?? ''),
-                label: sanitizeForDisplay(
-                  [d.nombre, d.apellido_paterno, d.apellido_materno].filter(Boolean).join(' ')
-                ) || '—',
+                label: sanitizeForDisplay(formatNombreCompleto(d)) || '—',
               })),
             ],
           },

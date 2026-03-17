@@ -1,6 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { COLORES } from '../../utils/constantes';
+import { formatNombreCompleto, inicialesDesdeNombreCompleto } from '../../utils/formatNombreCompleto';
 
 /**
  * PatientHeader - Header del paciente con información principal
@@ -18,16 +19,9 @@ import { COLORES } from '../../utils/constantes';
 const PatientHeader = ({ paciente, calcularEdad, obtenerDoctorAsignado, nombresDoctoresAsignados, formatearFecha }) => {
   if (!paciente) return null;
 
-  // Memoizar cálculos costosos
-  const iniciales = useMemo(() => 
-    `${paciente.nombre?.charAt(0)?.toUpperCase() || ''}${paciente.apellido_paterno?.charAt(0)?.toUpperCase() || ''}`,
-    [paciente.nombre, paciente.apellido_paterno]
-  );
-  
-  const nombreCompleto = useMemo(() => 
-    `${paciente.nombre} ${paciente.apellido_paterno} ${paciente.apellido_materno || ''}`.trim(),
-    [paciente.nombre, paciente.apellido_paterno, paciente.apellido_materno]
-  );
+  // Memoizar cálculos costosos (orden: Apellido paterno Apellido materno Nombre)
+  const iniciales = useMemo(() => inicialesDesdeNombreCompleto(paciente), [paciente.nombre, paciente.apellido_paterno, paciente.apellido_materno]);
+  const nombreCompleto = useMemo(() => paciente.nombre_completo || formatNombreCompleto(paciente) || '—', [paciente.nombre_completo, paciente.nombre, paciente.apellido_paterno, paciente.apellido_materno]);
   
   const edad = useMemo(() => calcularEdad(paciente.fecha_nacimiento), [paciente.fecha_nacimiento, calcularEdad]);
   

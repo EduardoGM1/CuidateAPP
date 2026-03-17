@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
-import { formatDateTime } from '../../utils/format';
+import { formatDateTime, formatNombreCompleto } from '../../utils/format';
 import { displayText } from '../../utils/sanitize';
 import { getPresionValueStyle, getVitalSignValueStyle } from '../../utils/vitalSignsRanges';
 
@@ -50,7 +50,7 @@ export default function AdminAlertDetailModal({ open, onClose, alerta }) {
   };
 
   if (tipo === 'valor_critico') {
-    const pacienteNombre = alerta.paciente ?? ([alerta.nombre, alerta.apellido_paterno].filter(Boolean).join(' ') || '—');
+    const pacienteNombre = alerta.paciente ?? (formatNombreCompleto(alerta) || '—');
     return (
       <Modal open={open} onClose={onClose} title="Alerta: valor crítico" footer={null} width={460}>
         <div style={sectionStyle}>

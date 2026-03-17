@@ -5,40 +5,26 @@
  * @date 2025-11-19
  */
 
+import { formatNombreCompleto, inicialesDesdeNombreCompleto } from './formatNombreCompleto';
+
 /**
- * Obtener iniciales del paciente
+ * Obtener iniciales del paciente (orden: Apellido paterno, Apellido materno, Nombre)
  * @param {Object} paciente - Objeto con datos del paciente
  * @returns {string} Iniciales del paciente
  */
 export const obtenerIniciales = (paciente) => {
   if (!paciente) return '??';
-  const nombre = paciente.nombre || '';
-  const apellido = paciente.apellido_paterno || paciente.apellido_materno || '';
-  const inicial1 = nombre.charAt(0).toUpperCase() || '';
-  const inicial2 = apellido.charAt(0).toUpperCase() || '';
-  
-  if (inicial1 && inicial2) {
-    return inicial1 + inicial2;
-  } else if (inicial1) {
-    return inicial1 + (nombre.charAt(1) || '').toUpperCase();
-  } else {
-    return '??';
-  }
+  return inicialesDesdeNombreCompleto(paciente);
 };
 
 /**
- * Obtener nombre completo del paciente
+ * Obtener nombre completo del paciente (orden: Apellido paterno Apellido materno Nombre)
  * @param {Object} paciente - Objeto con datos del paciente
  * @returns {string} Nombre completo del paciente
  */
 export const obtenerNombreCompleto = (paciente) => {
   if (!paciente) return 'Paciente';
-  const partes = [
-    paciente.nombre,
-    paciente.apellido_paterno,
-    paciente.apellido_materno
-  ].filter(Boolean);
-  return partes.join(' ') || 'Paciente';
+  return formatNombreCompleto(paciente) || 'Paciente';
 };
 
 /**

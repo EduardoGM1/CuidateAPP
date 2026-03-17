@@ -18,6 +18,7 @@ import { useAdminDashboard } from '../../hooks/useDashboard';
 import { COLORES } from '../../utils/constantes';
 import { modalStyles } from '../../utils/sharedStyles';
 import { formatDateTime, formatDateWithWeekday } from '../../utils/dateUtils';
+import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 import gestionService from '../../api/gestionService';
 import SeveridadBadge from '../../components/common/SeveridadBadge';
 import AlertBanner from '../../components/common/AlertBanner';
@@ -630,7 +631,7 @@ const DashboardAdmin = ({ navigation }) => {
                         <View style={styles.detailRow}>
                           <Text style={styles.detailLabel}>Paciente:</Text>
                           <Text style={styles.detailValue}>
-                            {notificacionSeleccionada.rawData.nombre} {notificacionSeleccionada.rawData.apellido_paterno}
+                            {formatNombreCompleto(notificacionSeleccionada.rawData)}
                           </Text>
                         </View>
 

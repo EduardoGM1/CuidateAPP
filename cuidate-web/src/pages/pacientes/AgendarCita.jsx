@@ -9,6 +9,7 @@ import { Card, Button, Input } from '../../components/ui';
 import { LoadingSpinner } from '../../components/ui';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { formatNombreCompleto } from '../../utils/format';
 
 export default function AgendarCita() {
   const { id } = useParams();
@@ -101,7 +102,7 @@ export default function AgendarCita() {
     );
   }
 
-  const nombrePaciente = [paciente.nombre, paciente.apellido_paterno, paciente.apellido_materno].filter(Boolean).join(' ');
+  const nombrePaciente = formatNombreCompleto(paciente);
 
   return (
     <div>
@@ -131,7 +132,7 @@ export default function AgendarCita() {
               <option value="">— Seleccionar doctor —</option>
               {doctores.map((d) => (
                 <option key={d.id_doctor ?? d.id} value={d.id_doctor ?? d.id}>
-                  {sanitizeForDisplay([d.nombre, d.apellido_paterno, d.apellido_materno].filter(Boolean).join(' ')) || '—'}
+                  {sanitizeForDisplay(formatNombreCompleto(d)) || '—'}
                 </option>
               ))}
             </select>

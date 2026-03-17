@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import gestionService from '../api/gestionService';
 import { usePacienteMedicalData } from './usePacienteMedicalData';
 import Logger from '../services/logger';
+import { formatNombreCompleto } from '../utils/formatNombreCompleto';
 
 /**
  * Hook para datos del paciente
@@ -30,7 +31,7 @@ const usePacienteData = (options = {}) => {
         nombre: userData.nombre,
         apellido_paterno: userData.apellido_paterno,
         apellido_materno: userData.apellido_materno,
-        nombre_completo: userData.nombre_completo || `${userData.nombre} ${userData.apellido_paterno || ''}`.trim(),
+        nombre_completo: userData.nombre_completo || formatNombreCompleto(userData),
         fecha_nacimiento: userData.fecha_nacimiento,
         sexo: userData.sexo,
         curp: userData.curp,

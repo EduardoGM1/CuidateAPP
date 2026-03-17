@@ -32,6 +32,7 @@ import useTestMode from '../../hooks/useTestMode';
 // Servicios
 import Logger from '../../services/logger';
 import { COLORES, NETWORK_STAGGER } from '../../utils/constantes';
+import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 import { pacienteAuthService } from '../../api/authService';
 import gestionService from '../../api/gestionService';
 import { useAuth } from '../../context/AuthContext';
@@ -1788,7 +1789,7 @@ const AgregarPaciente = () => {
                         styles.moduleOptionText,
                         formData.primeraConsulta.idDoctor === doctor.id_doctor.toString() && styles.moduleOptionTextSelected
                       ]}>
-                        Dr. {doctor.nombre} {doctor.apellido_paterno}
+                        Dr. {formatNombreCompleto(doctor)}
                       </Text>
                     </TouchableOpacity>
                   ))}

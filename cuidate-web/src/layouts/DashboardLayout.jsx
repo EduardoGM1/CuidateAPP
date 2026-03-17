@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import { formatNombreCompleto } from '../utils/format';
 import { Button } from '../components/ui/Button';
 
 const navStyle = {
@@ -30,10 +31,7 @@ export function DashboardLayout() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
-  const displayName =
-    user?.nombre && user?.apellido_paterno
-      ? `${user.nombre} ${user.apellido_paterno}`
-      : user?.email ?? 'Usuario';
+  const displayName = formatNombreCompleto(user) || user?.email ?? 'Usuario';
 
   const handleLogout = () => {
     logout();
