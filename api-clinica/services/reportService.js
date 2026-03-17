@@ -59,6 +59,15 @@ function decryptForReport(value) {
 const MESES_NOMBRE = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 import DashboardService from './dashboardService.js';
 
+/** Nombre completo en formato "Apellido paterno Apellido materno Nombre" (ej. González Morales José). */
+function formatNombreCompleto(obj) {
+  if (obj == null || typeof obj !== 'object') return '';
+  const ap = String(obj.apellido_paterno ?? obj.apellido ?? '').trim();
+  const am = String(obj.apellido_materno ?? '').trim();
+  const n = String(obj.nombre ?? '').trim();
+  return [ap, am, n].filter(Boolean).join(' ') || '';
+}
+
 /** Ancho y alto por defecto para gráficas SVG en el reporte PDF */
 const CHART_WIDTH = 420;
 const CHART_HEIGHT = 200;
