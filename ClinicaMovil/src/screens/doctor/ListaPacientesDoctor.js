@@ -106,7 +106,7 @@ const ListaPacientesDoctor = ({ navigation }) => {
       filtered = pacientes.filter(paciente => {
         if (!paciente || typeof paciente !== 'object') return false;
         
-        const nombreCompleto = paciente.nombreCompleto || formatNombreCompleto(paciente);
+        const nombreCompleto = formatNombreCompleto(paciente) || paciente.nombreCompleto || '';
         const curp = paciente.curp || '';
         const telefono = paciente.numero_celular || '';
         
@@ -207,7 +207,7 @@ const ListaPacientesDoctor = ({ navigation }) => {
               <View style={styles.cardTitleContainer}>
                 <View style={styles.titleRow}>
                   <Title style={[styles.cardTitle, !paciente.activo && styles.inactiveText]}>
-                    {paciente.nombreCompleto || formatNombreCompleto(paciente)}
+                    {formatNombreCompleto(paciente) || paciente.nombreCompleto || '—'}
                   </Title>
                   <View style={[styles.statusBadge, paciente.activo ? styles.activeBadge : styles.inactiveBadge]}>
                     <Text style={styles.statusText}>

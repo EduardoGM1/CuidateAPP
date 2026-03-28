@@ -393,7 +393,7 @@ const GestionAdmin = ({ navigation }) => {
       fecha_nacimiento: paciente.fecha_nacimiento || new Date().toISOString(),
       activo: paciente.activo !== undefined ? paciente.activo : true,
       // Datos adicionales desde el backend
-      nombre_completo: paciente.nombreCompleto || formatNombreCompleto(paciente),
+      nombre_completo: formatNombreCompleto(paciente) || paciente.nombreCompleto,
       doctorNombre: paciente.doctorNombre || 'Sin doctor asignado',
       edad: paciente.edad,
       institucion_salud: paciente.institucion_salud || 'No especificada'
@@ -433,7 +433,7 @@ const GestionAdmin = ({ navigation }) => {
     }
 
     const pacienteId = paciente.id_paciente || paciente.id || paciente.pacienteId || paciente.paciente_id;
-    const fullName = paciente.nombreCompleto || formatNombreCompleto(paciente) || 'Sin nombre';
+    const fullName = formatNombreCompleto(paciente) || paciente.nombreCompleto || 'Sin nombre';
     
     if (!pacienteId) {
       Logger.error('handleDeletePatient: Paciente sin ID válido', { 
@@ -724,7 +724,7 @@ const GestionAdmin = ({ navigation }) => {
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleContainer}>
               <Title style={[styles.cardTitle, !paciente.activo && styles.inactiveText]}>
-                {paciente.nombreCompleto || formatNombreCompleto(paciente)}
+                {formatNombreCompleto(paciente) || paciente.nombreCompleto || '—'}
               </Title>
               <Text style={[styles.cardSubtitle, !paciente.activo && styles.inactiveText]}>
                 {paciente.sexo === 'Mujer' ? '👩' : '👨'} • {paciente.edad || (new Date().getFullYear() - new Date(paciente.fecha_nacimiento).getFullYear())} años

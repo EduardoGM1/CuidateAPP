@@ -164,7 +164,7 @@ const DashboardPaciente = () => {
   // Saludar al paciente al entrar
   useEffect(() => {
     const saludar = async () => {
-      const mensaje = `Bienvenido ${nombrePaciente}. ¿Qué necesitas hacer hoy? Ver tus Citas, Registrar Signos Vitales, Ver tus Medicamentos, o Ver tu Historial Médico?`;
+      const mensaje = `Hola, ${nombrePaciente}. Selecciona una opción para continuar: ver tus citas, registrar tus signos vitales, consultar tus medicamentos, revisar tu historial o chatear con tu doctor.`;
       await speak(mensaje);
     };
 
@@ -221,7 +221,7 @@ const DashboardPaciente = () => {
             onPress={async () => {
               try {
                 hapticService.light();
-                const mensaje = `Hola ${nombreCompleto || nombrePaciente}. ¿Qué necesitas hacer hoy? Ver tus Citas, Registrar Signos Vitales, Ver tus Medicamentos, o Ver tu Historial Médico?`;
+                const mensaje = `Hola, ${nombrePaciente}. Selecciona una opción para continuar: ver tus citas, registrar tus signos vitales, consultar tus medicamentos, revisar tu historial o chatear con tu doctor.`;
                 await speak(mensaje);
               } catch (error) {
                 Logger.error('Error en TTS:', error);

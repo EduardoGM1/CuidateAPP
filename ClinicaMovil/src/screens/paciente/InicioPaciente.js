@@ -227,8 +227,9 @@ const InicioPaciente = () => {
   // Saludar al paciente al entrar
   useEffect(() => {
     const saludar = async () => {
-      const primerNombre = obtenerPrimerNombre(nombreCompleto);
-      await speak(`Bienvenido ${nombrePaciente}. ¿Qué necesitas hacer hoy, Ver tus Citas, Registrar Signos Vitales, Ver tus Medicamentos, Ver tu Historial Medico, o Chat con Doctor?`);
+      await speak(
+        `Hola, ${nombrePaciente}. Selecciona una opción para continuar: ver tus citas, registrar tus signos vitales, consultar tus medicamentos, revisar tu historial o chatear con tu doctor.`
+      );
     };
 
     let timeoutId;
@@ -272,7 +273,9 @@ const InicioPaciente = () => {
             onPress={async () => {
               try {
                 hapticService.light();
-                await speak(`Hola ${nombreCompleto || nombrePaciente}. ¿Qué necesitas hacer hoy, Ver tus Citas, Registrar Signos Vitales, Ver tus Medicamentos, Ver tu Historial Medico, o Chat con Doctor?`);
+                await speak(
+                  `Hola, ${nombrePaciente}. Selecciona una opción para continuar: ver tus citas, registrar tus signos vitales, consultar tus medicamentos, revisar tu historial o chatear con tu doctor.`
+                );
               } catch (error) {
                 Logger.error('Error en TTS:', error);
                 hapticService.error();
