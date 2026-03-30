@@ -6,7 +6,7 @@ export function getShellSteps(isMobile) {
       placement: 'center',
       disableBeacon: true,
       content:
-        '¡Hola! Te damos la bienvenida a Cuidate. En un minuto verás cómo moverte por la app: dónde está el menú, el título de cada pantalla y el área de trabajo. Si ya lo sabes todo, puedes pulsar «Omitir».',
+        '¡Hola! Te damos la bienvenida a Cuidate. En un momento verás cómo abrir el menú para moverte entre secciones. Si ya lo sabes todo, puedes pulsar «Omitir».',
     },
     {
       target: '[data-tour="onboarding-menu-toggle"]',
@@ -14,20 +14,6 @@ export function getShellSteps(isMobile) {
       disableBeacon: true,
       content:
         'En el móvil o en pantallas estrechas, el menú no está siempre visible: tócalo aquí para desplegarlo y saltar de una sección a otra.',
-    },
-    {
-      target: '[data-tour="onboarding-header-title"]',
-      placement: 'bottom',
-      disableBeacon: true,
-      content:
-        'Fíjate en esta franja: el título te dice en qué parte de la aplicación estás, para que no te pierdas si abres varias cosas a la vez.',
-    },
-    {
-      target: '[data-tour="onboarding-main-content"]',
-      placement: 'top',
-      disableBeacon: true,
-      content:
-        'Todo lo que hagas (listas, formularios, citas…) ocurre aquí abajo. Cuando entres por primera vez a una sección, te mostraremos unos pasos cortos sobre esa pantalla en concreto.',
     },
   ];
 
@@ -47,25 +33,11 @@ export function getShellSteps(isMobile) {
         'Desde aquí eliges la sección: Inicio, Pacientes, Citas, Reportes, Perfil y el resto según tu rol (por ejemplo, administración o herramientas de doctor). Es tu mapa principal.',
     },
     {
-      target: '[data-tour="onboarding-header-title"]',
-      placement: 'bottom',
-      disableBeacon: true,
-      content:
-        'El encabezado te recuerda el nombre de la pantalla en la que estás. Así sabes siempre si estás, por ejemplo, en citas o en pacientes.',
-    },
-    {
       target: '[data-tour="onboarding-user-area"]',
       placement: 'right',
       disableBeacon: true,
       content:
         'Aquí ves con qué usuario has entrado. Cuando termines tu jornada, usa «Cerrar sesión» para salir con seguridad, sobre todo si compartes el equipo.',
-    },
-    {
-      target: '[data-tour="onboarding-main-content"]',
-      placement: 'top',
-      disableBeacon: true,
-      content:
-        'El contenido de cada página se muestra en esta zona. Las guías detalladas solo aparecen la primera vez que visitas cada apartado; puedes repetirlas desde tu perfil si lo necesitas.',
     },
   ];
 
@@ -82,13 +54,6 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         disableBeacon: true,
         content:
           'Esta es tu pantalla de inicio: piensa en ella como un tablero donde ves de un vistazo qué está pasando en la clínica según tu rol (pacientes, citas, avisos…).',
-      },
-      {
-        target: '[data-tour="section-dashboard-welcome"]',
-        placement: 'bottom',
-        disableBeacon: true,
-        content:
-          'Aquí te confirmamos que la sesión está activa y te mostramos la fecha de hoy. Es una buena referencia antes de empezar a trabajar.',
       },
       {
         target: '[data-tour="section-dashboard-stats"]',
@@ -167,13 +132,6 @@ export function getSectionSteps(sectionId, { isAdmin }) {
           '«Reportes» es el lugar para analizar: números, gráficos y, si aplica, exportar datos (por ejemplo PDF). No es la pantalla de día a día, sino de lectura y seguimiento.',
       },
       {
-        target: '[data-tour="section-reportes-summary"]',
-        placement: 'top',
-        disableBeacon: true,
-        content:
-          'El bloque de resumen te da cifras clave de un vistazo (pacientes, citas, etc.). Úsalo para orientarte antes de bajar al detalle.',
-      },
-      {
         target: '[data-tour="section-reportes-detail"]',
         placement: 'top',
         disableBeacon: true,
@@ -190,18 +148,11 @@ export function getSectionSteps(sectionId, { isAdmin }) {
           'En «Perfil» revisas quién eres en el sistema, actualizas datos profesionales si aplica y cambias tu contraseña cuando lo necesites.',
       },
       {
-        target: '[data-tour="section-perfil-datos"]',
-        placement: 'top',
-        disableBeacon: true,
-        content:
-          'Aquí ves tu nombre, correo y rol. Comprueba que el correo sea el correcto, porque suele usarse para recuperación de cuenta o avisos.',
-      },
-      {
         target: '[data-tour="section-perfil-password"]',
         placement: 'top',
         disableBeacon: true,
         content:
-          'Cambia la contraseña de vez en cuando y evita reutilizar la de otros sitios. Abajo, si quieres volver a ver las guías de la aplicación, tienes el botón «Ver guías de nuevo».',
+          'Desde aquí puedes actualizar tu contraseña cuando lo necesites; usa una distinta a la de otros sitios y guárdala en un lugar seguro.',
       },
     ],
     doctores: [
@@ -269,13 +220,6 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         disableBeacon: true,
         content:
           'Los catálogos son los datos «maestros» que luego verás en formularios: módulos, instituciones, comorbilidades, medicamentos, vacunas… Mantenerlos ordenados ayuda a que todo el equipo use los mismos criterios.',
-      },
-      {
-        target: '[data-tour="section-catalogos-tabs"]',
-        placement: 'bottom',
-        disableBeacon: true,
-        content:
-          'Cada pestaña es un tipo de catálogo distinto. Cambia de pestaña y verás la tabla correspondiente abajo.',
       },
       {
         target: '[data-tour="section-catalogos-toolbar"]',
