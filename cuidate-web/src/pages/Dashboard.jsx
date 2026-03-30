@@ -17,6 +17,7 @@ import StatCard, { IconUsers, IconUser, IconCalendar, IconTrendingUp, IconMessag
 import { Card, Button } from '../components/ui';
 import { LoadingSpinner } from '../components/ui';
 import { CHART_COLORS } from '../components/reportes/chartConfig';
+import { useOnboardingPageReady } from '../onboarding/useOnboardingPageReady';
 import {
   BarChart,
   Bar,
@@ -75,6 +76,8 @@ export default function Dashboard() {
   const [citaDetalleId, setCitaDetalleId] = useState(null);
   const [citaDetalle, setCitaDetalle] = useState(null);
   const [citaDetalleLoading, setCitaDetalleLoading] = useState(false);
+
+  useOnboardingPageReady(!loading);
 
   const load = useCallback(async () => {
     setLoading(true);

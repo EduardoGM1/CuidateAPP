@@ -7,6 +7,7 @@ import { PageHeader } from '../../components/shared';
 import { Card, Button, LoadingSpinner, EmptyState, Badge, Modal, Input } from '../../components/ui';
 import { formatDateTime, formatDate } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const ESTADO_LABELS = {
   pendiente: 'Pendiente',
@@ -24,6 +25,8 @@ export default function SolicitudesReprogramacion() {
   const [submitError, setSubmitError] = useState('');
   const [aprobarModal, setAprobarModal] = useState(null);
   const [rechazarModal, setRechazarModal] = useState(null);
+
+  useOnboardingPageReady(!loading);
 
   const load = useCallback(async () => {
     setLoading(true);

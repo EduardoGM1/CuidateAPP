@@ -11,6 +11,7 @@ import { PageHeader, SearchFilterBar, Pagination } from '../../components/shared
 import { Badge } from '../../components/ui';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatNombreCompleto } from '../../utils/format';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const COLUMNS = [
   { key: 'nombre_completo', label: 'Nombre', render: (row) => sanitizeForDisplay(formatNombreCompleto(row) || row.nombre_completo) || '—' },
@@ -53,6 +54,8 @@ export default function PacientesList() {
   });
   const [comorbilidades, setComorbilidades] = useState([]);
   const [modulos, setModulos] = useState([]);
+
+  useOnboardingPageReady(!loading);
 
   const loadModulos = useCallback(async () => {
     try {

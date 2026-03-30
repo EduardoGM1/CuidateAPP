@@ -10,6 +10,7 @@ import { useCurrentDoctorId } from '../hooks/useCurrentDoctorId';
 import { PageHeader } from '../components/shared';
 import { Card, Button, Input } from '../components/ui';
 import { resetAllOnboarding } from '../onboarding/storage';
+import { useOnboardingPageReady } from '../onboarding/useOnboardingPageReady';
 import { LoadingSpinner } from '../components/ui';
 import { sanitizeForDisplay } from '../utils/sanitize';
 
@@ -19,7 +20,7 @@ export default function Perfil() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const getDisplayName = useAuthStore((s) => s.getDisplayName);
   const isAdmin = useAuthStore((s) => s.isAdmin);
-  const { idDoctor } = useCurrentDoctorId();
+  const { idDoctor, loading: resolvingDoctor } = useCurrentDoctorId();
 
   const [successMessage, setSuccessMessage] = useState('');
   const [submitError, setSubmitError] = useState('');
@@ -27,6 +28,8 @@ export default function Perfil() {
   const [loadingDoctor, setLoadingDoctor] = useState(false);
   const [perfilError, setPerfilError] = useState('');
   const [perfilSuccess, setPerfilSuccess] = useState('');
+
+  useOnboardingPageReady(!loadingDoctor && !resolvingDoctor);
 
   const {
     control,

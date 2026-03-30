@@ -10,6 +10,7 @@ import {
 } from './storage';
 import { getSectionTourId } from './sectionFromPath';
 import { getShellSteps, getSectionSteps, filterExistingTargets } from './tourSteps';
+import { ONBOARDING_PAGE_READY } from './notifyPageReady';
 
 const JOYRIDE_LOCALE = {
   back: 'Atrás',
@@ -19,6 +20,8 @@ const JOYRIDE_LOCALE = {
   open: 'Abrir',
   skip: 'Omitir',
 };
+
+const SECTION_TOUR_FALLBACK_MS = 12000;
 
 const joyrideStyles = {
   options: {
@@ -46,19 +49,37 @@ const joyrideStyles = {
   },
 };
 
+function runWhenDocumentFullyLoaded(callback) {
+  if (typeof window === 'undefined') return;
+  const run = () => {
+    requestAnimationFrame(() => requestAnimationFrame(callback));
+  };
+  if (document.readyState === 'complete') {
+    run();
+  } else {
+    window.addEventListener('load', run, { once: true });
+  }
+}
+
 /**
- * Tours globales (shell) y por ruta. Montado una vez en MainLayout.
+ * Tours globales (shell) y por ruta. La guía por sección espera a que la página
+ * emita "listo" (useOnboardingPageReady) o al fallback si no hay aviso.
  */
 export default function OnboardingHost({ isMobile }) {
   const location = useLocation();
   const isAdminRaw = useAuthStore((s) => s.isAdmin);
   const isAdminFn = typeof isAdminRaw === 'function' ? isAdminRaw : () => false;
 
+  const locationPathRef = useRef(location.pathname);
+  locationPathRef.current = location.pathname;
+
   const [run, setRun] = useState(false);
   const [steps, setSteps] = useState([]);
   const tourModeRef = useRef('idle');
   const sectionIdRef = useRef(null);
   const shellStartedRef = useRef(false);
+  /** Incrementar cuando el tour shell termina u omite, para volver a programar la guía de sección sin cambiar de ruta. */
+  const [shellFinishedTick, setShellFinishedTick] = useState(0);
 
   const tryStartSectionTour = useCallback(
     (pathname) => {
@@ -76,6 +97,41 @@ export default function OnboardingHost({ isMobile }) {
     [isAdminFn]
   );
 
+  const scheduleSectionTour = useCallback(
+    (pathname) => {
+      if (!isShellComplete()) return;
+      const id = getSectionTourId(pathname, isAdminFn());
+      if (!id || isSectionComplete(id)) return;
+
+      let cancelled = false;
+
+      const startIfStillHere = () => {
+        if (cancelled) return;
+        if (locationPathRef.current !== pathname) return;
+        tryStartSectionTour(pathname);
+      };
+
+      const onReady = () => {
+        if (cancelled) return;
+        if (locationPathRef.current !== pathname) return;
+        requestAnimationFrame(() => requestAnimationFrame(startIfStillHere));
+      };
+
+      window.addEventListener(ONBOARDING_PAGE_READY, onReady);
+      const fallback = window.setTimeout(() => {
+        window.removeEventListener(ONBOARDING_PAGE_READY, onReady);
+        startIfStillHere();
+      }, SECTION_TOUR_FALLBACK_MS);
+
+      return () => {
+        cancelled = true;
+        window.removeEventListener(ONBOARDING_PAGE_READY, onReady);
+        window.clearTimeout(fallback);
+      };
+    },
+    [isAdminFn, tryStartSectionTour]
+  );
+
   const handleJoyrideCallback = useCallback(
     (data) => {
       const { status } = data;
@@ -87,7 +143,7 @@ export default function OnboardingHost({ isMobile }) {
         sectionIdRef.current = null;
         setRun(false);
         setSteps([]);
-        window.setTimeout(() => tryStartSectionTour(location.pathname), 450);
+        setShellFinishedTick((t) => t + 1);
         return;
       }
 
@@ -99,7 +155,7 @@ export default function OnboardingHost({ isMobile }) {
         setSteps([]);
       }
     },
-    [location.pathname, tryStartSectionTour]
+    []
   );
 
   useEffect(() => {
@@ -109,15 +165,16 @@ export default function OnboardingHost({ isMobile }) {
       sectionIdRef.current = null;
       setRun(false);
       setSteps([]);
-      const filtered = filterExistingTargets(getShellSteps(isMobile));
-      if (!filtered.length) {
-        markShellComplete();
-        return;
-      }
-      window.setTimeout(() => {
+      runWhenDocumentFullyLoaded(() => {
+        const filtered = filterExistingTargets(getShellSteps(isMobile));
+        if (!filtered.length) {
+          markShellComplete();
+          return;
+        }
+        tourModeRef.current = 'shell';
         setSteps(filtered);
         setRun(true);
-      }, 350);
+      });
     };
     window.addEventListener('cuidate-onboarding-reset', onReset);
     return () => window.removeEventListener('cuidate-onboarding-reset', onReset);
@@ -126,29 +183,25 @@ export default function OnboardingHost({ isMobile }) {
   useEffect(() => {
     if (isShellComplete() || shellStartedRef.current) return;
     shellStartedRef.current = true;
-    const filtered = filterExistingTargets(getShellSteps(isMobile));
-    if (!filtered.length) {
-      markShellComplete();
-      return;
-    }
-    tourModeRef.current = 'shell';
-    const t = window.setTimeout(() => {
+    runWhenDocumentFullyLoaded(() => {
+      const filtered = filterExistingTargets(getShellSteps(isMobile));
+      if (!filtered.length) {
+        markShellComplete();
+        return;
+      }
+      tourModeRef.current = 'shell';
       setSteps(filtered);
       setRun(true);
-    }, 650);
-    return () => window.clearTimeout(t);
+    });
   }, [isMobile]);
 
   useEffect(() => {
     if (!isShellComplete()) return;
     setRun(false);
     setSteps([]);
-    const t = window.setTimeout(() => tryStartSectionTour(location.pathname), 550);
-    return () => {
-      window.clearTimeout(t);
-      setRun(false);
-    };
-  }, [location.pathname, tryStartSectionTour]);
+    const cleanup = scheduleSectionTour(location.pathname);
+    return cleanup;
+  }, [location.pathname, scheduleSectionTour, shellFinishedTick]);
 
   if (!steps.length && !run) return null;
 

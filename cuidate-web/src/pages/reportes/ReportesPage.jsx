@@ -14,6 +14,7 @@ import { sanitizeForDisplay } from '../../utils/sanitize';
 import { PAGE_SIZE_MAX } from '../../utils/constants';
 import { useReportesSummary } from '../../hooks/useReportesSummary';
 import { useReportesDetalle } from '../../hooks/useReportesDetalle';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 function ReporteCardWrapper({ title, description, children }) {
   return (
@@ -436,6 +437,9 @@ export default function ReportesPage() {
   const { summary, loading: loadingSummary, error: errorSummary, refresh: refreshSummary } = useReportesSummary({ isAdmin: admin });
   const detalle = useReportesDetalle({ enabled: admin && !loadingSummary && summary != null });
   const showDetalle = admin && !detalle.loading;
+
+  const reportesListos = !loadingSummary && (!admin || !detalle.loading);
+  useOnboardingPageReady(reportesListos);
 
   const chartData = summary?.chartData ?? {};
   const charts = summary?.charts ?? {};

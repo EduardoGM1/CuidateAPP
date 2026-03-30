@@ -10,6 +10,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatNombreCompleto } from '../../utils/format';
 import { STORAGE_KEYS, PAGE_SIZE_DEFAULT } from '../../utils/constants';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const COLUMNS = [
   {
@@ -47,6 +48,8 @@ export default function DoctoresList() {
     limit: PAGE_SIZE_DEFAULT,
     estado: 'activos',
   });
+
+  useOnboardingPageReady(!loading);
 
   const loadModulos = useCallback(async () => {
     try {

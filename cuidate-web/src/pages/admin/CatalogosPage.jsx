@@ -7,6 +7,7 @@ import { getComorbilidades, createComorbilidad, updateComorbilidad, deleteComorb
 import { getMedicamentos, createMedicamento, updateMedicamento, deleteMedicamento } from '../../api/medicamentos';
 import { getVacunas, createVacuna, updateVacuna, deleteVacuna } from '../../api/vacunas';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const TABS = [
   { id: 'modulos', label: 'Módulos' },
@@ -27,6 +28,8 @@ export default function CatalogosPage() {
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+
+  useOnboardingPageReady(!loading);
 
   const load = useCallback(async () => {
     setLoading(true);

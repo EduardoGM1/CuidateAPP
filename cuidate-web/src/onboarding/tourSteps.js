@@ -6,27 +6,28 @@ export function getShellSteps(isMobile) {
       placement: 'center',
       disableBeacon: true,
       content:
-        'Bienvenido a Cuidate. Esta guía breve te muestra cómo moverte por la aplicación. Puedes omitirla en cualquier momento.',
+        '¡Hola! Te damos la bienvenida a Cuidate. En un minuto verás cómo moverte por la app: dónde está el menú, el título de cada pantalla y el área de trabajo. Si ya lo sabes todo, puedes pulsar «Omitir».',
     },
     {
       target: '[data-tour="onboarding-menu-toggle"]',
       placement: 'bottom',
       disableBeacon: true,
       content:
-        'En pantallas pequeñas, abre el menú con este icono para acceder a todas las secciones.',
+        'En el móvil o en pantallas estrechas, el menú no está siempre visible: tócalo aquí para desplegarlo y saltar de una sección a otra.',
     },
     {
       target: '[data-tour="onboarding-header-title"]',
       placement: 'bottom',
       disableBeacon: true,
-      content: 'Aquí verás el nombre de la sección en la que te encuentras.',
+      content:
+        'Fíjate en esta franja: el título te dice en qué parte de la aplicación estás, para que no te pierdas si abres varias cosas a la vez.',
     },
     {
       target: '[data-tour="onboarding-main-content"]',
       placement: 'top',
       disableBeacon: true,
       content:
-        'El contenido de cada página aparece aquí. La primera vez que entres a un apartado, te ofreceremos una guía corta específica.',
+        'Todo lo que hagas (listas, formularios, citas…) ocurre aquí abajo. Cuando entres por primera vez a una sección, te mostraremos unos pasos cortos sobre esa pantalla en concreto.',
     },
   ];
 
@@ -36,32 +37,35 @@ export function getShellSteps(isMobile) {
       placement: 'center',
       disableBeacon: true,
       content:
-        'Bienvenido a Cuidate. Te mostramos el menú principal y las zonas clave. Puedes omitir esta guía cuando quieras.',
+        '¡Hola! Te damos la bienvenida a Cuidate. Vamos a recorrer el menú lateral y las zonas que usarás cada día. Si prefieres explorar solo, puedes pulsar «Omitir».',
     },
     {
       target: '[data-tour="onboarding-sidebar"]',
       placement: 'right',
       disableBeacon: true,
-      content: 'Usa el menú lateral para ir a Inicio, Pacientes, Citas, Reportes, Perfil y el resto de opciones según tu rol.',
+      content:
+        'Desde aquí eliges la sección: Inicio, Pacientes, Citas, Reportes, Perfil y el resto según tu rol (por ejemplo, administración o herramientas de doctor). Es tu mapa principal.',
     },
     {
       target: '[data-tour="onboarding-header-title"]',
       placement: 'bottom',
       disableBeacon: true,
-      content: 'La barra superior indica en qué sección estás trabajando.',
+      content:
+        'El encabezado te recuerda el nombre de la pantalla en la que estás. Así sabes siempre si estás, por ejemplo, en citas o en pacientes.',
     },
     {
       target: '[data-tour="onboarding-user-area"]',
       placement: 'right',
       disableBeacon: true,
-      content: 'Aquí ves tu nombre y puedes cerrar sesión de forma segura.',
+      content:
+        'Aquí ves con qué usuario has entrado. Cuando termines tu jornada, usa «Cerrar sesión» para salir con seguridad, sobre todo si compartes el equipo.',
     },
     {
       target: '[data-tour="onboarding-main-content"]',
       placement: 'top',
       disableBeacon: true,
       content:
-        'Cada pantalla muestra su contenido en esta zona. Las guías por sección aparecerán solo la primera vez que las visites.',
+        'El contenido de cada página se muestra en esta zona. Las guías detalladas solo aparecen la primera vez que visitas cada apartado; puedes repetirlas desde tu perfil si lo necesitas.',
     },
   ];
 
@@ -76,20 +80,22 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         target: '[data-tour="section-dashboard-root"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'El inicio resume la actividad de la clínica según tu rol: métricas, alertas y accesos rápidos.',
+        content:
+          'Esta es tu pantalla de inicio: piensa en ella como un tablero donde ves de un vistazo qué está pasando en la clínica según tu rol (pacientes, citas, avisos…).',
       },
       {
         target: '[data-tour="section-dashboard-welcome"]',
         placement: 'bottom',
         disableBeacon: true,
-        content: 'Aquí se confirma tu sesión y la fecha de trabajo actual.',
+        content:
+          'Aquí te confirmamos que la sesión está activa y te mostramos la fecha de hoy. Es una buena referencia antes de empezar a trabajar.',
       },
       {
         target: '[data-tour="section-dashboard-stats"]',
         placement: 'top',
         disableBeacon: true,
         content:
-          'Las tarjetas y gráficos resumen pacientes, citas y avisos importantes. Puedes pulsar en alertas para ver más detalle cuando aplique.',
+          'Las tarjetas y gráficos resumen números importantes (por ejemplo citas del día o alertas). Si ves algo marcado como alerta, suele ser un buen punto para revisarlo con más detalle.',
       },
     ],
     pacientes: [
@@ -97,25 +103,29 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         target: '[data-tour="section-pacientes-root"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'En Pacientes gestionas el padrón: alta, consulta y seguimiento de cada persona.',
+        content:
+          'En «Pacientes» trabajas el padrón: dar de alta a personas nuevas, buscar a quién ya está registrado y abrir la ficha para ver historial, citas y más.',
       },
       {
         target: '[data-tour="section-pacientes-new"]',
         placement: 'left',
         disableBeacon: true,
-        content: 'Crea un nuevo registro de paciente con este botón.',
+        content:
+          '¿Necesitas incorporar a alguien que aún no está en el sistema? Este botón inicia el alta; te pedirá los datos paso a paso.',
       },
       {
         target: '[data-tour="section-pacientes-filters"]',
         placement: 'bottom',
         disableBeacon: true,
-        content: 'Busca por nombre y filtra por estado, comorbilidad o módulo para acotar la lista.',
+        content:
+          'Si la lista es larga, usa la búsqueda y los filtros (estado, comorbilidad, módulo…) para acotar. Así llegas más rápido al paciente que buscas.',
       },
       {
         target: '[data-tour="section-pacientes-table"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Pulsa una fila para abrir la ficha completa del paciente (citas, signos vitales, etc.).',
+        content:
+          'Cada fila es un paciente. Haz clic en la fila (no solo en el nombre) para abrir su ficha completa: ahí verás citas, signos vitales y el resto del contexto clínico.',
       },
     ],
     citas: [
@@ -123,25 +133,29 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         target: '[data-tour="section-citas-root"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Centralizas las citas: consulta, filtra y actualiza estados según tu permiso.',
+        content:
+          'Aquí concentras las citas: verlas en lista, pasar a una vista tipo agenda, filtrar y, si tu rol lo permite, actualizar el estado de cada cita.',
       },
       {
         target: '[data-tour="section-citas-view-toggle"]',
         placement: 'bottom',
         disableBeacon: true,
-        content: 'Alterna entre vista de lista y agenda según cómo prefieras trabajar el día.',
+        content:
+          'Puedes alternar entre «Lista» (todo en filas) y «Agenda» (más visual por día o semana). Prueba ambas y quédate con la que te resulte más cómoda.',
       },
       {
         target: '[data-tour="section-citas-filters"]',
         placement: 'bottom',
         disableBeacon: true,
-        content: 'Filtra por estado, doctor y fechas para encontrar citas concretas.',
+        content:
+          'Combina filtros (estado, doctor, fechas…) para encontrar una cita concreta o revisar un rango de tiempo, por ejemplo solo las pendientes de esta semana.',
       },
       {
         target: '[data-tour="section-citas-table"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Abre el detalle de una cita con un clic. Los doctores y administradores pueden cambiar el estado desde la fila.',
+        content:
+          'Clic en una fila para abrir el detalle de esa cita. Si eres doctor o administrador, a veces podrás cambiar el estado desde aquí sin entrar a otra pantalla.',
       },
     ],
     reportes: [
@@ -149,19 +163,22 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         target: '[data-tour="section-reportes-root"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Reportes agrupa indicadores, gráficos y exportaciones para análisis y seguimiento.',
+        content:
+          '«Reportes» es el lugar para analizar: números, gráficos y, si aplica, exportar datos (por ejemplo PDF). No es la pantalla de día a día, sino de lectura y seguimiento.',
       },
       {
         target: '[data-tour="section-reportes-summary"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'El resumen numérico ofrece una vista rápida de la actividad reciente.',
+        content:
+          'El bloque de resumen te da cifras clave de un vistazo (pacientes, citas, etc.). Úsalo para orientarte antes de bajar al detalle.',
       },
       {
         target: '[data-tour="section-reportes-detail"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Más abajo encontrarás desgloses, tablas y opciones como PDF según tu rol.',
+        content:
+          'Más abajo encontrarás desgloses y tarjetas (según tu rol). Si ves opción de descargar PDF u otros informes, suele estar en esta zona.',
       },
     ],
     perfil: [
@@ -169,19 +186,22 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         target: '[data-tour="section-perfil-root"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'En Perfil revisas tu usuario, actualizas datos profesionales (si aplica) y cambias tu contraseña.',
+        content:
+          'En «Perfil» revisas quién eres en el sistema, actualizas datos profesionales si aplica y cambias tu contraseña cuando lo necesites.',
       },
       {
         target: '[data-tour="section-perfil-datos"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Consulta correo, rol y nombre asociados a tu cuenta.',
+        content:
+          'Aquí ves tu nombre, correo y rol. Comprueba que el correo sea el correcto, porque suele usarse para recuperación de cuenta o avisos.',
       },
       {
         target: '[data-tour="section-perfil-password"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Mantén tu contraseña al día por seguridad. Más abajo puedes volver a ver las guías de la aplicación.',
+        content:
+          'Cambia la contraseña de vez en cuando y evita reutilizar la de otros sitios. Abajo, si quieres volver a ver las guías de la aplicación, tienes el botón «Ver guías de nuevo».',
       },
     ],
     doctores: [
@@ -190,8 +210,8 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         placement: 'top',
         disableBeacon: true,
         content: isAdmin
-          ? 'Como administrador, aquí das de alta y administras doctores y sus datos básicos.'
-          : 'Consulta la información de doctores según los permisos de tu cuenta.',
+          ? 'Como administrador, aquí gestionas el equipo médico: altas, datos básicos y búsqueda. Los doctores suelen ver una vista más limitada a su propio perfil.'
+          : 'Consulta la información de doctores según lo que te permita tu cuenta; si solo ves tu perfil, es normal en algunos roles.',
       },
       ...(isAdmin
         ? [
@@ -199,7 +219,8 @@ export function getSectionSteps(sectionId, { isAdmin }) {
               target: '[data-tour="section-doctores-new"]',
               placement: 'bottom',
               disableBeacon: true,
-              content: 'Registra un nuevo doctor y vincúlalo a su usuario cuando corresponda.',
+              content:
+                'Para incorporar a un profesional nuevo, empieza aquí. El sistema te guiará para vincular usuario, datos y módulo cuando corresponda.',
             },
           ]
         : []),
@@ -207,13 +228,15 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         target: '[data-tour="section-doctores-filters"]',
         placement: 'bottom',
         disableBeacon: true,
-        content: 'Filtra por estado o módulo para localizar profesionales.',
+        content:
+          'Si la lista es larga, filtra por estado o módulo para encontrar a alguien o revisar solo un grupo de trabajo.',
       },
       {
         target: '[data-tour="section-doctores-table"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Pulsa una fila para ver o editar la ficha del doctor.',
+        content:
+          'Cada fila es un doctor. Haz clic para abrir la ficha: verás más detalle y, según permisos, podrás editar.',
       },
     ],
     auditoria: [
@@ -221,19 +244,22 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         target: '[data-tour="section-auditoria-root"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'La auditoría registra acciones relevantes del sistema para trazabilidad y cumplimiento.',
+        content:
+          'La auditoría guarda un registro de acciones importantes en el sistema, para poder revisar qué pasó y cuándo. Es muy útil para trazabilidad y cumplimiento.',
       },
       {
         target: '[data-tour="section-auditoria-export"]',
         placement: 'bottom',
         disableBeacon: true,
-        content: 'Exporta el listado a CSV cuando necesites un informe externo.',
+        content:
+          'Si necesitas trabajar los datos fuera de la aplicación (por ejemplo en Excel), puedes exportar el listado a CSV cuando haya resultados.',
       },
       {
         target: '[data-tour="section-auditoria-filters"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Acota por fechas, IP o texto en la descripción para revisar eventos concretos.',
+        content:
+          'Acota por fechas, IP o texto en la descripción para centrarte en un periodo o en un tipo de evento concreto.',
       },
     ],
     catalogos: [
@@ -241,19 +267,22 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         target: '[data-tour="section-catalogos-root"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Los catálogos definen datos maestros: módulos, instituciones, comorbilidades, medicamentos y vacunas.',
+        content:
+          'Los catálogos son los datos «maestros» que luego verás en formularios: módulos, instituciones, comorbilidades, medicamentos, vacunas… Mantenerlos ordenados ayuda a que todo el equipo use los mismos criterios.',
       },
       {
         target: '[data-tour="section-catalogos-tabs"]',
         placement: 'bottom',
         disableBeacon: true,
-        content: 'Cambia de pestaña para administrar cada tipo de catálogo.',
+        content:
+          'Cada pestaña es un tipo de catálogo distinto. Cambia de pestaña y verás la tabla correspondiente abajo.',
       },
       {
         target: '[data-tour="section-catalogos-toolbar"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Añade registros nuevos o edita los existentes desde la tabla inferior.',
+        content:
+          'Desde aquí das de alta y editas registros. Si algo no debe borrarse a la ligera, el sistema suele pedirte confirmación antes de eliminar.',
       },
     ],
     usuarios: [
@@ -261,19 +290,22 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         target: '[data-tour="section-usuarios-root"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Gestiona cuentas de acceso: altas, roles y estado de los usuarios del sistema.',
+        content:
+          'Aquí administras las cuentas de acceso: quién puede entrar, con qué rol y si está activo. Es una pantalla sensible; conviene revisarla solo con permisos de administrador.',
       },
       {
         target: '[data-tour="section-usuarios-new"]',
         placement: 'left',
         disableBeacon: true,
-        content: 'Crea usuarios nuevos por invitación o con contraseña inicial, según el flujo que elijas en el formulario.',
+        content:
+          '¿Necesitas dar de alta a alguien nuevo? Este botón abre el flujo: podrás invitar por correo para que cree su contraseña o definir una contraseña inicial, según elijas.',
       },
       {
         target: '[data-tour="section-usuarios-table"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Edita o desactiva usuarios desde las acciones de cada fila.',
+        content:
+          'Cada fila es un usuario. Desde las acciones podrás editar datos o desactivar cuentas que ya no deban entrar.',
       },
     ],
     notificaciones: [
@@ -281,19 +313,22 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         target: '[data-tour="section-notificaciones-root"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Revisa avisos de citas, mensajes y alertas clínicas dirigidas a tu perfil de doctor.',
+        content:
+          'Las notificaciones te avisan de cosas que te conciernen como doctor: citas, mensajes, alertas de signos, etc. Revísalas para no perder nada urgente.',
       },
       {
         target: '[data-tour="section-notificaciones-filters"]',
         placement: 'bottom',
         disableBeacon: true,
-        content: 'Filtra por tipo, estado o fechas para priorizar lo urgente.',
+        content:
+          'Si la bandeja se llena, usa tipo, estado y fechas para ver solo lo pendiente o lo reciente.',
       },
       {
         target: '[data-tour="section-notificaciones-list"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Pulsa una tarjeta para abrir el detalle y marcar como leída cuando proceda.',
+        content:
+          'Toca una tarjeta para leer el mensaje completo. Cuando ya lo hayas tratado, puedes marcarla como leída o archivarla para mantener orden.',
       },
     ],
     'solicitudes-reprogramacion': [
@@ -301,19 +336,22 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         target: '[data-tour="section-solicitudes-root"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Aquí respondes a las solicitudes de cambio de fecha u hora de citas.',
+        content:
+          'Aquí llegan las peticiones de cambio de fecha u hora de una cita. Tu trabajo es revisar cada una y decidir si la apruebas o la rechazas, con una respuesta clara al paciente.',
       },
       {
         target: '[data-tour="section-solicitudes-filter"]',
         placement: 'bottom',
         disableBeacon: true,
-        content: 'Filtra por estado para ver pendientes, aprobadas o rechazadas.',
+        content:
+          'Filtra por estado para ver solo lo pendiente o revisar lo ya cerrado (aprobado o rechazado).',
       },
       {
         target: '[data-tour="section-solicitudes-list"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Cada tarjeta resume la solicitud; usa los botones para aprobar o rechazar con el mensaje adecuado.',
+        content:
+          'Cada tarjeta resume la solicitud. Si la cita sigue pendiente, usa los botones para aprobar o rechazar; a veces podrás añadir un comentario o motivo.',
       },
     ],
     chat: [
@@ -321,19 +359,22 @@ export function getSectionSteps(sectionId, { isAdmin }) {
         target: '[data-tour="section-chat-root"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'El chat concentra las conversaciones con pacientes que te escriben desde la app.',
+        content:
+          'El chat es el canal de mensajes con pacientes que escriben desde la app. Aquí ves las conversaciones abiertas y entras a cada una para responder.',
       },
       {
         target: '[data-tour="section-chat-filter"]',
         placement: 'bottom',
         disableBeacon: true,
-        content: 'Busca por nombre si tienes muchas conversaciones abiertas.',
+        content:
+          'Si tienes muchas conversaciones, escribe parte del nombre del paciente para acortar la lista.',
       },
       {
         target: '[data-tour="section-chat-list"]',
         placement: 'top',
         disableBeacon: true,
-        content: 'Selecciona una conversación para leer y responder en la vista siguiente.',
+        content:
+          'Toca una conversación para abrirla en la pantalla siguiente y leer el hilo completo. Los mensajes nuevos suelen actualizar la lista en tiempo real.',
       },
     ],
   };

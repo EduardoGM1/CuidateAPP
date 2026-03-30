@@ -10,6 +10,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatDateTime, formatNombreCompleto } from '../../utils/format';
 import { STORAGE_KEYS, PAGE_SIZE_DEFAULT } from '../../utils/constants';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const ESTADO_LABELS = {
   pendiente: 'Pendiente',
@@ -91,6 +92,8 @@ export default function CitasList() {
     fecha_desde: '',
     fecha_hasta: '',
   });
+
+  useOnboardingPageReady(!loading);
 
   const canEditCitas = isDoctorFn() || isAdminFn();
 

@@ -7,6 +7,7 @@ import { PageHeader, SearchFilterBar } from '../../components/shared';
 import { sanitizeForDisplay, displayText } from '../../utils/sanitize';
 import { formatDateTime } from '../../utils/format';
 import { PAGE_SIZE_DEFAULT } from '../../utils/constants';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const COLUMNS = [
   {
@@ -42,6 +43,8 @@ export default function AuditoriaList() {
     limit: PAGE_SIZE_DEFAULT,
     ip_address: '',
   });
+
+  useOnboardingPageReady(!loading);
 
   const loadUsuarios = useCallback(async () => {
     try {

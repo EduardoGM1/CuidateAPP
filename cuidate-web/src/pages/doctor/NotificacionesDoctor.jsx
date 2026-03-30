@@ -9,6 +9,7 @@ import { Card, Button, LoadingSpinner, EmptyState, Badge, Input, Select } from '
 import DetalleNotificacionModal from '../../components/doctor/DetalleNotificacionModal';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const TIPO_LABELS = {
   alerta_signos_vitales: 'Signos vitales',
@@ -47,6 +48,9 @@ export default function NotificacionesDoctor() {
   const [incluirTodos, setIncluirTodos] = useState(false);
   const [actingId, setActingId] = useState(null);
   const [detalleNotificacion, setDetalleNotificacion] = useState(null);
+
+  const notificacionesListas = !loadingDoctor && (!idDoctor ? true : !loading);
+  useOnboardingPageReady(notificacionesListas);
 
   const load = useCallback(async () => {
     if (!idDoctor) return;

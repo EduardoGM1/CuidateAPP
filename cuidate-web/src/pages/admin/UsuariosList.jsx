@@ -10,6 +10,7 @@ import { Button, Input, Select, Table, LoadingSpinner, EmptyState, Badge, Modal 
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { ROLES } from '../../utils/constants';
 import { nuevoUsuarioSchema } from '../../lib/validations/usuarioSchema';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 export default function UsuariosList() {
   const [list, setList] = useState([]);
@@ -49,6 +50,8 @@ export default function UsuariosList() {
 
   const newUserRol = watchNewUser('rol');
   const newUserModo = watchNewUser('modo');
+
+  useOnboardingPageReady(!loading);
 
   const load = useCallback(async () => {
     setLoading(true);

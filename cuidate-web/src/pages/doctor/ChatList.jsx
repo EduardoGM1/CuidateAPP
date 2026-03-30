@@ -9,6 +9,7 @@ import { STORAGE_KEYS } from '../../utils/constants';
 import { Card, LoadingSpinner, EmptyState, Badge } from '../../components/ui';
 import { formatDateTime, formatNombreCompleto } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 export default function ChatList() {
   const navigate = useNavigate();
@@ -18,6 +19,9 @@ export default function ChatList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filterNombre, setFilterNombre] = useState('');
+
+  const chatListo = !loadingDoctor && (!idDoctor ? true : !loading);
+  useOnboardingPageReady(chatListo);
 
   const load = useCallback(async () => {
     if (!idDoctor) return;
