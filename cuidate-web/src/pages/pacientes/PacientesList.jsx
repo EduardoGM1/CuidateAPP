@@ -179,15 +179,18 @@ export default function PacientesList() {
   };
 
   return (
-    <div>
+    <div data-tour="section-pacientes-root">
       <PageHeader
         title="Pacientes"
         action={
-          <Button variant="primary" onClick={() => navigate('/pacientes/nuevo')}>
-            Nuevo paciente
-          </Button>
+          <span data-tour="section-pacientes-new" style={{ display: 'inline-block' }}>
+            <Button variant="primary" onClick={() => navigate('/pacientes/nuevo')}>
+              Nuevo paciente
+            </Button>
+          </span>
         }
       />
+      <div data-tour="section-pacientes-filters">
       <SearchFilterBar
         placeholder="Buscar por nombre..."
         filterOptions={filterOptions}
@@ -199,6 +202,7 @@ export default function PacientesList() {
         }}
         onSearch={handleSearch}
       />
+      </div>
       {error && (
         <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: 'var(--color-fondo-error-claro)', color: 'var(--color-error)', borderRadius: 'var(--radius)' }}>
           {error}
@@ -207,6 +211,7 @@ export default function PacientesList() {
           </Button>
         </div>
       )}
+      <div data-tour="section-pacientes-table">
       <Table
         columns={COLUMNS}
         data={list}
@@ -214,6 +219,7 @@ export default function PacientesList() {
         emptyMessage="No hay pacientes"
         onRowClick={handleRowClick}
       />
+      </div>
       {!loading && (
         <Pagination
           currentPage={params.page}

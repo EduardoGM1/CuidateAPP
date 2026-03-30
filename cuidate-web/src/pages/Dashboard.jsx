@@ -164,7 +164,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="saas-page">
+      <div className="saas-page" data-tour="section-dashboard-root">
         <div className="saas-welcome">
           <h1>Inicio</h1>
           <p>Cargando resumen…</p>
@@ -180,8 +180,8 @@ export default function Dashboard() {
   const rolLabel = isAdmin() ? 'Administrador' : 'Doctor';
 
   return (
-    <div className="saas-page">
-      <section className="saas-welcome" aria-label="Bienvenida">
+    <div className="saas-page" data-tour="section-dashboard-root">
+      <section className="saas-welcome" aria-label="Bienvenida" data-tour="section-dashboard-welcome">
         <h1>Bienvenido, {sanitizeForDisplay(getDisplayName())}</h1>
         <p>Rol: {rolLabel} · {formatDateWithWeekday(new Date())}</p>
       </section>
@@ -203,7 +203,7 @@ export default function Dashboard() {
 
       {!error && summary && (
         <>
-          <section className="saas-stats" aria-label="Estadísticas">
+          <section className="saas-stats" aria-label="Estadísticas" data-tour="section-dashboard-stats">
             {isAdmin() ? (
               <>
                 <StatCard icon={IconUsers} label="Total pacientes" value={m.totalPacientes} />

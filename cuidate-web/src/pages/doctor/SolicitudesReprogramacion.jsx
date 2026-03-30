@@ -75,9 +75,9 @@ export default function SolicitudesReprogramacion() {
   };
 
   return (
-    <div>
+    <div data-tour="section-solicitudes-root">
       <PageHeader title="Solicitudes de reprogramación" showBack backTo="/" />
-      <div style={{ marginBottom: '1rem' }}>
+      <div data-tour="section-solicitudes-filter" style={{ marginBottom: '1rem' }}>
         <label style={{ marginRight: '0.5rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}>Estado:</label>
         <select
           value={filtroEstado}
@@ -107,7 +107,7 @@ export default function SolicitudesReprogramacion() {
       ) : list.length === 0 ? (
         <EmptyState message="No hay solicitudes de reprogramación" />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div data-tour="section-solicitudes-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {list.map((s) => {
             const isPendiente = (s.estado || '').toLowerCase() === 'pendiente';
             return (

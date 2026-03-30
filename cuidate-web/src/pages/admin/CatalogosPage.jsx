@@ -170,9 +170,11 @@ export default function CatalogosPage() {
   const showActivoField = activeTab === 'instituciones';
 
   return (
-    <div>
+    <div data-tour="section-catalogos-root">
       <PageHeader title="Catálogos (Admin)" />
+      <div data-tour="section-catalogos-tabs">
       <Tabs tabs={TABS} activeId={activeTab} onChange={setActiveTab} />
+      </div>
       <Modal
         open={Boolean(editingId)}
         onClose={() => { if (!submitting) { setEditingId(null); setSubmitError(''); } }}
@@ -200,7 +202,7 @@ export default function CatalogosPage() {
           </form>
         )}
       </Modal>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+      <div data-tour="section-catalogos-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
         <h2 style={{ margin: 0, fontSize: '1.15rem', color: 'var(--color-primario)' }}>{TABS.find((t) => t.id === activeTab)?.label}</h2>
         {!editingId && <Button variant="primary" onClick={handleNew}>Nuevo</Button>}
       </div>

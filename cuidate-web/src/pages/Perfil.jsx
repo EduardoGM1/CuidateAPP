@@ -9,6 +9,7 @@ import { getDoctorById, updateDoctor } from '../api/doctores';
 import { useCurrentDoctorId } from '../hooks/useCurrentDoctorId';
 import { PageHeader } from '../components/shared';
 import { Card, Button, Input } from '../components/ui';
+import { resetAllOnboarding } from '../onboarding/storage';
 import { LoadingSpinner } from '../components/ui';
 import { sanitizeForDisplay } from '../utils/sanitize';
 
@@ -138,9 +139,9 @@ export default function Perfil() {
   const showEditarMisDatos = Boolean(idDoctor) && (doctor || loadingDoctor);
 
   return (
-    <div>
+    <div data-tour="section-perfil-root">
       <PageHeader title="Perfil" />
-      <Card style={{ marginBottom: '1.5rem' }}>
+      <Card style={{ marginBottom: '1.5rem' }} data-tour="section-perfil-datos">
         <h2 style={{ fontSize: '1.1rem', margin: '0 0 1rem', color: 'var(--color-primario)' }}>
           Datos del usuario
         </h2>
@@ -264,7 +265,7 @@ export default function Perfil() {
         </Card>
       )}
 
-      <Card>
+      <Card data-tour="section-perfil-password">
         <h2 style={{ fontSize: '1.1rem', margin: '0 0 1rem', color: 'var(--color-primario)' }}>
           Cambiar contraseña
         </h2>
@@ -302,6 +303,21 @@ export default function Perfil() {
             {isSubmitting ? 'Guardando…' : 'Cambiar contraseña'}
           </Button>
         </form>
+        <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--color-borde-claro)' }}>
+          <p style={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
+            ¿Quieres repetir las guías de la aplicación?
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              resetAllOnboarding();
+              window.dispatchEvent(new CustomEvent('cuidate-onboarding-reset'));
+            }}
+          >
+            Ver guías de nuevo
+          </Button>
+        </div>
       </Card>
     </div>
   );

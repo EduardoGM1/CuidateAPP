@@ -137,8 +137,9 @@ export default function DoctoresList() {
   };
 
   return (
-    <div>
+    <div data-tour="section-doctores-root">
       <PageHeader title="Doctores" />
+      <div data-tour="section-doctores-filters">
       {!isAdmin && (
         <p style={{ marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
           Solo puedes ver y editar tu propio perfil. Los administradores pueden gestionar todos los doctores.
@@ -146,9 +147,11 @@ export default function DoctoresList() {
       )}
       {isAdmin && (
         <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
-          <Button variant="primary" type="button" onClick={() => navigate('/doctores/nuevo')}>
-            Nuevo doctor
-          </Button>
+          <span data-tour="section-doctores-new" style={{ display: 'inline-block' }}>
+            <Button variant="primary" type="button" onClick={() => navigate('/doctores/nuevo')}>
+              Nuevo doctor
+            </Button>
+          </span>
         </div>
       )}
       {isAdmin && (
@@ -159,6 +162,7 @@ export default function DoctoresList() {
           onSearch={handleSearch}
         />
       )}
+      </div>
       {error && (
         <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: 'var(--color-fondo-error-claro)', color: 'var(--color-error)', borderRadius: 'var(--radius)' }}>
           {error}
@@ -167,6 +171,7 @@ export default function DoctoresList() {
           </Button>
         </div>
       )}
+      <div data-tour="section-doctores-table">
       <Table
         columns={COLUMNS}
         data={list}
@@ -174,6 +179,7 @@ export default function DoctoresList() {
         emptyMessage="No hay doctores"
         onRowClick={handleRowClick}
       />
+      </div>
       {!loading && list.length > 0 && (
         <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
           Mostrando {list.length} resultado(s)

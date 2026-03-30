@@ -336,9 +336,9 @@ export default function CitasList() {
     : COLUMNS;
 
   return (
-    <div>
+    <div data-tour="section-citas-root">
       <PageHeader title="Citas" />
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-3)' }}>
+      <div data-tour="section-citas-view-toggle" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-3)' }}>
         <div
           style={{
             display: 'inline-flex',
@@ -378,6 +378,7 @@ export default function CitasList() {
           </button>
         </div>
       </div>
+      <div data-tour="section-citas-filters">
       <SearchFilterBar
         placeholder="Buscar por motivo..."
         filterOptions={filterOptions}
@@ -433,6 +434,7 @@ export default function CitasList() {
           />
         </div>
       </div>
+      </div>
       {(error || updateError) && (
         <div
           style={{
@@ -457,6 +459,7 @@ export default function CitasList() {
           )}
         </div>
       )}
+      <div data-tour="section-citas-table">
       {viewMode === 'list' ? (
         <Table
           columns={columns}
@@ -806,6 +809,7 @@ export default function CitasList() {
           })()}
         </div>
       )}
+      </div>
       {!loading && (
         <Pagination
           currentPage={params.page}

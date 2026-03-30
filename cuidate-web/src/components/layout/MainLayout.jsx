@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Layout, Menu, Drawer, Button } from 'antd';
 import { useAuthStore } from '../../stores/authStore';
@@ -6,6 +6,7 @@ import { connect } from '../../api/socket';
 import { STORAGE_KEYS } from '../../utils/constants';
 import ButtonUI from '../ui/Button';
 import Logo from '../common/Logo';
+import OnboardingHost from '../../onboarding/OnboardingHost';
 
 function IconDashboard() {
   return (
@@ -201,9 +202,11 @@ export default function MainLayout() {
   };
 
   return (
+    <Fragment>
     <Layout style={{ minHeight: '100vh', background: 'var(--saas-bg, var(--color-fondo))' }}>
       {/* Sider: visible solo en desktop (oculto en móvil con CSS) */}
       <Layout.Sider
+        data-tour="onboarding-sidebar"
         breakpoint="lg"
         collapsedWidth="0"
         width={280}
@@ -240,7 +243,7 @@ export default function MainLayout() {
             background: 'transparent',
           }}
         />
-        <div style={{ padding: '1rem 1rem 0', borderTop: '1px solid var(--color-borde-claro)', marginTop: '1rem' }}>
+        <div data-tour="onboarding-user-area" style={{ padding: '1rem 1rem 0', borderTop: '1px solid var(--color-borde-claro)', marginTop: '1rem' }}>
           <div style={{ padding: '0.75rem', marginBottom: '0.75rem', background: 'var(--color-fondo-secundario)', borderRadius: 8, fontSize: '0.875rem', fontWeight: 500 }}>
             {getDisplayNameSafe()}
           </div>
@@ -291,6 +294,7 @@ export default function MainLayout() {
           <Button
             type="text"
             aria-label="Abrir menú"
+            data-tour="onboarding-menu-toggle"
             onClick={() => setDrawerOpen(true)}
             className="saas-menu-toggle"
             style={{
@@ -303,6 +307,7 @@ export default function MainLayout() {
             <MenuIcon />
           </Button>
           <h1
+            data-tour="onboarding-header-title"
             style={{
               margin: 0,
               fontSize: 'clamp(1rem, 4vw, 1.25rem)',
@@ -319,6 +324,7 @@ export default function MainLayout() {
           </h1>
         </Layout.Header>
         <Layout.Content
+          data-tour="onboarding-main-content"
           style={{
             padding: 'clamp(1rem, 4vw, 2rem)',
             overflow: 'auto',
@@ -333,5 +339,7 @@ export default function MainLayout() {
         </Layout.Content>
       </Layout>
     </Layout>
+    <OnboardingHost isMobile={mobile} />
+    </Fragment>
   );
 }

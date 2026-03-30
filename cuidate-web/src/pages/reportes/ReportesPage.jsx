@@ -449,12 +449,12 @@ export default function ReportesPage() {
   const m = summary?.metrics ?? {};
 
   return (
-    <div>
+    <div data-tour="section-reportes-root">
       <PageHeader title="Reportes" />
 
       {/* Resumen (métricas) - paridad con app móvil */}
       {(admin || isDoctor()) && (
-        <section className="saas-section" aria-label="Resumen" style={{ marginBottom: '1.5rem' }}>
+        <section className="saas-section" aria-label="Resumen" style={{ marginBottom: '1.5rem' }} data-tour="section-reportes-summary">
           <h2 className="saas-section-title">Resumen</h2>
           {loadingSummary && (
             <div style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
@@ -632,6 +632,7 @@ export default function ReportesPage() {
 
       {/* Tarjetas: Comorbilidades primero, luego Estadísticas, Pacientes activos, Citas por estado */}
       <div
+        data-tour="section-reportes-detail"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',

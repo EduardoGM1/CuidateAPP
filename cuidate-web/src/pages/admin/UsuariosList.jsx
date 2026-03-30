@@ -201,13 +201,15 @@ export default function UsuariosList() {
   ];
 
   return (
-    <div>
+    <div data-tour="section-usuarios-root">
       <PageHeader
         title="Usuarios (Admin)"
         action={
-          <Button type="button" variant="primary" onClick={() => { setShowNewUserModal(true); clearNewUserErrors(); resetNewUser(); }}>
-            Nuevo usuario
-          </Button>
+          <span data-tour="section-usuarios-new" style={{ display: 'inline-block' }}>
+            <Button type="button" variant="primary" onClick={() => { setShowNewUserModal(true); clearNewUserErrors(); resetNewUser(); }}>
+              Nuevo usuario
+            </Button>
+          </span>
         }
       />
       <Modal
@@ -362,7 +364,9 @@ export default function UsuariosList() {
         )}
       </Modal>
       {error && <p style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>{error} <button type="button" onClick={load} style={{ marginLeft: '0.5rem', textDecoration: 'underline' }}>Reintentar</button></p>}
+      <div data-tour="section-usuarios-table">
       {loading ? <LoadingSpinner /> : list.length === 0 ? <EmptyState message="No hay usuarios" /> : <Table columns={columns} data={list} emptyMessage="No hay usuarios" />}
+      </div>
     </div>
   );
 }

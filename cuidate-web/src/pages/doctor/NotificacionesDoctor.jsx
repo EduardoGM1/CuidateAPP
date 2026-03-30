@@ -142,9 +142,9 @@ export default function NotificacionesDoctor() {
   }
 
   return (
-    <div>
+    <div data-tour="section-notificaciones-root">
       <PageHeader title="Notificaciones" showBack backTo="/" />
-      <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-end' }}>
+      <div data-tour="section-notificaciones-filters" style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-end' }}>
         <div style={{ minWidth: 180 }}>
           <Select label="Tipo" value={filtroTipo} onChange={(v) => setFiltroTipo(v ?? '')} options={TIPO_OPCIONES} placeholder="Todos" />
         </div>
@@ -169,7 +169,7 @@ export default function NotificacionesDoctor() {
       ) : list.length === 0 ? (
         <EmptyState message="No hay notificaciones" />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div data-tour="section-notificaciones-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {list.map((n) => {
             const id = n.id_notificacion ?? n.id;
             const isLeida = (n.estado || '').toLowerCase() === 'leida';

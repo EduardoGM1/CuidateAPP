@@ -163,11 +163,14 @@ export default function AuditoriaList() {
   };
 
   return (
-    <div>
+    <div data-tour="section-auditoria-root">
+      <div data-tour="section-auditoria-export">
       <PageHeader
         title="Auditoría"
         action={list.length > 0 ? <Button variant="outline" onClick={exportarCSV}>Exportar CSV</Button> : undefined}
       />
+      </div>
+      <div data-tour="section-auditoria-filters">
       <div className="form-row-inline" style={{ marginBottom: '1rem' }}>
         <div style={{ minWidth: 140 }}>
           <label style={{ display: 'block', marginBottom: '0.35rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-texto-secundario)' }}>Desde</label>
@@ -204,6 +207,7 @@ export default function AuditoriaList() {
         }}
         onSearch={handleSearch}
       />
+      </div>
       {error && (
         <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: 'var(--color-fondo-error-claro)', color: 'var(--color-error)', borderRadius: 'var(--radius)' }}>
           {error}

@@ -79,10 +79,11 @@ export default function ChatList() {
     : list;
 
   return (
-    <div>
+    <div data-tour="section-chat-root">
       <PageHeader title="Conversaciones" showBack backTo="/" />
       {list.length > 0 && (
         <input
+          data-tour="section-chat-filter"
           type="text"
           placeholder="Filtrar por nombre del paciente..."
           value={filterNombre}
@@ -115,7 +116,7 @@ export default function ChatList() {
             : 'Ninguna conversación coincide con el filtro.'}
         />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div data-tour="section-chat-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {listFiltrada.map((c) => {
             const pid = c.id_paciente ?? c.paciente_id;
             const nombre = (c.paciente?.nombre_completo ?? c.paciente_nombre ?? formatNombreCompleto(c.paciente || c)) || 'Paciente';
