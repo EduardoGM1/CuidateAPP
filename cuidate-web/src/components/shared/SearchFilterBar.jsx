@@ -18,13 +18,17 @@ export default function SearchFilterBar({
   const [search, setSearch] = useState(initialSearch);
   const [filters, setFilters] = useState(initialFilters);
   const timerRef = useRef(null);
+  const latestSearchRef = useRef(initialSearch || '');
+  const latestFiltersRef = useRef(initialFilters || {});
 
   useEffect(() => {
     setSearch(initialSearch || '');
+    latestSearchRef.current = initialSearch || '';
   }, [initialSearch]);
 
   useEffect(() => {
     setFilters(initialFilters || {});
+    latestFiltersRef.current = initialFilters || {};
   }, [initialFilters]);
 
   useEffect(() => {
@@ -34,18 +38,19 @@ export default function SearchFilterBar({
   }, []);
 
   const emitSearch = useCallback(() => {
-    const term = normalizeString(search, { maxLength: 100 });
-    const out = { ...filters, search: term };
+    const term = normalizeString(latestSearchRef.current, { maxLength: 100 });
+    const out = { ...latestFiltersRef.current, search: term };
     onSearch(out);
-  }, [search, filters, onSearch]);
+  }, [onSearch]);
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearch(value);
+    latestSearchRef.current = value;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       const term = normalizeString(value, { maxLength: 100 });
-      const out = { ...filters, search: term };
+      const out = { ...latestFiltersRef.current, search: term };
       onSearch(out);
     }, DEBOUNCE_MS);
   };
@@ -55,9 +60,10 @@ export default function SearchFilterBar({
     if (value === '' || value == null) delete next[key];
     else next[key] = value;
     setFilters(next);
+    latestFiltersRef.current = next;
     onSearch({
       ...next,
-      search: normalizeString(search, { maxLength: 100 }),
+      search: normalizeString(latestSearchRef.current, { maxLength: 100 }),
     });
   };
 
