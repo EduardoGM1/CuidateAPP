@@ -40,9 +40,39 @@ function normalizeEstadoParam(value) {
   return 'activos';
 }
 
+/** Escapa %, _ y \ para uso seguro en LIKE */
+function escapeLikePattern(str) {
+  return String(str).replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+}
+
+/**
+ * Filtro por nombre o apellidos: cada palabra debe aparecer en al menos uno de los campos (AND entre palabras).
+ * @param {string|null|undefined} searchRaw
+ * @returns {object|null}
+ */
+function buildNameSearchWhere(searchRaw) {
+  if (searchRaw == null || searchRaw === '') return null;
+  const s = String(searchRaw).trim().slice(0, 100);
+  if (!s) return null;
+  const words = s.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return null;
+  return {
+    [Op.and]: words.map((word) => {
+      const pattern = `%${escapeLikePattern(word)}%`;
+      return {
+        [Op.or]: [
+          { nombre: { [Op.like]: pattern } },
+          { apellido_paterno: { [Op.like]: pattern } },
+          { apellido_materno: { [Op.like]: pattern } },
+        ],
+      };
+    }),
+  };
+}
+
 export const getPacientes = async (req, res) => {
   try {
-    const { comorbilidad = null, modulo: moduloQuery = null } = req.query;
+    const { comorbilidad = null, modulo: moduloQuery = null, search: searchQuery = null } = req.query;
     const estadoParam = normalizeEstadoParam(req.query.estado);
     const sortParam = req.query.sort == null || req.query.sort === '' ? 'recent' : String(req.query.sort).toLowerCase().trim();
     const queryForBuild = { ...req.query, estado: estadoParam, sort: sortParam === 'oldest' ? 'oldest' : 'recent' };
@@ -60,11 +90,18 @@ export const getPacientes = async (req, res) => {
     );
 
     // Combinar condiciones
-    const whereCondition = { ...estadoWhere };
+    let whereCondition = { ...estadoWhere };
     if (idModuloFilter != null) {
       whereCondition.id_modulo = idModuloFilter;
     }
-    
+
+    const nameSearchWhere = buildNameSearchWhere(searchQuery);
+    if (nameSearchWhere) {
+      whereCondition = {
+        [Op.and]: [whereCondition, nameSearchWhere],
+      };
+    }
+
     // Log específico para debug del filtro "todos" - Solo en desarrollo
     if (process.env.NODE_ENV === 'development' && req.query.estado === 'todos') {
       logger.debug('🔍 Backend pacientes filtro todos', {

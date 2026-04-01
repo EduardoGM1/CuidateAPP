@@ -47,6 +47,7 @@ export default function DoctoresList() {
     page: 1,
     limit: PAGE_SIZE_DEFAULT,
     estado: 'activos',
+    search: '',
   });
 
   useOnboardingPageReady(!loading);
@@ -70,6 +71,7 @@ export default function DoctoresList() {
         sort: params.sort || 'recent',
         estado: params.estado || 'activos',
         modulo: params.modulo,
+        search: params.search || undefined,
       });
       setList(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -77,7 +79,7 @@ export default function DoctoresList() {
     } finally {
       setLoading(false);
     }
-  }, [params.page, params.limit, params.sort, params.estado, params.modulo]);
+  }, [params.page, params.limit, params.sort, params.estado, params.modulo, params.search]);
 
   useEffect(() => {
     loadModulos();
@@ -109,6 +111,7 @@ export default function DoctoresList() {
       page: 1,
       estado: searchParams.estado ?? prev.estado,
       modulo: searchParams.modulo ? Number(searchParams.modulo) : undefined,
+      search: searchParams.search !== undefined ? searchParams.search : prev.search,
     }));
   }
 
@@ -161,6 +164,7 @@ export default function DoctoresList() {
         <SearchFilterBar
           placeholder="Buscar por nombre o email..."
           filterOptions={filterOptions}
+          initialSearch={params.search || ''}
           initialFilters={{ estado: params.estado, modulo: params.modulo ? String(params.modulo) : '' }}
           onSearch={handleSearch}
         />

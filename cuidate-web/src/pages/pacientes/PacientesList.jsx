@@ -51,6 +51,7 @@ export default function PacientesList() {
     estado: 'activos',
     comorbilidad: '',
     modulo: '',
+    search: '',
   });
   const [comorbilidades, setComorbilidades] = useState([]);
   const [modulos, setModulos] = useState([]);
@@ -87,6 +88,7 @@ export default function PacientesList() {
         estado: params.estado || 'activos',
         comorbilidad: params.comorbilidad || undefined,
         modulo: params.modulo ? Number(params.modulo) : undefined,
+        search: params.search || undefined,
       });
       setList(res.pacientes ?? []);
       setTotal(res.total ?? 0);
@@ -95,7 +97,7 @@ export default function PacientesList() {
     } finally {
       setLoading(false);
     }
-  }, [params.page, params.limit, params.sort, params.estado, params.comorbilidad, params.modulo]);
+  }, [params.page, params.limit, params.sort, params.estado, params.comorbilidad, params.modulo, params.search]);
 
   useEffect(() => {
     load();
@@ -127,6 +129,7 @@ export default function PacientesList() {
       estado: searchParams.estado ?? prev.estado,
       comorbilidad: searchParams.comorbilidad ?? prev.comorbilidad,
       modulo: searchParams.modulo ?? prev.modulo,
+      search: searchParams.search !== undefined ? searchParams.search : prev.search,
     }));
   };
 
@@ -197,6 +200,7 @@ export default function PacientesList() {
       <SearchFilterBar
         placeholder="Buscar por nombre..."
         filterOptions={filterOptions}
+        initialSearch={params.search || ''}
         initialFilters={{
           estado: params.estado,
           sort: params.sort || 'recent',

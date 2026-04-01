@@ -7,7 +7,7 @@ const BASE = API_PATHS.PACIENTES;
 
 /**
  * Lista de pacientes con paginación y filtros.
- * @param {{ page?: number, limit?: number, offset?: number, sort?: string, estado?: string, comorbilidad?: string, modulo?: number|string }} params
+ * @param {{ page?: number, limit?: number, offset?: number, sort?: string, estado?: string, comorbilidad?: string, modulo?: number|string, search?: string }} params
  */
 export async function getPacientes(params = {}) {
   const limit = Math.min(
@@ -32,6 +32,11 @@ export async function getPacientes(params = {}) {
   const modulo = parsePositiveInt(params.modulo, 0);
   if (modulo > 0) {
     q.set('modulo', String(modulo));
+  }
+
+  const search = normalizeString(params.search, { maxLength: 100 });
+  if (search) {
+    q.set('search', search);
   }
 
   const { data } = await client.get(`${BASE}?${q.toString()}`);

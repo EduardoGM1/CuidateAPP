@@ -7,7 +7,7 @@ const BASE = API_PATHS.DOCTORES;
 
 /**
  * Lista de doctores (Admin: todos; Doctor: solo el propio).
- * @param {{ page?: number, limit?: number, offset?: number, sort?: string, estado?: string, modulo?: number }} params
+ * @param {{ page?: number, limit?: number, offset?: number, sort?: string, estado?: string, modulo?: number, search?: string }} params
  * @returns {Promise<Array>} Array de doctores (el backend no devuelve total)
  */
 export async function getDoctores(params = {}) {
@@ -19,6 +19,7 @@ export async function getDoctores(params = {}) {
   const sort = normalizeString(params.sort, { maxLength: 20 }) || 'recent';
   const estado = normalizeString(params.estado, { maxLength: 20 }) || 'activos';
   const modulo = parsePositiveInt(params.modulo, 0);
+  const search = normalizeString(params.search, { maxLength: 100 });
 
   const q = new URLSearchParams();
   q.set('limit', String(limit));
@@ -26,6 +27,7 @@ export async function getDoctores(params = {}) {
   q.set('sort', sort);
   q.set('estado', estado);
   if (modulo > 0) q.set('modulo', String(modulo));
+  if (search) q.set('search', search);
 
   const { data } = await client.get(`${BASE}?${q.toString()}`);
   const list = data?.data ?? data;

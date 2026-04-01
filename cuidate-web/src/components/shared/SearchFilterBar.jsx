@@ -21,8 +21,7 @@ export default function SearchFilterBar({
 
   const emitSearch = useCallback(() => {
     const term = normalizeString(search, { maxLength: 100 });
-    const out = { ...filters };
-    if (term) out.search = term;
+    const out = { ...filters, search: term };
     onSearch(out);
   }, [search, filters, onSearch]);
 
@@ -33,8 +32,7 @@ export default function SearchFilterBar({
     setTimer(
       setTimeout(() => {
         const term = normalizeString(value, { maxLength: 100 });
-        const out = { ...filters };
-        if (term) out.search = term;
+        const out = { ...filters, search: term };
         onSearch(out);
       }, DEBOUNCE_MS)
     );
@@ -45,7 +43,10 @@ export default function SearchFilterBar({
     if (value === '' || value == null) delete next[key];
     else next[key] = value;
     setFilters(next);
-    onSearch({ ...next, ...(normalizeString(search, { maxLength: 100 }) ? { search: search.trim() } : {}) });
+    onSearch({
+      ...next,
+      search: normalizeString(search, { maxLength: 100 }),
+    });
   };
 
   return (

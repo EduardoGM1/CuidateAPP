@@ -18,9 +18,35 @@ function parseModuloFilter(modulo) {
   return id;
 }
 
+function escapeLikePattern(str) {
+  return String(str).replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+}
+
+function buildDoctorSearchWhere(searchRaw) {
+  if (searchRaw == null || searchRaw === '') return null;
+  const s = String(searchRaw).trim().slice(0, 100);
+  if (!s) return null;
+  const words = s.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return null;
+
+  return {
+    [Op.and]: words.map((word) => {
+      const pattern = `%${escapeLikePattern(word)}%`;
+      return {
+        [Op.or]: [
+          { nombre: { [Op.like]: pattern } },
+          { apellido_paterno: { [Op.like]: pattern } },
+          { apellido_materno: { [Op.like]: pattern } },
+          sequelize.where(sequelize.col('Usuario.email'), { [Op.like]: pattern }),
+        ],
+      };
+    }),
+  };
+}
+
 export const getDoctores = async (req, res) => {
   try {
-    const { modulo: moduloQuery } = req.query;
+    const { modulo: moduloQuery, search: searchQuery = null } = req.query;
     const idModuloFilter = parseModuloFilter(moduloQuery);
 
     // Usar utility functions para construir opciones de paginación
@@ -34,9 +60,15 @@ export const getDoctores = async (req, res) => {
     );
     
     // Combinar condiciones
-    const whereCondition = { ...estadoWhere };
+    let whereCondition = { ...estadoWhere };
     if (idModuloFilter != null) {
       whereCondition.id_modulo = idModuloFilter;
+    }
+    const searchWhere = buildDoctorSearchWhere(searchQuery);
+    if (searchWhere) {
+      whereCondition = {
+        [Op.and]: [whereCondition, searchWhere],
+      };
     }
     
     // Log específico para debug del filtro "todos" - Solo en desarrollo
