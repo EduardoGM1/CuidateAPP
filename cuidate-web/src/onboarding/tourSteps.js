@@ -73,7 +73,7 @@ export function getSectionSteps(sectionId, { isAdmin }) {
       {
         ...TOUR_MAIN_CONTENT,
         content:
-          'En «Pacientes» trabajas el padrón: dar de alta a personas nuevas, buscar a quién ya está registrado y abrir la ficha para ver historial, citas y más.',
+          'En «Pacientes» gestionas el registro de pacientes: dar de alta a personas nuevas, buscar a quién ya está registrado y abrir la ficha para ver historial, citas y más.',
       },
       {
         target: '[data-tour="section-pacientes-new"]',
