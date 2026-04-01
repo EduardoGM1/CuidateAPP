@@ -8,10 +8,10 @@ import {
   isSectionComplete,
   markSectionComplete,
 } from './storage';
-import { getSectionTourId } from './sectionFromPath';
-import { getShellSteps, getSectionSteps, filterExistingTargets } from './tourSteps';
+import { getShellSteps, filterExistingTargets } from './tourSteps';
 import { ONBOARDING_PAGE_READY } from './notifyPageReady';
 import { createJoyrideStyles, JOYRIDE_LOCALE } from './joyrideTheme';
+import { resolverGuiaPorRuta } from './motorOnboarding';
 
 const SECTION_TOUR_FALLBACK_MS = 12000;
 
@@ -52,14 +52,11 @@ export default function OnboardingHost({ isMobile }) {
   const tryStartSectionTour = useCallback(
     (pathname) => {
       if (!isShellComplete()) return;
-      const id = getSectionTourId(pathname, isAdminFn());
-      if (!id || isSectionComplete(id)) return;
-      const raw = getSectionSteps(id, { isAdmin: isAdminFn() });
-      const filtered = filterExistingTargets(raw);
-      if (!filtered.length) return;
+      const guia = resolverGuiaPorRuta(pathname, isAdminFn());
+      if (!guia || isSectionComplete(guia.idSeccion)) return;
       tourModeRef.current = 'section';
-      sectionIdRef.current = id;
-      setSteps(filtered);
+      sectionIdRef.current = guia.idSeccion;
+      setSteps(guia.pasos);
       setRun(true);
     },
     [isAdminFn]
@@ -68,8 +65,8 @@ export default function OnboardingHost({ isMobile }) {
   const scheduleSectionTour = useCallback(
     (pathname) => {
       if (!isShellComplete()) return;
-      const id = getSectionTourId(pathname, isAdminFn());
-      if (!id || isSectionComplete(id)) return;
+      const guia = resolverGuiaPorRuta(pathname, isAdminFn());
+      if (!guia || isSectionComplete(guia.idSeccion)) return;
 
       let cancelled = false;
 
