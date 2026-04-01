@@ -4,7 +4,7 @@
 
 | Build        | API usada                          |
 |-------------|-------------------------------------|
-| **Release** | API online (VPS): `http://187.77.14.148` |
+| **Release** | Producción: `https://cuidateapp.com.mx` (ver `apiEndpoints.js`) |
 | **Debug**   | Detección automática: localhost (adb reverse), IP local o emulador |
 
 La URL de producción está centralizada en **`apiEndpoints.js`**. Al pasar a dominio/HTTPS, solo se cambia ahí.

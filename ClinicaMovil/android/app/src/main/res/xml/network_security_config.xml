@@ -11,6 +11,11 @@
         </trust-anchors>
     </base-config>
     
+    <!-- IP VPS legacy (HTTP); solo si pruebas contra IP sin HTTPS -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">187.77.14.148</domain>
+    </domain-config>
+
     <!-- Permitir HTTP para localhost y redes locales -->
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">localhost</domain>
@@ -25,8 +30,10 @@
         <domain includeSubdomains="true">192.168.0.1</domain>
     </domain-config>
     
-    <!-- Forzar HTTPS para todas las conexiones de producción -->
+    <!-- Producción: dominios con TLS (sin cleartext) -->
     <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">cuidateapp.com.mx</domain>
+        <domain includeSubdomains="true">www.cuidateapp.com.mx</domain>
         <domain includeSubdomains="true">api.tuclinica.com</domain>
         <domain includeSubdomains="true">tuclinica.com</domain>
     </domain-config>

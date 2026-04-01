@@ -473,9 +473,34 @@ export const getRealtimeStats = async (req, res) => {
   }
 };
 
+/**
+ * Origen público https://host (o http en local) para la app móvil y Socket.IO.
+ * Detrás de Nginx usar X-Forwarded-Proto / X-Forwarded-Host.
+ * Override: PUBLIC_SOCKET_URL en .env (ej. https://cuidateapp.com.mx).
+ */
+function resolvePublicApiOrigin(req) {
+  const override = process.env.PUBLIC_SOCKET_URL?.trim();
+  if (override) {
+    return override.replace(/\/$/, '');
+  }
+  const forwardedProto = (req.get('x-forwarded-proto') || '').split(',')[0].trim().toLowerCase();
+  const proto =
+    forwardedProto === 'https' || forwardedProto === 'http'
+      ? forwardedProto
+      : req.secure
+        ? 'https'
+        : 'http';
+  const host = (req.get('x-forwarded-host') || req.get('host') || '').trim();
+  if (!host) {
+    return `http://127.0.0.1:${process.env.PORT || 3000}`;
+  }
+  return `${proto}://${host}`;
+}
+
 // Obtener configuración de la app móvil
 export const getMobileConfig = async (req, res) => {
   try {
+    const publicOrigin = resolvePublicApiOrigin(req);
     const config = {
       api_version: '1.0.0',
       min_app_version: '1.0.0',
@@ -487,9 +512,10 @@ export const getMobileConfig = async (req, res) => {
         dark_mode: true
       },
       endpoints: {
-        websocket_url: `ws://localhost:${process.env.PORT || 3000}`,
-        api_base_url: `${req.protocol}://${req.get('host')}/api`,
-        push_service_url: `${req.protocol}://${req.get('host')}/api/mobile/push`
+        // Socket.IO-client acepta el mismo origen que REST (https://…)
+        websocket_url: publicOrigin,
+        api_base_url: `${publicOrigin}/api`,
+        push_service_url: `${publicOrigin}/api/mobile/push`
       },
       limits: {
         max_file_size: '10MB',

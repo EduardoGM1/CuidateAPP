@@ -48,7 +48,7 @@ const API_CONFIG = {
     baseURL: PRODUCTION_API_BASE_URL,
     timeout: 60000,
     description: 'Servidor de producción (VPS Hostinger)',
-    forceHttps: false // cambiar a true cuando PRODUCTION_API_BASE_URL use https://
+    forceHttps: true
   }
 };
 
