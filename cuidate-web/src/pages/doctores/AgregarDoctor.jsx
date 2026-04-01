@@ -10,8 +10,10 @@ import { PageHeader } from '../../components/shared';
 import { Card, Button, Input } from '../../components/ui';
 import { message } from 'antd';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 export default function AgregarDoctor() {
+  useOnboardingPageReady(true);
   const navigate = useNavigate();
   const [modulos, setModulos] = useState([]);
   const [submitError, setSubmitError] = useState('');

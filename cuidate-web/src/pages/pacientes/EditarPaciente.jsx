@@ -31,6 +31,7 @@ import { Card, Button, Input, Select, LoadingSpinner } from '../../components/ui
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatNombreCompleto } from '../../utils/format';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const OPCIONES_SEXO = [{ value: '', label: '—' }, { value: 'Hombre', label: 'Hombre' }, { value: 'Mujer', label: 'Mujer' }, { value: 'Otro', label: 'Otro' }];
 
@@ -73,6 +74,8 @@ export default function EditarPaciente() {
   const [anioDiagnostico, setAnioDiagnostico] = useState('');
   const [catalogoComorbilidades, setCatalogoComorbilidades] = useState([]);
   const [comorbilidadIds, setComorbilidadIds] = useState(getInitialComorbilidadIds);
+
+  useOnboardingPageReady(parsedId > 0 && !loading && !!paciente);
 
   const {
     register,

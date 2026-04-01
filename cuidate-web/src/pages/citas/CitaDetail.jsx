@@ -12,6 +12,7 @@ import { STORAGE_KEYS } from '../../utils/constants';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatDateTime, formatNombreCompleto } from '../../utils/format';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const ESTADOS_OPCIONES = [
   { value: 'pendiente', label: 'Pendiente' },
@@ -46,6 +47,8 @@ export default function CitaDetail() {
 
   const parsedId = parsePositiveInt(id, 0);
   const canEditCita = isDoctor() || isAdmin();
+
+  useOnboardingPageReady(parsedId > 0 && !loading && !!cita && !error);
 
   const load = useCallback(async () => {
     if (parsedId === 0) return;

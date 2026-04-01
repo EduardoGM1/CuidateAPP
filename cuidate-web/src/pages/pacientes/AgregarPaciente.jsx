@@ -26,10 +26,12 @@ import {
 } from '../../constants/enfermedadesCronicas';
 import { createEmptyRedApoyoItem } from '../../constants/redApoyo';
 import RedApoyoFormFields from '../../components/pacientes/RedApoyoFormFields';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const OPCIONES_SEXO = [{ value: '', label: '—' }, { value: 'Hombre', label: 'Hombre' }, { value: 'Mujer', label: 'Mujer' }, { value: 'Otro', label: 'Otro' }];
 
 export default function AgregarPaciente() {
+  useOnboardingPageReady(true);
   const navigate = useNavigate();
   const [modulos, setModulos] = useState([]);
   const [institucionesSalud, setInstitucionesSalud] = useState([]);

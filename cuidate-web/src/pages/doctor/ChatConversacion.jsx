@@ -12,6 +12,7 @@ import { sanitizeForDisplay } from '../../utils/sanitize';
 import { parsePositiveInt } from '../../utils/params';
 import { STORAGE_KEYS } from '../../utils/constants';
 import VoiceMessagePlayer from '../../components/chat/VoiceMessagePlayer';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 export default function ChatConversacion() {
   const { id: pacienteIdParam } = useParams();
@@ -26,6 +27,15 @@ export default function ChatConversacion() {
   const [texto, setTexto] = useState('');
   const [sending, setSending] = useState(false);
   const scrollRef = useRef(null);
+
+  useOnboardingPageReady(
+    !loadingDoctor &&
+      !errorDoctor &&
+      idDoctor != null &&
+      pacienteId > 0 &&
+      !loading &&
+      !error
+  );
 
   const load = useCallback(async () => {
     if (!idDoctor || pacienteId === 0) return;

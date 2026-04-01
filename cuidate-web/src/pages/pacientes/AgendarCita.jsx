@@ -10,6 +10,7 @@ import { LoadingSpinner } from '../../components/ui';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatNombreCompleto } from '../../utils/format';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 export default function AgendarCita() {
   const { id } = useParams();
@@ -24,6 +25,8 @@ export default function AgendarCita() {
   const { control, register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     defaultValues: { id_doctor: '', fecha_cita: '', motivo: '' },
   });
+
+  useOnboardingPageReady(parsedId > 0 && !loading && !!paciente);
 
   useEffect(() => {
     if (parsedId === 0) {

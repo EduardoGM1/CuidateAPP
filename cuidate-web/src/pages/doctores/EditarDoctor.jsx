@@ -12,6 +12,7 @@ import { Card, Button, Input } from '../../components/ui';
 import { LoadingSpinner } from '../../components/ui';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 export default function EditarDoctor() {
   const { id } = useParams();
@@ -25,6 +26,8 @@ export default function EditarDoctor() {
   const [modulos, setModulos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitError, setSubmitError] = useState('');
+
+  useOnboardingPageReady(parsedId > 0 && !loading && !!doctor);
 
   const {
     register,

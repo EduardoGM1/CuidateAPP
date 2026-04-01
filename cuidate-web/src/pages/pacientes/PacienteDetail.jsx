@@ -87,6 +87,7 @@ import {
 } from 'recharts';
 import TimeRangeFilter, { filterSignosByTimeRange, FILTROS_TIEMPO } from '../../components/charts/TimeRangeFilter';
 import { aggregateSignosByMonth } from '../../components/charts/monthlyChartUtils';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const ESTADO_CITA = {
   pendiente: 'Pendiente',
@@ -201,6 +202,8 @@ export default function PacienteDetail() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const isDoctor = useAuthStore((s) => s.isDoctor);
   const canEditMedical = isDoctor() || isAdmin();
+
+  useOnboardingPageReady(parsedId > 0 && !loading && !!paciente && !error);
 
   const [signosForm, setSignosForm] = useState(INITIAL_SIGNOS_VITALES);
   const [signosSubmitError, setSignosSubmitError] = useState('');

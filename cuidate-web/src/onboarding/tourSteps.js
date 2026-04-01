@@ -289,6 +289,146 @@ export function getSectionSteps(sectionId, { isAdmin }) {
           'Toca una conversación para abrirla en la pantalla siguiente y leer el hilo completo. Los mensajes nuevos suelen actualizar la lista en tiempo real.',
       },
     ],
+    'pacientes-nuevo': [
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Estás en el alta de un paciente nuevo. El formulario te pide datos personales y de contacto; rellénalo con calma, en el orden que te resulte cómodo.',
+      },
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Más abajo puedes añadir red de apoyo, datos médicos iniciales o una primera consulta si aplica; todo eso es opcional salvo lo que marque el propio formulario como obligatorio.',
+      },
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Cuando termines, usa el botón principal de guardar o crear. Si falta algo importante, el sistema te lo indicará antes de guardar. Puedes volver atrás sin guardar si lo necesitas.',
+      },
+    ],
+    'pacientes-detalle': [
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Esta es la ficha del paciente: aquí concentras su información, historial de citas, signos vitales, medicación y otras secciones según tu rol.',
+      },
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Explora con el menú o las pestañas que veas en pantalla. Desde aquí suele poderse agendar citas, registrar datos clínicos o abrir el detalle de cada elemento.',
+      },
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'El enlace «Volver a Pacientes» te regresa al listado. Si no ves un dato, puede que tu usuario no tenga permiso para verlo.',
+      },
+    ],
+    'pacientes-editar': [
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Aquí actualizas los datos generales del paciente (nombre, contacto, domicilio, etc.). Al guardar, los cambios sustituyen la información que había antes.',
+      },
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Revisa teléfono, CURP y dirección con cuidado; suelen usarse para contacto y trazabilidad. Puedes cancelar y volver a la ficha sin guardar si lo prefieres.',
+      },
+    ],
+    'pacientes-agendar-cita': [
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Vas a crear una cita para este paciente: elige doctor, fecha y hora. El motivo suele ser opcional pero ayuda a quien atienda la consulta.',
+      },
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Al confirmar, la cita quedará registrada. Luego la verás en la lista de citas y en el contexto del paciente. Si te equivocas, suele poder corregirse desde el detalle de la cita.',
+      },
+    ],
+    'citas-detalle': [
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Esta pantalla muestra una sola cita: quién es el paciente, el doctor, la fecha, el estado y las observaciones.',
+      },
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Según tu rol, podrás cambiar el estado, completar la consulta, registrar signos vitales o reprogramar. Los botones disponibles son los que tu cuenta puede usar.',
+      },
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Puedes saltar a la ficha del paciente o ver más citas de esa persona con los accesos que aparezcan. «Volver» te regresa al listado de citas.',
+      },
+    ],
+    'doctores-nuevo': [
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Das de alta a un doctor nuevo. Lo primero es el correo: puedes invitarlo para que él cree su contraseña, o definir una contraseña inicial tú mismo.',
+      },
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Completa nombre, datos de contacto y módulo. Al final, el botón de crear guarda todo; si el correo ya existía, el sistema te avisará para que decidas qué hacer.',
+      },
+    ],
+    'doctores-detalle': [
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Resumen del doctor: datos profesionales, pacientes asignados y citas recientes cuando haya información cargada.',
+      },
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Desde aquí puedes editar su ficha, gestionar pacientes asignados o acciones de administración (contraseña, activar o desactivar) según lo que permita tu rol.',
+      },
+    ],
+    'doctores-editar': [
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Modificas los datos del doctor en el formulario. Lo que guardes reemplaza la información anterior en el sistema.',
+      },
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Si entras a editar tu propio perfil como doctor, algunos campos pueden estar bloqueados; es normal para proteger datos que solo cambia administración.',
+      },
+    ],
+    'auditoria-detalle': [
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Este es un registro puntual de auditoría: qué acción ocurrió, cuándo, qué usuario la hizo y desde qué equipo (IP), en texto legible.',
+      },
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Sirve para aclarar dudas o cumplir revisiones internas. Si el registro está ligado a una cita, puede haber un acceso directo para abrirla.',
+      },
+    ],
+    'chat-conversacion': [
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Chateas con un paciente concreto. Arriba verás el historial de mensajes; los tuyos y los del paciente suelen distinguirse por el diseño de cada burbuja.',
+      },
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          'Escribe tu mensaje abajo y envíalo con el botón correspondiente. Pueden llegar mensajes nuevos en tiempo real mientras mantengas esta pantalla abierta.',
+      },
+      {
+        ...TOUR_MAIN_CONTENT,
+        content:
+          '«Volver» te lleva otra vez a la lista de conversaciones para elegir otro paciente o cerrar el chat.',
+      },
+    ],
   };
 
   return steps[sectionId] ?? [];

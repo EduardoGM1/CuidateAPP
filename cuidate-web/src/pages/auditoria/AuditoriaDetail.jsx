@@ -6,6 +6,7 @@ import { LoadingSpinner, Button } from '../../components/ui';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay, displayText } from '../../utils/sanitize';
 import { formatDateTime } from '../../utils/format';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 export default function AuditoriaDetail() {
   const { id } = useParams();
@@ -15,6 +16,8 @@ export default function AuditoriaDetail() {
   const [error, setError] = useState(null);
 
   const parsedId = parsePositiveInt(id, 0);
+
+  useOnboardingPageReady(parsedId > 0 && !loading && !!registro && !error);
 
   useEffect(() => {
     if (parsedId === 0) {

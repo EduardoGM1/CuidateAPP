@@ -31,6 +31,7 @@ import { useCurrentDoctorId } from '../../hooks/useCurrentDoctorId';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatDate, formatDateTime, formatNombreCompleto } from '../../utils/format';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const ESTADO_CITA = {
   pendiente: 'Pendiente',
@@ -94,6 +95,8 @@ export default function DoctorDetail() {
   const [passwordSaving, setPasswordSaving] = useState(false);
 
   const canEdit = isAdmin || (idDoctor != null && idDoctor === parsedId);
+
+  useOnboardingPageReady(parsedId > 0 && !loading && !!doctor && !(error && !doctor));
 
   const load = useCallback(async () => {
     if (parsedId === 0) return;
