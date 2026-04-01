@@ -184,6 +184,10 @@ export default function PacientesList() {
     if (id) navigate(`/pacientes/${id}`);
   };
 
+  const emptyMessage = params.search
+    ? `No se encontraron pacientes para "${params.search}".`
+    : 'No hay pacientes';
+
   return (
     <div data-tour="section-pacientes-root">
       <PageHeader
@@ -223,7 +227,7 @@ export default function PacientesList() {
         columns={COLUMNS}
         data={list}
         loading={loading}
-        emptyMessage="No hay pacientes"
+        emptyMessage={emptyMessage}
         onRowClick={handleRowClick}
       />
       </div>

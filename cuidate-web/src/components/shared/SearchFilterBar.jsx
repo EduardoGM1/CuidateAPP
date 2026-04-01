@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Input, Button } from '../ui';
 import { normalizeString } from '../../utils/sanitize';
 
@@ -17,7 +17,21 @@ export default function SearchFilterBar({
 }) {
   const [search, setSearch] = useState(initialSearch);
   const [filters, setFilters] = useState(initialFilters);
-  const [timer, setTimer] = useState(null);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    setSearch(initialSearch || '');
+  }, [initialSearch]);
+
+  useEffect(() => {
+    setFilters(initialFilters || {});
+  }, [initialFilters]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const emitSearch = useCallback(() => {
     const term = normalizeString(search, { maxLength: 100 });
@@ -28,14 +42,12 @@ export default function SearchFilterBar({
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearch(value);
-    if (timer) clearTimeout(timer);
-    setTimer(
-      setTimeout(() => {
-        const term = normalizeString(value, { maxLength: 100 });
-        const out = { ...filters, search: term };
-        onSearch(out);
-      }, DEBOUNCE_MS)
-    );
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      const term = normalizeString(value, { maxLength: 100 });
+      const out = { ...filters, search: term };
+      onSearch(out);
+    }, DEBOUNCE_MS);
   };
 
   const handleFilterChange = (key, value) => {
@@ -77,7 +89,14 @@ export default function SearchFilterBar({
           </select>
         </div>
       ))}
-      <Button type="button" variant="primary" onClick={emitSearch}>
+      <Button
+        type="button"
+        variant="primary"
+        onClick={() => {
+          if (timerRef.current) clearTimeout(timerRef.current);
+          emitSearch();
+        }}
+      >
         Buscar
       </Button>
     </div>

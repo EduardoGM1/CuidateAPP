@@ -142,6 +142,10 @@ export default function DoctoresList() {
     if (id) navigate(`/doctores/${id}`);
   };
 
+  const emptyMessage = params.search
+    ? `No se encontraron doctores para "${params.search}".`
+    : 'No hay doctores';
+
   return (
     <div data-tour="section-doctores-root">
       <PageHeader title="Doctores" />
@@ -183,7 +187,7 @@ export default function DoctoresList() {
         columns={COLUMNS}
         data={list}
         loading={loading}
-        emptyMessage="No hay doctores"
+        emptyMessage={emptyMessage}
         onRowClick={handleRowClick}
       />
       </div>
