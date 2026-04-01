@@ -38,6 +38,29 @@ export function markSectionComplete(sectionId) {
   }
 }
 
+/** Mini-tours al abrir cada modal de sección en ficha de paciente (p. ej. Signos vitales). */
+export function patientModalSectionStorageKey(sectionId) {
+  return `${PREFIX}patient_modal_${sectionId}_v1`;
+}
+
+export function isPatientModalSectionComplete(sectionId) {
+  if (!sectionId) return true;
+  try {
+    return localStorage.getItem(patientModalSectionStorageKey(sectionId)) === '1';
+  } catch {
+    return true;
+  }
+}
+
+export function markPatientModalSectionComplete(sectionId) {
+  if (!sectionId) return;
+  try {
+    localStorage.setItem(patientModalSectionStorageKey(sectionId), '1');
+  } catch {
+    /* ignore */
+  }
+}
+
 /** Borra todo el progreso de guías (shell + secciones). */
 export function resetAllOnboarding() {
   try {

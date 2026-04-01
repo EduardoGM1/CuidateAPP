@@ -34,7 +34,7 @@ export default function PatientSectionModal({
       maskClosable
       destroyOnClose
     >
-      <div className="patient-section-modal-body">
+      <div className="patient-section-modal-body" data-tour="patient-section-modal-body">
         {children}
       </div>
     </Modal>

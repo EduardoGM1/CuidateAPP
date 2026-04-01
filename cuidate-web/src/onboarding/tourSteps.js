@@ -318,6 +318,13 @@ export function getSectionSteps(sectionId, { isAdmin }) {
           'Explora con el menú o las pestañas que veas en pantalla. Desde aquí suele poderse agendar citas, registrar datos clínicos o abrir el detalle de cada elemento.',
       },
       {
+        target: '[data-tour="paciente-detail-sections-grid"]',
+        placement: 'top',
+        disableBeacon: true,
+        content:
+          'Estas tarjetas son accesos al expediente por tema: consultas, citas, signos, medicación, vacunas, etc. Pulsa una para abrir su ventana; la primera vez que entres a cada una verás una explicación breve.',
+      },
+      {
         ...TOUR_MAIN_CONTENT,
         content:
           'El enlace «Volver a Pacientes» te regresa al listado. Si no ves un dato, puede que tu usuario no tenga permiso para verlo.',

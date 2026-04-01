@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import Joyride, { STATUS } from 'react-joyride';
 import { message } from 'antd';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -88,6 +89,17 @@ import {
 import TimeRangeFilter, { filterSignosByTimeRange, FILTROS_TIEMPO } from '../../components/charts/TimeRangeFilter';
 import { aggregateSignosByMonth } from '../../components/charts/monthlyChartUtils';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
+import { createJoyrideStyles, JOYRIDE_LOCALE } from '../../onboarding/joyrideTheme';
+import { getPatientModalSectionSteps } from '../../onboarding/patientDetailSectionTourSteps';
+import { filterExistingTargets } from '../../onboarding/tourSteps';
+import {
+  isShellComplete,
+  isSectionComplete,
+  isPatientModalSectionComplete,
+  markPatientModalSectionComplete,
+} from '../../onboarding/storage';
+
+const patientModalJoyrideStyles = createJoyrideStyles(10100);
 
 const ESTADO_CITA = {
   pendiente: 'Pendiente',
@@ -204,6 +216,62 @@ export default function PacienteDetail() {
   const canEditMedical = isDoctor() || isAdmin();
 
   useOnboardingPageReady(parsedId > 0 && !loading && !!paciente && !error);
+
+  const [patientModalTourRun, setPatientModalTourRun] = useState(false);
+  const [patientModalTourSteps, setPatientModalTourSteps] = useState([]);
+  const patientModalTourSectionRef = useRef(null);
+
+  const closePatientSectionModal = useCallback(() => {
+    setPatientModalTourRun(false);
+    setPatientModalTourSteps([]);
+    patientModalTourSectionRef.current = null;
+    setModalSection(null);
+  }, []);
+
+  useEffect(() => {
+    if (!modalSection) {
+      setPatientModalTourRun(false);
+      setPatientModalTourSteps([]);
+      patientModalTourSectionRef.current = null;
+      return undefined;
+    }
+
+    if (!isShellComplete() || !isSectionComplete('pacientes-detalle')) {
+      return undefined;
+    }
+    if (isPatientModalSectionComplete(modalSection)) {
+      return undefined;
+    }
+
+    const sectionId = modalSection;
+    patientModalTourSectionRef.current = sectionId;
+
+    const timer = window.setTimeout(() => {
+      if (patientModalTourSectionRef.current !== sectionId) return;
+      const raw = getPatientModalSectionSteps(sectionId);
+      const filtered = filterExistingTargets(raw);
+      if (filtered.length === 0) {
+        markPatientModalSectionComplete(sectionId);
+        return;
+      }
+      if (patientModalTourSectionRef.current !== sectionId) return;
+      setPatientModalTourSteps(filtered);
+      setPatientModalTourRun(true);
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [modalSection]);
+
+  const handlePatientModalTourCallback = useCallback((data) => {
+    const { status } = data;
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+      const sid = patientModalTourSectionRef.current;
+      if (sid) markPatientModalSectionComplete(sid);
+      setPatientModalTourRun(false);
+      setPatientModalTourSteps([]);
+      patientModalTourSectionRef.current = null;
+    }
+  }, []);
 
   const [signosForm, setSignosForm] = useState(INITIAL_SIGNOS_VITALES);
   const [signosSubmitError, setSignosSubmitError] = useState('');
@@ -3256,7 +3324,7 @@ export default function PacienteDetail() {
         </div>
       </div>
 
-      <div className="patient-detail-cards-grid">
+      <div className="patient-detail-cards-grid" data-tour="paciente-detail-sections-grid">
         {PATIENT_DETAIL_SECTIONS.map((section) => (
           <SectionCard
             key={section.id}
@@ -3270,10 +3338,27 @@ export default function PacienteDetail() {
       <PatientSectionModal
         open={!!modalSection}
         sectionId={modalSection}
-        onClose={() => setModalSection(null)}
+        onClose={closePatientSectionModal}
       >
         {modalSection && renderTabContent(modalSection)}
       </PatientSectionModal>
+
+      {patientModalTourSteps.length > 0 && (
+        <Joyride
+          key={modalSection ?? 'patient-modal-tour'}
+          run={patientModalTourRun}
+          steps={patientModalTourSteps}
+          continuous
+          showProgress
+          showSkipButton
+          disableScrollParentFix
+          disableScrolling
+          callback={handlePatientModalTourCallback}
+          locale={JOYRIDE_LOCALE}
+          styles={patientModalJoyrideStyles}
+          floaterProps={{ disableAnimation: false }}
+        />
+      )}
 
       {/* Modales "Ver todo" / historial completo */}
       <Modal open={showAllSignosOpen} onClose={() => setShowAllSignosOpen(false)} title="Historial de signos vitales" footer={null} width={720}>

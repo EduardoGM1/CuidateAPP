@@ -11,43 +11,11 @@ import {
 import { getSectionTourId } from './sectionFromPath';
 import { getShellSteps, getSectionSteps, filterExistingTargets } from './tourSteps';
 import { ONBOARDING_PAGE_READY } from './notifyPageReady';
-
-const JOYRIDE_LOCALE = {
-  back: 'Atrás',
-  close: 'Cerrar',
-  last: 'Listo',
-  next: 'Siguiente',
-  open: 'Abrir',
-  skip: 'Omitir',
-};
+import { createJoyrideStyles, JOYRIDE_LOCALE } from './joyrideTheme';
 
 const SECTION_TOUR_FALLBACK_MS = 12000;
 
-const joyrideStyles = {
-  options: {
-    primaryColor: 'var(--color-primario, #006657)',
-    textColor: 'var(--color-texto-primario, #1a1a1a)',
-    overlayColor: 'rgba(16, 49, 43, 0.78)',
-    zIndex: 10050,
-    arrowColor: '#fff',
-  },
-  tooltip: {
-    borderRadius: 10,
-    fontSize: 14,
-  },
-  tooltipContainer: {
-    textAlign: 'left',
-  },
-  buttonNext: {
-    fontSize: 14,
-  },
-  buttonBack: {
-    fontSize: 14,
-  },
-  buttonSkip: {
-    fontSize: 14,
-  },
-};
+const joyrideStyles = createJoyrideStyles(10050);
 
 function runWhenDocumentFullyLoaded(callback) {
   if (typeof window === 'undefined') return;
