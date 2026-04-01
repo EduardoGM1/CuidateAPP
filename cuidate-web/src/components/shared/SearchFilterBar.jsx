@@ -2,8 +2,6 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { Input, Button } from '../ui';
 import { normalizeString } from '../../utils/sanitize';
 
-const DEBOUNCE_MS = 400;
-
 /**
  * Barra de búsqueda y filtros. Emite onSearch con params normalizados.
  * @param {{ onSearch: (params: Record<string, string|number>) => void, placeholder?: string, filterOptions?: { key: string, label: string, options: { value: string, label: string }[] }[] }} props
@@ -17,12 +15,13 @@ export default function SearchFilterBar({
 }) {
   const [search, setSearch] = useState(initialSearch);
   const [filters, setFilters] = useState(initialFilters);
-  const timerRef = useRef(null);
+  const [appliedSearch, setAppliedSearch] = useState(normalizeString(initialSearch, { maxLength: 100 }));
   const latestSearchRef = useRef(initialSearch || '');
   const latestFiltersRef = useRef(initialFilters || {});
 
   useEffect(() => {
     setSearch(initialSearch || '');
+    setAppliedSearch(normalizeString(initialSearch, { maxLength: 100 }));
     latestSearchRef.current = initialSearch || '';
   }, [initialSearch]);
 
@@ -31,14 +30,9 @@ export default function SearchFilterBar({
     latestFiltersRef.current = initialFilters || {};
   }, [initialFilters]);
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
-
   const emitSearch = useCallback(() => {
     const term = normalizeString(latestSearchRef.current, { maxLength: 100 });
+    setAppliedSearch(term);
     const out = { ...latestFiltersRef.current, search: term };
     onSearch(out);
   }, [onSearch]);
@@ -47,12 +41,6 @@ export default function SearchFilterBar({
     const value = e.target.value;
     setSearch(value);
     latestSearchRef.current = value;
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      const term = normalizeString(value, { maxLength: 100 });
-      const out = { ...latestFiltersRef.current, search: term };
-      onSearch(out);
-    }, DEBOUNCE_MS);
   };
 
   const handleFilterChange = (key, value) => {
@@ -63,7 +51,7 @@ export default function SearchFilterBar({
     latestFiltersRef.current = next;
     onSearch({
       ...next,
-      search: normalizeString(latestSearchRef.current, { maxLength: 100 }),
+      search: appliedSearch,
     });
   };
 
@@ -98,10 +86,7 @@ export default function SearchFilterBar({
       <Button
         type="button"
         variant="primary"
-        onClick={() => {
-          if (timerRef.current) clearTimeout(timerRef.current);
-          emitSearch();
-        }}
+        onClick={emitSearch}
       >
         Buscar
       </Button>
