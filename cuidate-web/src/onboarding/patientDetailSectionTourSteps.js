@@ -17,7 +17,7 @@ const SECTION_COPY = {
     'Registra o revisa signos vitales (peso, presión, glucosa, etc.). Puedes ver la evolución y, si aplica, editar o añadir mediciones.',
   ],
   diagnosticos: [
-    'Listado de diagnósticos asociados al paciente. Puedes consultar fechas y descripciones y añadir nuevos cuando corresponda clínicamente.',
+    'Listado de diagnósticos asociados al paciente. Puedes consultar fechas y descripciones y añadir nuevos cuando corresponda.',
   ],
   medicacion: [
     'Planes de medicación y tomas: revisa qué está activo, las dosis y el historial. Los botones te guían para agregar o ajustar tratamientos.',
@@ -26,13 +26,13 @@ const SECTION_COPY = {
     'Contactos de la red de apoyo (familiares o acompañantes). Sirve para comunicación autorizada y datos de emergencia.',
   ],
   vacunacion: [
-    'Esquema de vacunas aplicadas o pendientes. Puedes registrar nuevas dosis con fecha y datos del biológico.',
+    'Esquema de vacunas aplicadas o pendientes. Puedes registrar nuevas dosis con fecha y datos de la vacuna.',
   ],
   comorbilidades: [
     'Condiciones crónicas o asociadas registradas. Ayuda a tener el contexto clínico completo ante nuevas consultas.',
   ],
   detecciones: [
-    'Tamizajes y detecciones de complicaciones. Documenta resultados y seguimiento según los protocolos de tu institución.',
+    'Evaluaciones y detecciones de complicaciones. Documenta resultados y seguimiento según los protocolos de tu institución.',
   ],
   'sesiones-educativas': [
     'Sesiones de educación en salud: tipo, fecha y asistencia. Útil para el seguimiento del autocuidado del paciente.',
