@@ -72,8 +72,8 @@ export const connectionDiagnosticService = {
     try {
       Logger.info(`Probando login en: ${baseUrl}`, { email });
       
-      // Mismo endpoint que el login real de la app (/api/mobile/login)
-      const response = await axios.post(`${baseUrl}/api/mobile/login`, {
+      // Mismo endpoint que el login doctor y la web (/api/auth/login)
+      const response = await axios.post(`${baseUrl}/api/auth/login`, {
         email,
         password,
       }, {

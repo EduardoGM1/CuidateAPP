@@ -217,7 +217,10 @@ api.interceptors.response.use(
 export const mobileApi = {
   // Login móvil
   login: async (email, password) => {
-    const response = await api.post('/mobile/login', { email, password });
+    const response = await api.post('/auth/login', {
+      email: String(email).trim().toLowerCase(),
+      password,
+    });
     const { token, refresh_token, expires_in, usuario, device_info } = response.data;
     
     // Importar storageService para guardar de forma segura

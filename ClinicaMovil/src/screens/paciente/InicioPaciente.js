@@ -349,6 +349,15 @@ const InicioPaciente = () => {
             onPress={() => handleNavigate('ChatDoctor', 'chat con doctor')}
             speakText="Chat con doctor. Hablar con tu médico"
           />
+
+          <BigIconButton
+            icon="👤"
+            label="Mi perfil"
+            subLabel="Cuenta, configuración y guía"
+            color="green"
+            onPress={() => handleNavigate('PerfilPaciente', 'mi perfil')}
+            speakText="Mi perfil. Cuenta configuración y guía del tutorial"
+          />
         </View>
 
 

@@ -17,7 +17,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../../context/AuthContext';
 import useTTS from '../../hooks/useTTS';
 import { storageService } from '../../services/storageService';
 import hapticService from '../../services/hapticService';

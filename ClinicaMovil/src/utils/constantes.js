@@ -107,7 +107,7 @@ export const TAMAÑOS = {
 };
 
 export const API_ENDPOINTS = {
-  LOGIN: '/mobile/login',
+  LOGIN: '/auth/login',
   REGISTER: '/auth/register',
   PACIENTES: '/pacientes',
   CITAS: '/citas',

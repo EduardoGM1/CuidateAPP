@@ -39,7 +39,7 @@ if (__DEV__) {
     require('./src/utils/testPacienteInterface');
   } catch (_) {}
 }
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -50,12 +50,14 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 import NavegacionAuth from './src/navigation/NavegacionAuth';
 import NavegacionProfesional from './src/navigation/NavegacionProfesional';
 import NavegacionPaciente from './src/navigation/NavegacionPaciente';
+import NavOnboardingController from './src/components/onboarding/NavOnboardingController';
 import Logger from './src/services/logger';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import firebaseInitService from './src/services/firebaseInitService';
 import offlineService from './src/services/offlineService';
 import { Platform, Alert } from 'react-native';
 import { useSessionManager } from './src/hooks/useSessionManager';
+import { isPacienteRole } from './src/onboarding/navOnboardingUtils';
 
 // Componente de carga
 const LoadingScreen = () => (
@@ -84,7 +86,7 @@ const AppNavigator = () => {
   }
 
   // Usuario autenticado - navegación según rol
-  if (userRole === 'paciente') {
+  if (isPacienteRole(userRole)) {
     Logger.info('Usuario autenticado como paciente, mostrando NavegacionPaciente');
     return <NavegacionPaciente />;
   } else if (userRole === 'Doctor' || userRole === 'doctor' || userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador') {
@@ -96,6 +98,42 @@ const AppNavigator = () => {
   Logger.warn('Rol no reconocido', { userRole });
   return <NavegacionAuth />;
 };
+
+const navigationRef = createNavigationContainerRef();
+
+function AppNavigationRoot() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [navigationRootState, setNavigationRootState] = React.useState(undefined);
+
+  const syncNavigationState = React.useCallback((state) => {
+    try {
+      const next = state ?? navigationRef.getRootState();
+      setNavigationRootState(next ?? undefined);
+    } catch {
+      setNavigationRootState(undefined);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (isLoading || !isAuthenticated) return undefined;
+    const t = setTimeout(() => {
+      syncNavigationState(navigationRef.getRootState());
+    }, 120);
+    return () => clearTimeout(t);
+  }, [isLoading, isAuthenticated, syncNavigationState]);
+
+  return (
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => syncNavigationState(navigationRef.getRootState())}
+      onStateChange={syncNavigationState}
+    >
+      <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
+      <NavOnboardingController navigationRootState={navigationRootState} />
+      <AppNavigator />
+    </NavigationContainer>
+  );
+}
 
 const App = () => {
   // Inicializar servicios al iniciar la app
@@ -181,10 +219,7 @@ const App = () => {
           <PaperProvider>
             <AuthProvider>
               <SafeAreaProvider>
-                <NavigationContainer>
-                  <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
-                  <AppNavigator />
-                </NavigationContainer>
+                <AppNavigationRoot />
               </SafeAreaProvider>
             </AuthProvider>
           </PaperProvider>

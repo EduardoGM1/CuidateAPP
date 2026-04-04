@@ -269,20 +269,31 @@ export const pacienteAuthService = {
 
 // Servicio de autenticación para doctores
 export const doctorAuthService = {
-  // Login estándar con email y contraseña (usa /api/mobile/login - compatible con credenciales creadas)
+  // Mismo contrato que la app web: POST /api/auth/login (cuidate-web src/api/auth.js)
   async login(email, password) {
     try {
-      Logger.apiCall('POST', '/mobile/login', { email });
-      
+      Logger.apiCall('POST', '/auth/login', { email });
+
       const apiClient = await createApiClient();
-      const response = await apiClient.post('/mobile/login', {
-        email: email.trim().toLowerCase(),
-        password: password,
-      });
-      
-      Logger.apiResponse('/mobile/login', response.status, 'Login doctor/administrador exitoso');
+      const response = await apiClient.post(
+        '/auth/login',
+        {
+          email: email.trim().toLowerCase(),
+          password: password,
+        },
+        { headers: getMobileHeaders() },
+      );
+
+      Logger.apiResponse('/auth/login', response.status, 'Login doctor/administrador exitoso');
       Logger.auth('login', 'doctor/administrador');
-      return response.data;
+      const d = response.data || {};
+      return {
+        ...d,
+        token: d.token,
+        refresh_token: d.refresh_token ?? d.refreshToken,
+        refreshToken: d.refresh_token ?? d.refreshToken,
+        usuario: d.usuario ?? d.user,
+      };
     } catch (error) {
       Logger.error('Error en login doctor/administrador', { email, error: error.message, status: error.response?.status });
       throw this.handleError(error);
@@ -403,7 +414,7 @@ export const doctorAuthService = {
       return {
         type: 'server_error',
         status,
-        message: data.error || 'Error del servidor',
+        message: data?.error || data?.message || 'Error del servidor',
         details: data,
       };
     } else if (error.request) {

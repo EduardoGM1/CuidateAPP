@@ -1,6 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  Pressable,
+  DeviceEventEmitter,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +44,21 @@ import GestionSolicitudesReprogramacion from '../screens/doctor/GestionSolicitud
 import ChatPaciente from '../screens/doctor/ChatPaciente';
 import ListaChats from '../screens/doctor/ListaChats';
 import ChangePasswordScreen from '../screens/settings/ChangePasswordScreen';
+import OnboardingShellModal from '../components/onboarding/OnboardingShellModal';
+import SectionTipModal from '../components/onboarding/SectionTipModal';
+import {
+  isShellComplete,
+  markShellComplete,
+  isSectionComplete,
+  markSectionComplete,
+  MOBILE_ONBOARDING_RESET_EVENT,
+} from '../onboarding/mobileOnboardingStorage';
+import OnboardingResetPickerModal from '../components/onboarding/OnboardingResetPickerModal';
+import {
+  SHELL_STEPS,
+  MOBILE_SECTION_IDS,
+  SECTION_TIP_COPY,
+} from '../onboarding/professionalOnboardingContent';
 
 // Pantallas profesionales (placeholder por ahora)
 const GestionScreen = ({ navigation }) => {
@@ -54,7 +78,8 @@ const MensajesScreen = ({ navigation, onBackFromSection }) => (
 );
 
 const PerfilScreen = ({ navigation }) => {
-  const { logout, user, userData, userRole } = useAuth();
+  const { logout, userData, userRole } = useAuth();
+  const [guiaPickerVisible, setGuiaPickerVisible] = useState(false);
 
   const handleLogout = async () => {
     Logger.info('Logout iniciado desde perfil profesional');
@@ -115,6 +140,31 @@ const PerfilScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📖 Guía del tutorial</Text>
+            <TouchableOpacity
+              style={styles.securityButton}
+              onPress={() => setGuiaPickerVisible(true)}
+            >
+              <View style={styles.securityButtonContent}>
+                <Text style={styles.securityButtonIcon}>🎯</Text>
+                <View style={styles.securityButtonInfo}>
+                  <Text style={styles.securityButtonLabel}>Elegir qué reiniciar</Text>
+                  <Text style={styles.securityButtonDescription}>
+                    Introducción, consejos por sección o tours de pantallas concretas
+                  </Text>
+                </View>
+                <Text style={styles.securityButtonArrow}>→</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          <OnboardingResetPickerModal
+            visible={guiaPickerVisible}
+            onClose={() => setGuiaPickerVisible(false)}
+            variant="professional"
+          />
+
           {/* Botón de Cerrar Sesión */}
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.logoutText}>Cerrar Sesión</Text>
@@ -172,6 +222,10 @@ const ACCESOS_RAPIDOS_DOCTOR = [
 const MainScreenWithMenu = ({ navigation }) => {
   const [seccion, setSeccion] = useState('Dashboard');
   const [menuVisible, setMenuVisible] = useState(false);
+  const [shellVisible, setShellVisible] = useState(false);
+  const [shellComplete, setShellComplete] = useState(null);
+  const [sectionTip, setSectionTip] = useState(null);
+  const [onboardingBump, setOnboardingBump] = useState(0);
   const { userData, userRole } = useAuth();
 
   const esDoctor = userRole === 'Doctor' || userRole === 'doctor';
@@ -189,6 +243,70 @@ const MainScreenWithMenu = ({ navigation }) => {
       if (esDoctor && doctorId) refreshConversaciones();
     }, [esDoctor, doctorId, refreshConversaciones])
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const done = await isShellComplete();
+      if (cancelled) return;
+      setShellComplete(done);
+      if (!done) {
+        setSectionTip(null);
+        setShellVisible(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(MOBILE_ONBOARDING_RESET_EVENT, () => {
+      (async () => {
+        const done = await isShellComplete();
+        setShellComplete(done);
+        setShellVisible(!done);
+        setSectionTip(null);
+        setOnboardingBump((b) => b + 1);
+      })();
+    });
+    return () => sub.remove();
+  }, []);
+
+  useEffect(() => {
+    if (shellComplete !== true) return undefined;
+    let cancelled = false;
+    (async () => {
+      const id = MOBILE_SECTION_IDS[seccion];
+      if (!id) return;
+      const done = await isSectionComplete(id);
+      if (cancelled) return;
+      if (!done) {
+        const copy = SECTION_TIP_COPY[id];
+        if (copy) setSectionTip({ id, title: copy.title, body: copy.body });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [seccion, shellComplete, onboardingBump]);
+
+  const finishShell = async () => {
+    await markShellComplete();
+    setShellVisible(false);
+    setShellComplete(true);
+  };
+
+  const skipShell = async () => {
+    await markShellComplete();
+    setShellVisible(false);
+    setShellComplete(true);
+  };
+
+  const closeSectionTip = async () => {
+    if (sectionTip?.id) await markSectionComplete(sectionTip.id);
+    setSectionTip(null);
+  };
 
   const titulo = SECCIONES.find(s => s.key === seccion)?.label || 'Dashboard';
   const labelMensajes = totalMensajesNoLeidos > 0 ? `Mensajes (${totalMensajesNoLeidos})` : 'Mensajes';
@@ -266,6 +384,19 @@ const MainScreenWithMenu = ({ navigation }) => {
           <Pressable style={styles.menuBackdrop} onPress={() => setMenuVisible(false)} />
         </View>
       </Modal>
+
+      <OnboardingShellModal
+        visible={shellVisible}
+        steps={SHELL_STEPS}
+        onSkip={skipShell}
+        onFinish={finishShell}
+      />
+      <SectionTipModal
+        visible={!!sectionTip}
+        title={sectionTip?.title ?? ''}
+        body={sectionTip?.body ?? ''}
+        onClose={closeSectionTip}
+      />
     </View>
   );
 };

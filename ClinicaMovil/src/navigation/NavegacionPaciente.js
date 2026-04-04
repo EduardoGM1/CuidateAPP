@@ -12,6 +12,7 @@ import HistorialMedico from '../screens/paciente/HistorialMedico';
 import GraficosEvolucion from '../screens/paciente/GraficosEvolucion';
 import ChatDoctor from '../screens/paciente/ChatDoctor';
 import Configuracion from '../screens/paciente/Configuracion';
+import PerfilPaciente from '../screens/paciente/PerfilPaciente';
 import ChangePINScreen from '../screens/settings/ChangePINScreen';
 
 // Stack Navigator
@@ -28,6 +29,7 @@ const NavegacionPaciente = () => {
       }}
     >
       <Stack.Screen name="InicioPaciente" component={InicioPaciente} />
+      <Stack.Screen name="PerfilPaciente" component={PerfilPaciente} />
       <Stack.Screen name="RegistrarSignosVitales" component={RegistrarSignosVitales} />
       <Stack.Screen name="MisCitas" component={MisCitas} />
       <Stack.Screen name="MisMedicamentos" component={MisMedicamentos} />

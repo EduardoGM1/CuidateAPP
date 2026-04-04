@@ -53,8 +53,8 @@ const DiagnosticScreen = ({ navigation }) => {
       results.push({ test: 'Autenticación', status: 'running' });
       setDiagnosticResults([...results]);
 
-      // Mismo endpoint que el login real de la app (/api/mobile/login)
-      const loginResponse = await axios.post(`${API_BASE_URL}/api/mobile/login`, {
+      // Mismo endpoint que el login doctor y la web (/api/auth/login)
+      const loginResponse = await axios.post(`${API_BASE_URL}/api/auth/login`, {
         email: 'Administrador@cuidateapp.com',
         password: 'admin123!'
       }, {

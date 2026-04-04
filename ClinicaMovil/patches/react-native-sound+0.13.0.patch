@@ -1,0 +1,16 @@
+diff --git a/node_modules/react-native-sound/android/build.gradle b/node_modules/react-native-sound/android/build.gradle
+index d1ee5f5..419c7d3 100644
+--- a/node_modules/react-native-sound/android/build.gradle
++++ b/node_modules/react-native-sound/android/build.gradle
+@@ -20,7 +20,10 @@ def reactNativeArchitectures() {
+ }
+ 
+ def isNewArchitectureEnabled() {
+-  return rootProject.hasProperty("newArchEnabled") && rootProject.getProperty("newArchEnabled") == "true"
++  def v = rootProject.findProperty("newArchEnabled") ?: project.findProperty("newArchEnabled")
++  if (v == null) return false
++  if (v instanceof Boolean) return v
++  return v.toString().equalsIgnoreCase("true")
+ }
+ 
+ apply plugin: "com.android.library"
