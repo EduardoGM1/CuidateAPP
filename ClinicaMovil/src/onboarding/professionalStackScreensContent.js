@@ -6,26 +6,81 @@ export const PROFESSIONAL_STACK_TOURS = {
       {
         title: 'Detalle del doctor',
         body:
-          'Resumen del profesional: datos, pacientes asignados y citas recientes. Puedes editar o usar acciones de administración según permisos.',
+          'Aquí ves un resumen del profesional: sus datos, pacientes asignados y citas recientes. Según tus permisos, puedes editar la ficha o usar otras acciones de administración.',
       },
       {
         title: 'Acciones',
         body:
-          'Revisa los botones para editar ficha o gestionar asignaciones. «Atrás» vuelve al listado.',
+          'Mira los botones para editar la ficha o gestionar asignaciones. El botón «Atrás» te devuelve al listado.',
       },
     ],
   },
   DetallePaciente: {
     steps: [
       {
-        title: 'Ficha del paciente',
+        title: 'Vista general de la ficha',
         body:
-          'Información del paciente: historial, citas, signos vitales y más. Usa las secciones o tarjetas para cada tema.',
+          'Esta pantalla concentra la información clínica del paciente en tarjetas y secciones. Desliza hacia abajo para ver todo; usa actualizar si necesitas datos recientes.',
       },
       {
-        title: 'Navegación',
+        title: 'Citas',
         body:
-          'Puedes agendar citas o registrar datos según permisos. Vuelve al listado con atrás.',
+          'En las tarjetas de citas verás la próxima cita, el resumen de citas y el historial de consultas. Desde aquí puedes revisar fechas, estados y, según tu rol, agendar o completar citas.',
+      },
+      {
+        title: 'Monitoreo continuo',
+        body:
+          'La sección de monitoreo continuo agrupa signos vitales y seguimiento en el tiempo. Úsala para ver tendencias y registrar mediciones cuando corresponda.',
+      },
+      {
+        title: 'Medicamentos',
+        body:
+          'Consulta y gestiona el tratamiento activo: dosis, frecuencia e indicaciones. Cualquier cambio debe quedar bien registrado y alineado con la prescripción.',
+      },
+      {
+        title: 'Registros e historial',
+        body:
+          'El historial y la línea de tiempo de consultas te muestran evolución y notas clínicas. Abre cada registro para ver el detalle completo cuando lo necesites.',
+      },
+      {
+        title: 'Red de apoyo',
+        body:
+          'Aquí figuran familiares o contactos de apoyo del paciente. Sirve para coordinar cuidados o ubicar a alguien autorizado en seguimiento.',
+      },
+      {
+        title: 'Esquema de vacunación',
+        body:
+          'Revisa vacunas aplicadas y pendientes según el esquema registrado. Puedes actualizar dosis o fechas cuando el sistema y tu rol lo permitan.',
+      },
+      {
+        title: 'Complicaciones',
+        body:
+          'Las detecciones o complicaciones documentan eventos o alertas clínicas relevantes. Revísalas para no perder de vista riesgos o seguimientos pendientes.',
+      },
+      {
+        title: 'Comorbilidades crónicas',
+        body:
+          'Las comorbilidades crónicas condicionan el plan de cuidados. Mantén el listado actualizado para que citas, medicamentos y educación sean coherentes con el estado del paciente.',
+      },
+      {
+        title: 'Sesiones educativas',
+        body:
+          'Registra o consulta sesiones de educación en salud: temas abordados, fechas y participación. Ayuda a documentar adherencia y autocuidado.',
+      },
+      {
+        title: 'Salud bucal',
+        body:
+          'En salud bucal verás hallazgos odontológicos, tratamientos y observaciones. Completa o amplía el historial desde los botones de la sección cuando aplique.',
+      },
+      {
+        title: 'Detección de tuberculosis',
+        body:
+          'Esta sección concentra encuestas, baciloscopia, tratamiento y notas de TB. Úsala para seguimiento de programa y trazabilidad de la detección.',
+      },
+      {
+        title: 'Permisos y volver al listado',
+        body:
+          'Lo que puedas ver o editar depende de tu rol. El botón atrás te devuelve al listado de pacientes; si falta alguna tarjeta, puede ser por permisos o porque aún no hay datos.',
       },
     ],
   },
@@ -34,7 +89,7 @@ export const PROFESSIONAL_STACK_TOURS = {
       {
         title: 'Alta de doctor',
         body:
-          'Correo primero: invita para que cree contraseña o define una inicial. Completa nombre, contacto y módulo.',
+          'Empieza por el correo: puedes invitar al doctor para que cree su contraseña o asignarle una inicial. Luego completa nombre, contacto y módulo.',
       },
     ],
   },
@@ -43,7 +98,7 @@ export const PROFESSIONAL_STACK_TOURS = {
       {
         title: 'Editar doctor',
         body:
-          'Los cambios guardados reemplazan datos anteriores. Algunos campos pueden estar bloqueados si editas tu propio perfil.',
+          'Lo que guardes sustituye a los datos anteriores. Si estás editando tu propio perfil, es posible que algunos campos no se puedan cambiar.',
       },
     ],
   },
@@ -52,12 +107,12 @@ export const PROFESSIONAL_STACK_TOURS = {
       {
         title: 'Alta de paciente',
         body:
-          'Formulario por pasos: datos, PIN, contacto. Lo obligatorio lo marca el formulario.',
+          'El formulario va por pasos: datos personales, PIN, contacto… Lo que sea obligatorio lo verás marcado claramente.',
       },
       {
         title: 'Opcionales',
         body:
-          'Red de apoyo o primera consulta suelen ser opcionales. Confirma con crear o guardar al final.',
+          'Campos como la red de apoyo o la primera consulta suelen ser opcionales. Cuando termines, confirma con crear o guardar.',
       },
     ],
   },
@@ -66,7 +121,7 @@ export const PROFESSIONAL_STACK_TOURS = {
       {
         title: 'Editar paciente',
         body:
-          'Actualiza datos generales. Revisa teléfono y CURP. Puedes cancelar sin guardar.',
+          'Actualiza los datos generales y revisa bien teléfono y CURP. Si te arrepientes, puedes salir sin guardar.',
       },
     ],
   },
@@ -74,7 +129,8 @@ export const PROFESSIONAL_STACK_TOURS = {
     steps: [
       {
         title: 'Medicamentos',
-        body: 'Catálogo maestro: alta, edición y búsqueda. Eliminar suele pedir confirmación.',
+        body:
+          'Es el catálogo general: puedes dar de alta, editar y buscar. Si borras algo, lo normal es que el sistema te pida confirmación.',
       },
     ],
   },
@@ -82,7 +138,8 @@ export const PROFESSIONAL_STACK_TOURS = {
     steps: [
       {
         title: 'Módulos',
-        body: 'Datos maestros de módulos usados al asignar pacientes o doctores.',
+        body:
+          'Aquí se definen los módulos que luego usarás al asignar pacientes o doctores.',
       },
     ],
   },
@@ -90,7 +147,8 @@ export const PROFESSIONAL_STACK_TOURS = {
     steps: [
       {
         title: 'Instituciones',
-        body: 'Instituciones de salud disponibles en formularios (IMSS, ISSSTE, etc.).',
+        body:
+          'Listado de instituciones de salud (por ejemplo IMSS, ISSSTE) que aparecen en los formularios.',
       },
     ],
   },
@@ -98,7 +156,8 @@ export const PROFESSIONAL_STACK_TOURS = {
     steps: [
       {
         title: 'Comorbilidades',
-        body: 'Listado maestro para registros clínicos.',
+        body:
+          'Catálogo de comorbilidades para usar en los registros clínicos.',
       },
     ],
   },
@@ -106,7 +165,8 @@ export const PROFESSIONAL_STACK_TOURS = {
     steps: [
       {
         title: 'Vacunas',
-        body: 'Catálogo de vacunas para esquemas de pacientes.',
+        body:
+          'Vacunas disponibles para armar o consultar esquemas de pacientes.',
       },
     ],
   },
@@ -115,7 +175,7 @@ export const PROFESSIONAL_STACK_TOURS = {
       {
         title: 'Citas',
         body:
-          'Lista y filtros por fechas o estado. Toca una fila para el detalle y cambios si tu rol lo permite.',
+          'Lista de citas con filtros por fecha o estado. Toca una fila para ver el detalle y, si tu rol lo permite, hacer cambios.',
       },
     ],
   },
@@ -123,11 +183,13 @@ export const PROFESSIONAL_STACK_TOURS = {
     steps: [
       {
         title: 'Auditoría',
-        body: 'Registro de acciones del sistema. Filtra por fechas o texto.',
+        body:
+          'Registro de lo que ha pasado en el sistema. Puedes filtrar por fechas o por texto.',
       },
       {
         title: 'Exportar',
-        body: 'Si hay datos, puede existir exportación a CSV u otro formato.',
+        body:
+          'Si hay datos, a veces podrás exportarlos a CSV u otro formato desde esta pantalla.',
       },
     ],
   },
@@ -135,7 +197,8 @@ export const PROFESSIONAL_STACK_TOURS = {
     steps: [
       {
         title: 'Notificaciones',
-        body: 'Avisos de citas, mensajes y alertas. Filtra si la bandeja crece.',
+        body:
+          'Avisos de citas, mensajes y alertas. Si se llena la lista, usa los filtros para encontrar lo que buscas.',
       },
     ],
   },
@@ -143,7 +206,8 @@ export const PROFESSIONAL_STACK_TOURS = {
     steps: [
       {
         title: 'Gráficos',
-        body: 'Evolución de indicadores en el tiempo. Ajusta filtros si existen.',
+        body:
+          'Gráficas de cómo evolucionan indicadores en el tiempo. Si hay filtros, úsalos para acotar lo que ves.',
       },
     ],
   },
@@ -151,7 +215,8 @@ export const PROFESSIONAL_STACK_TOURS = {
     steps: [
       {
         title: 'Mis pacientes',
-        body: 'Tus pacientes asignados. Busca y toca una fila para abrir la ficha.',
+        body:
+          'Pacientes que tienes asignados. Busca por nombre o datos y toca una fila para abrir la ficha completa.',
       },
     ],
   },
@@ -159,7 +224,8 @@ export const PROFESSIONAL_STACK_TOURS = {
     steps: [
       {
         title: 'Reportes',
-        body: 'Indicadores y análisis. Revisa gráficos y exportación si aplica.',
+        body:
+          'Indicadores y análisis para revisar. Mira también si puedes exportar o descargar algo desde aquí.',
       },
     ],
   },
@@ -167,7 +233,8 @@ export const PROFESSIONAL_STACK_TOURS = {
     steps: [
       {
         title: 'Historial médico',
-        body: 'Consultas y datos clínicos según alcance de tu rol.',
+        body:
+          'Consultas y datos clínicos según lo que tu rol te permita ver.',
       },
     ],
   },
@@ -175,7 +242,8 @@ export const PROFESSIONAL_STACK_TOURS = {
     steps: [
       {
         title: 'Reprogramación',
-        body: 'Aprueba o rechaza cambios de fecha/hora de citas. Filtra por estado.',
+        body:
+          'Solicitudes de cambio de fecha u hora de citas: puedes aprobarlas o rechazarlas. Filtra por estado para ir más rápido.',
       },
     ],
   },
@@ -183,7 +251,8 @@ export const PROFESSIONAL_STACK_TOURS = {
     steps: [
       {
         title: 'Chat',
-        body: 'Mensajes con el paciente. Historial arriba; escribe abajo. Atrás vuelve a la lista.',
+        body:
+          'Conversación con el paciente: el historial arriba y el campo para escribir abajo. Atrás te lleva de nuevo a la lista de chats.',
       },
     ],
   },
@@ -191,7 +260,8 @@ export const PROFESSIONAL_STACK_TOURS = {
     steps: [
       {
         title: 'Contraseña',
-        body: 'Usa una contraseña fuerte y distinta a otros sitios.',
+        body:
+          'Elige una contraseña segura y distinta a la que uses en otros sitios web o apps.',
       },
     ],
   },

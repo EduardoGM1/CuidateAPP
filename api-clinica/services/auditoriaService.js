@@ -290,6 +290,54 @@ class AuditoriaService {
       userAgentsDiferentes: userAgentsDiferentes.length
     };
   }
+
+  /**
+   * PIN de paciente asignado o restablecido por Admin/Doctor (p. ej. portal web).
+   * No guarda el valor del PIN en BD (solo metadatos).
+   *
+   * @param {Object} params
+   * @param {number} params.id_paciente
+   * @param {number|null} params.id_usuario_staff - id_usuario del token (Doctor/Admin)
+   * @param {'created'|'updated'} params.modo
+   * @param {number} [params.credenciales_afectadas=0]
+   * @param {string|null} [params.ip_address]
+   * @param {string|null} [params.user_agent]
+   * @param {string|null} [params.rol_staff]
+   */
+  async registrarResetPinPacientePorStaff({
+    id_paciente,
+    id_usuario_staff,
+    modo,
+    credenciales_afectadas = 0,
+    ip_address = null,
+    user_agent = null,
+    rol_staff = null
+  }) {
+    const pid = parseInt(id_paciente, 10);
+    const n = Number(credenciales_afectadas) || 0;
+    const desc =
+      modo === 'created'
+        ? `PIN inicial asignado al paciente #${pid} por personal autorizado (nueva credencial)`
+        : `PIN del paciente #${pid} restablecido por personal autorizado (${n} credencial(es) PIN actualizada(s))`;
+
+    return await this.registrarAccion({
+      tipo_accion: 'paciente_modificado',
+      entidad_afectada: 'paciente',
+      id_entidad: Number.isNaN(pid) ? null : pid,
+      descripcion: desc,
+      datos_anteriores: null,
+      datos_nuevos: {
+        subtipo: 'reset_pin_staff',
+        modo,
+        credenciales_afectadas: modo === 'created' ? 1 : n,
+        rol_staff
+      },
+      id_usuario: id_usuario_staff ?? null,
+      ip_address,
+      user_agent,
+      severidad: 'warning'
+    });
+  }
 }
 
 export default new AuditoriaService();

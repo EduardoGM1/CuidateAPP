@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { View, Text, StyleSheet } from 'react-native';
 import NavegacionAuth from './NavegacionAuth';
-import { COLORES, TAMAÑOS } from '../utils/constantes';
+import { COLORES, TAMAÑOS, NOMBRE_APP } from '../utils/constantes';
 
 const NavegacionPrincipal = () => {
   const { estaAutenticado, usuario } = useSelector((state) => state.auth);
@@ -12,7 +12,7 @@ const NavegacionPrincipal = () => {
     <NavigationContainer>
       {estaAutenticado ? (
         <View style={estilos.contenedorHome}>
-          <Text style={estilos.titulo}>¡Bienvenido!</Text>
+          <Text style={estilos.titulo}>{`¡Bienvenido a ${NOMBRE_APP}!`}</Text>
           <Text style={estilos.subtitulo}>
             Hola, {usuario?.nombre || 'Usuario'}
           </Text>

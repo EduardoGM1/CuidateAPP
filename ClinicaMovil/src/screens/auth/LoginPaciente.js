@@ -16,7 +16,7 @@ import { storageService } from '../../services/storageService';
 import Logger from '../../services/logger';
 import { useAuth } from '../../context/AuthContext';
 import { sanitizePatientId } from '../../utils/patientIdValidator';
-import { COLORES } from '../../utils/constantes';
+import { COLORES, NOMBRE_APP } from '../../utils/constantes';
 
 const { width, height } = Dimensions.get('window');
 
@@ -33,7 +33,7 @@ const LoginPaciente = ({ navigation, route }) => {
   const [biometricConfigured, setBiometricConfigured] = useState(false);
   const { login } = useAuth();
 
-  const textoInstrucciones = "Bienvenido paciente. Selecciona cómo quieres iniciar sesión: PIN de 4 números, huella dactilar o reconocimiento facial.";
+  const textoInstrucciones = `Bienvenido a ${NOMBRE_APP}. Selecciona cómo quieres iniciar sesión: PIN de 4 números, huella dactilar o reconocimiento facial.`;
 
   // Verificar disponibilidad de biometría al cargar
   useEffect(() => {

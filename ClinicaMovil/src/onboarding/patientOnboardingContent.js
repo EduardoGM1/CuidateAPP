@@ -2,24 +2,28 @@
  * Onboarding paciente: shell inicial + tours por pantalla del stack.
  */
 
+import { NOMBRE_APP } from '../utils/constantes';
+
+/** Texto de bienvenida (onboarding + pantalla de inicio paciente). */
+export const PACIENTE_TEXTO_BIENVENIDA = `Con ${NOMBRE_APP} puedes monitorear tu salud y llevar un seguimiento junto a tu médico, ver tus citas, medicamentos, llevar un control de tus signos vitales y hablar con tu doctor.`;
+
 export const PATIENT_SHELL_STEPS = [
   {
     key: 'welcome',
     title: 'Bienvenida',
-    body:
-      'Esta aplicación te ayuda a cuidar tu salud de forma sencilla: ver citas, medicamentos, registrar signos vitales y hablar con tu equipo cuando corresponda.',
+    body: PACIENTE_TEXTO_BIENVENIDA,
   },
   {
     key: 'inicio',
     title: 'Pantalla principal',
     body:
-      'En el inicio verás botones grandes para cada acción. Puedes usar el audio (TTS) tocando los iconos según lo que indique cada pantalla. Desliza hacia abajo para actualizar datos.',
+      'En la pantalla de inicio tienes un botón para cada cosa importante. Si quieres escuchar las indicaciones, usa el audio que te ofrezca cada pantalla. Desliza hacia abajo cuando quieras actualizar tus datos.',
   },
   {
     key: 'ayuda',
     title: 'Configuración',
     body:
-      'En Configuración ajustas el audio, tamaño de letra y notificaciones. Si compartes el teléfono, cierra sesión al terminar desde el inicio cuando esté disponible.',
+      'En Configuración puedes ajustar el sonido, el tamaño de la letra y las notificaciones a tu gusto.',
   },
 ];
 
@@ -29,7 +33,7 @@ export const PATIENT_STACK_TOURS = {
       {
         title: 'Signos vitales',
         body:
-          'Registra peso, presión, glucosa u otros datos que te indique tu equipo. Los valores ayudan al seguimiento de tu salud.',
+          'Anota peso, presión, glucosa u otros datos que tu médico te pida. Así puede hacer un mejor seguimiento de tu salud.',
       },
     ],
   },
@@ -38,7 +42,7 @@ export const PATIENT_STACK_TOURS = {
       {
         title: 'Tus citas',
         body:
-          'Consulta próximas y pasadas citas. Si necesitas cambiar una, pregunta a tu módulo o usa las opciones que te ofrezca la pantalla.',
+          'Aquí ves las citas que vienen y las que ya tuviste. Si necesitas cambiar alguna, pregunta en tu módulo o en el hospital, o mira si puedes hacerlo desde esta pantalla.',
       },
     ],
   },
@@ -47,7 +51,7 @@ export const PATIENT_STACK_TOURS = {
       {
         title: 'Medicamentos',
         body:
-          'Revisa qué medicamentos están activos, dosis e indicaciones. No dejes de tomar medicación sin indicación médica.',
+          'Consulta qué medicamentos tienes activos, con qué dosis y cómo tomarlos. No cambies ni dejes la medicación sin que tu médico te lo indique.',
       },
     ],
   },
@@ -56,7 +60,7 @@ export const PATIENT_STACK_TOURS = {
       {
         title: 'Historial',
         body:
-          'Consulta consultas y eventos de tu historial según lo que tu centro haya registrado para ti.',
+          'Aquí aparece lo que tu hospital haya registrado sobre tus consultas y tu historial. Si falta algo, pregunta en recepción o con tu médico.',
       },
     ],
   },
@@ -65,7 +69,7 @@ export const PATIENT_STACK_TOURS = {
       {
         title: 'Gráficas',
         body:
-          'Visualiza cómo evolucionan algunos signos o datos en el tiempo. Útil para entender tendencias con tu equipo de salud.',
+          'Las gráficas muestran cómo evolucionan algunos datos con el tiempo. Son muy útiles para comentarlas con tu médico en la consulta.',
       },
     ],
   },
@@ -74,7 +78,7 @@ export const PATIENT_STACK_TOURS = {
       {
         title: 'Mensajes',
         body:
-          'Escribe a tu equipo de salud cuando el chat esté habilitado. No uses este canal para emergencias urgentes: llama a emergencias o a tu módulo.',
+          'Cuando el chat esté disponible, puedes escribir a tu médico por aquí. Para emergencias graves no uses el chat: llama a emergencias o a tu módulo.',
       },
     ],
   },
@@ -82,8 +86,7 @@ export const PATIENT_STACK_TOURS = {
     steps: [
       {
         title: 'Ajustes',
-        body:
-          'Activa o desactiva la lectura en voz alta (TTS), el tamaño de letra y las notificaciones. Los cambios se guardan para la próxima vez que abras la app.',
+        body: `Aquí eliges si quieres que ${NOMBRE_APP} lea en voz alta, qué tamaño de letra prefieres y si quieres recibir notificaciones. Los cambios se guardan solos para la próxima vez que abras ${NOMBRE_APP}.`,
       },
     ],
   },
@@ -92,7 +95,7 @@ export const PATIENT_STACK_TOURS = {
       {
         title: 'Cambiar PIN',
         body:
-          'Elige un PIN de 4 dígitos que recuerdes y que no sea fácil de adivinar. No lo compartas con otras personas.',
+          'Elige un PIN de cuatro dígitos que recuerdes bien y que no sea fácil de adivinar. No se lo cuentes a otras personas.',
       },
     ],
   },

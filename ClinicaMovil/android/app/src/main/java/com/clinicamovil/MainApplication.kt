@@ -17,6 +17,7 @@ class MainApplication : Application(), ReactApplication {
     getDefaultReactHost(
       context = applicationContext,
       packageList = packages,
+      useDevSupport = BuildConfig.REACT_NATIVE_DEV_SUPPORT,
     )
   }
 

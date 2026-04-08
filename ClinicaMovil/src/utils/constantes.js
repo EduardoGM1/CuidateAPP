@@ -11,6 +11,9 @@
  */
 
 // Constantes globales de la aplicación
+/** Nombre comercial en pantalla (alineado con displayName / app_name en Android). */
+export const NOMBRE_APP = 'CuidaTeApp';
+
 export const COLORES = {
   // ==================== IMSS BIENESTAR - Colores Oficiales ====================
   // Paleta principal (logosímbolo institucional)

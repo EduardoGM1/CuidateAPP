@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import Logger from '../services/logger';
-import { COLORES } from '../utils/constantes';
+import { COLORES, NOMBRE_APP } from '../utils/constantes';
 import { formatNombreCompleto } from '../utils/formatNombreCompleto';
 import useConversacionesDoctor from '../hooks/useConversacionesDoctor';
 import DashboardAdmin from '../screens/admin/DashboardAdmin';
@@ -141,7 +141,7 @@ const PerfilScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📖 Guía del tutorial</Text>
+            <Text style={styles.sectionTitle}>📖 Ayuda de {NOMBRE_APP}</Text>
             <TouchableOpacity
               style={styles.securityButton}
               onPress={() => setGuiaPickerVisible(true)}
@@ -149,9 +149,9 @@ const PerfilScreen = ({ navigation }) => {
               <View style={styles.securityButtonContent}>
                 <Text style={styles.securityButtonIcon}>🎯</Text>
                 <View style={styles.securityButtonInfo}>
-                  <Text style={styles.securityButtonLabel}>Elegir qué reiniciar</Text>
+                  <Text style={styles.securityButtonLabel}>Volver a ver ayudas</Text>
                   <Text style={styles.securityButtonDescription}>
-                    Introducción, consejos por sección o tours de pantallas concretas
+                    Puedes mostrar otra vez la introducción, los mensajes por sección o la ayuda de cada pantalla
                   </Text>
                 </View>
                 <Text style={styles.securityButtonArrow}>→</Text>

@@ -4,6 +4,7 @@ import {
   loginPaciente,
   setupPIN,
   changePIN,
+  adminResetPatientPIN,
   setupBiometric,
   setupPassword,
   getUserCredentials,
@@ -103,6 +104,17 @@ router.put('/change-pin',
   AdvancedRateLimiting.crudLimiter(),
   writeRateLimit,
   changePIN
+);
+
+/**
+ * Restablecer PIN de un paciente (Admin o Doctor)
+ * PUT /api/auth-unified/admin/reset-patient-pin
+ */
+router.put('/admin/reset-patient-pin',
+  authorizeRoles(['Admin', 'Doctor']),
+  AdvancedRateLimiting.crudLimiter(),
+  writeRateLimit,
+  adminResetPatientPIN
 );
 
 /**

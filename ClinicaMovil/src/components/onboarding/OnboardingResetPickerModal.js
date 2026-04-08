@@ -120,7 +120,10 @@ export default function OnboardingResetPickerModal({ visible, onClose, variant =
   const applyReset = useCallback(async () => {
     const anyStack = selectedStackNames.length > 0;
     if (!intro && !sectionTips && !anyStack) {
-      Alert.alert('Selecciona algo', 'Marca al menos una opción o elige «Reiniciar todo».');
+      Alert.alert(
+        'Nada seleccionado',
+        'Marca al menos una casilla o, si prefieres, el botón de abajo para reiniciar toda la guía.',
+      );
       return;
     }
     try {
@@ -134,12 +137,12 @@ export default function OnboardingResetPickerModal({ visible, onClose, variant =
       }
       DeviceEventEmitter.emit(MOBILE_ONBOARDING_RESET_EVENT);
       Alert.alert(
-        'Listo',
-        'La próxima vez que corresponda verás de nuevo la ayuda que reiniciaste.',
+        'Hecho',
+        'Cuando vuelvas a esas pantallas, te mostraremos otra vez la ayuda que elegiste.',
       );
       handleClose();
     } catch (e) {
-      Alert.alert('Error', 'No se pudo aplicar el reinicio. Intenta de nuevo.');
+      Alert.alert('No se pudo guardar', 'Vuelve a intentarlo en unos segundos.');
     }
   }, [intro, sectionTips, selectedStackNames, variant, handleClose]);
 
@@ -147,10 +150,10 @@ export default function OnboardingResetPickerModal({ visible, onClose, variant =
     try {
       await resetAllMobileOnboarding();
       DeviceEventEmitter.emit(MOBILE_ONBOARDING_RESET_EVENT);
-      Alert.alert('Listo', 'Se reinició toda la guía.');
+      Alert.alert('Hecho', 'Toda la guía volverá a mostrarse desde el principio.');
       handleClose();
     } catch (e) {
-      Alert.alert('Error', 'No se pudo reiniciar.');
+      Alert.alert('Algo salió mal', 'No pudimos reiniciar la guía. Inténtalo otra vez.');
     }
   }, [handleClose]);
 
@@ -158,9 +161,9 @@ export default function OnboardingResetPickerModal({ visible, onClose, variant =
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <Pressable style={styles.backdrop} onPress={handleClose}>
         <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-          <Text style={styles.title}>Reiniciar guía del tutorial</Text>
+          <Text style={styles.title}>Volver a ver la guía</Text>
           <Text style={styles.hint}>
-            Elige qué partes quieres volver a ver. No afecta tus datos ni tu sesión.
+            Marca solo lo que quieras recordar. No borramos tus datos ni cerramos tu sesión.
           </Text>
 
           <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled">
@@ -169,13 +172,13 @@ export default function OnboardingResetPickerModal({ visible, onClose, variant =
                 <View style={styles.row}>
                   <View style={styles.rowText}>
                     <Text style={styles.rowTitle}>Introducción (menú ☰)</Text>
-                    <Text style={styles.rowSub}>Pasos iniciales al abrir la app</Text>
+                    <Text style={styles.rowSub}>Lo primero que ves al entrar con el menú lateral</Text>
                   </View>
                   <Switch value={intro} onValueChange={setIntro} />
                 </View>
                 <View style={styles.row}>
                   <View style={styles.rowText}>
-                    <Text style={styles.rowTitle}>Consejos por sección</Text>
+                    <Text style={styles.rowTitle}>Consejos al cambiar de sección</Text>
                     <Text style={styles.rowSub}>Dashboard, Gestión, Mensajes y Perfil</Text>
                   </View>
                   <Switch value={sectionTips} onValueChange={setSectionTips} />
@@ -184,14 +187,14 @@ export default function OnboardingResetPickerModal({ visible, onClose, variant =
             ) : (
               <View style={styles.row}>
                 <View style={styles.rowText}>
-                  <Text style={styles.rowTitle}>Introducción inicial</Text>
-                  <Text style={styles.rowSub}>Bienvenida al usar la app como paciente</Text>
+                  <Text style={styles.rowTitle}>Introducción para pacientes</Text>
+                  <Text style={styles.rowSub}>Mensaje de bienvenida y primeros pasos</Text>
                 </View>
                 <Switch value={intro} onValueChange={setIntro} />
               </View>
             )}
 
-            <Text style={styles.subheading}>Tours al abrir pantallas</Text>
+            <Text style={styles.subheading}>Ayuda al entrar en cada pantalla</Text>
             <View style={styles.stackActions}>
               <TouchableOpacity onPress={selectAllStacks}>
                 <Text style={styles.link}>Marcar todas</Text>
@@ -212,10 +215,10 @@ export default function OnboardingResetPickerModal({ visible, onClose, variant =
           </ScrollView>
 
           <TouchableOpacity style={styles.primaryBtn} onPress={applyReset}>
-            <Text style={styles.primaryBtnText}>Aplicar reinicio seleccionado</Text>
+            <Text style={styles.primaryBtnText}>Guardar lo que marqué</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.secondaryBtn} onPress={applyResetAll}>
-            <Text style={styles.secondaryBtnText}>Reiniciar toda la guía</Text>
+            <Text style={styles.secondaryBtnText}>Reiniciar toda la guía desde cero</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelBtn} onPress={handleClose}>
             <Text style={styles.cancelBtnText}>Cancelar</Text>

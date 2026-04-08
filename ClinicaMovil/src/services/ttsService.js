@@ -16,14 +16,18 @@
  * Compatibilidad:
  * - Algunos dispositivos cargan el motor TTS con retraso: se hace reintento de engines()
  *   y getInitStatus() con timeouts 5s + 10s antes de dar por fallida la inicialización.
- * - Velocidad demasiado rápida: se usa rate bajo (0.45–0.55) y setDefaultRate antes de
- *   cada speak(); en Android se añade un pequeño delay tras setDefaultRate para que el
- *   motor aplique el valor. El usuario puede ajustar con setDefaultRate() si lo desea.
+ * - Velocidad: `ttsDeviceProfile` aplica compensación por fabricante Android (mismo valor
+ *   suena más rápido en algunos OEM). setDefaultRate antes de cada speak(); en Android
+ *   un pequeño delay tras setDefaultRate. El usuario ajusta en Configuración (Lenta/Normal/Rápida).
  */
 
 import Tts from 'react-native-tts';
 import { Platform, Linking, NativeModules } from 'react-native';
 import Logger from './logger';
+import { toNativeSpeechRate, logicalToAndroidEngineRate } from './ttsDeviceProfile';
+
+/** Velocidad lógica por defecto (antes de compensación por dispositivo). */
+const SERVICE_DEFAULT_LOGICAL_RATE = 0.48;
 
 class TTSService {
   constructor() {
@@ -47,22 +51,22 @@ class TTSService {
     
     // Configuración adaptativa (en react-native-tts: 0.01 = más lento, 0.99 = más rápido)
     // Valores más bajos = más lento y comprensible en todos los dispositivos
-    this.defaultRate = 0.55; // Velocidad lenta por defecto para buena comprensión en todos los dispositivos
-    this.emulatorRate = 0.45; // Aún más lenta en emuladores
+    this.defaultRate = SERVICE_DEFAULT_LOGICAL_RATE;
+    this.emulatorRate = 0.38; // Aún más lenta en emuladores
     this.defaultVolume = 1.0; // Volumen por defecto (0.0-1.0)
     this.adaptiveRates = {
-      instruction: 0.5,     // Instrucciones: más lento
-      confirmation: 0.55,   // Confirmaciones: lento
-      information: 0.55,    // Información: lento
-      alert: 0.6,           // Alertas: un poco más rápido pero claro
-      error: 0.5,           // Errores: más lento para claridad
+      instruction: 0.44,
+      confirmation: 0.48,
+      information: 0.48,
+      alert: 0.52,
+      error: 0.44,
     };
     this.emulatorAdaptiveRates = {
-      instruction: 0.4,
-      confirmation: 0.45,
-      information: 0.45,
-      alert: 0.5,
-      error: 0.4,
+      instruction: 0.36,
+      confirmation: 0.4,
+      information: 0.4,
+      alert: 0.44,
+      error: 0.36,
     };
   }
 
@@ -130,26 +134,41 @@ class TTSService {
 
   /**
    * Establecer velocidad por defecto (para toda la app)
-   * @param {number} rate - Velocidad (0.01-0.99; ej. 0.45 lenta, 0.55 normal, 0.7 rápida)
+   * @param {number} rate - Velocidad lógica (Config ~0.7–1.1); el motor recibe valor más bajo vía toNativeSpeechRate
    */
   async setDefaultRate(rate) {
     const r = typeof rate === 'number' ? rate : parseFloat(rate);
     if (!Number.isNaN(r)) {
-      // react-native-tts: 0.01 = más lento, 0.99 = más rápido
-      const clampedRate = Math.max(0.2, Math.min(0.9, r));
-      this.defaultRate = clampedRate;
-      
-      // Aplicar inmediatamente al motor TTS nativo si está inicializado
+      // Valor “lógico” del usuario (Config: 0.7 / 0.9 / 1.1); el motor recibe toNativeSpeechRate()
+      const clampedUser = Math.max(0.2, Math.min(1.15, r));
+      this.defaultRate = clampedUser;
+
       if (this.isInitialized) {
         try {
-          await Tts.setDefaultRate(clampedRate);
-          Logger.debug('TTS: Velocidad aplicada al motor nativo', { rate: clampedRate });
+          if (Platform.OS === 'android') {
+            const engineRate = logicalToAndroidEngineRate(clampedUser);
+            await Tts.setDefaultRate(engineRate, true);
+            Logger.debug('TTS: Velocidad aplicada al motor nativo (Android directo)', {
+              userRate: clampedUser,
+              engineRate,
+            });
+          } else {
+            const native = toNativeSpeechRate(clampedUser);
+            await Tts.setDefaultRate(native);
+            Logger.debug('TTS: Velocidad aplicada al motor nativo', {
+              userRate: clampedUser,
+              nativeRate: native,
+            });
+          }
         } catch (error) {
-          Logger.warn('TTS: Error aplicando velocidad al motor nativo', { error: error.message, rate: clampedRate });
+          Logger.warn('TTS: Error aplicando velocidad al motor nativo', {
+            error: error.message,
+            userRate: clampedUser,
+          });
         }
       }
-      
-      Logger.debug('TTS: Velocidad por defecto actualizada', { rate: this.defaultRate });
+
+      Logger.debug('TTS: Velocidad por defecto actualizada', { userRate: this.defaultRate });
     }
   }
 
@@ -347,7 +366,11 @@ class TTSService {
       // Configurar velocidad de habla según el dispositivo
       // Los emuladores suelen reproducir TTS más rápido, usar velocidad más lenta
       const rateToUse = this.isEmulator ? this.emulatorRate : this.defaultRate;
-      await Tts.setDefaultRate(rateToUse);
+      if (Platform.OS === 'android') {
+        await Tts.setDefaultRate(logicalToAndroidEngineRate(rateToUse), true);
+      } else {
+        await Tts.setDefaultRate(toNativeSpeechRate(rateToUse));
+      }
       
       Logger.info('TTS: Velocidad configurada', {
         rate: rateToUse,
@@ -570,7 +593,7 @@ class TTSService {
     const priority = this._determinePriority(text, options);
 
     // Aplicar velocidad: priorizar velocidad del usuario sobre detección de emulador
-    const userHasCustomRate = this.defaultRate !== 0.55; // 0.55 es el valor por defecto (lento y estable)
+    const userHasCustomRate = this.defaultRate !== SERVICE_DEFAULT_LOGICAL_RATE;
     
     if (!options.rate && options.variant && !userHasCustomRate) {
       // Usar velocidades adaptativas solo si el usuario no configuró velocidad personalizada
@@ -663,16 +686,25 @@ class TTSService {
         Logger.debug('TTS: Error al detener habla anterior (puede estar bien)', stopError);
       }
 
-      // Aplicar opciones - asegurar que siempre se aplique la velocidad (del usuario o la calculada)
-      // Limitar rate a [0.2, 0.85]: evita que en algunos OEMs se reproduzca demasiado rápido
-      let rateToApply = options.rate ?? (this.isEmulator ? this.emulatorRate : this.defaultRate);
-      rateToApply = Math.max(0.2, Math.min(0.85, Number(rateToApply) || 0.55));
+      // Velocidad: valor lógico → compensación por fabricante (Android) → límite motor
+      let logicalRate = options.rate ?? (this.isEmulator ? this.emulatorRate : this.defaultRate);
+      logicalRate = Number(logicalRate);
+      if (Number.isNaN(logicalRate)) logicalRate = SERVICE_DEFAULT_LOGICAL_RATE;
+      logicalRate = Math.max(0.2, Math.min(1.15, logicalRate));
+      const rateToApply =
+        Platform.OS === 'android'
+          ? logicalToAndroidEngineRate(logicalRate)
+          : toNativeSpeechRate(logicalRate);
       try {
-        await Tts.setDefaultRate(rateToApply);
+        await Tts.setDefaultRate(rateToApply, Platform.OS === 'android');
         if (options.pitch) {
           await Tts.setDefaultPitch(options.pitch);
         }
-        Logger.debug('TTS: Velocidad aplicada antes de hablar', { rate: rateToApply });
+        Logger.debug('TTS: Velocidad aplicada antes de hablar', {
+          logicalRate,
+          appliedRate: rateToApply,
+          androidDirect: Platform.OS === 'android',
+        });
         // En Android, algunos fabricantes necesitan un momento para aplicar el rate
         if (Platform.OS === 'android') {
           await new Promise(r => setTimeout(r, 80));
@@ -683,7 +715,7 @@ class TTSService {
 
       // Preparar opciones para speak()
       const speakOptions = {};
-      // iOS: pasar rate en cada speak() para que se respete en todos los dispositivos
+      // iOS: pasar rate en cada speak(); en Android el rate va por setDefaultRate (arriba)
       if (Platform.OS === 'ios') {
         speakOptions.rate = rateToApply;
       }

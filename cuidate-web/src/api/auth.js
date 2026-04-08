@@ -68,6 +68,22 @@ export async function adminChangePassword(payload) {
 }
 
 /**
+ * Restablecer PIN de un paciente para la app móvil (solo Admin o Doctor).
+ * @param {{ id_paciente: number, newPin: string }} payload
+ */
+export async function adminResetPatientPin(payload) {
+  const id = Number(payload?.id_paciente);
+  const raw = String(payload?.newPin ?? '').replace(/\s/g, '');
+  if (!id || id <= 0) throw new Error('Paciente inválido');
+  if (!/^\d{4}$/.test(raw)) throw new Error('El PIN debe ser exactamente 4 dígitos');
+  const { data } = await client.put(API_PATHS.AUTH_UNIFIED_ADMIN_RESET_PATIENT_PIN, {
+    id_paciente: id,
+    newPin: raw,
+  });
+  return data;
+}
+
+/**
  * Lista de usuarios (solo Admin).
  * @returns {Promise<Array>}
  */

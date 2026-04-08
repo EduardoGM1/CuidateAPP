@@ -19,7 +19,7 @@ import OnboardingResetPickerModal from '../../components/onboarding/OnboardingRe
 import useTTS from '../../hooks/useTTS';
 import hapticService from '../../services/hapticService';
 import Logger from '../../services/logger';
-import { COLORES } from '../../utils/constantes';
+import { COLORES, NOMBRE_APP } from '../../utils/constantes';
 
 const PerfilPaciente = () => {
   const navigation = useNavigation();
@@ -59,7 +59,7 @@ const PerfilPaciente = () => {
         />
 
         <Text style={styles.title}>👤 Tu perfil</Text>
-        <Text style={styles.subtitle}>Cuenta y ayuda de la app</Text>
+        <Text style={styles.subtitle}>Cuenta y ayuda de {NOMBRE_APP}</Text>
 
         <View style={styles.card}>
           <Text style={styles.label}>Nombre</Text>
@@ -92,13 +92,13 @@ const PerfilPaciente = () => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📖 Guía del tutorial</Text>
+          <Text style={styles.sectionTitle}>📖 Ayuda de {NOMBRE_APP}</Text>
           <TouchableOpacity style={styles.rowBtn} onPress={() => setGuiaPickerVisible(true)}>
             <Text style={styles.rowIcon}>🎯</Text>
             <View style={styles.rowTextWrap}>
-              <Text style={styles.rowTitle}>Elegir qué reiniciar</Text>
+              <Text style={styles.rowTitle}>Volver a ver ayudas</Text>
               <Text style={styles.rowSub}>
-                Introducción o ayuda al abrir cada pantalla (citas, medicamentos, etc.)
+                La bienvenida inicial o los mensajes al entrar en citas, medicamentos y demás
               </Text>
             </View>
             <Text style={styles.rowArrow}>→</Text>

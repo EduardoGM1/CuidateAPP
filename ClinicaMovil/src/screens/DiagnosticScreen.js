@@ -13,7 +13,7 @@ import { Card, Title, Paragraph } from 'react-native-paper';
 import axios from 'axios';
 import { getApiConfigSync, getApiConfigWithFallback } from '../config/apiConfig';
 import { PRODUCTION_API_BASE_URL } from '../config/apiEndpoints';
-import { COLORES } from '../utils/constantes';
+import { COLORES, NOMBRE_APP } from '../utils/constantes';
 
 const MAX_DETAILS_LENGTH = 2000; // Evitar mostrar 200KB+ en pantalla (truncar JSON)
 
@@ -133,7 +133,7 @@ const DiagnosticScreen = ({ navigation }) => {
       results.push({
         test: 'Configuración de Red',
         status: 'info',
-        message: '📡 Configuración actual (misma que usa la app)',
+        message: `📡 Configuración actual (misma que usa ${NOMBRE_APP})`,
         details: {
           'URL Base': API_BASE_URL,
           'Timeout': `${config.timeout}ms`,
@@ -199,7 +199,9 @@ const DiagnosticScreen = ({ navigation }) => {
             <Paragraph>Descripción: {API_CONFIG.description}</Paragraph>
             <Paragraph>Timeout: {API_CONFIG.timeout}ms</Paragraph>
             <Paragraph>Entorno: {API_CONFIG.baseURL.includes('10.0.2.2') ? 'Emulador Android' : API_CONFIG.baseURL.includes('localhost') ? 'Dispositivo (adb reverse)' : 'Red Local'}</Paragraph>
-            <Paragraph style={{ marginTop: 8, fontStyle: 'italic' }}>Ejecuta el diagnóstico para usar la misma URL que la app (getApiConfigWithFallback).</Paragraph>
+            <Paragraph style={{ marginTop: 8, fontStyle: 'italic' }}>
+              {`Ejecuta el diagnóstico para usar la misma URL que ${NOMBRE_APP} (getApiConfigWithFallback).`}
+            </Paragraph>
           </Card.Content>
         </Card>
 

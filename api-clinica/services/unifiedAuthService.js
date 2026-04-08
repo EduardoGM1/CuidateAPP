@@ -489,6 +489,84 @@ class UnifiedAuthService {
   }
 
   /**
+   * Asigna o restablece el PIN de un paciente sin conocer el PIN anterior (solo personal de clínica).
+   * Actualiza todas las credenciales PIN activas del paciente con el mismo hash (mismo PIN en todos los dispositivos).
+   * Si no hay ninguna credencial PIN, crea una primaria vinculada a dispositivo lógico "clinic-web".
+   *
+   * @param {number} pacienteId - id_paciente
+   * @param {string} newPin - Nuevo PIN de 4 dígitos
+   * @param {{ staffUserId?: number|string }} meta - Solo para logs
+   */
+  static async adminResetPatientPIN(pacienteId, newPin, meta = {}) {
+    const userId = parseInt(pacienteId, 10);
+    if (Number.isNaN(userId) || userId < 1) {
+      throw new Error('id_paciente inválido');
+    }
+
+    if (!/^\d{4}$/.test(newPin)) {
+      throw new Error('El nuevo PIN debe tener exactamente 4 dígitos');
+    }
+
+    const weakPINs = ['0000', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '9999', '1234', '4321'];
+    if (weakPINs.includes(newPin)) {
+      throw new Error('El PIN es demasiado débil. Elige un PIN más seguro');
+    }
+
+    await this.validateUser('Paciente', userId);
+    await this.validatePinUniqueness(newPin, userId);
+
+    const whereClause = {
+      user_type: 'Paciente',
+      user_id: userId,
+      auth_method: 'pin',
+      activo: true
+    };
+
+    const records = await AuthCredential.findAll({ where: whereClause });
+
+    if (records.length === 0) {
+      await this.setupCredential('Paciente', userId, 'pin', newPin, {
+        deviceId: 'clinic-web',
+        deviceName: 'Asignado desde portal clínica',
+        deviceType: 'web',
+        isPrimary: true
+      });
+      logger.info('PIN creado por staff (paciente sin credencial previa)', {
+        pacienteId: userId,
+        staffUserId: meta.staffUserId
+      });
+      return {
+        success: true,
+        message: 'PIN configurado exitosamente',
+        mode: 'created'
+      };
+    }
+
+    const newPinHash = await bcrypt.hash(newPin, 10);
+    await Promise.all(
+      records.map((r) =>
+        r.update({
+          credential_value: newPinHash,
+          updated_at: new Date()
+        })
+      )
+    );
+
+    logger.info('PIN restablecido por staff', {
+      pacienteId: userId,
+      staffUserId: meta.staffUserId,
+      credentialsUpdated: records.length
+    });
+
+    return {
+      success: true,
+      message: 'PIN actualizado exitosamente',
+      mode: 'updated',
+      credentialsUpdated: records.length
+    };
+  }
+
+  /**
    * Verifica firma biométrica RSA
    */
   static async verifyBiometricSignature(signature, challenge, credentialId, authRecord) {

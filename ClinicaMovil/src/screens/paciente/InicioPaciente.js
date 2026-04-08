@@ -33,6 +33,7 @@ import Logger from '../../services/logger';
 import { COLORES } from '../../utils/constantes';
 import useWebSocket from '../../hooks/useWebSocket';
 import OfflineIndicator from '../../components/common/OfflineIndicator';
+import { PACIENTE_TEXTO_BIENVENIDA } from '../../onboarding/patientOnboardingContent';
 
 const InicioPaciente = () => {
   const navigation = useNavigation();
@@ -227,9 +228,7 @@ const InicioPaciente = () => {
   // Saludar al paciente al entrar
   useEffect(() => {
     const saludar = async () => {
-      await speak(
-        `Hola, ${nombrePaciente}. Selecciona una opción para continuar: ver tus citas, registrar tus signos vitales, consultar tus medicamentos, revisar tu historial o chatear con tu doctor.`
-      );
+      await speak(`Hola, ${nombrePaciente}. ${PACIENTE_TEXTO_BIENVENIDA}`);
     };
 
     let timeoutId;
@@ -268,14 +267,13 @@ const InicioPaciente = () => {
           <Text style={styles.saludo}>
             Hola {nombrePaciente}
           </Text>
+          <Text style={styles.textoBienvenida}>{PACIENTE_TEXTO_BIENVENIDA}</Text>
           <TouchableOpacity
             style={styles.listenButton}
             onPress={async () => {
               try {
                 hapticService.light();
-                await speak(
-                  `Hola, ${nombrePaciente}. Selecciona una opción para continuar: ver tus citas, registrar tus signos vitales, consultar tus medicamentos, revisar tu historial o chatear con tu doctor.`
-                );
+                await speak(`Hola, ${nombrePaciente}. ${PACIENTE_TEXTO_BIENVENIDA}`);
               } catch (error) {
                 Logger.error('Error en TTS:', error);
                 hapticService.error();
@@ -396,6 +394,16 @@ const styles = StyleSheet.create({
     color: COLORES.EXITO,
     marginBottom: 12,
     textAlign: 'center',
+  },
+  textoBienvenida: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: COLORES.NAV_PRIMARIO,
+    textAlign: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 8,
+    maxWidth: 400,
+    alignSelf: 'center',
   },
   listenButton: {
     backgroundColor: COLORES.NAV_FILTROS_ACTIVOS,

@@ -4,9 +4,9 @@ import { Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import useTTS from '../../hooks/useTTS';
-import { COLORES } from '../../utils/constantes';
+import { COLORES, NOMBRE_APP } from '../../utils/constantes';
 
-const TEXTO_INSTRUCCIONES = 'Bienvenido a la aplicación de la clínica. Para continuar, selecciona si eres paciente o doctor o administrador. Si eres paciente, presiona el botón con el icono de persona. Si eres doctor o administrador, presiona el botón con el icono médico.';
+const TEXTO_INSTRUCCIONES = `Bienvenido a ${NOMBRE_APP}. Para continuar, selecciona si eres paciente o doctor o administrador. Si eres paciente, presiona el botón con el icono de persona. Si eres doctor o administrador, presiona el botón con el icono médico.`;
 
 const PantallaInicioSesion = ({ navigation }) => {
   const [isZoomed, setIsZoomed] = useState(false);

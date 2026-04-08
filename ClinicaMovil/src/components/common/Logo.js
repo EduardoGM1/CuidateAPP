@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { COLORES } from '../../utils/constantes';
+import { COLORES, NOMBRE_APP } from '../../utils/constantes';
 
 const Logo = ({ 
   size = 'large', 
   showText = true, 
   logoSource = null,
-  logoText = 'CuidaTeApp',
+  logoText = NOMBRE_APP,
   logoEmoji = '🏥'
 }) => {
   const getSizeStyles = () => {

@@ -53,8 +53,13 @@ yarn-error.log
 **/fastlane/screenshots
 **/fastlane/test_output
 
+# APK generados localmente (no versionar binarios)
+releases/
+
 # Bundle artifact
 *.jsbundle
+# Generado por Gradle (Hermes); un bundle manual aqui rompe el merge o desactualiza el APK
+android/app/src/main/assets/index.android.bundle
 
 # Ruby / CocoaPods
 **/Pods/

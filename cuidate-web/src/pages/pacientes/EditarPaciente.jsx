@@ -23,6 +23,7 @@ import {
 import { createEmptyRedApoyoItem } from '../../constants/redApoyo';
 import RedApoyoFormFields from '../../components/pacientes/RedApoyoFormFields';
 import { registerInitialMedicalData } from '../../utils/registerInitialMedicalData';
+import { adminResetPatientPin } from '../../api/auth';
 import { useAuthStore } from '../../stores/authStore';
 import { estadosMexico } from '../../data/estadosMexico';
 import { getMunicipiosByEstado } from '../../data/municipiosMexico';
@@ -47,6 +48,7 @@ export default function EditarPaciente() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isAdmin = useAuthStore((s) => s.isAdmin);
+  const isStaff = useAuthStore((s) => s.isDoctor);
   const parsedId = parsePositiveInt(id, 0);
   const [paciente, setPaciente] = useState(null);
   const [modulos, setModulos] = useState([]);
@@ -74,6 +76,12 @@ export default function EditarPaciente() {
   const [anioDiagnostico, setAnioDiagnostico] = useState('');
   const [catalogoComorbilidades, setCatalogoComorbilidades] = useState([]);
   const [comorbilidadIds, setComorbilidadIds] = useState(getInitialComorbilidadIds);
+
+  const [staffPinNew, setStaffPinNew] = useState('');
+  const [staffPinConfirm, setStaffPinConfirm] = useState('');
+  const [staffPinLoading, setStaffPinLoading] = useState(false);
+  const [staffPinMessage, setStaffPinMessage] = useState('');
+  const [staffPinError, setStaffPinError] = useState('');
 
   useOnboardingPageReady(parsedId > 0 && !loading && !!paciente);
 
@@ -294,6 +302,28 @@ export default function EditarPaciente() {
       );
     }
   }
+
+  const handleStaffPinReset = async () => {
+    setStaffPinError('');
+    setStaffPinMessage('');
+    if (staffPinNew !== staffPinConfirm) {
+      setStaffPinError('Los PIN no coinciden');
+      return;
+    }
+    setStaffPinLoading(true);
+    try {
+      await adminResetPatientPin({ id_paciente: parsedId, newPin: staffPinNew });
+      setStaffPinMessage(
+        'PIN actualizado. Informa al paciente su nuevo PIN por un canal seguro (no uses el mismo medio que contraseñas de terceros).'
+      );
+      setStaffPinNew('');
+      setStaffPinConfirm('');
+    } catch (err) {
+      setStaffPinError(err?.response?.data?.error || err?.message || 'No se pudo actualizar el PIN');
+    } finally {
+      setStaffPinLoading(false);
+    }
+  };
 
   if (parsedId === 0) {
     return (
@@ -654,6 +684,48 @@ export default function EditarPaciente() {
           </div>
         </form>
       </Card>
+
+      {isStaff && (
+        <Card style={{ marginTop: '1.5rem' }}>
+          <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: 'var(--color-primario)' }}>
+            PIN de acceso (app móvil del paciente)
+          </h3>
+          <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
+            Para olvido de PIN o asignación de uno nuevo. El paciente podrá entrar a la app con este PIN de inmediato.
+          </p>
+          {staffPinError ? (
+            <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{staffPinError}</p>
+          ) : null}
+          {staffPinMessage ? (
+            <p style={{ margin: '0 0 0.75rem', color: 'var(--color-texto-secundario)', fontSize: '0.9rem' }}>
+              {staffPinMessage}
+            </p>
+          ) : null}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: 280 }}>
+            <Input
+              label="Nuevo PIN (4 dígitos)"
+              type="password"
+              inputMode="numeric"
+              autoComplete="new-password"
+              maxLength={4}
+              value={staffPinNew}
+              onChange={(e) => setStaffPinNew(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            />
+            <Input
+              label="Confirmar PIN"
+              type="password"
+              inputMode="numeric"
+              autoComplete="new-password"
+              maxLength={4}
+              value={staffPinConfirm}
+              onChange={(e) => setStaffPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            />
+            <Button type="button" variant="primary" disabled={staffPinLoading} onClick={handleStaffPinReset}>
+              {staffPinLoading ? 'Guardando…' : 'Guardar nuevo PIN'}
+            </Button>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

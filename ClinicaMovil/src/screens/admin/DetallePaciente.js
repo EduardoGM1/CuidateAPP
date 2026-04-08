@@ -30,7 +30,7 @@ import DateTimePickerButton from '../../components/DateTimePickerButton';
 import { validateCita, validateSignosVitales } from '../../utils/citaValidator';
 import { generarDatosSignosVitales, generarDatosDiagnostico, generarDatosCita } from '../../services/testDataService';
 import { canExecute } from '../../utils/validation';
-import { ESTADOS_CITA, COLORES } from '../../utils/constantes';
+import { ESTADOS_CITA, COLORES, NOMBRE_APP } from '../../utils/constantes';
 import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 import { downloadFile, downloadAndOpenFile, downloadCSV, downloadPDF } from '../../utils/fileDownloader';
 import RNFS from 'react-native-fs';
@@ -1556,7 +1556,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 setTimeout(() => {
                   const location = Platform.OS === 'android' 
                     ? 'Carpeta de Descargas'
-                    : 'Carpeta de Documentos de la app';
+                    : `Carpeta de Documentos de ${NOMBRE_APP}`;
                   
                   const mensaje = pdfAbierto
                     ? `Expediente médico generado y abierto exitosamente.\n\nArchivo: ${filename}\nTamaño: ${(fileSize / 1024).toFixed(2)} KB\n\nUbicación: ${location}`

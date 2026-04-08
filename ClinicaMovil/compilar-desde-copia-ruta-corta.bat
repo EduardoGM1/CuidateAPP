@@ -21,18 +21,13 @@ echo.
 REM Crear carpeta destino
 if not exist "C:\CuidateAPP" mkdir "C:\CuidateAPP"
 
-REM ========== GENERAR BUNDLE DESDE EL PROYECTO (menu hamburguesa) ==========
-REM El bundle se crea AQUI (origen) para que use 100%% el codigo actual; luego se copia a destino.
-echo Generando bundle JS desde proyecto origen...
-if not exist "%PROJECT_DIR%\android\app\src\main\assets" mkdir "%PROJECT_DIR%\android\app\src\main\assets"
-cd /d "%PROJECT_DIR%"
-call npx react-native bundle --platform android --dev false --reset-cache --entry-file index.js --bundle-output "%PROJECT_DIR%\android\app\src\main\assets\index.android.bundle" --assets-dest "%PROJECT_DIR%\android\app\src\main\res"
+REM Bundle JS: lo genera Gradle (createBundle*JsAndAssets + Hermes) al compilar. NO usar aqui
+REM "react-native bundle" en assets: en debug era JS plano y Hermes esperaba bytecode; ademas
+REM Metro/adb reverse podia servir JS viejo del PC. Ver android/app/build.gradle debuggableVariants.
 if exist "%PROJECT_DIR%\android\app\src\main\assets\index.android.bundle" (
-  echo Bundle generado correctamente.
-) else (
-  echo AVISO: No se pudo generar el bundle; la compilacion puede usar Metro en ejecucion.
+  del /q "%PROJECT_DIR%\android\app\src\main\assets\index.android.bundle" 2>nul
+  echo Eliminado bundle manual en assets (evita conflicto con el bundle Hermes de Gradle^).
 )
-cd /d "%PROJECT_DIR%"
 echo.
 
 REM Detener daemon Gradle en origen y en destino para liberar archivos .lock (evita ERROR 33 en robocopy)
@@ -50,13 +45,6 @@ if %ERRORLEVEL% geq 8 (
 )
 echo Sincronizacion completada.
 echo.
-
-REM Forzar copia del BUNDLE generado desde el proyecto (contiene menu hamburguesa)
-if exist "%PROJECT_DIR%\android\app\src\main\assets\index.android.bundle" (
-  if not exist "%DEST_DIR%\android\app\src\main\assets" mkdir "%DEST_DIR%\android\app\src\main\assets"
-  copy /Y "%PROJECT_DIR%\android\app\src\main\assets\index.android.bundle" "%DEST_DIR%\android\app\src\main\assets\" >nul
-  echo Bundle con menu hamburguesa copiado a destino.
-)
 
 REM Forzar copia de navegacion y App
 if not exist "%DEST_DIR%\src\navigation" mkdir "%DEST_DIR%\src\navigation"

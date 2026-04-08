@@ -6,6 +6,7 @@
 
 import { Platform, PermissionsAndroid, Alert, Linking } from 'react-native';
 import Logger from './logger';
+import { NOMBRE_APP } from '../utils/constantes';
 
 class PermissionsService {
   /**
@@ -20,7 +21,7 @@ class PermissionsService {
           PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
           {
             title: 'Permiso de Micrófono',
-            message: 'CuidaTeApp necesita acceso al micrófono para grabar mensajes de voz en el chat.',
+            message: `${NOMBRE_APP} necesita acceso al micrófono para grabar mensajes de voz en el chat.`,
             buttonNeutral: 'Preguntar después',
             buttonNegative: 'Cancelar',
             buttonPositive: 'Permitir',
@@ -68,7 +69,7 @@ class PermissionsService {
       const perm = PermissionsAndroid.PERMISSIONS?.POST_NOTIFICATIONS ?? 'android.permission.POST_NOTIFICATIONS';
       const granted = await PermissionsAndroid.request(perm, {
         title: 'Permiso de notificaciones',
-        message: 'CuidaTeApp necesita enviarte notificaciones para recordatorios de medicación, citas y mensajes importantes.',
+        message: `${NOMBRE_APP} necesita enviarte notificaciones para recordatorios de medicación, citas y mensajes importantes.`,
         buttonNeutral: 'Preguntar después',
         buttonNegative: 'Cancelar',
         buttonPositive: 'Permitir',

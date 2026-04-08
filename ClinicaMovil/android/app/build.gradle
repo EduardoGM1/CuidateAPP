@@ -7,6 +7,13 @@ apply plugin: "com.facebook.react"
  * By default you don't need to apply any configuration, just uncomment the lines you need.
  */
 react {
+    /*
+     * Por defecto RN trata "debug" como debuggable y NO empaqueta el bundle: la app intenta cargar
+     * desde Metro. Si el PC tiene Metro o adb reverse, se ejecuta JS del ordenador (a menudo viejo),
+     * no el del APK. Lista vacía = debug también genera e incluye index.android.bundle (Hermes).
+     */
+    debuggableVariants = []
+
     /* Folders */
     //   The root of your project, i.e. where "package.json" lives. Default is '../..'
     // root = file("../../")
@@ -73,6 +80,10 @@ def enableProguardInReleaseBuilds = true
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+// false = APK usa solo el JS empaquetado (recomendado al instalar en físico). true = Metro + menú dev.
+def reactNativeDevSupport =
+    (findProperty("react.native.devSupport") ?: "false").toString().toBoolean()
+
 android {
     // ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -118,9 +129,11 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            buildConfigField "boolean", "REACT_NATIVE_DEV_SUPPORT", reactNativeDevSupport ? "true" : "false"
         }
         release {
             signingConfig signingConfigs.release
+            buildConfigField "boolean", "REACT_NATIVE_DEV_SUPPORT", "false"
             minifyEnabled enableProguardInReleaseBuilds
             shrinkResources enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"

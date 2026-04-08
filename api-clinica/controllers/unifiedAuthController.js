@@ -447,6 +447,55 @@ export const changePIN = async (req, res) => {
 };
 
 /**
+ * Restablecer PIN de un paciente (Admin o Doctor; no requiere PIN actual del paciente)
+ * PUT /api/auth-unified/admin/reset-patient-pin
+ */
+export const adminResetPatientPIN = async (req, res) => {
+  try {
+    const { id_paciente, newPin } = req.body;
+    const staffId = req.user?.id_usuario ?? req.user?.id;
+
+    if (id_paciente == null || newPin == null) {
+      return res.status(400).json({
+        success: false,
+        error: 'id_paciente y newPin son requeridos'
+      });
+    }
+
+    const result = await UnifiedAuthService.adminResetPatientPIN(id_paciente, String(newPin).trim(), {
+      staffUserId: staffId
+    });
+
+    const ip_address = req.ip || req.connection?.remoteAddress || null;
+    const user_agent = req.get('User-Agent') || null;
+    await auditoriaService.registrarResetPinPacientePorStaff({
+      id_paciente: parseInt(id_paciente, 10),
+      id_usuario_staff: staffId ?? null,
+      modo: result.mode === 'created' ? 'created' : 'updated',
+      credenciales_afectadas:
+        result.mode === 'updated' ? result.credentialsUpdated ?? 0 : 1,
+      ip_address,
+      user_agent,
+      rol_staff: req.user?.rol ?? null
+    });
+
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    logger.error('Error restableciendo PIN por staff', {
+      error: error.message,
+      id_paciente: req.body?.id_paciente
+    });
+    res.status(400).json({
+      success: false,
+      error: error.message || 'Error al restablecer PIN'
+    });
+  }
+};
+
+/**
  * Configurar biometría para paciente
  * POST /api/auth/setup-biometric-unified
  */

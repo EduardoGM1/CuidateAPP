@@ -8,6 +8,7 @@
  */
 
 import Tts from 'react-native-tts';
+import { toNativeSpeechRate, logicalToAndroidEngineRate } from '../services/ttsDeviceProfile';
 import { Platform } from 'react-native';
 import Logger from '../services/logger';
 
@@ -93,7 +94,11 @@ class TTSDiagnostic {
       // 5. Verificar configuración de rate y pitch
       Logger.info('📋 Paso 5: Verificando configuración de rate y pitch...');
       try {
-        await Tts.setDefaultRate(0.9);
+        if (Platform.OS === 'android') {
+          await Tts.setDefaultRate(logicalToAndroidEngineRate(0.9), true);
+        } else {
+          await Tts.setDefaultRate(toNativeSpeechRate(0.9));
+        }
         await Tts.setDefaultPitch(1.0);
         Logger.info('✅ Rate y pitch configurados');
       } catch (error) {

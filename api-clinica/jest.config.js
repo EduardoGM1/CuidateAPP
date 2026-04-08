@@ -4,7 +4,8 @@ export default {
     '^.+\\.js$': 'babel-jest'
   },
   testMatch: [
-    '**/__tests__/**/*.test.js'
+    '**/__tests__/**/*.test.js',
+    '**/tests/unit/**/*.test.js',
   ],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testTimeout: 30000,

@@ -11,6 +11,7 @@ import { Platform, Alert, Linking, Share } from 'react-native';
 import { storageService } from '../services/storageService';
 import { getApiConfig } from '../config/apiConfig';
 import Logger from '../services/logger';
+import { NOMBRE_APP } from './constantes';
 
 /**
  * Descargar archivo desde el servidor con autenticación
@@ -406,7 +407,7 @@ export const downloadAndOpenFile = async (endpoint, filename, contentType = 'app
     // Informar al usuario dónde está el archivo
     const downloadLocation = Platform.OS === 'android' 
       ? 'Carpeta de Descargas del dispositivo'
-      : 'Carpeta de Documentos de la app';
+      : `Carpeta de Documentos de ${NOMBRE_APP}`;
     
     Logger.info('Archivo descargado exitosamente (sin abrir automáticamente)', {
       filename,
