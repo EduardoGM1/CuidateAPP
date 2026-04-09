@@ -98,8 +98,9 @@ if (process.env.NODE_ENV === 'development' && process.env.ALLOW_DEV_ENDPOINTS ==
  * Obtener todos los doctores asignados a un paciente
  * GET /api/pacientes/:id/doctores
  */
+// Paciente puede listar solo sus propios médicos (authorizePatientAccess); Admin/Doctor ven según reglas existentes
 router.get('/:id/doctores',
-  authorizeRoles('Admin', 'Doctor'),
+  authorizeRoles('Admin', 'Doctor', 'Paciente'),
   authorizePatientAccess,
   searchRateLimit,
   getPacienteDoctores

@@ -396,15 +396,15 @@ export const getPacienteById = async (req, res) => {
         through: { model: DoctorPaciente },
         where: { id_doctor: doctor.id_doctor },
         required: true,
-        attributes: ['nombre', 'apellido_paterno', 'apellido_materno']
+        attributes: ['id_doctor', 'nombre', 'apellido_paterno', 'apellido_materno']
       });
     } else {
-      // Para Admin: incluir todos los doctores asignados
+      // Admin y Paciente: todos los médicos asignados (paciente ve el suyo o la lista completa)
       includeOptions.push({
         model: Doctor,
         through: { model: DoctorPaciente },
         required: false,
-        attributes: ['nombre', 'apellido_paterno', 'apellido_materno']
+        attributes: ['id_doctor', 'nombre', 'apellido_paterno', 'apellido_materno']
       });
     }
     

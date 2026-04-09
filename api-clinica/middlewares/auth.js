@@ -126,7 +126,10 @@ export const authorizePatientAccess = (req, res, next) => {
 
   const userRol = req.user.rol?.toLowerCase();
   const userType = req.user.user_type?.toLowerCase();
-  const pacienteId = parseInt(req.params.id) || parseInt(req.params.pacienteId);
+  const pacienteId =
+    parseInt(req.params.id, 10) ||
+    parseInt(req.params.pacienteId, 10) ||
+    parseInt(req.params.idPaciente, 10);
   const userId = req.user.id_paciente || req.user.id;
 
   // Admin y Doctor pueden acceder a cualquier paciente

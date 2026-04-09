@@ -247,6 +247,9 @@ describe('pacienteMapper', () => {
 
       expect(output.doctor_nombre).toBe('Dr. Juan Pérez García');
       expect(output.id_doctor).toBe(1);
+      expect(output.doctores).toHaveLength(1);
+      expect(output.doctores[0].id_doctor).toBe(1);
+      expect(output.doctores[0].nombre_completo).toBe('Dr. Juan Pérez García');
     });
 
     it('debe establecer doctor_nombre como "Sin doctor asignado" si no hay doctor', () => {
@@ -260,6 +263,7 @@ describe('pacienteMapper', () => {
 
       expect(output.doctor_nombre).toBe('Sin doctor asignado');
       expect(output.id_doctor).toBeNull();
+      expect(output.doctores).toEqual([]);
     });
   });
 

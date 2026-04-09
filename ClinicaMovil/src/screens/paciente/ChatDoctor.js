@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import useTTS from '../../hooks/useTTS';
 import useChat from '../../hooks/useChat';
@@ -39,6 +39,7 @@ import permissionsService from '../../services/permissionsService';
 
 const ChatDoctor = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const { userData } = useAuth();
   const { speak, stopAndClear, createTimeout } = useTTS();
   
@@ -47,6 +48,18 @@ const ChatDoctor = () => {
     const id = userData?.id_paciente || userData?.id;
     return id ? String(id) : null;
   }, [userData?.id_paciente, userData?.id]);
+
+  const idDoctorParam = route.params?.id_doctor ?? route.params?.idDoctor;
+  const doctorIdDesdeRuta = useMemo(() => {
+    if (idDoctorParam === undefined || idDoctorParam === null || idDoctorParam === '') {
+      return null;
+    }
+    return String(idDoctorParam);
+  }, [idDoctorParam]);
+
+  const tituloCabecera = route.params?.nombreDoctor
+    ? `💬 ${route.params.nombreDoctor}`
+    : '💬 Chat con Doctor';
   
   const [fontSize, setFontSize] = useState(16);
   const [mostrarModalFontSize, setMostrarModalFontSize] = useState(false);
@@ -85,7 +98,7 @@ const ChatDoctor = () => {
     setDoctorId,
   } = useChat({
     pacienteId,
-    doctorId: null, // El backend obtendrá automáticamente el doctorId de la relación doctor_paciente
+    doctorId: doctorIdDesdeRuta,
     remitente: 'Paciente',
     onNuevoMensaje: (mensaje) => {
       // Leer mensaje con TTS si es del doctor
@@ -94,9 +107,6 @@ const ChatDoctor = () => {
       }
     },
   });
-
-  // Nota: El backend ahora obtiene automáticamente el doctorId de la relación doctor_paciente
-  // cuando el paciente envía un mensaje sin proporcionarlo, así que no necesitamos obtenerlo aquí
 
   // Cargar tamaño de fuente guardado
   useEffect(() => {
@@ -116,8 +126,19 @@ const ChatDoctor = () => {
   // Cargar datos al entrar
   useFocusEffect(
     useCallback(() => {
+      if (!doctorIdDesdeRuta) {
+        const redirect = setTimeout(() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.navigate('ListaChatsPaciente');
+          }
+        }, 0);
+        return () => clearTimeout(redirect);
+      }
+
       cargarMensajes();
-      
+
       permissionsService.checkMicrophonePermission().then((hasPermission) => {
         if (!hasPermission && Platform.OS === 'android') {
           Logger.info('ChatDoctor: Permiso de micrófono no otorgado, se solicitará cuando sea necesario');
@@ -125,22 +146,33 @@ const ChatDoctor = () => {
       }).catch((error) => {
         Logger.warn('ChatDoctor: Error verificando permiso de micrófono', error);
       });
-      
+
+      const nombreDoctor = route.params?.nombreDoctor;
       const timer = createTimeout(async () => {
-        await speak('Chat con tu doctor. Puedes enviar mensajes de texto o de voz.');
+        await speak(
+          nombreDoctor
+            ? `Chat con ${nombreDoctor}. Puedes enviar mensajes de texto o de voz.`
+            : 'Chat con tu doctor. Puedes enviar mensajes de texto o de voz.'
+        );
       }, 500);
-      
+
       return () => {
         stopAndClear();
         clearTimeout(timer);
       };
-    }, [cargarMensajes, speak, stopAndClear, createTimeout])
+    }, [
+      cargarMensajes,
+      speak,
+      stopAndClear,
+      createTimeout,
+      doctorIdDesdeRuta,
+      navigation,
+      route.params?.nombreDoctor,
+    ])
   );
 
   // Wrapper para handleEnviarTexto con TTS
   const handleEnviarTextoConTTS = useCallback(async (texto = null) => {
-    // El backend ahora obtiene automáticamente el doctorId si no se proporciona
-    // Así que podemos enviar el mensaje incluso si doctorId es null
     await handleEnviarTexto(texto);
     if (isOnline) {
       await speak('Mensaje enviado');
@@ -367,7 +399,7 @@ const ChatDoctor = () => {
             <Text style={styles.backButtonText}>← Atrás</Text>
           </TouchableOpacity>
           
-          <Text style={styles.title}>💬 Chat con Doctor</Text>
+          <Text style={styles.title} numberOfLines={2}>{tituloCabecera}</Text>
           
           <View style={styles.headerRight}>
             <TouchableOpacity

@@ -184,15 +184,41 @@ export const normalizePaciente = (pacienteData, options = {}) => {
       : null
   };
 
-  // Normalizar doctor
+  // Normalizar doctor(es): compatibilidad (primer médico) + lista completa para chat / UI
   if (includeDoctor) {
-    if (pacienteData.Doctors && Array.isArray(pacienteData.Doctors) && pacienteData.Doctors.length > 0) {
-      const doctor = pacienteData.Doctors[0];
+    const doctorsList =
+      pacienteData.Doctors && Array.isArray(pacienteData.Doctors) ? pacienteData.Doctors : [];
+
+    normalized.doctores = doctorsList.map((doctor) => {
+      const through = doctor.DoctorPaciente || doctor.doctor_paciente || {};
+      const nombreCompleto = [
+        doctor.nombre,
+        doctor.apellido_paterno,
+        doctor.apellido_materno || '',
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      return {
+        id_doctor: doctor.id_doctor,
+        nombre: doctor.nombre || '',
+        apellido_paterno: doctor.apellido_paterno || '',
+        apellido_materno: doctor.apellido_materno || null,
+        nombre_completo: nombreCompleto || 'Médico',
+        activo: doctor.activo !== false,
+        fecha_asignacion: through.fecha_asignacion || null,
+      };
+    });
+
+    if (doctorsList.length > 0) {
+      const doctor = doctorsList[0];
       normalized.doctor_nombre = [
         doctor.nombre,
         doctor.apellido_paterno,
-        doctor.apellido_materno || ''
-      ].filter(Boolean).join(' ') || 'Sin nombre';
+        doctor.apellido_materno || '',
+      ]
+        .filter(Boolean)
+        .join(' ') || 'Sin nombre';
       normalized.id_doctor = doctor.id_doctor || null;
     } else {
       normalized.doctor_nombre = 'Sin doctor asignado';

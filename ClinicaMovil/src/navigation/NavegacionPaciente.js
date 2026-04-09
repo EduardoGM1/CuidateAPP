@@ -10,6 +10,7 @@ import MisCitas from '../screens/paciente/MisCitas';
 import MisMedicamentos from '../screens/paciente/MisMedicamentos';
 import HistorialMedico from '../screens/paciente/HistorialMedico';
 import GraficosEvolucion from '../screens/paciente/GraficosEvolucion';
+import ListaChatsPaciente from '../screens/paciente/ListaChatsPaciente';
 import ChatDoctor from '../screens/paciente/ChatDoctor';
 import Configuracion from '../screens/paciente/Configuracion';
 import PerfilPaciente from '../screens/paciente/PerfilPaciente';
@@ -35,6 +36,7 @@ const NavegacionPaciente = () => {
       <Stack.Screen name="MisMedicamentos" component={MisMedicamentos} />
       <Stack.Screen name="HistorialMedico" component={HistorialMedico} />
       <Stack.Screen name="GraficosEvolucion" component={GraficosEvolucion} />
+      <Stack.Screen name="ListaChatsPaciente" component={ListaChatsPaciente} />
       <Stack.Screen name="ChatDoctor" component={ChatDoctor} />
       <Stack.Screen name="Configuracion" component={Configuracion} />
       <Stack.Screen 

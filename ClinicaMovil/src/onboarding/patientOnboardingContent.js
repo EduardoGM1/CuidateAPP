@@ -73,12 +73,21 @@ export const PATIENT_STACK_TOURS = {
       },
     ],
   },
+  ListaChatsPaciente: {
+    steps: [
+      {
+        title: 'Tus médicos',
+        body:
+          'Aquí aparecen todos los médicos asignados a ti. Toca un nombre para abrir el chat con esa persona, aunque aún no hayan mensajes.',
+      },
+    ],
+  },
   ChatDoctor: {
     steps: [
       {
         title: 'Mensajes',
         body:
-          'Cuando el chat esté disponible, puedes escribir a tu médico por aquí. Para emergencias graves no uses el chat: llama a emergencias o a tu módulo.',
+          'Escribe o envía un mensaje de voz a este médico. Para emergencias graves no uses el chat: llama a emergencias o a tu módulo.',
       },
     ],
   },

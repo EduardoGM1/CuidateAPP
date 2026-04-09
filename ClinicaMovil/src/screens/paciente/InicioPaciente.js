@@ -344,7 +344,7 @@ const InicioPaciente = () => {
             label="Chat con Doctor"
             subLabel="Hablar con tu médico"
             color="purple"
-            onPress={() => handleNavigate('ChatDoctor', 'chat con doctor')}
+            onPress={() => handleNavigate('ListaChatsPaciente', 'chat con doctor')}
             speakText="Chat con doctor. Hablar con tu médico"
           />
 

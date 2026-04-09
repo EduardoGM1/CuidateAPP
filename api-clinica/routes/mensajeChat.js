@@ -171,6 +171,14 @@ router.get('/paciente/:idPaciente/doctor/:idDoctor',
   mensajeChatController.getConversacion
 );
 
+// Lista de médicos asignados + vista previa (antes de la ruta genérica /paciente/:idPaciente)
+router.get(
+  '/paciente/:idPaciente/conversaciones-asignadas',
+  authorizePatientAccess,
+  searchRateLimit,
+  mensajeChatController.getConversacionesPacienteAsignadas
+);
+
 // Obtener mensajes de un paciente
 router.get('/paciente/:idPaciente', 
   authorizePatientAccess,

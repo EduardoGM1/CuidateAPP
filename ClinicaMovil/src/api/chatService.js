@@ -29,26 +29,15 @@ const initializeApiConfig = async (forceRefresh = false) => {
  * Obtener conversación entre paciente y doctor
  */
 export const getConversacion = async (idPaciente, idDoctor = null) => {
+  const finalUrl = idDoctor
+    ? `/mensajes-chat/paciente/${idPaciente}/doctor/${idDoctor}`
+    : `/mensajes-chat/paciente/${idPaciente}`;
   try {
     await initializeApiConfig();
     const apiClient = await ensureApiClient();
-    
-    // Siempre usar la ruta con doctor, el backend ajustará si es necesario
-    // Si no se proporciona idDoctor, el backend lo obtendrá del usuario autenticado
-    // NOTA: No incluir /api porque apiClient ya lo tiene en baseURL
-    const url = `/mensajes-chat/paciente/${idPaciente}/doctor/${idDoctor || ''}`;
-    
-    Logger.debug('ChatService: Obteniendo conversación', { 
-      idPaciente, 
-      idDoctor, 
-      url: url.replace(/\/doctor\/$/, '/doctor') // Limpiar URL si idDoctor es null
-    });
-    
-    // Si idDoctor es null, usar ruta sin doctor (el backend lo manejará)
-    const finalUrl = idDoctor 
-      ? `/mensajes-chat/paciente/${idPaciente}/doctor/${idDoctor}`
-      : `/mensajes-chat/paciente/${idPaciente}`;
-    
+
+    Logger.debug('ChatService: Obteniendo conversación', { idPaciente, idDoctor, finalUrl });
+
     const response = await apiClient.get(finalUrl);
     
     Logger.debug('ChatService: Conversación obtenida', { 
@@ -116,6 +105,69 @@ export const getConversacionesDoctor = async (idDoctor) => {
       data: [],
       total: 0,
       error: error.response?.data?.error || error.message || 'Error al obtener conversaciones'
+    };
+  }
+};
+
+/**
+ * Últimos mensajes del paciente (todos los médicos). Sirve para reconstruir la lista de chats
+ * cuando otros endpoints fallan o vienen vacíos.
+ */
+export const getMensajesPaciente = async (idPaciente, limit = 500) => {
+  try {
+    await initializeApiConfig();
+    const apiClient = await ensureApiClient();
+    const response = await apiClient.get(`/mensajes-chat/paciente/${idPaciente}`, {
+      params: { limit },
+    });
+    if (response.data?.success === false) {
+      return [];
+    }
+    return response.data?.data || [];
+  } catch (error) {
+    Logger.warn('ChatService: getMensajesPaciente falló', {
+      message: error.message,
+      status: error.response?.status,
+    });
+    return [];
+  }
+};
+
+/**
+ * Lista de médicos asignados al paciente con vista previa de chat (doctor_paciente).
+ */
+export const getConversacionesPacienteAsignadas = async (idPaciente) => {
+  try {
+    await initializeApiConfig();
+    const apiClient = await ensureApiClient();
+
+    const response = await apiClient.get(
+      `/mensajes-chat/paciente/${idPaciente}/conversaciones-asignadas`
+    );
+
+    if (response.data?.success) {
+      return {
+        success: true,
+        data: response.data.data?.conversaciones || [],
+        total: response.data.data?.total ?? 0,
+        error: null,
+      };
+    }
+    return {
+      success: false,
+      data: [],
+      total: 0,
+      error: response.data?.error || 'Error desconocido',
+    };
+  } catch (error) {
+    Logger.error('Error obteniendo conversaciones asignadas (paciente):', error);
+    const status = error.response?.status;
+    return {
+      success: false,
+      data: [],
+      total: 0,
+      error: error.response?.data?.error || error.message || 'Error al obtener conversaciones',
+      statusCode: status,
     };
   }
 };
@@ -434,6 +486,8 @@ export const eliminarMensaje = async (idMensaje) => {
 
 export default {
   getConversacion,
+  getConversacionesPacienteAsignadas,
+  getMensajesPaciente,
   getMensajesNoLeidos,
   enviarMensajeTexto,
   uploadAudioFile,

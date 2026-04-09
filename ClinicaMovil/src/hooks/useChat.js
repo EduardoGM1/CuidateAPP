@@ -19,7 +19,7 @@ import Logger from '../services/logger';
  * Hook useChat
  * @param {Object} config - Configuración del chat
  * @param {string|null} config.pacienteId - ID del paciente
- * @param {string|null} config.doctorId - ID del doctor (puede ser null inicialmente)
+ * @param {string|null} config.doctorId - ID del doctor (requerido para paciente con chat por médico)
  * @param {string} config.remitente - 'Paciente' o 'Doctor'
  * @param {Function} config.onNuevoMensaje - Callback cuando llega un nuevo mensaje (opcional)
  * @returns {Object} Estados y funciones del chat
@@ -125,6 +125,14 @@ const useChat = ({ pacienteId, doctorId: doctorIdProp, remitente, onNuevoMensaje
       Logger.warn('useChat: No hay pacienteId, no se pueden cargar mensajes');
       return;
     }
+
+    if (remitente === 'Paciente' && !doctorId) {
+      Logger.warn('useChat: Paciente sin id_doctor; no se carga conversación mezclada');
+      setMensajes([]);
+      if (showLoading) setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     
     try {
       if (showLoading) setLoading(true);
@@ -158,24 +166,6 @@ const useChat = ({ pacienteId, doctorId: doctorIdProp, remitente, onNuevoMensaje
       } catch (error) {
         Logger.warn('Error actualizando mensajes pendientes:', error);
       }
-      
-      // Si no hay doctorId pero hay mensajes, obtenerlo del primer mensaje (para ChatDoctor)
-      if (!doctorId && conversacion && conversacion.length > 0) {
-        const primerMensajeConDoctor = conversacion.find(m => m.id_doctor);
-        if (primerMensajeConDoctor && primerMensajeConDoctor.id_doctor) {
-          const nuevoDoctorId = primerMensajeConDoctor.id_doctor;
-          setDoctorId(nuevoDoctorId);
-          Logger.debug('useChat: doctorId obtenido del primer mensaje', { doctorId: nuevoDoctorId });
-          
-          // Marcar como leídos después de obtener doctorId (para pacientes)
-          try {
-            await chatService.marcarTodosComoLeidos(currentPacienteId, nuevoDoctorId);
-            Logger.debug('useChat: Mensajes marcados como leídos después de obtener doctorId');
-          } catch (error) {
-            Logger.warn('Error marcando mensajes como leídos después de obtener doctorId:', error);
-          }
-        }
-      }
     } catch (error) {
       Logger.error('Error cargando mensajes:', error);
       if (error.response?.status !== 404) {
@@ -191,7 +181,7 @@ const useChat = ({ pacienteId, doctorId: doctorIdProp, remitente, onNuevoMensaje
       setRefreshing(false);
     }
     return null;
-  }, [doctorId]);
+  }, [doctorId, remitente]);
   
   // Actualizar ref de cargarMensajes
   useEffect(() => {
@@ -219,6 +209,14 @@ const useChat = ({ pacienteId, doctorId: doctorIdProp, remitente, onNuevoMensaje
     const unsubscribeNuevo = subscribeToEvent('nuevo_mensaje', async (data) => {
       const currentPacienteId = pacienteIdRef.current;
       if (data.id_paciente === currentPacienteId || String(data.id_paciente) === String(currentPacienteId)) {
+        const currentDoctorId = doctorIdRef.current;
+        if (remitente === 'Paciente' && currentDoctorId) {
+          const msgDoctor = data.id_doctor ?? data.mensaje?.id_doctor;
+          if (msgDoctor != null && String(msgDoctor) !== String(currentDoctorId)) {
+            return;
+          }
+        }
+
         Logger.info('Nuevo mensaje recibido:', data);
         hapticService.light();
         
@@ -336,7 +334,7 @@ const useChat = ({ pacienteId, doctorId: doctorIdProp, remitente, onNuevoMensaje
         clearTimeout(typingTimeoutRef.current);
       }
     };
-  }, [subscribeToEvent, pacienteIdNormalized, isConnected, remitente, onNuevoMensaje]);
+  }, [subscribeToEvent, pacienteIdNormalized, isConnected, remitente, onNuevoMensaje, doctorId]);
 
   // Suscribirse a notificaciones push
   useEffect(() => {
@@ -352,6 +350,13 @@ const useChat = ({ pacienteId, doctorId: doctorIdProp, remitente, onNuevoMensaje
       const currentPacienteIdNormalized = currentPacienteIdFromRef ? String(currentPacienteIdFromRef) : null;
       
       if (dataPacienteId && currentPacienteIdNormalized && dataPacienteId === currentPacienteIdNormalized) {
+        if (remitente === 'Paciente' && doctorIdRef.current) {
+          const pushDoctor = data?.id_doctor;
+          if (pushDoctor != null && String(pushDoctor) !== String(doctorIdRef.current)) {
+            return;
+          }
+        }
+
         Logger.info('Notificación push recibida, actualizando chat...');
         hapticService.light();
         
@@ -370,7 +375,7 @@ const useChat = ({ pacienteId, doctorId: doctorIdProp, remitente, onNuevoMensaje
     return () => {
       if (unsubscribePush) unsubscribePush();
     };
-  }, [pacienteIdNormalized]);
+  }, [pacienteIdNormalized, remitente]);
 
   // Enviar mensaje de texto
   const handleEnviarTexto = useCallback(async (texto = null) => {
@@ -398,10 +403,17 @@ const useChat = ({ pacienteId, doctorId: doctorIdProp, remitente, onNuevoMensaje
     
     if (!pacienteIdNormalized || enviando) {
       Logger.warn('useChat: Faltan datos requeridos', { pacienteId: pacienteIdNormalized, doctorId, enviando });
-      // Nota: doctorId puede ser null - el backend lo obtendrá automáticamente de la relación doctor_paciente
       if (!pacienteIdNormalized) {
         return;
       }
+    }
+
+    if (remitente === 'Paciente' && !doctorId) {
+      Alert.alert(
+        'Selecciona un médico',
+        'Vuelve a la lista de conversaciones y elige un médico para enviar el mensaje.'
+      );
+      return;
     }
 
     const mensajeLocal = {
@@ -481,6 +493,15 @@ const useChat = ({ pacienteId, doctorId: doctorIdProp, remitente, onNuevoMensaje
       if (!duration || (!audioFilePath && !audioUrl)) {
         Alert.alert('Error', 'No se pudo obtener el archivo de audio');
         audioFeedbackService.playError();
+        setMostrarGrabador(false);
+        return;
+      }
+
+      if (remitente === 'Paciente' && !doctorId) {
+        Alert.alert(
+          'Selecciona un médico',
+          'Vuelve a la lista de conversaciones y elige un médico para enviar el audio.'
+        );
         setMostrarGrabador(false);
         return;
       }

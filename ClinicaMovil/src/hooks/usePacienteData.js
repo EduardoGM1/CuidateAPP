@@ -89,9 +89,9 @@ const usePacienteData = (options = {}) => {
       // Solo actualizar si tenemos datos válidos y son diferentes al actual
       if (pacienteNormalizado && pacienteNormalizado.id_paciente) {
         setPaciente(prevPaciente => {
-          // Evitar actualización si los datos son los mismos (comparar por ID)
+          // Mismo paciente: fusionar para no perder campos nuevos del API (p. ej. doctores[], doctor_nombre)
           if (prevPaciente && prevPaciente.id_paciente === pacienteNormalizado.id_paciente) {
-            return prevPaciente;
+            return { ...prevPaciente, ...pacienteNormalizado };
           }
           Logger.debug('Datos del paciente cargados exitosamente desde backend', { 
             pacienteId,

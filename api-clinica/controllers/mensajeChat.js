@@ -130,18 +130,26 @@ export const getMensajesPaciente = async (req, res) => {
     const { idPaciente } = req.params;
     const userRole = req.user?.rol;
     const userId = req.user?.id;
-    
-    // Verificar autorización
-    if (userRole !== 'Admin' && userRole !== 'Doctor' && userId !== parseInt(idPaciente)) {
+    const userPacienteId = req.user?.id_paciente;
+
+    // Paciente: comparar con id_paciente del token (req.user.id ya es id_paciente en auth)
+    const esPacientePropio =
+      (userRole === 'Paciente' || userRole === 'paciente') &&
+      (userId === parseInt(idPaciente, 10) || userPacienteId === parseInt(idPaciente, 10));
+
+    if (userRole !== 'Admin' && userRole !== 'admin' && userRole !== 'Doctor' && userRole !== 'doctor' && !esPacientePropio) {
       return res.status(403).json({ success: false, error: 'No autorizado' });
     }
-    
+
+    const limiteRaw = parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(limiteRaw) ? Math.min(Math.max(limiteRaw, 1), 500) : 400;
+
     const mensajes = await MensajeChat.findAll({
-      where: { id_paciente: parseInt(idPaciente) },
+      where: { id_paciente: parseInt(idPaciente, 10) },
       order: [['fecha_envio', 'DESC']],
-      limit: 100,
+      limit,
     });
-    
+
     res.json({ success: true, data: mensajes });
   } catch (error) {
     logger.error('Error obteniendo mensajes de paciente:', error);
@@ -256,6 +264,19 @@ export const createMensaje = async (req, res) => {
         return res.status(400).json({ 
           success: false, 
           error: 'No se encontró un doctor asignado. Contacta a la administración para que te asignen un doctor.' 
+        });
+      }
+    }
+
+    // Paciente solo puede escribir a médicos con asignación activa en doctor_paciente
+    if (remitente === 'Paciente' && doctorId) {
+      const asignacionValida = await DoctorPaciente.findOne({
+        where: { id_paciente: parseInt(id_paciente), id_doctor: doctorId },
+      });
+      if (!asignacionValida) {
+        return res.status(403).json({
+          success: false,
+          error: 'No puedes enviar mensajes a este médico: no está asignado a tu cuenta.',
         });
       }
     }
@@ -640,6 +661,135 @@ export const marcarTodosComoLeidos = async (req, res) => {
   } catch (error) {
     logger.error('Error marcando mensajes como leídos:', error);
     res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+/**
+ * Lista de médicos asignados al paciente (doctor_paciente) con vista previa de chat.
+ * GET /api/mensajes-chat/paciente/:idPaciente/conversaciones-asignadas
+ *
+ * Incluye doctores sin mensajes aún; no leídos = mensajes del doctor no leídos por el paciente.
+ */
+export const getConversacionesPacienteAsignadas = async (req, res) => {
+  try {
+    const { idPaciente } = req.params;
+    const idP = parseInt(idPaciente, 10);
+
+    if (Number.isNaN(idP)) {
+      return res.status(400).json({ success: false, error: 'idPaciente inválido' });
+    }
+
+    const asignaciones = await DoctorPaciente.findAll({
+      where: { id_paciente: idP },
+      attributes: ['id_doctor', 'fecha_asignacion'],
+    });
+
+    if (asignaciones.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          conversaciones: [],
+          total: 0,
+        },
+      });
+    }
+
+    const idDoctores = asignaciones.map((a) => Number(a.id_doctor)).filter((n) => Number.isFinite(n));
+    const doctores = await Doctor.findAll({
+      where: { id_doctor: { [Op.in]: idDoctores } },
+      attributes: ['id_doctor', 'nombre', 'apellido_paterno', 'apellido_materno', 'activo'],
+    });
+    // Claves numéricas: Sequelize/JSON a veces mezclan string y number y .get falla sin resolución
+    const doctorPorId = new Map(doctores.map((d) => [Number(d.id_doctor), d]));
+
+    const conversacionesConDetalles = await Promise.all(
+      asignaciones.map(async (row) => {
+        const doctorId = Number(row.id_doctor);
+        const doctor = Number.isFinite(doctorId) ? doctorPorId.get(doctorId) : null;
+
+        const ultimoMensaje = await MensajeChat.findOne({
+          where: { id_paciente: idP, id_doctor: doctorId },
+          order: [['fecha_envio', 'DESC']],
+          attributes: [
+            'id_mensaje',
+            'mensaje_texto',
+            'mensaje_audio_transcripcion',
+            'remitente',
+            'fecha_envio',
+            'leido',
+          ],
+        });
+
+        const mensajesNoLeidos = await MensajeChat.count({
+          where: {
+            id_paciente: idP,
+            id_doctor: doctorId,
+            remitente: 'Doctor',
+            leido: false,
+          },
+        });
+
+        let previewMensaje = '';
+        if (ultimoMensaje) {
+          if (ultimoMensaje.mensaje_texto) {
+            previewMensaje = ultimoMensaje.mensaje_texto;
+          } else if (ultimoMensaje.mensaje_audio_transcripcion) {
+            previewMensaje = ultimoMensaje.mensaje_audio_transcripcion;
+          } else {
+            previewMensaje = 'Mensaje de voz';
+          }
+          if (previewMensaje.length > 50) {
+            previewMensaje = `${previewMensaje.substring(0, 50)}...`;
+          }
+        }
+
+        const nombreCompleto = doctor
+          ? `${doctor.nombre} ${doctor.apellido_paterno} ${doctor.apellido_materno || ''}`.trim()
+          : 'Médico';
+
+        return {
+          id_doctor: doctorId,
+          doctor: {
+            id_doctor: doctorId,
+            nombre: doctor?.nombre || '',
+            apellido_paterno: doctor?.apellido_paterno || '',
+            apellido_materno: doctor?.apellido_materno || '',
+            nombre_completo: nombreCompleto,
+            activo: doctor?.activo !== false,
+          },
+          ultimo_mensaje: ultimoMensaje
+            ? {
+                id_mensaje: ultimoMensaje.id_mensaje,
+                preview: previewMensaje,
+                remitente: ultimoMensaje.remitente,
+                fecha_envio: ultimoMensaje.fecha_envio,
+                leido: ultimoMensaje.leido,
+              }
+            : null,
+          mensajes_no_leidos: mensajesNoLeidos,
+          ultima_fecha: ultimoMensaje?.fecha_envio || row.fecha_asignacion || null,
+        };
+      })
+    );
+
+    conversacionesConDetalles.sort((a, b) => {
+      const fechaA = a.ultima_fecha ? new Date(a.ultima_fecha).getTime() : 0;
+      const fechaB = b.ultima_fecha ? new Date(b.ultima_fecha).getTime() : 0;
+      return fechaB - fechaA;
+    });
+
+    logger.info('Conversaciones asignadas del paciente', { idP, total: conversacionesConDetalles.length });
+
+    res.json({
+      success: true,
+      data: {
+        conversaciones: conversacionesConDetalles,
+        total: conversacionesConDetalles.length,
+      },
+    });
+  } catch (error) {
+    logger.error('Error obteniendo conversaciones asignadas del paciente:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
