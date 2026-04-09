@@ -58,6 +58,27 @@ function getAlertaDescripcion(item) {
   return item.descripcion ?? item.mensaje ?? 'Alerta';
 }
 
+/** Gráfico de barras: citas por día (últimos 7 días). Un solo bloque reutilizable para admin y doctor. */
+function ChartCitasUltimos7Dias({ data, title, height = 220 }) {
+  if (!Array.isArray(data) || data.length === 0) return null;
+  return (
+    <Card className="saas-chart-card">
+      <h3 className="saas-chart-title">{title}</h3>
+      <div className="saas-chart-inner">
+        <ResponsiveContainer width="100%" height={height}>
+          <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
+            <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+            <Tooltip />
+            <Bar dataKey="citas" name="Citas" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </Card>
+  );
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const getDisplayNameRaw = useAuthStore((s) => s.getDisplayName);
@@ -241,22 +262,6 @@ export default function Dashboard() {
                 <StatCard icon={IconUsers} label="Pacientes asignados" value={m.pacientesAsignados} />
                 <StatCard icon={IconMessageCircle} label="Mensajes pendientes" value={m.mensajesPendientes} />
                 <StatCard icon={IconCalendar} label="Próximas citas" value={m.proximasCitas} />
-                {Array.isArray(summary.chartData?.citasUltimos7Dias) && summary.chartData.citasUltimos7Dias.length > 0 && (
-                  <Card className="saas-chart-card" style={{ gridColumn: 'span 2', minHeight: 0 }}>
-                    <h3 className="saas-chart-title">Mis citas últimos 7 días</h3>
-                    <div className="saas-chart-inner">
-                      <ResponsiveContainer width="100%" height={180}>
-                        <BarChart data={summary.chartData.citasUltimos7Dias} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
-                          <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
-                          <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                          <Tooltip />
-                          <Bar dataKey="citas" name="Citas" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </Card>
-                )}
               </>
             )}
           </section>
@@ -329,22 +334,7 @@ export default function Dashboard() {
               <div className="saas-charts-grid">
                 {(
                   <>
-                    {Array.isArray(summary.chartData?.citasUltimos7Dias) && summary.chartData.citasUltimos7Dias.length > 0 && (
-                      <Card className="saas-chart-card">
-                        <h3 className="saas-chart-title">Citas últimos 7 días</h3>
-                        <div className="saas-chart-inner">
-                          <ResponsiveContainer width="100%" height={220}>
-                            <BarChart data={summary.chartData.citasUltimos7Dias} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
-                              <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
-                              <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                              <Tooltip />
-                              <Bar dataKey="citas" name="Citas" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </Card>
-                    )}
+                    <ChartCitasUltimos7Dias data={summary.chartData?.citasUltimos7Dias} title="Citas últimos 7 días" />
                     {Array.isArray(summary.chartData?.pacientesNuevos) && summary.chartData.pacientesNuevos.length > 0 && (
                       <Card className="saas-chart-card">
                         <h3 className="saas-chart-title">Pacientes nuevos (últimos 7 días)</h3>
@@ -443,6 +433,14 @@ export default function Dashboard() {
                       <Link to="/citas">Ver todas</Link>
                     </p>
                   </Card>
+                </section>
+              )}
+              {Array.isArray(summary.chartData?.citasUltimos7Dias) && summary.chartData.citasUltimos7Dias.length > 0 && (
+                <section className="saas-section" aria-labelledby="graficos-doctor-title">
+                  <h2 id="graficos-doctor-title" className="saas-section-title">Gráficos y métricas</h2>
+                  <div className="saas-charts-grid">
+                    <ChartCitasUltimos7Dias data={summary.chartData.citasUltimos7Dias} title="Mis citas últimos 7 días" />
+                  </div>
                 </section>
               )}
               <DetalleCitaModal
