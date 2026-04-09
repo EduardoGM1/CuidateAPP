@@ -10,6 +10,7 @@ import DetalleNotificacionModal from '../../components/doctor/DetalleNotificacio
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
+import { useDoctorNavBadgesRefresh } from '../../contexts/DoctorNavBadgesContext';
 
 const TIPO_LABELS = {
   alerta_signos_vitales: 'Signos vitales',
@@ -35,6 +36,7 @@ const ESTADO_OPCIONES = [
 ];
 
 export default function NotificacionesDoctor() {
+  const { refreshDoctorNavBadges } = useDoctorNavBadgesRefresh();
   const { idDoctor, loading: loadingDoctor, error: errorDoctor } = useCurrentDoctorId();
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
@@ -80,6 +82,11 @@ export default function NotificacionesDoctor() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    if (!idDoctor) return;
+    void refreshDoctorNavBadges();
+  }, [idDoctor, refreshDoctorNavBadges]);
+
   // Tiempo real: actualizar notificaciones cuando llega una nueva
   const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
   useEffect(() => {
@@ -95,7 +102,8 @@ export default function NotificacionesDoctor() {
     setActingId(id);
     try {
       await marcarNotificacionLeida(idDoctor, id);
-      load();
+      await load();
+      await refreshDoctorNavBadges();
     } catch {
       setActingId(null);
     } finally {
@@ -109,7 +117,8 @@ export default function NotificacionesDoctor() {
     setActingId(id);
     try {
       await archivarNotificacion(idDoctor, id);
-      load();
+      await load();
+      await refreshDoctorNavBadges();
     } catch {
       setActingId(null);
     } finally {

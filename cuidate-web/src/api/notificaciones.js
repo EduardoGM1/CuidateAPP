@@ -1,6 +1,7 @@
 import client from './client';
 import { API_PATHS } from '../utils/constants';
 import { parsePositiveInt } from '../utils/params';
+import { parseNoLeidasCount } from '../utils/notificacionesDoctorCounts';
 
 const BASE = API_PATHS.DOCTORES;
 
@@ -31,18 +32,23 @@ export async function getNotificacionesDoctor(doctorId, params = {}) {
   const { data } = await client.get(url);
   const body = norm(data) ?? data;
   const list = body?.notificaciones ?? body?.rows ?? (Array.isArray(body) ? body : []);
-  return { notificaciones: Array.isArray(list) ? list : [], total: body?.total ?? body?.count ?? list.length, no_leidas: body?.no_leidas };
+  return {
+    notificaciones: Array.isArray(list) ? list : [],
+    total: body?.total ?? body?.count ?? list.length,
+    no_leidas: parseNoLeidasCount(body),
+  };
 }
 
 /**
- * Contador de notificaciones no leídas del doctor.
+ * Contador de notificaciones pendientes de leer (estado `enviada` / `no_leidas` del API).
+ * @returns {Promise<number>}
  */
 export async function getContadorNotificaciones(doctorId) {
   const id = parsePositiveInt(doctorId, 0);
   if (id === 0) throw new Error('ID de doctor inválido');
   const { data } = await client.get(`${BASE}/${id}/notificaciones/contador`);
   const body = norm(data);
-  return body?.contador ?? body?.total ?? 0;
+  return parseNoLeidasCount(body);
 }
 
 /**

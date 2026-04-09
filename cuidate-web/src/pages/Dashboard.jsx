@@ -18,6 +18,7 @@ import { Card, Button } from '../components/ui';
 import { LoadingSpinner } from '../components/ui';
 import { CHART_COLORS } from '../components/reportes/chartConfig';
 import { useOnboardingPageReady } from '../onboarding/useOnboardingPageReady';
+import { useDoctorNavBadgesRefresh } from '../contexts/DoctorNavBadgesContext';
 import {
   BarChart,
   Bar,
@@ -80,6 +81,7 @@ function ChartCitasUltimos7Dias({ data, title, height = 220 }) {
 }
 
 export default function Dashboard() {
+  const { refreshDoctorNavBadges } = useDoctorNavBadgesRefresh();
   const navigate = useNavigate();
   const getDisplayNameRaw = useAuthStore((s) => s.getDisplayName);
   const isAdminRaw = useAuthStore((s) => s.isAdmin);
@@ -142,11 +144,12 @@ export default function Dashboard() {
     setActingId(id);
     try {
       await marcarNotificacionLeida(idDoctor, id);
-      loadNotificaciones();
+      await loadNotificaciones();
+      await refreshDoctorNavBadges();
     } finally {
       setActingId(null);
     }
-  }, [idDoctor, loadNotificaciones]);
+  }, [idDoctor, loadNotificaciones, refreshDoctorNavBadges]);
 
   const openDetalleCita = useCallback((id) => {
     if (!id) return;

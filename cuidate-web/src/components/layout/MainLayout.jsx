@@ -8,6 +8,7 @@ import ButtonUI from '../ui/Button';
 import Logo from '../common/Logo';
 import OnboardingHost from '../../onboarding/OnboardingHost';
 import { useDoctorNavBadges } from '../../hooks/useDoctorNavBadges';
+import { DoctorNavBadgesProvider } from '../../contexts/DoctorNavBadgesContext';
 
 function IconDashboard() {
   return (
@@ -166,7 +167,7 @@ export default function MainLayout() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const getDisplayName = useAuthStore((s) => s.getDisplayName);
   const logout = useAuthStore((s) => s.logout);
-  const { notifCount, chatCount } = useDoctorNavBadges();
+  const { notifCount, chatCount, refresh: refreshDoctorNavBadges } = useDoctorNavBadges();
 
   // Conexión WebSocket para tiempo real (chat, notificaciones, citas, pacientes, etc.)
   useEffect(() => {
@@ -204,7 +205,7 @@ export default function MainLayout() {
               justifyContent: 'center',
               fontWeight: 700,
             }}
-            aria-label={`${notifCount} notificaciones nuevas`}
+            aria-label={`${notifCount} notificaciones no leídas`}
           >
             {notifCount > 99 ? '99+' : notifCount}
           </span>
@@ -381,7 +382,9 @@ export default function MainLayout() {
             boxSizing: 'border-box',
           }}
         >
-          <Outlet />
+          <DoctorNavBadgesProvider refresh={refreshDoctorNavBadges}>
+            <Outlet />
+          </DoctorNavBadgesProvider>
         </Layout.Content>
       </Layout>
     </Layout>
