@@ -2,25 +2,9 @@
  * Tarjeta de estadística reutilizable (Dashboard y Reportes).
  * Usa las clases CSS .saas-stat-card del tema.
  */
-function StatCard({ icon: Icon, label, value, sublabel, onClick, ariaLabel }) {
-  const clickable = typeof onClick === 'function';
-  const handleKeyDown = (e) => {
-    if (!clickable) return;
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onClick();
-    }
-  };
-
+function StatCard({ icon: Icon, label, value, sublabel }) {
   return (
-    <div
-      className={`saas-stat-card${clickable ? ' is-clickable' : ''}`}
-      onClick={clickable ? onClick : undefined}
-      onKeyDown={handleKeyDown}
-      role={clickable ? 'button' : undefined}
-      tabIndex={clickable ? 0 : undefined}
-      aria-label={clickable ? ariaLabel || label : undefined}
-    >
+    <div className="saas-stat-card">
       <div className="saas-stat-icon" aria-hidden="true">
         {typeof Icon === 'function' ? <Icon /> : null}
       </div>

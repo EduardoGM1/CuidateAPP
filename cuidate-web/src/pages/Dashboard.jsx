@@ -237,34 +237,10 @@ export default function Dashboard() {
               </>
             ) : (
               <>
-                <StatCard
-                  icon={IconCalendar}
-                  label="Citas hoy"
-                  value={m.citasHoy}
-                  onClick={() => navigate('/citas')}
-                  ariaLabel="Ir a Citas"
-                />
-                <StatCard
-                  icon={IconUsers}
-                  label="Pacientes asignados"
-                  value={m.pacientesAsignados}
-                  onClick={() => navigate('/pacientes')}
-                  ariaLabel="Ir a Pacientes"
-                />
-                <StatCard
-                  icon={IconMessageCircle}
-                  label="Mensajes pendientes"
-                  value={m.mensajesPendientes}
-                  onClick={() => navigate('/chat')}
-                  ariaLabel="Ir a Chat"
-                />
-                <StatCard
-                  icon={IconCalendar}
-                  label="Próximas citas"
-                  value={m.proximasCitas}
-                  onClick={() => navigate('/citas')}
-                  ariaLabel="Ir a Citas próximas"
-                />
+                <StatCard icon={IconCalendar} label="Citas hoy" value={m.citasHoy} />
+                <StatCard icon={IconUsers} label="Pacientes asignados" value={m.pacientesAsignados} />
+                <StatCard icon={IconMessageCircle} label="Mensajes pendientes" value={m.mensajesPendientes} />
+                <StatCard icon={IconCalendar} label="Próximas citas" value={m.proximasCitas} />
                 {Array.isArray(summary.chartData?.citasUltimos7Dias) && summary.chartData.citasUltimos7Dias.length > 0 && (
                   <Card className="saas-chart-card" style={{ gridColumn: 'span 2', minHeight: 0 }}>
                     <h3 className="saas-chart-title">Mis citas últimos 7 días</h3>

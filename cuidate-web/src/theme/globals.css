@@ -1273,13 +1273,6 @@ select:focus-visible {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   border-color: rgba(45, 212, 191, 0.35);
 }
-.saas-stat-card.is-clickable {
-  cursor: pointer;
-}
-.saas-stat-card.is-clickable:focus-visible {
-  outline: 2px solid var(--color-primario);
-  outline-offset: 2px;
-}
 .saas-stat-card .saas-stat-icon {
   width: 48px;
   height: 48px;
