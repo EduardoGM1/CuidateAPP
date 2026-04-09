@@ -7,6 +7,7 @@ import { STORAGE_KEYS } from '../../utils/constants';
 import ButtonUI from '../ui/Button';
 import Logo from '../common/Logo';
 import OnboardingHost from '../../onboarding/OnboardingHost';
+import { useDoctorNavBadges } from '../../hooks/useDoctorNavBadges';
 
 function IconDashboard() {
   return (
@@ -165,6 +166,7 @@ export default function MainLayout() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const getDisplayName = useAuthStore((s) => s.getDisplayName);
   const logout = useAuthStore((s) => s.logout);
+  const { notifCount, chatCount } = useDoctorNavBadges();
 
   // Conexión WebSocket para tiempo real (chat, notificaciones, citas, pacientes, etc.)
   useEffect(() => {
@@ -184,7 +186,51 @@ export default function MainLayout() {
 
   const menuItems = navLinks.map(({ path, label, icon: Icon }) => ({
     key: path,
-    label,
+    label: (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+        <span>{label}</span>
+        {path === '/notificaciones' && notifCount > 0 ? (
+          <span
+            style={{
+              display: 'inline-flex',
+              minWidth: 18,
+              height: 18,
+              padding: '0 5px',
+              borderRadius: 999,
+              background: 'var(--color-error, #d93025)',
+              color: '#fff',
+              fontSize: '0.72rem',
+              lineHeight: '18px',
+              justifyContent: 'center',
+              fontWeight: 700,
+            }}
+            aria-label={`${notifCount} notificaciones nuevas`}
+          >
+            {notifCount > 99 ? '99+' : notifCount}
+          </span>
+        ) : null}
+        {path === '/chat' && chatCount > 0 ? (
+          <span
+            style={{
+              display: 'inline-flex',
+              minWidth: 18,
+              height: 18,
+              padding: '0 5px',
+              borderRadius: 999,
+              background: 'var(--color-error, #d93025)',
+              color: '#fff',
+              fontSize: '0.72rem',
+              lineHeight: '18px',
+              justifyContent: 'center',
+              fontWeight: 700,
+            }}
+            aria-label={`${chatCount} mensajes nuevos`}
+          >
+            {chatCount > 99 ? '99+' : chatCount}
+          </span>
+        ) : null}
+      </span>
+    ),
     icon: typeof Icon === 'function' ? <Icon /> : null,
     onClick: () => {
       navigate(path);
