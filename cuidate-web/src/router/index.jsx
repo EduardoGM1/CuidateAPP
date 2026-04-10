@@ -9,7 +9,6 @@ import ConfirmarCuenta from '../pages/ConfirmarCuenta';
 import Dashboard from '../pages/Dashboard';
 import PacientesList from '../pages/pacientes/PacientesList';
 import PacienteDetail from '../pages/pacientes/PacienteDetail';
-import PacienteEvolucion from '../pages/pacientes/PacienteEvolucion';
 import AgregarPaciente from '../pages/pacientes/AgregarPaciente';
 import EditarPaciente from '../pages/pacientes/EditarPaciente';
 import AgendarCita from '../pages/pacientes/AgendarCita';
@@ -49,7 +48,6 @@ const router = createBrowserRouter([
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'pacientes', element: <PacientesList /> },
       { path: 'pacientes/nuevo', element: <AgregarPaciente /> },
-      { path: 'pacientes/:id/evolucion', element: <PacienteEvolucion /> },
       { path: 'pacientes/:id', element: <PacienteDetail /> },
       { path: 'pacientes/:id/editar', element: <EditarPaciente /> },
       { path: 'pacientes/:id/agendar-cita', element: <AgendarCita /> },

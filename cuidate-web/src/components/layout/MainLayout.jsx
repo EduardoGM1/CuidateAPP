@@ -117,7 +117,6 @@ function getPageTitle(pathname) {
       return title;
     }
   }
-  if (pathname.match(/^\/pacientes\/[^/]+\/evolucion$/)) return 'Evolución del paciente';
   if (pathname.startsWith('/pacientes/')) return 'Detalle de paciente';
   if (pathname.startsWith('/citas/')) return 'Detalle de cita';
   if (pathname.startsWith('/doctores/')) return pathname.includes('/editar') ? 'Editar doctor' : pathname.endsWith('/nuevo') ? 'Nuevo doctor' : 'Detalle de doctor';

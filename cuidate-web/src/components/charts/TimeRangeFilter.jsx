@@ -95,8 +95,6 @@ export default function TimeRangeFilter({ value, onChange }) {
             <button
               key={opt.key}
               type="button"
-              aria-pressed={active}
-              aria-label={`Período ${opt.label}`}
               onClick={() => onChange(opt.key)}
               style={{
                 padding: 'var(--space-1) var(--space-3)',

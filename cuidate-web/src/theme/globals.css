@@ -1004,16 +1004,6 @@ select:focus-visible {
 }
 /* Imprimir: expediente con texto negro para papel */
 @media print {
-  .no-print { display: none !important; }
-  #print-evolucion-zone {
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    color: #000 !important;
-    background: #fff !important;
-  }
-  #print-evolucion-zone .recharts-wrapper,
-  #print-evolucion-zone svg { break-inside: avoid; page-break-inside: avoid; }
   .detalle-signo-no-print { display: none !important; }
   .detalle-signo-expediente {
     width: 90% !important;
