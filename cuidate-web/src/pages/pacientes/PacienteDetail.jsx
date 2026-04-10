@@ -51,6 +51,7 @@ import {
   createPacientePlanMedicacion as apiCreatePlanMedicacion,
   updatePacientePlanMedicacion as apiUpdatePlanMedicacion,
   deletePacientePlanMedicacion as apiDeletePlanMedicacion,
+  createDeteccionComplicacion as apiCreateDeteccionComplicacion,
   updateDeteccionComplicacion as apiUpdateDeteccionComplicacion,
   deleteDeteccionComplicacion as apiDeleteDeteccionComplicacion,
 } from '../../api/pacienteMedicalData';
@@ -291,7 +292,13 @@ export default function PacienteDetail() {
   const [comorbilidadModalOpen, setComorbilidadModalOpen] = useState(false);
   const [editingComorbilidad, setEditingComorbilidad] = useState(null);
   const [editingDeteccion, setEditingDeteccion] = useState(null);
-  const [deteccionEditForm, setDeteccionEditForm] = useState({ fecha_deteccion: '', fecha_diagnostico: '', observaciones: '' });
+  const [deteccionCreating, setDeteccionCreating] = useState(false);
+  const [deteccionEditForm, setDeteccionEditForm] = useState({
+    tipo_complicacion: '',
+    fecha_deteccion: '',
+    fecha_diagnostico: '',
+    observaciones: '',
+  });
   const [saludModalOpen, setSaludModalOpen] = useState(false);
   const [editingSalud, setEditingSalud] = useState(null);
   const [tbModalOpen, setTbModalOpen] = useState(false);
@@ -2272,9 +2279,35 @@ export default function PacienteDetail() {
         );
       case 'detecciones': {
         const deteccionIdForApi = (d) => d.id_deteccion ?? d.id;
+        const openNuevaDeteccion = () => {
+          setDeteccionCreating(true);
+          setEditingDeteccion(null);
+          setDeteccionEditForm({
+            tipo_complicacion: '',
+            fecha_deteccion: new Date().toISOString().slice(0, 10),
+            fecha_diagnostico: '',
+            observaciones: '',
+          });
+        };
         return (
           <Card className="patient-section-card">
-            <h2 className="patient-section-title">Detecciones de complicaciones</h2>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+                marginBottom: '1rem',
+              }}
+            >
+              <h2 className="patient-section-title" style={{ margin: 0 }}>Detecciones de complicaciones</h2>
+              {canEditMedical && (
+                <Button type="button" variant="primary" onClick={openNuevaDeteccion}>
+                  Nueva complicación
+                </Button>
+              )}
+            </div>
             {deteccionesComplicacionesLoading ? (
               <LoadingSpinner />
             ) : (deteccionesComplicaciones.data?.length ?? 0) === 0 ? (
@@ -2298,8 +2331,10 @@ export default function PacienteDetail() {
                           size="small"
                           variant="primary"
                           onClick={() => {
+                            setDeteccionCreating(false);
                             setEditingDeteccion(d);
                             setDeteccionEditForm({
+                              tipo_complicacion: d.tipo_complicacion ?? '',
                               fecha_deteccion: d.fecha_deteccion ? String(d.fecha_deteccion).slice(0, 10) : '',
                               fecha_diagnostico: d.fecha_diagnostico ? String(d.fecha_diagnostico).slice(0, 10) : '',
                               observaciones: d.observaciones ?? '',
@@ -2335,28 +2370,55 @@ export default function PacienteDetail() {
             {deteccionesComplicaciones.total > (deteccionesComplicaciones.data?.length ?? 0) && (
               <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>Total: {deteccionesComplicaciones.total}</p>
             )}
-            {canEditMedical && editingDeteccion && (
+            {canEditMedical && (editingDeteccion || deteccionCreating) && (
               <Modal
-                open={!!editingDeteccion}
-                onClose={() => { setEditingDeteccion(null); }}
-                title="Editar detección"
-                okText="Guardar cambios"
+                open={!!(editingDeteccion || deteccionCreating)}
+                onClose={() => {
+                  setEditingDeteccion(null);
+                  setDeteccionCreating(false);
+                }}
+                title={deteccionCreating ? 'Nueva complicación' : 'Editar detección'}
+                okText={deteccionCreating ? 'Registrar' : 'Guardar cambios'}
                 onOk={async () => {
                   try {
-                    await apiUpdateDeteccionComplicacion(parsedId, deteccionIdForApi(editingDeteccion), {
-                      fecha_deteccion: deteccionEditForm.fecha_deteccion || undefined,
-                      fecha_diagnostico: deteccionEditForm.fecha_diagnostico || undefined,
-                      observaciones: deteccionEditForm.observaciones?.trim() || undefined,
-                    });
-                    message.success('Detección actualizada');
-                    setEditingDeteccion(null);
+                    if (deteccionCreating) {
+                      const tipo = deteccionEditForm.tipo_complicacion?.trim();
+                      if (!tipo) {
+                        message.warning('Indica el tipo o descripción de la complicación');
+                        throw new Error('VALIDATION');
+                      }
+                      await apiCreateDeteccionComplicacion(parsedId, {
+                        tipo_complicacion: tipo,
+                        fecha_deteccion: deteccionEditForm.fecha_deteccion || undefined,
+                        fecha_diagnostico: deteccionEditForm.fecha_diagnostico || undefined,
+                        observaciones: deteccionEditForm.observaciones?.trim() || undefined,
+                      });
+                      message.success('Complicación registrada');
+                      setDeteccionCreating(false);
+                    } else {
+                      await apiUpdateDeteccionComplicacion(parsedId, deteccionIdForApi(editingDeteccion), {
+                        tipo_complicacion: deteccionEditForm.tipo_complicacion?.trim() || undefined,
+                        fecha_deteccion: deteccionEditForm.fecha_deteccion || undefined,
+                        fecha_diagnostico: deteccionEditForm.fecha_diagnostico || undefined,
+                        observaciones: deteccionEditForm.observaciones?.trim() || undefined,
+                      });
+                      message.success('Detección actualizada');
+                      setEditingDeteccion(null);
+                    }
                     loadDeteccionesComplicaciones();
                   } catch (e) {
-                    message.error(e?.response?.data?.error || e?.message || 'Error al actualizar');
+                    if (e?.message === 'VALIDATION') return;
+                    message.error(e?.response?.data?.error || e?.message || 'Error al guardar');
                   }
                 }}
               >
                 <div style={{ display: 'grid', gap: '0.75rem' }}>
+                  <Input
+                    label="Tipo o descripción de la complicación"
+                    value={deteccionEditForm.tipo_complicacion}
+                    onChange={(e) => setDeteccionEditForm((f) => ({ ...f, tipo_complicacion: e.target.value }))}
+                    placeholder="Ej. Neuropatía periférica leve"
+                  />
                   <Input
                     label="Fecha detección"
                     type="date"

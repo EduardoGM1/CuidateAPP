@@ -249,6 +249,19 @@ export async function deletePacienteComorbilidad(pacienteId, comorbilidadId) {
 }
 
 /**
+ * Crear detección de complicación.
+ * POST /api/pacientes/:id/detecciones-complicaciones
+ * @param {number|string} pacienteId
+ * @param {{ tipo_complicacion?: string, fecha_deteccion?: string, fecha_diagnostico?: string, observaciones?: string, id_comorbilidad?: number|string, id_cita?: number|string, id_doctor?: number|string }} body
+ */
+export async function createDeteccionComplicacion(pacienteId, body) {
+  const pid = parsePositiveInt(pacienteId, 0);
+  if (pid === 0) throw new Error('ID de paciente inválido');
+  const { data } = await client.post(`${BASE}/${pid}/detecciones-complicaciones`, body ?? {});
+  return data?.data ?? data;
+}
+
+/**
  * Actualizar detecci?n de complicaci?n. PUT /api/pacientes/:id/detecciones-complicaciones/:id
  */
 export async function updateDeteccionComplicacion(pacienteId, deteccionId, body) {
