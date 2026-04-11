@@ -450,6 +450,30 @@ class EmailService {
   /**
    * Envío genérico (Resend o SMTP); no lanza si falla (para notificaciones no críticas).
    */
+  /**
+   * Nuevo ticket de soporte (doctor → admins). Envío por email a cada administrador.
+   */
+  async sendTicketNuevoAdmins(adminEmails, datos = {}) {
+    const { id_ticket, asunto, doctorEmail } = datos;
+    const subject = `[Soporte #${id_ticket}] ${asunto || 'Nuevo ticket'}`;
+    const text = `Un doctor ha abierto un ticket de soporte.\n\nDoctor: ${doctorEmail || '—'}\nAsunto: ${asunto}\nID ticket: ${id_ticket}\n\nRevisa la bandeja en la web: Administración → Tickets de soporte.`;
+    const list = Array.isArray(adminEmails) ? adminEmails : [];
+    for (const to of list) {
+      await this._sendGeneric(subject, text, to, 'ticket_nuevo_admin', datos);
+    }
+    return { sent: list.length };
+  }
+
+  /**
+   * Respuesta de un administrador en el hilo del ticket (notifica al doctor creador).
+   */
+  async sendTicketRespuestaDoctor(to, datos = {}) {
+    const { id_ticket, asunto, preview } = datos;
+    const subject = `[Soporte #${id_ticket}] Respuesta del equipo`;
+    const text = `Hay una nueva respuesta en tu ticket "${asunto || ''}".\n\n${preview || ''}\n\nConsulta el hilo completo en la web: Soporte → Mis tickets.`;
+    return this._sendGeneric(subject, text, to, 'ticket_respuesta_doctor', datos);
+  }
+
   async _sendGeneric(subject, text, to, tipo, datos = {}) {
     if (!to || typeof to !== 'string' || !to.includes('@')) {
       logger.warn(`[EMAIL] _sendGeneric: destino inválido (${tipo})`, { to: to ? '***' : null });

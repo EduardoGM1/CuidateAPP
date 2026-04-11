@@ -29,6 +29,9 @@ import DeteccionTuberculosis from './DeteccionTuberculosis.js';
 // import PacienteAuth, { PacienteAuthPIN, PacienteAuthBiometric } from './PacienteAuth.js';
 import AuthCredential from './AuthCredential.js';
 import PasswordResetToken from './PasswordResetToken.js';
+import DataAccessLog from './DataAccessLog.js';
+import SoporteTicket from './SoporteTicket.js';
+import SoporteTicketMensaje from './SoporteTicketMensaje.js';
 
 // Usuario - Paciente (1:1)
 Usuario.hasOne(Paciente, { foreignKey: 'id_usuario' });
@@ -162,6 +165,16 @@ SistemaAuditoria.belongsTo(Usuario, { foreignKey: 'id_usuario' });
 Usuario.hasMany(PasswordResetToken, { foreignKey: 'id_usuario' });
 PasswordResetToken.belongsTo(Usuario, { foreignKey: 'id_usuario' });
 
+Usuario.hasMany(DataAccessLog, { foreignKey: 'id_usuario' });
+DataAccessLog.belongsTo(Usuario, { foreignKey: 'id_usuario' });
+
+// Tickets de soporte (Doctor → Admin)
+Usuario.hasMany(SoporteTicket, { foreignKey: 'id_usuario_creador', as: 'TicketsCreados' });
+SoporteTicket.belongsTo(Usuario, { foreignKey: 'id_usuario_creador', as: 'Creador' });
+SoporteTicket.hasMany(SoporteTicketMensaje, { foreignKey: 'id_ticket', as: 'Mensajes' });
+SoporteTicketMensaje.belongsTo(SoporteTicket, { foreignKey: 'id_ticket', as: 'Ticket' });
+SoporteTicketMensaje.belongsTo(Usuario, { foreignKey: 'id_usuario_autor', as: 'Autor' });
+
 // Doctor - NotificacionDoctor (1:N)
 Doctor.hasMany(NotificacionDoctor, { foreignKey: 'id_doctor' });
 NotificacionDoctor.belongsTo(Doctor, { foreignKey: 'id_doctor' });
@@ -279,5 +292,8 @@ export {
   Vacuna,
   InstitucionSalud,
   AuthCredential,
-  PasswordResetToken
+  PasswordResetToken,
+  DataAccessLog,
+  SoporteTicket,
+  SoporteTicketMensaje
 };

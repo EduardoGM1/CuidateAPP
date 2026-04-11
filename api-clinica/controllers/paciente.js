@@ -9,6 +9,7 @@ import { buildPaginationOptions } from '../utils/queryHelpers.js';
 import { PAGINATION } from '../config/constants.js';
 import { normalizePaciente } from '../utils/pacienteMapper.js';
 import { sendSuccess, sendServerError } from '../utils/responseHelpers.js';
+import { logDataAccess } from '../services/dataAccessLogService.js';
 
 /**
  * Parsea el parámetro de filtro comorbilidad: acepta id (numérico) o 'todas'/vacío.
@@ -448,7 +449,20 @@ export const getPacienteById = async (req, res) => {
       pacienteId: pacienteNormalizado.id_paciente,
       comorbilidadesCount: pacienteNormalizado.comorbilidades?.length || 0
     });
-    
+
+    const rolAcceso = String(req.user?.rol || '').toLowerCase();
+    if (rolAcceso === 'doctor' || rolAcceso === 'admin') {
+      void logDataAccess({
+        id_usuario: req.user.id_usuario,
+        rol: req.user.rol,
+        accion: 'READ_PACIENTE_FICHA',
+        recurso_tipo: 'paciente',
+        id_recurso: pacienteNormalizado.id_paciente,
+        ip_address: req.ip,
+        user_agent: req.get('user-agent'),
+      });
+    }
+
     res.json(pacienteNormalizado);
   } catch (error) {
     res.status(500).json({ error: error.message });

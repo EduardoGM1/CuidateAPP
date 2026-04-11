@@ -328,6 +328,19 @@ const newPayload = {
     }
   }
 
+  /** Revoca todas las sesiones (refresh) de un usuario sin filtrar por user_type (admin). */
+  static async revokeAllRefreshTokensForUserId(userId) {
+    const uid = parseInt(userId, 10);
+    if (!uid || Number.isNaN(uid)) return;
+    const query = `
+      UPDATE refresh_tokens
+      SET revoked = TRUE, revoked_at = NOW()
+      WHERE user_id = ? AND revoked = FALSE
+    `;
+    await sequelize.query(query, { replacements: [uid] });
+    logger.info('Refresh tokens revocados (todas las variantes user_type)', { userId: uid });
+  }
+
   /**
    * Limpia tokens expirados de la base de datos
    */

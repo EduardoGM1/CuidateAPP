@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuditoria, getAuditoriaUsuarios } from '../../api/auditoria';
+import { getAuditoria, getAuditoriaUsuarios, exportAuditoriaServerCsv } from '../../api/auditoria';
 import { Table, Button, Input } from '../../components/ui';
-import { downloadAsFile } from '../../utils/reportUtils';
+import { downloadAsFile, downloadBlob } from '../../utils/reportUtils';
 import { PageHeader, SearchFilterBar } from '../../components/shared';
 import { sanitizeForDisplay, displayText } from '../../utils/sanitize';
 import { formatDateTime } from '../../utils/format';
@@ -38,6 +38,7 @@ export default function AuditoriaList() {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [exportingServer, setExportingServer] = useState(false);
   const [params, setParams] = useState({
     page: 1,
     limit: PAGE_SIZE_DEFAULT,
@@ -141,6 +142,26 @@ export default function AuditoriaList() {
     if (id) navigate(`/admin/auditoria/${id}`);
   };
 
+  const exportarCsvServidor = async () => {
+    setExportingServer(true);
+    try {
+      const blob = await exportAuditoriaServerCsv({
+        tipo_accion: params.tipo_accion || undefined,
+        fecha_desde: params.fecha_desde,
+        fecha_hasta: params.fecha_hasta,
+        id_usuario: params.id_usuario,
+        search: params.search,
+        severidad: params.severidad,
+        ip_address: params.ip_address || undefined,
+      });
+      downloadBlob(blob, `auditoria-servidor-${new Date().toISOString().slice(0, 10)}.csv`);
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || 'Error al exportar desde servidor');
+    } finally {
+      setExportingServer(false);
+    }
+  };
+
   const exportarCSV = () => {
     const headers = ['Fecha', 'Tipo', 'Entidad', 'Usuario', 'Descripción', 'Severidad', 'IP'];
     const escape = (v) => {
@@ -170,7 +191,14 @@ export default function AuditoriaList() {
       <div data-tour="section-auditoria-export">
       <PageHeader
         title="Auditoría"
-        action={list.length > 0 ? <Button variant="outline" onClick={exportarCSV}>Exportar CSV</Button> : undefined}
+        action={
+          <span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <Button variant="outline" onClick={exportarCSV} disabled={!list.length}>Exportar vista (CSV)</Button>
+            <Button variant="primary" onClick={exportarCsvServidor} disabled={exportingServer}>
+              {exportingServer ? 'Generando…' : 'CSV completo (servidor)'}
+            </Button>
+          </span>
+        }
       />
       </div>
       <div data-tour="section-auditoria-filters">

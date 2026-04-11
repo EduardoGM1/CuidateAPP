@@ -49,3 +49,17 @@ export function toDateString(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
   return s;
 }
+
+/** Descarga un Blob (p. ej. respuesta axios responseType blob). */
+export function downloadBlob(blob, filename) {
+  if (typeof window === 'undefined' || !blob) return;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}

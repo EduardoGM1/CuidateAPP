@@ -90,6 +90,9 @@ const iconByPath = {
   '/admin/auditoria': IconShield,
   '/admin/catalogos': IconFileText,
   '/admin/usuarios': IconUsers,
+  '/admin/operaciones': IconFileText,
+  '/admin/tickets': IconClipboard,
+  '/soporte/tickets': IconClipboard,
 };
 
 const PATH_TITLES = {
@@ -106,6 +109,9 @@ const PATH_TITLES = {
   '/admin/auditoria': 'Auditoría',
   '/admin/catalogos': 'Catálogos',
   '/admin/usuarios': 'Usuarios',
+  '/admin/operaciones': 'Operaciones',
+  '/admin/tickets': 'Tickets soporte',
+  '/soporte/tickets': 'Soporte',
 };
 
 function getPageTitle(pathname) {
@@ -121,6 +127,9 @@ function getPageTitle(pathname) {
   if (pathname.startsWith('/citas/')) return 'Detalle de cita';
   if (pathname.startsWith('/doctores/')) return pathname.includes('/editar') ? 'Editar doctor' : pathname.endsWith('/nuevo') ? 'Nuevo doctor' : 'Detalle de doctor';
   if (pathname.startsWith('/admin/auditoria/')) return 'Detalle de auditoría';
+  if (pathname.startsWith('/admin/tickets/')) return 'Detalle de ticket';
+  if (pathname.startsWith('/soporte/tickets/nuevo')) return 'Nuevo ticket';
+  if (pathname.startsWith('/soporte/tickets/')) return 'Detalle de ticket';
   if (pathname.startsWith('/chat/')) return 'Conversación';
   return 'Cuidate';
 }
@@ -138,11 +147,14 @@ const navLinkReportes = { path: '/reportes', label: 'Reportes', icon: iconByPath
 const navLinksDoctor = [
   { path: '/notificaciones', label: 'Notificaciones', icon: iconByPath['/notificaciones'] },
   { path: '/solicitudes-reprogramacion', label: 'Reprogramaciones', icon: iconByPath['/solicitudes-reprogramacion'] },
+  { path: '/soporte/tickets', label: 'Soporte', icon: iconByPath['/soporte/tickets'] },
   { path: '/chat', label: 'Chat', icon: iconByPath['/chat'] },
 ];
 
 const navLinksAdmin = [
   { path: '/admin/auditoria', label: 'Auditoría', icon: iconByPath['/admin/auditoria'] },
+  { path: '/admin/operaciones', label: 'Operaciones', icon: iconByPath['/admin/operaciones'] },
+  { path: '/admin/tickets', label: 'Tickets', icon: iconByPath['/admin/tickets'] },
   { path: '/admin/catalogos', label: 'Catálogos', icon: iconByPath['/admin/catalogos'] },
   { path: '/admin/usuarios', label: 'Usuarios', icon: iconByPath['/admin/usuarios'] },
 ];

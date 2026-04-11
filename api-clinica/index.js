@@ -66,6 +66,8 @@ import institucionSaludRoutes from "./routes/institucionSalud.js"; // ✅ Catál
 import pacienteMedicalDataRoutes from "./routes/pacienteMedicalData.js"; // ✅ Datos médicos de pacientes
 import vacunaRoutes from "./routes/vacuna.js"; // ✅ Rutas de vacunas (catálogo)
 import auditoriaRoutes from "./routes/auditoriaRoutes.js"; // ✅ Rutas de auditoría (admin)
+import adminOperationsRoutes from "./routes/adminOperationsRoutes.js";
+import ticketRoutes from "./routes/ticketRoutes.js";
 import notificacionRoutes from "./routes/notificacionRoutes.js"; // ✅ Rutas de notificaciones (doctores)
 import reportRoutes from "./routes/reportRoutes.js"; // ✅ Rutas de reportes (PDF/CSV)
 import medicamentoTomaRoutes from "./routes/medicamentoToma.js"; // ✅ Rutas de toma de medicamentos
@@ -277,6 +279,8 @@ app.use("/api/instituciones-salud", institucionSaludRoutes); // ✅ Catálogo in
 app.use("/api/pacientes", pacienteMedicalDataRoutes); // ✅ Datos médicos de pacientes
 app.use("/api/vacunas", vacunaRoutes); // ✅ Rutas de vacunas (catálogo)
 app.use("/api/admin/auditoria", auditoriaRoutes); // ✅ Auditoría del sistema (admin)
+app.use("/api/admin/operations", adminOperationsRoutes); // Exportaciones, logs sensibles, sistema, sesiones
+app.use("/api/tickets", ticketRoutes); // Soporte doctor → admin
 app.use("/api/doctores", notificacionRoutes); // ✅ Notificaciones de doctores
 app.use("/api/reportes", reportRoutes); // ✅ Reportes PDF/CSV
 app.use("/api/medicamentos-toma", medicamentoTomaRoutes); // ✅ Toma de medicamentos

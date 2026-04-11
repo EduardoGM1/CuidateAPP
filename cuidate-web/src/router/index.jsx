@@ -23,7 +23,12 @@ import AuditoriaList from '../pages/auditoria/AuditoriaList';
 import AuditoriaDetail from '../pages/auditoria/AuditoriaDetail';
 import CatalogosPage from '../pages/admin/CatalogosPage';
 import UsuariosList from '../pages/admin/UsuariosList';
+import AdminOperacionesPage from '../pages/admin/AdminOperacionesPage';
+import AdminTicketsPage from '../pages/admin/AdminTicketsPage';
 import NotificacionesDoctor from '../pages/doctor/NotificacionesDoctor';
+import DoctorTicketsPage from '../pages/doctor/DoctorTicketsPage';
+import TicketNuevoPage from '../pages/soporte/TicketNuevoPage';
+import TicketDetailPage from '../pages/soporte/TicketDetailPage';
 import SolicitudesReprogramacion from '../pages/doctor/SolicitudesReprogramacion';
 import ChatList from '../pages/doctor/ChatList';
 import ChatConversacion from '../pages/doctor/ChatConversacion';
@@ -62,6 +67,12 @@ const router = createBrowserRouter([
       { path: 'admin/auditoria/:id', element: <AdminRoute><AuditoriaDetail /></AdminRoute> },
       { path: 'admin/catalogos', element: <AdminRoute><CatalogosPage /></AdminRoute> },
       { path: 'admin/usuarios', element: <AdminRoute><UsuariosList /></AdminRoute> },
+      { path: 'admin/operaciones', element: <AdminRoute><AdminOperacionesPage /></AdminRoute> },
+      { path: 'admin/tickets', element: <AdminRoute><AdminTicketsPage /></AdminRoute> },
+      { path: 'admin/tickets/:id', element: <AdminRoute><TicketDetailPage /></AdminRoute> },
+      { path: 'soporte/tickets/nuevo', element: <TicketNuevoPage /> },
+      { path: 'soporte/tickets/:id', element: <TicketDetailPage /> },
+      { path: 'soporte/tickets', element: <DoctorTicketsPage /> },
       { path: 'notificaciones', element: <NotificacionesDoctor /> },
       { path: 'solicitudes-reprogramacion', element: <SolicitudesReprogramacion /> },
       { path: 'chat', element: <ChatList /> },

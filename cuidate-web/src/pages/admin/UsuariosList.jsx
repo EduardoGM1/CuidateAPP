@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { getUsuarios, updateUsuario, deleteUsuario, createUsuario } from '../../api/auth';
+import { revokeUserSessions } from '../../api/adminOperations';
 import { createDoctor } from '../../api/doctores';
 import { getModulos } from '../../api/modulos';
 import { PageHeader } from '../../components/shared';
@@ -114,6 +115,19 @@ export default function UsuariosList() {
     }
   };
 
+  const handleRevokeSessions = async (row) => {
+    const id = row.id_usuario ?? row.id;
+    if (!id) return;
+    if (!window.confirm('¿Revocar todas las sesiones (refresh tokens) de este usuario? Deberá volver a iniciar sesión.')) return;
+    try {
+      await revokeUserSessions(id);
+      message.success('Sesiones revocadas');
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || 'Error';
+      message.error(msg);
+    }
+  };
+
   const handleDesactivar = async (row) => {
     const id = row.id_usuario ?? row.id;
     if (!id) return;
@@ -193,8 +207,11 @@ export default function UsuariosList() {
       key: '_actions',
       label: 'Acciones',
       render: (row) => (
-        <span style={{ display: 'flex', gap: '0.5rem' }}>
+        <span style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button type="button" onClick={() => handleEdit(row)} style={{ background: 'none', border: 'none', color: 'var(--color-primario)', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.9rem' }}>Editar</button>
+          {row.activo !== false && (
+            <button type="button" onClick={() => handleRevokeSessions(row)} style={{ background: 'none', border: 'none', color: 'var(--color-texto-secundario)', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.9rem' }}>Cerrar sesiones</button>
+          )}
           {row.activo !== false && (
             <button type="button" onClick={() => handleDesactivar(row)} style={{ background: 'none', border: 'none', color: 'var(--color-error)', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.9rem' }}>Desactivar</button>
           )}

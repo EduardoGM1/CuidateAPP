@@ -63,6 +63,19 @@ export async function getAuditoriaUsuarios() {
  * Estadísticas de auditoría (solo Admin).
  * @param {{ fecha_desde?: string, fecha_hasta?: string }} params
  */
+/**
+ * Exportación CSV desde servidor (mismos filtros que POST del backend).
+ * @param {object} filtros - tipo_accion, fecha_desde, fecha_hasta, id_usuario, search, severidad, ip_address
+ */
+export async function exportAuditoriaServerCsv(filtros = {}) {
+  const { data } = await client.post(
+    `${BASE}/exportar`,
+    { formato: 'csv', ...filtros },
+    { responseType: 'blob' }
+  );
+  return data;
+}
+
 export async function getEstadisticasAuditoria(params = {}) {
   const q = new URLSearchParams();
   const fecha_desde = toDateString(params.fecha_desde);
