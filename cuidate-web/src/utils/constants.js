@@ -27,7 +27,8 @@ export const API_PATHS = {
   AUTH_USUARIOS: '/api/auth/usuarios',
   ADMIN_AUDITORIA: '/api/admin/auditoria',
   ADMIN_OPERATIONS: '/api/admin/operations',
-  TICKETS: '/api/tickets',
+  /** Soporte doctor→admin (prefijo bajo /api/doctores para mismo proxy que el resto de rutas de doctor) */
+  TICKETS: '/api/doctores/soporte',
   MODULOS: '/api/modulos',
   INSTITUCIONES_SALUD: '/api/instituciones-salud',
   REPORTES: '/api/reportes',

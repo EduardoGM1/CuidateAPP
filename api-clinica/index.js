@@ -262,6 +262,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/paciente-auth", pacienteAuthRoutes); // Legacy - mantener para compatibilidad
 app.use("/api/auth-unified", unifiedAuthRoutes); // Nuevo sistema unificado
 app.use("/api/pacientes", pacienteRoutes);
+// Tickets (soporte doctor → admin): ANTES de /api/doctores para no chocar con GET /api/doctores/:id
+app.use("/api/doctores/soporte", ticketRoutes);
 app.use("/api/doctores", doctorRoutes);
 app.use("/api/comorbilidades", comorbillidadRoutes);
 app.use("/api/medicamentos", medicamentoRoutes);
@@ -280,7 +282,7 @@ app.use("/api/pacientes", pacienteMedicalDataRoutes); // ✅ Datos médicos de p
 app.use("/api/vacunas", vacunaRoutes); // ✅ Rutas de vacunas (catálogo)
 app.use("/api/admin/auditoria", auditoriaRoutes); // ✅ Auditoría del sistema (admin)
 app.use("/api/admin/operations", adminOperationsRoutes); // Exportaciones, logs sensibles, sistema, sesiones
-app.use("/api/tickets", ticketRoutes); // Soporte doctor → admin
+app.use("/api/tickets", ticketRoutes); // Alias; la web usa /api/doctores/soporte por compatibilidad con proxies
 app.use("/api/doctores", notificacionRoutes); // ✅ Notificaciones de doctores
 app.use("/api/reportes", reportRoutes); // ✅ Reportes PDF/CSV
 app.use("/api/medicamentos-toma", medicamentoTomaRoutes); // ✅ Toma de medicamentos
