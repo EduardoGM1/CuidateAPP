@@ -4,6 +4,7 @@ import { SoporteTicket, SoporteTicketMensaje, Usuario, Doctor } from '../models/
 import { sendSuccess, sendError, sendServerError, sendUnauthorized } from '../utils/responseHelpers.js';
 import logger from '../utils/logger.js';
 import emailService from '../services/emailService.js';
+import { cerrarTicketsResueltoVencidos } from '../services/ticketAutoCloseService.js';
 
 const CATEGORIAS = new Set(['tecnico', 'cita_paciente', 'acceso', 'otro']);
 const PRIORIDADES = new Set(['baja', 'media', 'alta']);
@@ -117,6 +118,7 @@ export async function createTicket(req, res) {
 export async function listMyTickets(req, res) {
   try {
     if (!isDoctor(req)) return sendUnauthorized(res, 'Solo doctores');
+    await cerrarTicketsResueltoVencidos();
     const rows = await SoporteTicket.findAll({
       where: { id_usuario_creador: req.user.id_usuario },
       order: [['updated_at', 'DESC']],
@@ -133,6 +135,7 @@ export async function listMyTickets(req, res) {
 export async function listAdminTickets(req, res) {
   try {
     if (!isAdmin(req)) return sendUnauthorized(res, 'Solo administradores');
+    await cerrarTicketsResueltoVencidos();
     const estado = req.query.estado ? String(req.query.estado).toLowerCase() : null;
     const where = {};
     if (estado && ESTADOS.has(estado)) where.estado = estado;
@@ -179,6 +182,8 @@ export async function getTicket(req, res) {
   try {
     const tid = parseInt(req.params.id, 10);
     if (!tid || Number.isNaN(tid)) return sendError(res, 'ID inválido', 400);
+
+    await cerrarTicketsResueltoVencidos();
 
     const ticket = await SoporteTicket.findByPk(tid, {
       include: [
@@ -293,6 +298,8 @@ export async function patchTicket(req, res) {
     const ticket = await SoporteTicket.findByPk(tid);
     if (!ticket) return sendError(res, 'Ticket no encontrado', 404);
 
+    await cerrarTicketsResueltoVencidos();
+
     const patch = {};
     if (req.body.estado != null) {
       const e = String(req.body.estado).toLowerCase();
@@ -303,6 +310,12 @@ export async function patchTicket(req, res) {
       if (PRIORIDADES.has(p)) patch.prioridad = p;
     }
     if (Object.keys(patch).length === 0) return sendError(res, 'Sin cambios válidos', 400);
+
+    if (patch.estado === 'resuelto') {
+      patch.resuelto_at = new Date();
+    } else if (patch.estado != null && patch.estado !== 'resuelto') {
+      patch.resuelto_at = null;
+    }
 
     await ticket.update(patch);
     return sendSuccess(res, { ticket: { id_ticket: ticket.id_ticket, ...patch } });

@@ -27,6 +27,8 @@ import { createSSLServer, forceHTTPS } from "./config/ssl.js";
 import { requestMonitoring, healthCheck as monitoringHealthCheck, memoryMonitoring } from "./middlewares/monitoring.js";
 // import { scheduleBackups } from "./scripts/backup-system.js"; // Archivo eliminado en limpieza
 import scheduledTasksService from "./services/scheduledTasksService.js";
+import { ensureTicketResueltoAtColumn } from "./utils/ensureTicketResueltoAt.js";
+import { cerrarTicketsResueltoVencidos } from "./services/ticketAutoCloseService.js";
 
 // Security middlewares
 import { generalRateLimit, suspiciousActivityDetector } from './middlewares/rateLimiting.js';
@@ -298,8 +300,14 @@ app.use(globalErrorHandler);
 let server;
 sequelize
   .sync({ force: false })
-  .then(() => {
+  .then(async () => {
     logger.info("Database synchronized successfully.");
+    try {
+      await ensureTicketResueltoAtColumn();
+      await cerrarTicketsResueltoVencidos();
+    } catch (e) {
+      logger.warn("[tickets] Arranque: columna resuelto_at o cierre automático", { error: e.message });
+    }
     // Iniciar servidor según entorno
     if (NODE_ENV === 'production') {
       // En producción, intentar HTTPS primero

@@ -14,6 +14,7 @@ import sequelize from '../config/db.js';
 import logger from '../utils/logger.js';
 import pushNotificationService from './pushNotificationService.js';
 import { Cita, Paciente, PlanMedicacion, PlanDetalle, Medicamento, Doctor } from '../models/associations.js';
+import { cerrarTicketsResueltoVencidos } from './ticketAutoCloseService.js';
 
 class ScheduledTasksService {
   constructor() {
@@ -94,6 +95,14 @@ class ScheduledTasksService {
       timezone: 'America/Mexico_City'
     });
 
+    // Tickets en "resuelto" → "cerrado" tras N días (por defecto 2), sin depender de que alguien abra el admin
+    const ticketsResueltoCierreTask = cron.schedule('0 * * * *', async () => {
+      await cerrarTicketsResueltoVencidos();
+    }, {
+      scheduled: false,
+      timezone: 'America/Mexico_City'
+    });
+
     // Iniciar todas las tareas
     medicationTask.start();
     appointment24hTask.start();
@@ -101,8 +110,9 @@ class ScheduledTasksService {
     appointment2hTask.start();
     appointment1hTask.start();
     appointment30minTask.start();
+    ticketsResueltoCierreTask.start();
 
-    this.tasks.push(medicationTask, appointment24hTask, appointment5hTask, appointment2hTask, appointment1hTask, appointment30minTask);
+    this.tasks.push(medicationTask, appointment24hTask, appointment5hTask, appointment2hTask, appointment1hTask, appointment30minTask, ticketsResueltoCierreTask);
     this.isRunning = true;
 
     logger.info('✅ Tareas programadas iniciadas correctamente');
@@ -112,6 +122,7 @@ class ScheduledTasksService {
     logger.info('   ⏰ Verificación de citas (2h): cada 10 minutos');
     logger.info('   ⏰ Verificación de citas (1h): cada 5 minutos');
     logger.info('   ⏰ Verificación de citas (30min): cada minuto');
+    logger.info('   🎫 Cierre automático tickets resueltos: cada hora');
   }
 
   /**

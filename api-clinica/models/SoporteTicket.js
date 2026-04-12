@@ -33,6 +33,12 @@ const SoporteTicket = sequelize.define(
       allowNull: false,
       defaultValue: 'abierto',
     },
+    /** Momento en que el admin marcó resuelto; tras N días pasa a cerrado (job + consultas admin). */
+    resuelto_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
   },
   {
     tableName: 'soporte_tickets',
