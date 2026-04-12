@@ -120,9 +120,12 @@ export default function TicketDetailPage() {
         <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
           Estado: {ticket.estado} · Prioridad: {ticket.prioridad} · Categoría: {ticket.categoria}
         </p>
-        {ticket.creador_email && (
+        {(ticket.creador_nombre || ticket.creador_email) && (
           <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
-            Doctor: {sanitizeForDisplay(ticket.creador_email)}
+            Doctor: {sanitizeForDisplay(ticket.creador_nombre || ticket.creador_email)}
+            {ticket.creador_nombre && ticket.creador_email ? (
+              <span style={{ marginLeft: 8, opacity: 0.85 }}>({sanitizeForDisplay(ticket.creador_email)})</span>
+            ) : null}
           </p>
         )}
       </Card>

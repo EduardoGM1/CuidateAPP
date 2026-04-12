@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import sequelize from '../config/db.js';
-import { SoporteTicket, SoporteTicketMensaje, Usuario } from '../models/associations.js';
+import { SoporteTicket, SoporteTicketMensaje, Usuario, Doctor } from '../models/associations.js';
 import { sendSuccess, sendError, sendServerError, sendUnauthorized } from '../utils/responseHelpers.js';
 import logger from '../utils/logger.js';
 import emailService from '../services/emailService.js';
@@ -15,6 +15,23 @@ function isDoctor(req) {
 
 function isAdmin(req) {
   return String(req.user?.rol || '').toLowerCase() === 'admin';
+}
+
+/** Apellido paterno + apellido materno + nombre (misma convención que la web). */
+function formatoDoctorApellidosNombre(doctor) {
+  if (!doctor) return '';
+  const ap = String(doctor.apellido_paterno ?? '').trim();
+  const am = String(doctor.apellido_materno ?? '').trim();
+  const n = String(doctor.nombre ?? '').trim();
+  const parts = [ap, am, n].filter(Boolean);
+  return parts.join(' ');
+}
+
+function creadorNombreLegible(creadorJson) {
+  const nom = formatoDoctorApellidosNombre(creadorJson?.Doctor);
+  if (nom) return nom;
+  const email = (creadorJson?.email || '').trim();
+  return email || null;
 }
 
 async function loadAdminEmails() {
@@ -119,6 +136,13 @@ export async function listAdminTickets(req, res) {
           model: Usuario,
           as: 'Creador',
           attributes: ['id_usuario', 'email', 'rol'],
+          include: [
+            {
+              model: Doctor,
+              required: false,
+              attributes: ['nombre', 'apellido_paterno', 'apellido_materno'],
+            },
+          ],
         },
       ],
     });
@@ -134,6 +158,7 @@ export async function listAdminTickets(req, res) {
           estado: j.estado,
           created_at: j.created_at,
           updated_at: j.updated_at,
+          creador_nombre: creadorNombreLegible(j.Creador),
           creador_email: j.Creador?.email,
         };
       }),
@@ -150,7 +175,20 @@ export async function getTicket(req, res) {
     if (!tid || Number.isNaN(tid)) return sendError(res, 'ID inválido', 400);
 
     const ticket = await SoporteTicket.findByPk(tid, {
-      include: [{ model: Usuario, as: 'Creador', attributes: ['id_usuario', 'email', 'rol'] }],
+      include: [
+        {
+          model: Usuario,
+          as: 'Creador',
+          attributes: ['id_usuario', 'email', 'rol'],
+          include: [
+            {
+              model: Doctor,
+              required: false,
+              attributes: ['nombre', 'apellido_paterno', 'apellido_materno'],
+            },
+          ],
+        },
+      ],
     });
     if (!ticket) return sendError(res, 'Ticket no encontrado', 404);
 
@@ -174,6 +212,7 @@ export async function getTicket(req, res) {
         estado: j.estado,
         created_at: j.created_at,
         updated_at: j.updated_at,
+        creador_nombre: creadorNombreLegible(j.Creador),
         creador_email: j.Creador?.email,
         mensajes: mensajes.map((m) => {
           const mj = m.toJSON();

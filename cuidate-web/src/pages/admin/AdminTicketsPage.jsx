@@ -33,7 +33,11 @@ export default function AdminTicketsPage() {
   const columns = [
     { key: 'id_ticket', label: 'ID', render: (r) => r.id_ticket },
     { key: 'asunto', label: 'Asunto', render: (r) => sanitizeForDisplay(r.asunto) },
-    { key: 'creador_email', label: 'Doctor', render: (r) => sanitizeForDisplay(r.creador_email) || '—' },
+    {
+      key: 'creador_nombre',
+      label: 'Doctor',
+      render: (r) => sanitizeForDisplay(r.creador_nombre || r.creador_email) || '—',
+    },
     { key: 'estado', label: 'Estado', render: (r) => sanitizeForDisplay(r.estado) },
     { key: 'prioridad', label: 'Prioridad', render: (r) => sanitizeForDisplay(r.prioridad) },
     { key: 'updated_at', label: 'Actualizado', render: (r) => formatDateTime(r.updated_at) },
