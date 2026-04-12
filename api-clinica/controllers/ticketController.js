@@ -27,11 +27,21 @@ function formatoDoctorApellidosNombre(doctor) {
   return parts.join(' ');
 }
 
-function creadorNombreLegible(creadorJson) {
-  const nom = formatoDoctorApellidosNombre(creadorJson?.Doctor);
-  if (nom) return nom;
-  const email = (creadorJson?.email || '').trim();
-  return email || null;
+/** Carga nombres formateados por id_usuario (evita fallos del include Usuario→Doctor en Sequelize). */
+async function nombresDoctorPorIdsUsuario(idsUsuario) {
+  const uniq = [...new Set((idsUsuario || []).filter(Boolean))];
+  if (!uniq.length) return new Map();
+  const doctors = await Doctor.findAll({
+    where: { id_usuario: { [Op.in]: uniq } },
+    attributes: ['id_usuario', 'nombre', 'apellido_paterno', 'apellido_materno'],
+  });
+  const map = new Map();
+  for (const d of doctors) {
+    const dj = d.toJSON();
+    const nom = formatoDoctorApellidosNombre(dj);
+    if (nom) map.set(dj.id_usuario, nom);
+  }
+  return map;
 }
 
 async function loadAdminEmails() {
@@ -136,20 +146,16 @@ export async function listAdminTickets(req, res) {
           model: Usuario,
           as: 'Creador',
           attributes: ['id_usuario', 'email', 'rol'],
-          include: [
-            {
-              model: Doctor,
-              required: false,
-              attributes: ['nombre', 'apellido_paterno', 'apellido_materno'],
-            },
-          ],
         },
       ],
     });
 
+    const nombresPorUsuario = await nombresDoctorPorIdsUsuario(rows.map((r) => r.id_usuario_creador));
+
     return sendSuccess(res, {
       tickets: rows.map((r) => {
         const j = r.toJSON();
+        const idU = j.id_usuario_creador;
         return {
           id_ticket: j.id_ticket,
           asunto: j.asunto,
@@ -158,7 +164,7 @@ export async function listAdminTickets(req, res) {
           estado: j.estado,
           created_at: j.created_at,
           updated_at: j.updated_at,
-          creador_nombre: creadorNombreLegible(j.Creador),
+          creador_nombre: nombresPorUsuario.get(idU) || null,
           creador_email: j.Creador?.email,
         };
       }),
@@ -180,13 +186,6 @@ export async function getTicket(req, res) {
           model: Usuario,
           as: 'Creador',
           attributes: ['id_usuario', 'email', 'rol'],
-          include: [
-            {
-              model: Doctor,
-              required: false,
-              attributes: ['nombre', 'apellido_paterno', 'apellido_materno'],
-            },
-          ],
         },
       ],
     });
@@ -203,6 +202,9 @@ export async function getTicket(req, res) {
     });
 
     const j = ticket.toJSON();
+    const nombresPorUsuario = await nombresDoctorPorIdsUsuario([j.id_usuario_creador]);
+    const creadorNombre = nombresPorUsuario.get(j.id_usuario_creador) || null;
+
     return sendSuccess(res, {
       ticket: {
         id_ticket: j.id_ticket,
@@ -212,7 +214,7 @@ export async function getTicket(req, res) {
         estado: j.estado,
         created_at: j.created_at,
         updated_at: j.updated_at,
-        creador_nombre: creadorNombreLegible(j.Creador),
+        creador_nombre: creadorNombre,
         creador_email: j.Creador?.email,
         mensajes: mensajes.map((m) => {
           const mj = m.toJSON();
