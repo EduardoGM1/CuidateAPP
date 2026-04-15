@@ -614,7 +614,7 @@ class ReportService {
   }
 
   /**
-   * Genera HTML del formato NOTAS MÉDICAS (Secretaría de Salud - mismo diseño que formato oficial).
+   * Genera HTML del documento de nota médica (encabezado simplificado; cuerpo tipo expediente).
    * GET /api/reportes/notas-medicas/:idPaciente/html
    * @param {number} pacienteId
    * @returns {Promise<string>}
@@ -692,17 +692,13 @@ class ReportService {
     const diagText = diagnosticos.map(d => decryptForReport(d.descripcion)).filter(Boolean).join('; ') || '—';
     const medRows = medicamentos.map(m => `<tr><td>${escapeHtml(m.nombre || '—')} ${m.dosis ? escapeHtml(m.dosis) : ''} ${m.frecuencia ? escapeHtml(m.frecuencia) : ''} ${m.via ? escapeHtml(m.via) : ''}</td></tr>`).join('') || '<tr><td>—</td></tr>';
 
-    const institucion = process.env.NOTAS_MEDICAS_INSTITUCION || 'SECRETARÍA DE SALUD MÓDULO IV';
-    const subsecretaria = process.env.NOTAS_MEDICAS_SUBSECRETARIA || 'SUBSECRETARÍA DE SERVICIOS DE SALUD';
-
     const html = `<!DOCTYPE html>
 <html lang="es">
-<head><meta charset="UTF-8"/><title>Notas Médicas - ${escapeHtml(nombreCompleto)}</title>
+<head><meta charset="UTF-8"/><title>Nota médica - ${escapeHtml(nombreCompleto)}</title>
 <style>
   body{font-family:Arial,sans-serif;font-size:11px;color:#000;padding:16px;max-width:900px;margin:0 auto;}
   .header{text-align:center;margin-bottom:12px;}
-  .header h1{font-size:14px;margin:0;}
-  .header h2{font-size:16px;margin:4px 0;}
+  .header h1{font-size:18px;margin:0;font-weight:bold;}
   table.notas{width:100%;border-collapse:collapse;margin:8px 0;}
   table.notas th, table.notas td{border:1px solid #000;padding:4px 6px;vertical-align:top;}
   table.notas th{background:#e8e8e8;font-weight:bold;}
@@ -713,9 +709,7 @@ class ReportService {
 </head>
 <body>
   <div class="header">
-    <h1>${escapeHtml(institucion)}</h1>
-    <h2>${escapeHtml(subsecretaria)}</h2>
-    <h2>NOTAS MÉDICAS</h2>
+    <h1>NOTA MÉDICA</h1>
   </div>
 
   <table class="notas">

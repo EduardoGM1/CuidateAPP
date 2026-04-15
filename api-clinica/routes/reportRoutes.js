@@ -24,7 +24,7 @@ router.get('/forma/:idPaciente/meses-disponibles', searchRateLimit, reportContro
 // Datos para FORMA (Registro Mensual GAM - SIC) - solo web, por paciente
 router.get('/forma/:idPaciente', searchRateLimit, reportController.getFormaData);
 
-// Notas Médicas (formato Secretaría de Salud) - HTML para imprimir/PDF
+// Nota médica - HTML para imprimir/PDF
 router.get('/notas-medicas/:idPaciente/html', searchRateLimit, reportController.getNotasMedicasHTML);
 
 // Expediente médico completo en HTML (NUEVO - para react-native-html-to-pdf)

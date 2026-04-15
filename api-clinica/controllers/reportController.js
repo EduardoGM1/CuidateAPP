@@ -210,7 +210,7 @@ export const getReporteEstadisticasHTML = async (req, res) => {
 };
 
 /**
- * Notas Médicas en HTML (formato Secretaría de Salud). Para imprimir/guardar como PDF.
+ * Nota médica en HTML. Para imprimir/guardar como PDF.
  * GET /api/reportes/notas-medicas/:idPaciente/html
  */
 export const getNotasMedicasHTML = async (req, res) => {

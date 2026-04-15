@@ -92,7 +92,7 @@ export async function getFormaData(params) {
 }
 
 /**
- * Obtiene el HTML de Notas Médicas (formato Secretaría de Salud) para un paciente.
+ * Obtiene el HTML de nota médica para un paciente (generado en la API).
  * Se abre en nueva ventana para imprimir o guardar como PDF.
  * @param {number|string} idPaciente
  * @returns {Promise<string>} HTML
