@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
+import { message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { pacienteCreateSchema } from '../../lib/validations/pacienteSchema';
 import { createPaciente } from '../../api/pacientes';
+import { adminResetPatientPin } from '../../api/auth';
 import { getDoctores } from '../../api/doctores';
 import { createPacienteRedApoyo } from '../../api/pacienteMedicalData';
 import { createCita } from '../../api/citas';
@@ -27,6 +29,9 @@ import {
 import { createEmptyRedApoyoItem } from '../../constants/redApoyo';
 import RedApoyoFormFields from '../../components/pacientes/RedApoyoFormFields';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
+
+/** Misma lista débil que valida la API al asignar PIN */
+const PIN_DEBILES = new Set(['0000', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '9999', '1234', '4321']);
 
 const OPCIONES_SEXO = [{ value: '', label: '—' }, { value: 'Hombre', label: 'Hombre' }, { value: 'Mujer', label: 'Mujer' }, { value: 'Otro', label: 'Otro' }];
 
@@ -72,6 +77,8 @@ export default function AgregarPaciente() {
   const [tratamientoNoFarmaco, setTratamientoNoFarmaco] = useState(false);
   const [tratamientoFarmaco, setTratamientoFarmaco] = useState(false);
   const [anioDiagnostico, setAnioDiagnostico] = useState('');
+  const [appPin, setAppPin] = useState('');
+  const [appPinConfirm, setAppPinConfirm] = useState('');
   const [catalogoComorbilidades, setCatalogoComorbilidades] = useState([]);
   const [comorbilidadIds, setComorbilidadIds] = useState(getInitialComorbilidadIds);
 
@@ -166,6 +173,23 @@ export default function AgregarPaciente() {
 
   async function onSubmit(data) {
     setSubmitError('');
+    const pinDigits = appPin.replace(/\D/g, '').slice(0, 4);
+    const pinDigitsConfirm = appPinConfirm.replace(/\D/g, '').slice(0, 4);
+    if (pinDigits.length > 0 || pinDigitsConfirm.length > 0) {
+      if (pinDigits.length !== 4 || pinDigitsConfirm.length !== 4) {
+        setSubmitError('Si indicas un PIN para la app, debe tener exactamente 4 dígitos en ambos campos.');
+        return;
+      }
+      if (pinDigits !== pinDigitsConfirm) {
+        setSubmitError('Los PIN no coinciden.');
+        return;
+      }
+      if (PIN_DEBILES.has(pinDigits)) {
+        setSubmitError('El PIN es demasiado débil. Elige una combinación más segura.');
+        return;
+      }
+    }
+
     try {
       const payload = {
         nombre: data.nombre.trim(),
@@ -245,6 +269,18 @@ export default function AgregarPaciente() {
             });
           } catch (e) {
             console.error('Error al registrar datos médicos iniciales', e);
+          }
+        }
+
+        if (pinDigits.length === 4) {
+          try {
+            await adminResetPatientPin({ id_paciente: id, newPin: pinDigits });
+          } catch (e) {
+            const errMsg =
+              e?.response?.data?.error || e?.response?.data?.message || e?.message || 'Error desconocido';
+            message.warning(
+              `Paciente creado, pero no se pudo asignar el PIN en la app. Puedes definirlo desde Editar paciente. (${errMsg})`
+            );
           }
         }
 
@@ -533,6 +569,35 @@ export default function AgregarPaciente() {
               type="number"
               value={anioDiagnostico}
               onChange={(e) => setAnioDiagnostico(e.target.value)}
+            />
+          </div>
+
+          <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--color-borde-claro)' }} />
+          <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: 'var(--color-primario)' }}>
+            PIN para la app móvil (opcional)
+          </h3>
+          <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
+            Si lo defines aquí, el paciente podrá iniciar sesión en la app con este PIN de cuatro dígitos. Comunícalo por un
+            canal seguro. Déjalo vacío si lo configurarás después desde Editar paciente.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: 280, marginBottom: '1rem' }}>
+            <Input
+              label="PIN (4 dígitos)"
+              type="password"
+              inputMode="numeric"
+              autoComplete="new-password"
+              maxLength={4}
+              value={appPin}
+              onChange={(e) => setAppPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            />
+            <Input
+              label="Confirmar PIN"
+              type="password"
+              inputMode="numeric"
+              autoComplete="new-password"
+              maxLength={4}
+              value={appPinConfirm}
+              onChange={(e) => setAppPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))}
             />
           </div>
 
