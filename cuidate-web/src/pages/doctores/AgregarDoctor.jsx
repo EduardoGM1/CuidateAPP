@@ -6,6 +6,7 @@ import { doctorCreateSchema } from '../../lib/validations/doctorSchema';
 import { createUsuario } from '../../api/auth';
 import { createDoctor } from '../../api/doctores';
 import { getModulos } from '../../api/modulos';
+import { getInstitucionesSalud } from '../../api/institucionesSalud';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, Input } from '../../components/ui';
 import { message } from 'antd';
@@ -16,6 +17,7 @@ export default function AgregarDoctor() {
   useOnboardingPageReady(true);
   const navigate = useNavigate();
   const [modulos, setModulos] = useState([]);
+  const [institucionesSalud, setInstitucionesSalud] = useState([]);
   const [submitError, setSubmitError] = useState('');
 
   const {
@@ -46,7 +48,15 @@ export default function AgregarDoctor() {
   const usePassword = watch('usePassword');
 
   useEffect(() => {
-    getModulos().then((data) => setModulos(Array.isArray(data) ? data : [])).catch(() => setModulos([]));
+    Promise.all([getModulos(), getInstitucionesSalud()])
+      .then(([mods, insts]) => {
+        setModulos(Array.isArray(mods) ? mods : []);
+        setInstitucionesSalud(Array.isArray(insts) ? insts : []);
+      })
+      .catch(() => {
+        setModulos([]);
+        setInstitucionesSalud([]);
+      });
   }, []);
 
   async function onSubmit(data) {
@@ -205,7 +215,41 @@ export default function AgregarDoctor() {
             name="institucion_hospitalaria"
             control={control}
             render={({ field }) => (
-              <Input label="Institución hospitalaria" placeholder="Ej. IMSS Bienestar" error={errors.institucion_hospitalaria?.message} {...field} />
+              <div style={{ marginBottom: '1rem' }}>
+                <label
+                  style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}
+                  htmlFor="agregar-doctor-institucion"
+                >
+                  Institución hospitalaria
+                </label>
+                <select
+                  id="agregar-doctor-institucion"
+                  {...field}
+                  value={field.value ?? ''}
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 0.75rem',
+                    border: errors.institucion_hospitalaria ? '1px solid var(--color-error)' : '1px solid var(--color-borde-claro)',
+                    borderRadius: 'var(--radius)',
+                    backgroundColor: 'var(--color-fondo-card)',
+                  }}
+                >
+                  <option value="">— Seleccionar institución —</option>
+                  {institucionesSalud.map((inst) => (
+                    <option key={inst.id_institucion_salud ?? inst.nombre} value={inst.nombre}>
+                      {sanitizeForDisplay(inst.nombre) || '—'}
+                    </option>
+                  ))}
+                </select>
+                {errors.institucion_hospitalaria?.message ? (
+                  <p style={{ margin: '0.35rem 0 0', fontSize: '0.85rem', color: 'var(--color-error)' }}>
+                    {errors.institucion_hospitalaria.message}
+                  </p>
+                ) : null}
+                <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem', color: 'var(--color-texto-secundario)' }}>
+                  Catálogo de instituciones configurado en Administración → Catálogos.
+                </p>
+              </div>
             )}
           />
           <Controller

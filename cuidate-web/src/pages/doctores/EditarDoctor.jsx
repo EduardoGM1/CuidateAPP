@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { doctorEditSchema } from '../../lib/validations/doctorSchema';
 import { getDoctorById, updateDoctor } from '../../api/doctores';
 import { getModulos } from '../../api/modulos';
+import { getInstitucionesSalud } from '../../api/institucionesSalud';
 import { useAuthStore } from '../../stores/authStore';
 import { useCurrentDoctorId } from '../../hooks/useCurrentDoctorId';
 import { PageHeader } from '../../components/shared';
@@ -24,6 +25,7 @@ export default function EditarDoctor() {
 
   const [doctor, setDoctor] = useState(null);
   const [modulos, setModulos] = useState([]);
+  const [institucionesSalud, setInstitucionesSalud] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitError, setSubmitError] = useState('');
 
@@ -57,7 +59,11 @@ export default function EditarDoctor() {
     if (parsedId === 0) return;
     setLoading(true);
     try {
-      const [rawDoc, mods] = await Promise.all([getDoctorById(parsedId), getModulos()]);
+      const [rawDoc, mods, insts] = await Promise.all([
+        getDoctorById(parsedId),
+        getModulos(),
+        getInstitucionesSalud(),
+      ]);
       const doc = rawDoc && typeof rawDoc === 'object' ? rawDoc : {};
       const email = doc.email ?? doc.Usuario?.email ?? (isSelfEdit ? authUser?.email : null) ?? '';
       const nombre = doc.nombre ?? (isSelfEdit ? authUser?.nombre : null) ?? '';
@@ -72,6 +78,7 @@ export default function EditarDoctor() {
 
       setDoctor({ ...doc, email, nombre, apellido_paterno, apellido_materno, id_modulo: doc.id_modulo, telefono, institucion_hospitalaria, grado_estudio, anos_servicio, activo });
       setModulos(Array.isArray(mods) ? mods : []);
+      setInstitucionesSalud(Array.isArray(insts) ? insts : []);
 
       reset({
         email: String(email ?? ''),
@@ -216,14 +223,59 @@ export default function EditarDoctor() {
           <Controller
             name="institucion_hospitalaria"
             control={control}
-            render={({ field }) => (
-              <Input
-                label="Institución hospitalaria"
-                placeholder="Ej. IMSS Bienestar"
-                error={errors.institucion_hospitalaria?.message}
-                {...field}
-              />
-            )}
+            render={({ field }) => {
+              const valorActual = String(field.value ?? '').trim();
+              const enCatalogo = institucionesSalud.some((i) => i.nombre === valorActual);
+              const mostrarLegacy = valorActual && !enCatalogo;
+              return (
+                <div style={{ marginBottom: '1rem' }}>
+                  <label
+                    style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}
+                    htmlFor="editar-doctor-institucion"
+                  >
+                    Institución hospitalaria
+                  </label>
+                  <select
+                    id="editar-doctor-institucion"
+                    {...field}
+                    value={field.value ?? ''}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      border: errors.institucion_hospitalaria ? '1px solid var(--color-error)' : '1px solid var(--color-borde-claro)',
+                      borderRadius: 'var(--radius)',
+                      backgroundColor: 'var(--color-fondo-card)',
+                    }}
+                  >
+                    <option value="">— Seleccionar institución —</option>
+                    {mostrarLegacy ? (
+                      <option value={valorActual}>
+                        {sanitizeForDisplay(valorActual)} (texto previo, no en catálogo)
+                      </option>
+                    ) : null}
+                    {institucionesSalud.map((inst) => (
+                      <option key={inst.id_institucion_salud ?? inst.nombre} value={inst.nombre}>
+                        {sanitizeForDisplay(inst.nombre) || '—'}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.institucion_hospitalaria?.message ? (
+                    <p style={{ margin: '0.35rem 0 0', fontSize: '0.85rem', color: 'var(--color-error)' }}>
+                      {errors.institucion_hospitalaria.message}
+                    </p>
+                  ) : null}
+                  {mostrarLegacy ? (
+                    <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem', color: 'var(--color-texto-secundario)' }}>
+                      Puedes elegir una institución del catálogo para alinear el registro.
+                    </p>
+                  ) : (
+                    <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem', color: 'var(--color-texto-secundario)' }}>
+                      Catálogo en Administración → Catálogos.
+                    </p>
+                  )}
+                </div>
+              );
+            }}
           />
           <Controller
             name="grado_estudio"
