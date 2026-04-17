@@ -565,7 +565,7 @@ export default function EditarPaciente() {
             <>
               <hr style={{ margin: '1rem 0', border: 'none', borderTop: '1px solid var(--color-borde-claro)' }} />
               <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: 'var(--color-primario)' }}>
-                Baja del paciente (GAM ⑭)
+                Baja del paciente
               </h3>
               <p style={{ margin: '0 0 0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
                 Indica fecha y motivo. Si el paciente vuelve a estar activo, estos datos se borran al guardar.
