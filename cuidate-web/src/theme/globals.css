@@ -361,6 +361,21 @@ select:focus-visible {
 .vacuna-modal-form-wrap label {
   color: var(--color-texto-primario) !important;
 }
+/* Modal Agregar vacuna: misma altura visual en inputs y selects (Ant Design) */
+.vacuna-modal-form-wrap .vacuna-modal-form-grid .ant-input,
+.vacuna-modal-form-wrap .vacuna-modal-form-grid input.ant-input {
+  min-height: 40px !important;
+  height: 40px !important;
+  line-height: 1.5715 !important;
+  box-sizing: border-box !important;
+}
+.vacuna-modal-form-wrap .vacuna-modal-form-grid .ant-select-single .ant-select-selector {
+  min-height: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+}
 /* Modal Descargar FORMA: select Periodo con texto legible (contraste fijo) */
 .modal-forma-periodo .ant-select-selector {
   background-color: #ffffff !important;

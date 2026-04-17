@@ -2051,15 +2051,18 @@ export default function PacienteDetail() {
                       </p>
                     )}
                     <div
+                      className="vacuna-modal-form-grid"
                       style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))',
                         gap: '0.75rem',
                         marginBottom: '0.75rem',
+                        alignItems: 'start',
                       }}
                     >
                       <Select
                       label="Vacuna"
+                      size="large"
                       placeholder="— Seleccionar vacuna —"
                       value={vacunaForm.id_vacuna || undefined}
                       onChange={(v) =>
@@ -2076,6 +2079,7 @@ export default function PacienteDetail() {
                     <Input
                       label="Fecha de aplicación"
                       type="date"
+                      size="large"
                       value={vacunaForm.fecha_aplicacion}
                       onChange={(e) =>
                         setVacunaForm((f) => ({ ...f, fecha_aplicacion: e.target.value }))
@@ -2083,13 +2087,15 @@ export default function PacienteDetail() {
                     />
                     <Input
                       label="Lote (opcional)"
+                      size="large"
                       value={vacunaForm.lote}
                       onChange={(e) =>
                         setVacunaForm((f) => ({ ...f, lote: e.target.value }))
                       }
                     />
                     <Select
-                      label="Lugar de aplicación (opcional)"
+                      label="Lugar de aplicación"
+                      size="large"
                       placeholder="— No indicar —"
                       value={vacunaForm.lugar_aplicacion ? vacunaForm.lugar_aplicacion : undefined}
                       onChange={(v) =>
@@ -2107,7 +2113,8 @@ export default function PacienteDetail() {
                     />
                     {vacunaForm.lugar_aplicacion === LUGAR_APLICACION_OTRO ? (
                       <Input
-                        label="Especificar lugar / institución"
+                        label="lugar/Institución"
+                        size="large"
                         placeholder="Ej. Hospital general, clínica privada…"
                         value={vacunaForm.lugar_aplicacion_otro}
                         onChange={(e) =>
@@ -2117,6 +2124,7 @@ export default function PacienteDetail() {
                     ) : null}
                     <Input
                       label="Observaciones (opcional)"
+                      size="large"
                       value={vacunaForm.observaciones}
                       onChange={(e) =>
                         setVacunaForm((f) => ({ ...f, observaciones: e.target.value }))
