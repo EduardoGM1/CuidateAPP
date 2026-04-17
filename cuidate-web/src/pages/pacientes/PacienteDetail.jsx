@@ -3394,6 +3394,27 @@ export default function PacienteDetail() {
             <span className={`patient-badge-status ${p.activo ? 'is-active' : 'is-inactive'}`}>
               {p.activo ? 'Activo' : 'Inactivo'}
             </span>
+            {!p.activo && (p.fecha_baja || p.motivo_baja) ? (
+              <div
+                style={{
+                  marginTop: '0.35rem',
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--color-texto-secundario)',
+                  maxWidth: '42rem',
+                }}
+              >
+                {p.fecha_baja ? (
+                  <span style={{ display: 'block' }}>
+                    <strong>Fecha de baja:</strong> {formatDate(p.fecha_baja)}
+                  </span>
+                ) : null}
+                {p.motivo_baja ? (
+                  <span style={{ display: 'block' }}>
+                    <strong>Motivo:</strong> {sanitizeForDisplay(p.motivo_baja)}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           <div className="patient-header-actions" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
             <Button variant="outline" type="button" onClick={() => setFormaModalOpen(true)}>

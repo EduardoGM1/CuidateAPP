@@ -1108,8 +1108,10 @@ export const updatePaciente = async (req, res) => {
       }
     }
     
-    // Verificar que el paciente está activo
-    if (!pacienteExists.activo) {
+    // Paciente inactivo: solo Admin puede actualizar (p. ej. reactivar o completar datos de baja)
+    const rolNorm = (req.user.rol || '').toString();
+    const esAdmin = rolNorm === 'Admin' || rolNorm === 'admin';
+    if (!pacienteExists.activo && !esAdmin) {
       logger.warn('updatePaciente: Paciente inactivo', { pacienteId });
       return res.status(404).json({ error: 'Paciente inactivo' });
     }
@@ -1207,8 +1209,8 @@ export const updatePaciente = async (req, res) => {
     if ('activo' in updateData && updateData.activo === false && !updateData.fecha_baja) {
       // Si se desactiva sin fecha_baja, establecer fecha actual
       updateData.fecha_baja = new Date().toISOString().split('T')[0];
-    } else if ('activo' in updateData && updateData.activo === true && updateData.fecha_baja) {
-      // Si se reactiva, limpiar fecha_baja
+    } else if ('activo' in updateData && updateData.activo === true) {
+      // Reactivación: siempre limpiar baja en GAM
       updateData.fecha_baja = null;
       updateData.motivo_baja = null;
     }

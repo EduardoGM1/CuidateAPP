@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MOTIVO_BAJA_VALUE } from '../../constants/pacienteBaja';
 
 const maxNombre = 100;
 const maxCurp = 18;
@@ -43,6 +44,55 @@ export const pacienteCreateSchema = z.object({
   }),
 });
 
-export const pacienteEditSchema = pacienteCreateSchema.extend({
-  activo: z.boolean().optional(),
-});
+/**
+ * @param {{ requireBajaWhenInactive?: boolean }} options
+ * Si `requireBajaWhenInactive` es true (admin), al marcar inactivo se exigen fecha y motivo de baja.
+ */
+export function createPacienteEditSchema(options = {}) {
+  const { requireBajaWhenInactive = false } = options;
+  return pacienteCreateSchema
+    .extend({
+      activo: z.boolean().optional(),
+      fecha_baja: z.string().max(32).optional().or(z.literal('')),
+      motivo_baja_tipo: z.string().max(40).optional().or(z.literal('')),
+      motivo_baja_detalle: z.string().max(1000).optional().or(z.literal('')),
+    })
+    .superRefine((data, ctx) => {
+      if (!requireBajaWhenInactive || data.activo !== false) return;
+
+      const fecha = (data.fecha_baja || '').trim();
+      if (!fecha) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Indica la fecha de baja',
+          path: ['fecha_baja'],
+        });
+      } else {
+        const d = new Date(fecha);
+        if (Number.isNaN(d.getTime())) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Fecha de baja no válida',
+            path: ['fecha_baja'],
+          });
+        }
+      }
+
+      const tipo = (data.motivo_baja_tipo || '').trim();
+      if (!tipo) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Selecciona el motivo de baja',
+          path: ['motivo_baja_tipo'],
+        });
+      }
+
+      if (tipo === MOTIVO_BAJA_VALUE.OTROS && !(data.motivo_baja_detalle || '').trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Describe el motivo cuando eliges «Otros»',
+          path: ['motivo_baja_detalle'],
+        });
+      }
+    });
+}

@@ -14,6 +14,20 @@ import MunicipioSelector from './MunicipioSelector';
 import { formValidation } from './FormValidation';
 import Logger from '../../services/logger';
 import { COLORES } from '../../utils/constantes';
+import {
+  buildMotivoBajaStorageString,
+  getMotivoBajaSelectOptions,
+  MOTIVO_BAJA_VALUE,
+  parseMotivoBajaForForm,
+} from '../../constants/pacienteBaja';
+
+function fechaBajaToForm(value) {
+  if (value == null || value === '') return '';
+  const s = String(value);
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
+}
 
 /**
  * Componente de formulario específico para pacientes
@@ -58,7 +72,8 @@ const PacienteForm = ({
     activo: true,
     // ✅ Campos de baja según formato GAM (Instrucción ⑭)
     fechaBaja: '',
-    motivoBaja: '',
+    motivoBajaTipo: '',
+    motivoBajaDetalle: '',
     numeroGam: '',
   });
 
@@ -69,6 +84,7 @@ const PacienteForm = ({
   // Cargar datos iniciales si estamos editando
   useEffect(() => {
     if (initialData && mode === 'edit') {
+      const { tipo, detalleOtros } = parseMotivoBajaForForm(initialData.motivo_baja);
       setFormData({
         email: initialData.email || '',
         password: '', // No mostrar contraseña existente
@@ -86,6 +102,10 @@ const PacienteForm = ({
         institucionSalud: initialData.institucion_salud || '',
         idModulo: initialData.id_modulo?.toString() || '',
         activo: initialData.activo !== undefined ? initialData.activo : true,
+        fechaBaja: fechaBajaToForm(initialData.fecha_baja),
+        motivoBajaTipo: tipo,
+        motivoBajaDetalle: detalleOtros,
+        numeroGam: initialData.numero_gam != null ? String(initialData.numero_gam) : '',
       });
       
       Logger.info('PacienteForm: Datos iniciales cargados', { 
@@ -202,15 +222,21 @@ const PacienteForm = ({
         }
       }
 
+      const motivoBajaSerialized = buildMotivoBajaStorageString(
+        formData.motivoBajaTipo,
+        formData.motivoBajaDetalle
+      );
+
       // Preparar datos para envío
       const submitData = {
         ...formData,
-        idModulo: parseInt(formData.idModulo) || 1,
-        // ✅ Campos de baja según formato GAM (Instrucción ⑭)
+        idModulo: parseInt(formData.idModulo, 10) || 1,
         fechaBaja: formData.fechaBaja || null,
-        motivoBaja: formData.motivoBaja || null,
-        numeroGam: formData.numeroGam ? parseInt(formData.numeroGam) : null,
+        motivoBaja: motivoBajaSerialized,
+        numeroGam: formData.numeroGam ? parseInt(formData.numeroGam, 10) : null,
       };
+      delete submitData.motivoBajaTipo;
+      delete submitData.motivoBajaDetalle;
 
       // Remover campos no necesarios para el backend
       if (mode === 'edit') {
@@ -543,16 +569,56 @@ const PacienteForm = ({
               </View>
 
               <View style={styles.fieldContainer}>
-                <FormField
-                  label="Motivo de Baja (opcional)"
-                  value={formData.motivoBaja}
-                  onChangeText={(value) => handleFieldChange('motivoBaja', value)}
-                  placeholder="Motivo de la baja del paciente"
-                  multiline
-                  numberOfLines={3}
-                  error={errors.motivoBaja}
-                />
+                <Text style={styles.fieldLabel}>Motivo de baja (opcional)</Text>
+                <View style={styles.moduleSelector}>
+                  {getMotivoBajaSelectOptions().map((opt) => (
+                    <TouchableOpacity
+                      key={opt.value || 'none'}
+                      style={[
+                        styles.moduleOption,
+                        formData.motivoBajaTipo === opt.value && styles.moduleOptionSelected,
+                      ]}
+                      onPress={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          motivoBajaTipo: opt.value,
+                          motivoBajaDetalle:
+                            opt.value !== MOTIVO_BAJA_VALUE.OTROS ? '' : prev.motivoBajaDetalle,
+                        }));
+                        setErrors((prev) => ({
+                          ...prev,
+                          motivoBajaTipo: null,
+                          motivoBajaDetalle: null,
+                        }));
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.moduleOptionText,
+                          formData.motivoBajaTipo === opt.value && styles.moduleOptionTextSelected,
+                        ]}
+                      >
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                {errors.motivoBajaTipo ? <Text style={styles.errorText}>{errors.motivoBajaTipo}</Text> : null}
               </View>
+
+              {formData.motivoBajaTipo === MOTIVO_BAJA_VALUE.OTROS ? (
+                <View style={styles.fieldContainer}>
+                  <FormField
+                    label="Especificar motivo (Otros)"
+                    value={formData.motivoBajaDetalle}
+                    onChangeText={(value) => handleFieldChange('motivoBajaDetalle', value)}
+                    placeholder="Describe el motivo de la baja"
+                    multiline
+                    numberOfLines={3}
+                    error={errors.motivoBajaDetalle}
+                  />
+                </View>
+              ) : null}
             </>
           )}
 

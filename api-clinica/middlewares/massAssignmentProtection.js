@@ -96,7 +96,10 @@ class MassAssignmentProtection {
         'institucion_salud',
         'id_modulo',
         'curp',
-        'activo' // Permitido para actualización (solo Admin puede cambiar)
+        'activo', // Solo Admin puede cambiar (controlador)
+        'fecha_baja',
+        'motivo_baja',
+        'numero_gam'
       ],
       
       // Campos permitidos para registro de doctores
