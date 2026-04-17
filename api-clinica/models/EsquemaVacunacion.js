@@ -26,6 +26,12 @@ const EsquemaVacunacion = sequelize.define('EsquemaVacunacion', {
     allowNull: true,
     defaultValue: null
   },
+  lugar_aplicacion: {
+    type: DataTypes.STRING(150),
+    allowNull: true,
+    defaultValue: null,
+    comment: 'Institución o lugar donde se aplicó la vacuna (IMSS, ISSSTE, SEDENA, etc.)',
+  },
   observaciones: {
     type: DataTypes.TEXT,
     allowNull: true,

@@ -69,6 +69,12 @@ import SignosVitalesForm, { INITIAL_SIGNOS_VITALES, signosVitalesToPayload } fro
 import DetalleSignoVitalModal from '../../components/pacientes/DetalleSignoVitalModal';
 import ComparativaEvolucionSignos from '../../components/pacientes/ComparativaEvolucionSignos';
 import { PATIENT_DETAIL_SECTIONS } from '../../constants/patientDetailSections';
+import {
+  LUGARES_APLICACION_VACUNA_OPTIONS,
+  LUGAR_APLICACION_OTRO,
+  parseLugarAplicacionVacunaForm,
+  buildLugarAplicacionPayload,
+} from '../../constants/lugaresAplicacionVacuna';
 import { getVacunas } from '../../api/vacunas';
 import { getComorbilidades } from '../../api/comorbilidades';
 import { parsePositiveInt } from '../../utils/params';
@@ -163,6 +169,8 @@ export default function PacienteDetail() {
     id_vacuna: '',
     fecha_aplicacion: '',
     lote: '',
+    lugar_aplicacion: '',
+    lugar_aplicacion_otro: '',
     observaciones: '',
   });
   const [vacunaSubmitting, setVacunaSubmitting] = useState(false);
@@ -1875,6 +1883,7 @@ export default function PacienteDetail() {
                       <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-texto-secundario)' }}>
                         {v.fecha_aplicacion && `· ${formatDate(v.fecha_aplicacion)}`}
                         {v.lote && ` · Lote: ${sanitizeForDisplay(v.lote)}`}
+                        {v.lugar_aplicacion && ` · Lugar: ${sanitizeForDisplay(v.lugar_aplicacion)}`}
                       </span>
                     </div>
                     {canEditMedical && (
@@ -1885,11 +1894,16 @@ export default function PacienteDetail() {
                           variant="primary"
                           onClick={() => {
                             setVacunaError('');
-                            setVacunaForm({
-                              id_vacuna: String(v.id_vacuna ?? v.id_vacuna_fk ?? v.id ?? ''),
-                              fecha_aplicacion: v.fecha_aplicacion ? String(v.fecha_aplicacion).slice(0, 10) : '',
-                              lote: v.lote ?? '',
-                              observaciones: v.observaciones ?? '',
+                            setVacunaForm(() => {
+                              const lug = parseLugarAplicacionVacunaForm(v.lugar_aplicacion);
+                              return {
+                                id_vacuna: String(v.id_vacuna ?? v.id_vacuna_fk ?? v.id ?? ''),
+                                fecha_aplicacion: v.fecha_aplicacion ? String(v.fecha_aplicacion).slice(0, 10) : '',
+                                lote: v.lote ?? '',
+                                lugar_aplicacion: lug.select,
+                                lugar_aplicacion_otro: lug.otro,
+                                observaciones: v.observaciones ?? '',
+                              };
                             });
                             setEditingVacuna(v);
                             setVacunaModalOpen(true);
@@ -1933,6 +1947,8 @@ export default function PacienteDetail() {
                       id_vacuna: '',
                       fecha_aplicacion: '',
                       lote: '',
+                      lugar_aplicacion: '',
+                      lugar_aplicacion_otro: '',
                       observaciones: '',
                     });
                     setVacunaModalOpen(true);
@@ -1958,6 +1974,17 @@ export default function PacienteDetail() {
                       setVacunaError('Selecciona una vacuna y una fecha de aplicación.');
                       return;
                     }
+                    if (vacunaForm.lugar_aplicacion === LUGAR_APLICACION_OTRO) {
+                      const ot = (vacunaForm.lugar_aplicacion_otro || '').trim();
+                      if (!ot) {
+                        setVacunaError('Especifica el lugar de aplicación o elige otra opción.');
+                        return;
+                      }
+                    }
+                    const lugarPayload = buildLugarAplicacionPayload(
+                      vacunaForm.lugar_aplicacion,
+                      vacunaForm.lugar_aplicacion_otro
+                    );
                     setVacunaError('');
                     setVacunaSubmitting(true);
                     try {
@@ -1966,6 +1993,7 @@ export default function PacienteDetail() {
                           id_vacuna: idVac,
                           fecha_aplicacion: fecha,
                           lote: vacunaForm.lote?.trim() || undefined,
+                          lugar_aplicacion: lugarPayload || null,
                           observaciones: vacunaForm.observaciones?.trim() || undefined,
                         });
                         message.success('Vacuna actualizada');
@@ -1975,10 +2003,18 @@ export default function PacienteDetail() {
                           vacuna: undefined,
                           fecha_aplicacion: fecha,
                           lote: vacunaForm.lote?.trim() || undefined,
+                          lugar_aplicacion: lugarPayload || null,
                           observaciones: vacunaForm.observaciones?.trim() || undefined,
                         });
                       }
-                      setVacunaForm({ id_vacuna: '', fecha_aplicacion: '', lote: '', observaciones: '' });
+                      setVacunaForm({
+                        id_vacuna: '',
+                        fecha_aplicacion: '',
+                        lote: '',
+                        lugar_aplicacion: '',
+                        lugar_aplicacion_otro: '',
+                        observaciones: '',
+                      });
                       setEditingVacuna(null);
                       setVacunaModalOpen(false);
                       loadVacunacion();
@@ -2052,6 +2088,33 @@ export default function PacienteDetail() {
                         setVacunaForm((f) => ({ ...f, lote: e.target.value }))
                       }
                     />
+                    <Select
+                      label="Lugar de aplicación (opcional)"
+                      placeholder="— No indicar —"
+                      value={vacunaForm.lugar_aplicacion ? vacunaForm.lugar_aplicacion : undefined}
+                      onChange={(v) =>
+                        setVacunaForm((f) => ({
+                          ...f,
+                          lugar_aplicacion: v ?? '',
+                          lugar_aplicacion_otro:
+                            v === LUGAR_APLICACION_OTRO ? f.lugar_aplicacion_otro : '',
+                        }))
+                      }
+                      options={LUGARES_APLICACION_VACUNA_OPTIONS.filter((o) => o.value !== '').map((o) => ({
+                        value: o.value,
+                        label: o.label,
+                      }))}
+                    />
+                    {vacunaForm.lugar_aplicacion === LUGAR_APLICACION_OTRO ? (
+                      <Input
+                        label="Especificar lugar / institución"
+                        placeholder="Ej. Hospital general, clínica privada…"
+                        value={vacunaForm.lugar_aplicacion_otro}
+                        onChange={(e) =>
+                          setVacunaForm((f) => ({ ...f, lugar_aplicacion_otro: e.target.value }))
+                        }
+                      />
+                    ) : null}
                     <Input
                       label="Observaciones (opcional)"
                       value={vacunaForm.observaciones}

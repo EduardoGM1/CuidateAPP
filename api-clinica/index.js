@@ -28,6 +28,7 @@ import { requestMonitoring, healthCheck as monitoringHealthCheck, memoryMonitori
 // import { scheduleBackups } from "./scripts/backup-system.js"; // Archivo eliminado en limpieza
 import scheduledTasksService from "./services/scheduledTasksService.js";
 import { ensureTicketResueltoAtColumn } from "./utils/ensureTicketResueltoAt.js";
+import { ensureEsquemaVacunacionLugarColumn } from "./utils/ensureEsquemaVacunacionLugar.js";
 import { cerrarTicketsResueltoVencidos } from "./services/ticketAutoCloseService.js";
 
 // Security middlewares
@@ -307,6 +308,11 @@ sequelize
       await cerrarTicketsResueltoVencidos();
     } catch (e) {
       logger.warn("[tickets] Arranque: columna resuelto_at o cierre automático", { error: e.message });
+    }
+    try {
+      await ensureEsquemaVacunacionLugarColumn();
+    } catch (e) {
+      logger.warn("[vacunación] Arranque: columna lugar_aplicacion", { error: e.message });
     }
     // Iniciar servidor según entorno
     if (NODE_ENV === 'production') {

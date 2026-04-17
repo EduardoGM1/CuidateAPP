@@ -12,6 +12,7 @@ import {
   Usuario,
   RedApoyo,
   EsquemaVacunacion,
+  Vacuna,
   DoctorPaciente,
   Comorbilidad,
   PacienteComorbilidad
@@ -28,6 +29,26 @@ import { crearNotificacionDoctor } from './cita.js';
  * Helper function para desencriptar un campo si está encriptado
  * Maneja tanto formato JSON como formato iv:tag:data
  */
+/** Nombre de vacuna: prioriza catálogo por id_vacuna; si no, texto en `vacuna`. */
+async function resolveNombreVacunaDesdeBody(body) {
+  const idRaw = body?.id_vacuna;
+  if (idRaw != null && String(idRaw).trim() !== '') {
+    const idV = parseInt(String(idRaw), 10);
+    if (!isNaN(idV) && idV > 0) {
+      const row = await Vacuna.findByPk(idV, { attributes: ['nombre_vacuna'] });
+      if (row?.nombre_vacuna) return String(row.nombre_vacuna).trim();
+    }
+  }
+  const direct = typeof body?.vacuna === 'string' ? body.vacuna.trim() : '';
+  return direct;
+}
+
+function normalizeLugarAplicacionVacuna(val) {
+  if (val == null) return null;
+  const s = String(val).trim().slice(0, 150);
+  return s || null;
+}
+
 const decryptFieldIfNeeded = (value) => {
   if (value === null || value === undefined || value === '') return value;
   const isEncryptedObject = typeof value === 'object' && value !== null && value.encrypted != null && value.iv != null && value.authTag != null;
@@ -2689,7 +2710,7 @@ export const getPacienteEsquemaVacunacion = async (req, res) => {
 export const createPacienteEsquemaVacunacion = async (req, res) => {
   try {
     const { id } = req.params;
-    const { vacuna, fecha_aplicacion, lote, observaciones } = req.body;
+    const { fecha_aplicacion, lote, observaciones, lugar_aplicacion } = req.body;
 
     if (!id || isNaN(id)) {
       return res.status(400).json({
@@ -2709,7 +2730,8 @@ export const createPacienteEsquemaVacunacion = async (req, res) => {
       });
     }
 
-    if (!vacuna || vacuna.trim().length === 0) {
+    const nombreVacuna = await resolveNombreVacunaDesdeBody(req.body);
+    if (!nombreVacuna) {
       return res.status(400).json({
         success: false,
         error: 'El nombre de la vacuna es requerido'
@@ -2734,9 +2756,10 @@ export const createPacienteEsquemaVacunacion = async (req, res) => {
 
     const registro = await EsquemaVacunacion.create({
       id_paciente: pacienteId,
-      vacuna: vacuna.trim(),
+      vacuna: nombreVacuna,
       fecha_aplicacion: fecha.toISOString().split('T')[0],
       lote: lote?.trim() || null,
+      lugar_aplicacion: normalizeLugarAplicacionVacuna(lugar_aplicacion),
       observaciones: observaciones?.trim() || null,
       fecha_creacion: new Date()
     });
@@ -3373,7 +3396,7 @@ export const deletePacienteRedApoyo = async (req, res) => {
 export const updatePacienteEsquemaVacunacion = async (req, res) => {
   try {
     const { id, esquemaId } = req.params;
-    const { vacuna, fecha_aplicacion, lote, observaciones } = req.body;
+    const { vacuna, fecha_aplicacion, lote, observaciones, id_vacuna, lugar_aplicacion } = req.body;
 
     if (!id || isNaN(id) || !esquemaId || isNaN(esquemaId)) {
       return res.status(400).json({
@@ -3410,7 +3433,10 @@ export const updatePacienteEsquemaVacunacion = async (req, res) => {
     }
 
     // Actualizar campos permitidos
-    if (vacuna !== undefined) esquema.vacuna = vacuna?.trim() || null;
+    if (vacuna !== undefined || id_vacuna !== undefined) {
+      const nombre = await resolveNombreVacunaDesdeBody(req.body);
+      if (nombre) esquema.vacuna = nombre;
+    }
     if (fecha_aplicacion !== undefined) {
       const fecha = new Date(fecha_aplicacion);
       if (isNaN(fecha.getTime())) {
@@ -3422,6 +3448,9 @@ export const updatePacienteEsquemaVacunacion = async (req, res) => {
       esquema.fecha_aplicacion = fecha.toISOString().split('T')[0];
     }
     if (lote !== undefined) esquema.lote = lote?.trim() || null;
+    if (lugar_aplicacion !== undefined) {
+      esquema.lugar_aplicacion = normalizeLugarAplicacionVacuna(lugar_aplicacion);
+    }
     if (observaciones !== undefined) esquema.observaciones = observaciones?.trim() || null;
 
     await esquema.save();
