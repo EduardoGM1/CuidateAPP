@@ -155,72 +155,6 @@ function ReporteEstadisticasCard() {
   );
 }
 
-function ReportePacientesActivosCard() {
-  // Reutilizamos el mismo reporte de estadísticas, pero semánticamente
-  // esta card se orienta a pacientes activos/seguimiento.
-  return (
-    <ReporteCardWrapper
-      title="Pacientes activos y seguimiento"
-      description="Distribución de pacientes activos, nuevos ingresos y seguimiento clínico en el periodo seleccionado."
-    >
-      <p
-        style={{
-          margin: '0 0 0.75rem',
-          fontSize: '0.9rem',
-          color: 'var(--color-texto-secundario)',
-        }}
-      >
-        Usa el reporte de estadísticas generales para analizar pacientes activos y
-        su evolución. Para cortes más finos (por módulo, doctor o fecha), ajusta los filtros en la tarjeta de
-        estadísticas generales.
-      </p>
-      <p
-        style={{
-          margin: 0,
-          fontSize: '0.85rem',
-          color: 'var(--color-texto-secundario)',
-        }}
-      >
-        Nota: Este reporte se basa en la misma fuente de datos que el reporte de
-        estadísticas generales. Los filtros aplicados allí afectarán los datos de
-        pacientes activos.
-      </p>
-    </ReporteCardWrapper>
-  );
-}
-
-function ReporteCitasPorEstadoCard() {
-  return (
-    <ReporteCardWrapper
-      title="Citas por estado"
-      description="Análisis de citas programadas, atendidas, canceladas y no asistidas."
-    >
-      <p
-        style={{
-          margin: '0 0 0.75rem',
-          fontSize: '0.9rem',
-          color: 'var(--color-texto-secundario)',
-        }}
-      >
-        Para ver el detalle por estado de las citas usa el reporte de estadísticas
-        generales filtrando por rango de fechas y, si aplica, por módulo. El
-        backend consolida los conteos por estado según el diseño definido en los
-        documentos de reportes.
-      </p>
-      <p
-        style={{
-          margin: 0,
-          fontSize: '0.85rem',
-          color: 'var(--color-texto-secundario)',
-        }}
-      >
-        Si necesitas una vista diaria, también puedes usar la agenda de citas en
-        el módulo de Citas para validar los estados a nivel de cita individual.
-      </p>
-    </ReporteCardWrapper>
-  );
-}
-
 const PERIODO_OPCIONES = [
   { value: '', label: 'Sin agrupar' },
   { value: 'semestre', label: 'Semestral' },
@@ -634,7 +568,7 @@ export default function ReportesPage() {
         </section>
       )}
 
-      {/* Tarjetas: Comorbilidades primero, luego Estadísticas, Pacientes activos, Citas por estado */}
+      {/* Tarjetas: Comorbilidades y Estadísticas generales */}
       <div
         data-tour="section-reportes-detail"
         style={{
@@ -646,8 +580,6 @@ export default function ReportesPage() {
       >
         {(admin || isDoctor()) && <ReporteComorbilidadesHeatmapCard summaryFromParent={summary} />}
         {(admin || isDoctor()) && <ReporteEstadisticasCard />}
-        {admin && <ReportePacientesActivosCard />}
-        {(admin || isDoctor()) && <ReporteCitasPorEstadoCard />}
       </div>
     </div>
   );
