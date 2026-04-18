@@ -102,7 +102,7 @@ function normalizeRolUsuarioFilter(rol) {
 // Query opcional: estado=activos|inactivos|todos, search=email parcial, rol=Admin|Doctor|Paciente, modulo=id (cuentas doctor en ese módulo)
 export const getUsuarios = async (req, res) => {
   try {
-    const { Usuario, Doctor } = await import('../models/associations.js');
+    const { Usuario, Doctor, Paciente } = await import('../models/associations.js');
 
     const estadoParam = req.query.estado;
     const estadoRaw = (
@@ -161,27 +161,55 @@ export const getUsuarios = async (req, res) => {
     const usuarios = await Usuario.findAll({
       attributes: ['id_usuario', 'email', 'rol', 'activo', 'fecha_creacion', 'ultimo_login'],
       where: whereClause,
-      include: [{
-        model: Doctor,
-        required: false,
-        attributes: ['id_doctor', 'nombre', 'apellido_paterno'],
-      }],
+      include: [
+        {
+          model: Doctor,
+          required: false,
+          attributes: ['id_doctor', 'nombre', 'apellido_paterno'],
+        },
+        {
+          model: Paciente,
+          required: false,
+          attributes: ['id_paciente', 'activo', 'fecha_baja', 'motivo_baja'],
+        },
+      ],
       order: [['fecha_creacion', 'DESC']],
     });
-    
-    const usuariosConEstado = usuarios.map(usuario => ({
-      id_usuario: usuario.id_usuario,
-      email: usuario.email,
-      rol: usuario.rol,
-      activo: usuario.activo,
-      fecha_creacion: usuario.fecha_creacion,
-      ultimo_login: usuario.ultimo_login,
-      tiene_perfil: usuario.rol === 'Doctor' ? !!usuario.Doctor : true,
-      perfil_completo: usuario.Doctor ? {
-        nombre: usuario.Doctor.nombre,
-        apellido: usuario.Doctor.apellido_paterno
-      } : null
-    }));
+
+    const usuariosConEstado = usuarios.map((usuario) => {
+      const pac = usuario.Paciente;
+      const pacientePerfil =
+        usuario.rol === 'Paciente' && pac
+          ? {
+              id_paciente: pac.id_paciente,
+              activo: pac.activo,
+              fecha_baja: pac.fecha_baja,
+              motivo_baja: pac.motivo_baja,
+            }
+          : null;
+
+      return {
+        id_usuario: usuario.id_usuario,
+        email: usuario.email,
+        rol: usuario.rol,
+        activo: usuario.activo,
+        fecha_creacion: usuario.fecha_creacion,
+        ultimo_login: usuario.ultimo_login,
+        tiene_perfil:
+          usuario.rol === 'Doctor'
+            ? !!usuario.Doctor
+            : usuario.rol === 'Paciente'
+              ? !!pac
+              : true,
+        perfil_completo: usuario.Doctor
+          ? {
+              nombre: usuario.Doctor.nombre,
+              apellido: usuario.Doctor.apellido_paterno,
+            }
+          : null,
+        paciente_perfil: pacientePerfil,
+      };
+    });
     
     const sinPerfil = usuariosConEstado.filter(u => !u.tiene_perfil);
     

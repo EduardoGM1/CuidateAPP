@@ -44,21 +44,25 @@ export const pacienteCreateSchema = z.object({
   }),
 });
 
+/** Edición de datos demográficos del paciente (sin seguimiento GAM / baja). */
+export function createPacienteEditSchema() {
+  return pacienteCreateSchema;
+}
+
 /**
- * @param {{ requireBajaWhenInactive?: boolean }} options
- * Si `requireBajaWhenInactive` es true (admin), al marcar inactivo se exigen fecha y motivo de baja.
+ * Seguimiento clínico GAM (admin): activo + baja con fecha/motivo si está inactivo.
+ * Usado en modal desde Usuarios, no en la ficha de editar paciente.
  */
-export function createPacienteEditSchema(options = {}) {
-  const { requireBajaWhenInactive = false } = options;
-  return pacienteCreateSchema
-    .extend({
-      activo: z.boolean().optional(),
+export function createPacienteSeguimientoClinicoSchema() {
+  return z
+    .object({
+      activo: z.boolean(),
       fecha_baja: z.string().max(32).optional().or(z.literal('')),
       motivo_baja_tipo: z.string().max(40).optional().or(z.literal('')),
       motivo_baja_detalle: z.string().max(1000).optional().or(z.literal('')),
     })
     .superRefine((data, ctx) => {
-      if (!requireBajaWhenInactive || data.activo !== false) return;
+      if (data.activo !== false) return;
 
       const fecha = (data.fecha_baja || '').trim();
       if (!fecha) {

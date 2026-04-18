@@ -3,8 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createPacienteEditSchema } from '../../lib/validations/pacienteSchema';
-import { buildPacienteBajaApiPatchForAdmin, parseMotivoBajaForForm } from '../../constants/pacienteBaja';
-import PacienteBajaFormFields from '../../components/pacientes/PacienteBajaFormFields';
 import { getPacienteById, updatePaciente } from '../../api/pacientes';
 import { getModulos } from '../../api/modulos';
 import { getInstitucionesSalud } from '../../api/institucionesSalud';
@@ -27,7 +25,6 @@ import RedApoyoFormFields from '../../components/pacientes/RedApoyoFormFields';
 import { registerInitialMedicalData } from '../../utils/registerInitialMedicalData';
 import { adminResetPatientPin } from '../../api/auth';
 import { useAuthStore } from '../../stores/authStore';
-import { ROLES } from '../../utils/constants';
 import { estadosMexico } from '../../data/estadosMexico';
 import { getMunicipiosByEstado } from '../../data/municipiosMexico';
 import { PageHeader } from '../../components/shared';
@@ -52,16 +49,7 @@ export default function EditarPaciente() {
   const navigate = useNavigate();
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const isStaff = useAuthStore((s) => s.isDoctor);
-  const authUser = useAuthStore((s) => s.user);
-  const isAdminUser = useMemo(() => {
-    const rol = (authUser?.rol ?? authUser?.role ?? '').toString();
-    return rol === ROLES.ADMIN || rol === ROLES.ADMIN_ALT;
-  }, [authUser]);
-
-  const pacienteEditResolverSchema = useMemo(
-    () => createPacienteEditSchema({ requireBajaWhenInactive: isAdminUser }),
-    [isAdminUser]
-  );
+  const pacienteEditResolverSchema = useMemo(() => createPacienteEditSchema(), []);
   const parsedId = parsePositiveInt(id, 0);
   const [paciente, setPaciente] = useState(null);
   const [modulos, setModulos] = useState([]);
@@ -103,7 +91,6 @@ export default function EditarPaciente() {
     handleSubmit,
     reset,
     watch,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(pacienteEditResolverSchema),
@@ -120,23 +107,11 @@ export default function EditarPaciente() {
       sexo: '',
       institucion_salud: '',
       id_modulo: '',
-      activo: true,
-      fecha_baja: '',
-      motivo_baja_tipo: '',
-      motivo_baja_detalle: '',
     },
   });
 
   const estadoWatch = watch('estado');
-  const activoWatch = watch('activo');
   const municipiosOpciones = useMemo(() => getMunicipiosByEstado(estadoWatch || ''), [estadoWatch]);
-
-  useEffect(() => {
-    if (activoWatch !== true) return;
-    setValue('fecha_baja', '');
-    setValue('motivo_baja_tipo', '');
-    setValue('motivo_baja_detalle', '');
-  }, [activoWatch, setValue]);
 
   const load = useCallback(async () => {
     if (parsedId === 0) return;
@@ -174,7 +149,6 @@ export default function EditarPaciente() {
       }
 
       const tel = p.numero_celular ?? p.telefono ?? '';
-      const { tipo: motivoBajaTipo, detalleOtros: motivoBajaDetalle } = parseMotivoBajaForForm(p.motivo_baja);
       const formValues = {
         nombre: String(p.nombre ?? '').trim(),
         apellido_paterno: String(p.apellido_paterno ?? '').trim(),
@@ -188,10 +162,6 @@ export default function EditarPaciente() {
         sexo: String(p.sexo ?? '').trim(),
         institucion_salud: String(p.institucion_salud ?? '').trim(),
         id_modulo: p.id_modulo != null ? String(p.id_modulo) : '',
-        activo: p.activo !== false,
-        fecha_baja: toInputDate(p.fecha_baja),
-        motivo_baja_tipo: motivoBajaTipo,
-        motivo_baja_detalle: motivoBajaDetalle,
       };
       reset(formValues);
     } catch {
@@ -259,17 +229,6 @@ export default function EditarPaciente() {
         institucion_salud: data.institucion_salud?.trim() || null,
         id_modulo: data.id_modulo ?? null,
       };
-      if (isAdmin()) {
-        Object.assign(
-          payload,
-          buildPacienteBajaApiPatchForAdmin({
-            activo: data.activo,
-            fecha_baja: data.fecha_baja,
-            motivo_baja_tipo: data.motivo_baja_tipo,
-            motivo_baja_detalle: data.motivo_baja_detalle,
-          })
-        );
-      }
       await updatePaciente(parsedId, payload);
 
       // Red de apoyo: actualizar existentes y crear nuevos (paridad con app móvil)
@@ -533,46 +492,6 @@ export default function EditarPaciente() {
               />
             )}
           />
-          <Controller
-            name="activo"
-            control={control}
-            render={({ field }) => (
-              <div
-                style={{
-                  marginBottom: isAdmin() ? '0.25rem' : 0,
-                  ...(isAdmin()
-                    ? { display: 'flex', alignItems: 'center', gap: '0.5rem' }
-                    : { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }),
-                }}
-                aria-hidden={!isAdmin()}
-              >
-                <input
-                  type="checkbox"
-                  id="activo"
-                  checked={!!field.value}
-                  onChange={(e) => field.onChange(e.target.checked)}
-                  disabled={!isAdmin()}
-                />
-                {isAdmin() ? (
-                  <label htmlFor="activo" style={{ fontWeight: 500, color: 'var(--color-texto-primario)' }}>
-                    Paciente activo
-                  </label>
-                ) : null}
-              </div>
-            )}
-          />
-          {isAdmin() && activoWatch === false ? (
-            <>
-              <hr style={{ margin: '1rem 0', border: 'none', borderTop: '1px solid var(--color-borde-claro)' }} />
-              <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: 'var(--color-primario)' }}>
-                Baja del paciente
-              </h3>
-              <p style={{ margin: '0 0 0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
-                Indica fecha y motivo. Si el paciente vuelve a estar activo, estos datos se borran al guardar.
-              </p>
-              <PacienteBajaFormFields control={control} errors={errors} disabled={isSubmitting} />
-            </>
-          ) : null}
           {/* Red de apoyo: lista de contactos (paridad con app móvil) */}
           <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--color-borde-claro)' }} />
           <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: 'var(--color-primario)' }}>
