@@ -382,7 +382,12 @@ export const getPacientes = async (req, res) => {
 
 export const getPacienteById = async (req, res) => {
   try {
-    let whereCondition = { id_paciente: req.params.id, activo: true };
+    // Admin y Doctor pueden ver ficha aunque el paciente esté inactivo (baja GAM).
+    // El rol Paciente solo ve su expediente si sigue activo en el programa.
+    let whereCondition = { id_paciente: req.params.id };
+    if (req.user.rol === 'Paciente') {
+      whereCondition.activo = true;
+    }
     let includeOptions = [];
     
     // Configurar inclusión de Doctor según el rol
@@ -1108,10 +1113,11 @@ export const updatePaciente = async (req, res) => {
       }
     }
     
-    // Paciente inactivo: solo Admin puede actualizar (p. ej. reactivar o completar datos de baja)
+    // Paciente inactivo: Admin o Doctor asignado pueden actualizar (reactivar o datos de baja)
     const rolNorm = (req.user.rol || '').toString();
     const esAdmin = rolNorm === 'Admin' || rolNorm === 'admin';
-    if (!pacienteExists.activo && !esAdmin) {
+    const esDoctor = rolNorm === 'Doctor' || rolNorm === 'doctor';
+    if (!pacienteExists.activo && !esAdmin && !esDoctor) {
       logger.warn('updatePaciente: Paciente inactivo', { pacienteId });
       return res.status(404).json({ error: 'Paciente inactivo' });
     }
@@ -1119,8 +1125,8 @@ export const updatePaciente = async (req, res) => {
     // Preparar datos de actualización
     const updateData = { ...req.body };
     
-    // Solo Admin puede actualizar el campo 'activo'
-    if (req.user.rol !== 'Admin' && 'activo' in updateData) {
+    // Solo Admin y Doctor (paciente asignado ya verificado arriba) pueden cambiar activo / baja GAM
+    if (!esAdmin && !esDoctor && 'activo' in updateData) {
       delete updateData.activo;
     }
     

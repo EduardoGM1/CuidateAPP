@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPacientes } from '../../api/pacientes';
+import { message } from 'antd';
+import { getPacientes, updatePaciente } from '../../api/pacientes';
 import { getComorbilidades } from '../../api/comorbilidades';
 import { getModulos } from '../../api/modulos';
 import { connect, on, off } from '../../api/socket';
@@ -9,24 +10,10 @@ import { STORAGE_KEYS, PAGE_SIZE_DEFAULT } from '../../utils/constants';
 import { Table, Button } from '../../components/ui';
 import { PageHeader, SearchFilterBar, Pagination } from '../../components/shared';
 import { Badge } from '../../components/ui';
+import PacienteDarBajaModal from '../../components/pacientes/PacienteDarBajaModal';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatNombreCompleto } from '../../utils/format';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
-
-const COLUMNS = [
-  { key: 'nombre_completo', label: 'Nombre', render: (row) => sanitizeForDisplay(formatNombreCompleto(row) || row.nombre_completo) || '—' },
-  { key: 'doctor_nombre', label: 'Doctor', render: (row) => sanitizeForDisplay(row.doctor_nombre ?? '—') },
-  { key: 'edad', label: 'Edad', render: (row) => row.edad != null ? String(row.edad) : '—' },
-  {
-    key: 'estado',
-    label: 'Estado',
-    render: (row) => (
-      <Badge variant={row.activo ? 'success' : 'neutral'}>
-        {row.activo ? 'Activo' : 'Inactivo'}
-      </Badge>
-    ),
-  },
-];
 
 const FILTER_ESTADO = {
   key: 'estado',
@@ -40,6 +27,8 @@ const FILTER_ESTADO = {
 
 export default function PacientesList() {
   const navigate = useNavigate();
+  const canGestionPaciente = useAuthStore((s) => s.isDoctor());
+  const [bajaModal, setBajaModal] = useState({ open: false, idPaciente: null, nombre: '' });
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -184,6 +173,84 @@ export default function PacientesList() {
     if (id) navigate(`/pacientes/${id}`);
   };
 
+  const openDarBaja = useCallback((row) => {
+    const id = row.id_paciente ?? row.id;
+    if (!id) return;
+    const nombre = sanitizeForDisplay(formatNombreCompleto(row) || row.nombre_completo) || 'Paciente';
+    setBajaModal({ open: true, idPaciente: id, nombre });
+  }, []);
+
+  const closeBajaModal = useCallback(() => {
+    setBajaModal({ open: false, idPaciente: null, nombre: '' });
+  }, []);
+
+  const handleReactivarPaciente = useCallback(
+    async (row) => {
+      const id = row.id_paciente ?? row.id;
+      if (!id) return;
+      if (
+        !window.confirm(
+          '¿Reactivar a este paciente en el programa? Se limpiarán fecha y motivo de baja registrados en el GAM.'
+        )
+      ) {
+        return;
+      }
+      try {
+        await updatePaciente(id, { activo: true });
+        message.success('Paciente reactivado en el programa');
+        load();
+      } catch (err) {
+        message.error(err?.response?.data?.error || err?.message || 'No se pudo reactivar');
+      }
+    },
+    [load]
+  );
+
+  const columns = useMemo(() => {
+    const base = [
+      {
+        key: 'nombre_completo',
+        label: 'Nombre',
+        render: (row) => sanitizeForDisplay(formatNombreCompleto(row) || row.nombre_completo) || '—',
+      },
+      { key: 'doctor_nombre', label: 'Doctor', render: (row) => sanitizeForDisplay(row.doctor_nombre ?? '—') },
+      { key: 'edad', label: 'Edad', render: (row) => (row.edad != null ? String(row.edad) : '—') },
+      {
+        key: 'estado',
+        label: 'Estado',
+        render: (row) => (
+          <Badge variant={row.activo !== false ? 'success' : 'neutral'}>
+            {row.activo !== false ? 'Activo' : 'Inactivo'}
+          </Badge>
+        ),
+      },
+    ];
+    if (canGestionPaciente) {
+      base.push({
+        key: '_acciones',
+        label: 'Acciones',
+        render: (row) => (
+          <span
+            role="presentation"
+            onClick={(e) => e.stopPropagation()}
+            style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}
+          >
+            {row.activo !== false ? (
+              <Button type="button" variant="outline" size="small" onClick={() => openDarBaja(row)}>
+                Dar de baja
+              </Button>
+            ) : (
+              <Button type="button" variant="primary" size="small" onClick={() => handleReactivarPaciente(row)}>
+                Reactivar
+              </Button>
+            )}
+          </span>
+        ),
+      });
+    }
+    return base;
+  }, [canGestionPaciente, openDarBaja, handleReactivarPaciente]);
+
   const emptyMessage = params.search
     ? `No se encontraron pacientes para "${params.search}".`
     : 'No hay pacientes';
@@ -224,13 +291,20 @@ export default function PacientesList() {
       )}
       <div data-tour="section-pacientes-table">
       <Table
-        columns={COLUMNS}
+        columns={columns}
         data={list}
         loading={loading}
         emptyMessage={emptyMessage}
         onRowClick={handleRowClick}
       />
       </div>
+      <PacienteDarBajaModal
+        open={bajaModal.open}
+        onClose={closeBajaModal}
+        idPaciente={bajaModal.idPaciente}
+        nombrePaciente={bajaModal.nombre}
+        onCompleted={load}
+      />
       {!loading && (
         <Pagination
           currentPage={params.page}
