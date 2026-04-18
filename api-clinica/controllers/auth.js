@@ -513,6 +513,25 @@ export const updateUsuario = async (req, res) => {
     } else {
       await usuario.update(dataToUpdate);
     }
+
+    if (mustCascadeReactivate) {
+      try {
+        await usuario.reload({ attributes: ['email', 'rol', 'activo'] });
+        const nombre =
+          usuario.email && usuario.email.includes('@')
+            ? usuario.email.split('@')[0]
+            : 'Usuario';
+        await emailService.sendAccountReactivatedEmail(usuario.email, {
+          nombre,
+          rol: usuario.rol || 'Usuario',
+        });
+      } catch (mailErr) {
+        logger.warn('Reactivación: no se pudo enviar email al usuario (no crítico)', {
+          userId: id,
+          error: mailErr?.message,
+        });
+      }
+    }
     
     logger.info(`Usuario ID ${id} actualizado exitosamente`);
     

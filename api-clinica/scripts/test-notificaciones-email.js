@@ -59,6 +59,14 @@ async function runPruebas() {
 
   const tipos = [
     { nombre: 'Bienvenida', fn: () => emailService.sendWelcomeEmail(email, email.split('@')[0], 'Doctor') },
+    {
+      nombre: 'Cuenta reactivada',
+      fn: () =>
+        emailService.sendAccountReactivatedEmail(email, {
+          nombre: email.split('@')[0],
+          rol: 'Doctor',
+        }),
+    },
     { nombre: 'Nuevo mensaje', fn: () => emailService.sendNewMessageNotification(email, { remitenteNombre: 'Paciente de prueba', previewTexto: 'Hola, tengo una duda...', enlaceApp: process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL}/chat` : '' }) },
     { nombre: 'Nuevo paciente', fn: () => emailService.sendPatientRegisteredNotification(email, { pacienteNombre: 'Juan Pérez García', id_paciente: 1 }) },
     { nombre: 'Cita agendada', fn: () => emailService.sendCitaConfirmationEmail(email, { fecha: 'lunes 10 de marzo de 2026', hora: '10:00', doctorNombre: 'Dr. Ricardo Mendoza', motivo: 'Control', reprogramada: false }) },

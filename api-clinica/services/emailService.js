@@ -386,6 +386,23 @@ class EmailService {
   }
 
   /**
+   * Cuenta reactivada por administración (mismo canal que bienvenida / _sendGeneric).
+   * @param {string} to
+   * @param {{ nombre?: string, rol?: string }} [datos]
+   */
+  async sendAccountReactivatedEmail(to, datos = {}) {
+    const { nombre = '', rol = 'Usuario' } = datos;
+    const greet = nombre ? ` ${nombre}` : '';
+    const subject = 'Tu cuenta ha sido reactivada - CuídateApp';
+    const text = `Hola${greet},
+
+Tu cuenta en CuídateApp (rol: ${rol}) ha sido reactivada. Ya puedes volver a iniciar sesión con tu correo y contraseña habituales.
+
+Si no esperabas este mensaje, contacta al administrador de la clínica.`;
+    return this._sendGeneric(subject, text, to, 'cuenta_reactivada', datos);
+  }
+
+  /**
    * Notificación de nuevo mensaje en el chat
    */
   async sendNewMessageNotification(to, datos = {}) {
