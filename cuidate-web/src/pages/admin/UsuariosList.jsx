@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { getUsuarios, updateUsuario, deleteUsuario, createUsuario } from '../../api/auth';
 import { revokeUserSessions } from '../../api/adminOperations';
 import { createDoctor } from '../../api/doctores';
 import { getModulos } from '../../api/modulos';
-import { PageHeader } from '../../components/shared';
+import { PageHeader, SearchFilterBar } from '../../components/shared';
 import { message } from 'antd';
 import { Button, Input, Select, Table, LoadingSpinner, EmptyState, Badge, Modal } from '../../components/ui';
 import { sanitizeForDisplay } from '../../utils/sanitize';
@@ -27,6 +27,12 @@ export default function UsuariosList() {
 
   const [showNewUserModal, setShowNewUserModal] = useState(false);
   const [modulos, setModulos] = useState([]);
+  const [params, setParams] = useState({
+    estado: 'activos',
+    search: '',
+    rol: '',
+    modulo: '',
+  });
 
   const {
     control: newUserControl,
@@ -59,27 +65,79 @@ export default function UsuariosList() {
     setLoading(true);
     setError(null);
     try {
-      const data = await getUsuarios();
-      setList(data);
+      const data = await getUsuarios({
+        estado: params.estado || 'activos',
+        search: (params.search || '').trim() || undefined,
+        rol: (params.rol || '').trim() || undefined,
+        modulo: params.modulo != null && String(params.modulo).trim() !== '' ? params.modulo : undefined,
+      });
+      setList(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || 'Error al cargar usuarios');
       setList([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [params.estado, params.search, params.rol, params.modulo]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   useEffect(() => {
-    if (showNewUserModal && newUserRol === ROLES.DOCTOR) {
-      getModulos().then((data) => setModulos(Array.isArray(data) ? data : [])).catch(() => setModulos([]));
-    } else {
-      setModulos([]);
+    getModulos().then((data) => setModulos(Array.isArray(data) ? data : [])).catch(() => setModulos([]));
+  }, []);
+
+  const handleSearch = (searchParams) => {
+    setParams((prev) => ({
+      ...prev,
+      estado: searchParams.estado ?? prev.estado,
+      modulo:
+        searchParams.modulo !== undefined && searchParams.modulo !== ''
+          ? searchParams.modulo
+          : '',
+      rol: searchParams.rol !== undefined ? searchParams.rol || '' : prev.rol,
+      search: searchParams.search !== undefined ? searchParams.search : prev.search,
+    }));
+  };
+
+  const filterOptions = useMemo(() => {
+    const opts = [
+      {
+        key: 'estado',
+        label: 'Estado',
+        options: [
+          { value: 'activos', label: 'Activos' },
+          { value: 'inactivos', label: 'Inactivos' },
+          { value: 'todos', label: 'Todos' },
+        ],
+      },
+      {
+        key: 'rol',
+        label: 'Rol',
+        options: [
+          { value: '', label: 'Todos' },
+          { value: 'Admin', label: 'Admin' },
+          { value: 'Doctor', label: 'Doctor' },
+          { value: 'Paciente', label: 'Paciente' },
+        ],
+      },
+    ];
+    if (modulos.length > 0) {
+      opts.push({
+        key: 'modulo',
+        label: 'Módulo',
+        options: [
+          { value: '', label: 'Todos' },
+          ...modulos.map((m) => ({
+            value: String(m.id_modulo ?? m.id),
+            label: sanitizeForDisplay(m.nombre_modulo ?? m.nombre) || '—',
+          })),
+        ],
+      });
     }
-  }, [showNewUserModal, newUserRol]);
+    return opts;
+  }, [modulos]);
 
   const handleEdit = (row) => {
     setEditingId(row.id_usuario ?? row.id);
@@ -224,6 +282,10 @@ export default function UsuariosList() {
     },
   ];
 
+  const emptyUsersMessage = (params.search || '').trim()
+    ? `No se encontraron usuarios para "${(params.search || '').trim()}".`
+    : 'No hay usuarios';
+
   return (
     <div data-tour="section-usuarios-root">
       <PageHeader
@@ -236,6 +298,19 @@ export default function UsuariosList() {
           </span>
         }
       />
+      <div data-tour="section-usuarios-filters" style={{ marginBottom: '1rem' }}>
+        <SearchFilterBar
+          placeholder="Buscar por correo…"
+          filterOptions={filterOptions}
+          initialSearch={params.search || ''}
+          initialFilters={{
+            estado: params.estado,
+            modulo: params.modulo ? String(params.modulo) : '',
+            rol: params.rol || '',
+          }}
+          onSearch={handleSearch}
+        />
+      </div>
       <Modal
         open={showNewUserModal}
         onClose={() => { if (!newUserSubmitting) { setShowNewUserModal(false); resetNewUser(); } }}
@@ -409,7 +484,13 @@ export default function UsuariosList() {
       </Modal>
       {error && <p style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>{error} <button type="button" onClick={load} style={{ marginLeft: '0.5rem', textDecoration: 'underline' }}>Reintentar</button></p>}
       <div data-tour="section-usuarios-table">
-      {loading ? <LoadingSpinner /> : list.length === 0 ? <EmptyState message="No hay usuarios" /> : <Table columns={columns} data={list} emptyMessage="No hay usuarios" />}
+      {loading ? (
+        <LoadingSpinner />
+      ) : list.length === 0 ? (
+        <EmptyState message={emptyUsersMessage} />
+      ) : (
+        <Table columns={columns} data={list} emptyMessage={emptyUsersMessage} />
+      )}
       </div>
     </div>
   );

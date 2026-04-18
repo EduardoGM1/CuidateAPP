@@ -89,23 +89,83 @@ export const register = async (req, res) => {
   }
 };
 
+function normalizeRolUsuarioFilter(rol) {
+  const r = (rol || '').toString().trim().toLowerCase();
+  if (r === 'admin') return 'Admin';
+  if (r === 'doctor') return 'Doctor';
+  if (r === 'paciente') return 'Paciente';
+  return null;
+}
+
 // Listar usuarios para vincular con perfiles (legacy - mantiene compatibilidad)
+// Query opcional: estado=activos|inactivos|todos, search=email parcial, rol=Admin|Doctor|Paciente, modulo=id (cuentas doctor en ese módulo)
 export const getUsuarios = async (req, res) => {
   try {
     const { Usuario, Doctor } = await import('../models/associations.js');
-    
-    const { includeInactive = false } = req.query;
-    const whereClause = includeInactive === 'true' ? {} : { activo: true };
-    
+
+    const estadoParam = req.query.estado;
+    const estadoRaw = (
+      estadoParam != null && String(estadoParam).trim() !== ''
+        ? String(estadoParam)
+        : req.query.includeInactive === 'true'
+          ? 'todos'
+          : 'activos'
+    )
+      .toString()
+      .toLowerCase();
+    const estado = ['activos', 'inactivos', 'todos'].includes(estadoRaw) ? estadoRaw : 'activos';
+
+    const searchRaw = (req.query.search || '').trim().slice(0, 100);
+    const safeSearch = searchRaw.replace(/[%_]/g, '');
+
+    const rolNormalized = normalizeRolUsuarioFilter(req.query.rol);
+    const moduloStr = req.query.modulo;
+    const moduloId =
+      moduloStr !== undefined && moduloStr !== '' && moduloStr != null
+        ? parseInt(String(moduloStr), 10)
+        : NaN;
+
+    const whereClause = {};
+    if (estado === 'inactivos') {
+      whereClause.activo = false;
+    } else if (estado === 'activos') {
+      whereClause.activo = true;
+    }
+
+    if (safeSearch) {
+      whereClause.email = { [Op.iLike]: `%${safeSearch}%` };
+    }
+    if (rolNormalized) {
+      whereClause.rol = rolNormalized;
+    }
+
+    if (!Number.isNaN(moduloId) && moduloId > 0) {
+      const docs = await Doctor.findAll({
+        attributes: ['id_usuario'],
+        where: { id_modulo: moduloId },
+        raw: true,
+      });
+      const userIdsInMod = [...new Set(docs.map((d) => d.id_usuario).filter(Boolean))];
+      if (userIdsInMod.length === 0) {
+        return res.json({
+          todos_usuarios: [],
+          usuarios_sin_perfil: [],
+          total: 0,
+          sin_perfil_count: 0,
+        });
+      }
+      whereClause.id_usuario = { [Op.in]: userIdsInMod };
+    }
+
     const usuarios = await Usuario.findAll({
       attributes: ['id_usuario', 'email', 'rol', 'activo', 'fecha_creacion', 'ultimo_login'],
       where: whereClause,
       include: [{
         model: Doctor,
         required: false,
-        attributes: ['id_doctor', 'nombre', 'apellido_paterno']
+        attributes: ['id_doctor', 'nombre', 'apellido_paterno'],
       }],
-      order: [['fecha_creacion', 'DESC']]
+      order: [['fecha_creacion', 'DESC']],
     });
     
     const usuariosConEstado = usuarios.map(usuario => ({

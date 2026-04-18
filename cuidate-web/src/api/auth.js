@@ -85,10 +85,18 @@ export async function adminResetPatientPin(payload) {
 
 /**
  * Lista de usuarios (solo Admin).
+ * @param {{ estado?: 'activos'|'inactivos'|'todos', search?: string, rol?: string, modulo?: string|number }} [params]
  * @returns {Promise<Array>}
  */
-export async function getUsuarios() {
-  const { data } = await client.get(API_PATHS.AUTH_USUARIOS);
+export async function getUsuarios(params = {}) {
+  const q = new URLSearchParams();
+  if (params.estado) q.set('estado', String(params.estado));
+  if (params.search != null && String(params.search).trim() !== '') q.set('search', String(params.search).trim());
+  if (params.rol) q.set('rol', String(params.rol));
+  if (params.modulo != null && String(params.modulo).trim() !== '') q.set('modulo', String(params.modulo).trim());
+  const qs = q.toString();
+  const url = qs ? `${API_PATHS.AUTH_USUARIOS}?${qs}` : API_PATHS.AUTH_USUARIOS;
+  const { data } = await client.get(url);
   const list = data?.todos_usuarios ?? data?.usuarios ?? data?.data?.usuarios ?? data?.data ?? (Array.isArray(data) ? data : []);
   return Array.isArray(list) ? list : [];
 }
