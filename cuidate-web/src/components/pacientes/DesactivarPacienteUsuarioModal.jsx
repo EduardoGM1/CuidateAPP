@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { message } from 'antd';
 import { Modal, Button } from '../ui';
-import { createPacienteSeguimientoClinicoSchema } from '../../lib/validations/pacienteSchema';
+import { createPacienteBajaGAMDesactivarSchema } from '../../lib/validations/pacienteSchema';
 import { buildPacienteBajaApiPatchForAdmin, parseMotivoBajaForForm } from '../../constants/pacienteBaja';
 import PacienteBajaFormFields from './PacienteBajaFormFields';
 import { getPacienteById, updatePaciente } from '../../api/pacientes';
+import { deleteUsuario } from '../../api/auth';
 
 function toInputDate(value) {
   if (value == null) return '';
@@ -16,41 +17,29 @@ function toInputDate(value) {
 }
 
 /**
- * Modal admin: seguimiento GAM (paciente activo / baja con fecha y motivo).
- * Reutiliza `PacienteBajaFormFields` y `buildPacienteBajaApiPatchForAdmin` (paridad con API).
+ * Al desactivar un usuario con rol Paciente: registra baja GAM y luego desactiva la cuenta.
  */
-export default function PacienteSeguimientoClinicoModal({
+export default function DesactivarPacienteUsuarioModal({
   open,
   onClose,
   idPaciente,
+  idUsuario,
   userEmail,
-  onSaved,
+  onCompleted,
 }) {
   const {
     control,
     handleSubmit,
     reset,
-    watch,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
-    resolver: zodResolver(createPacienteSeguimientoClinicoSchema()),
+    resolver: zodResolver(createPacienteBajaGAMDesactivarSchema()),
     defaultValues: {
-      activo: true,
       fecha_baja: '',
       motivo_baja_tipo: '',
       motivo_baja_detalle: '',
     },
   });
-
-  const activoWatch = watch('activo');
-
-  useEffect(() => {
-    if (activoWatch !== true) return;
-    setValue('fecha_baja', '');
-    setValue('motivo_baja_tipo', '');
-    setValue('motivo_baja_detalle', '');
-  }, [activoWatch, setValue]);
 
   useEffect(() => {
     if (!open || !idPaciente) return;
@@ -61,7 +50,6 @@ export default function PacienteSeguimientoClinicoModal({
         if (cancelled || !p) return;
         const { tipo, detalleOtros } = parseMotivoBajaForForm(p.motivo_baja);
         reset({
-          activo: p.activo !== false,
           fecha_baja: toInputDate(p.fecha_baja),
           motivo_baja_tipo: tipo,
           motivo_baja_detalle: detalleOtros,
@@ -76,22 +64,23 @@ export default function PacienteSeguimientoClinicoModal({
   }, [open, idPaciente, reset]);
 
   async function onSubmit(data) {
-    if (!idPaciente) return;
+    if (!idPaciente || !idUsuario) return;
     try {
       await updatePaciente(
         idPaciente,
         buildPacienteBajaApiPatchForAdmin({
-          activo: data.activo,
+          activo: false,
           fecha_baja: data.fecha_baja,
           motivo_baja_tipo: data.motivo_baja_tipo,
           motivo_baja_detalle: data.motivo_baja_detalle,
         })
       );
-      message.success('Seguimiento clínico actualizado');
-      onSaved?.();
+      await deleteUsuario(idUsuario);
+      message.success('Baja registrada y cuenta desactivada');
+      onCompleted?.();
       onClose();
     } catch (err) {
-      message.error(err?.response?.data?.error || err?.message || 'Error al guardar');
+      message.error(err?.response?.data?.error || err?.message || 'Error al desactivar');
     }
   }
 
@@ -101,13 +90,13 @@ export default function PacienteSeguimientoClinicoModal({
       onClose={() => {
         if (!isSubmitting) onClose();
       }}
-      title="Seguimiento clínico (GAM)"
+      title="Desactivar usuario"
       width={520}
       footer={null}
     >
-      {!idPaciente ? (
+      {!idPaciente || !idUsuario ? (
         <p style={{ margin: 0, color: 'var(--color-texto-secundario)', fontSize: '0.9rem' }}>
-          No hay expediente de paciente vinculado a esta cuenta.
+          Datos incompletos para desactivar esta cuenta.
         </p>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -117,54 +106,27 @@ export default function PacienteSeguimientoClinicoModal({
                 margin: '0 0 1rem',
                 fontSize: '0.9rem',
                 color: 'var(--color-texto-secundario)',
+                lineHeight: 1.45,
               }}
             >
               Cuenta: <strong>{userEmail}</strong>
             </p>
           ) : null}
-          <Controller
-            name="activo"
-            control={control}
-            render={({ field }) => (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  marginBottom: '1rem',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  id="seguimiento-paciente-activo"
-                  checked={!!field.value}
-                  onChange={(e) => field.onChange(e.target.checked)}
-                  disabled={isSubmitting}
-                />
-                <label htmlFor="seguimiento-paciente-activo" style={{ fontWeight: 500, color: 'var(--color-texto-primario)' }}>
-                  Paciente activo en el programa
-                </label>
-              </div>
-            )}
-          />
-          {activoWatch === false ? (
-            <>
-              <p
-                style={{
-                  margin: '0 0 0.75rem',
-                  fontSize: '0.875rem',
-                  color: 'var(--color-texto-secundario)',
-                  lineHeight: 1.45,
-                }}
-              >
-                Indica fecha y motivo de baja. Si reactivas al paciente, estos datos se borrarán al guardar.
-              </p>
-              <PacienteBajaFormFields control={control} errors={errors} disabled={isSubmitting} />
-            </>
-          ) : null}
+          <p
+            style={{
+              margin: '0 0 0.75rem',
+              fontSize: '0.875rem',
+              color: 'var(--color-texto-secundario)',
+              lineHeight: 1.45,
+            }}
+          >
+            Indica la <strong>baja del programa (GAM)</strong>. Después se desactivará la cuenta: el usuario no podrá
+            iniciar sesión.
+          </p>
+          <PacienteBajaFormFields control={control} errors={errors} disabled={isSubmitting} />
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
-            <Button type="submit" variant="primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Guardando…' : 'Guardar'}
+            <Button type="submit" variant="danger" disabled={isSubmitting}>
+              {isSubmitting ? 'Procesando…' : 'Confirmar desactivación'}
             </Button>
             <Button type="button" variant="outline" disabled={isSubmitting} onClick={onClose}>
               Cancelar

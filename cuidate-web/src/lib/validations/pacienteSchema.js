@@ -50,20 +50,16 @@ export function createPacienteEditSchema() {
 }
 
 /**
- * Seguimiento clínico GAM (admin): activo + baja con fecha/motivo si está inactivo.
- * Usado en modal desde Usuarios, no en la ficha de editar paciente.
+ * Baja GAM (fecha + motivo) al desactivar cuenta de usuario Paciente desde Usuarios (Admin).
  */
-export function createPacienteSeguimientoClinicoSchema() {
+export function createPacienteBajaGAMDesactivarSchema() {
   return z
     .object({
-      activo: z.boolean(),
       fecha_baja: z.string().max(32).optional().or(z.literal('')),
       motivo_baja_tipo: z.string().max(40).optional().or(z.literal('')),
       motivo_baja_detalle: z.string().max(1000).optional().or(z.literal('')),
     })
     .superRefine((data, ctx) => {
-      if (data.activo !== false) return;
-
       const fecha = (data.fecha_baja || '').trim();
       if (!fecha) {
         ctx.addIssue({

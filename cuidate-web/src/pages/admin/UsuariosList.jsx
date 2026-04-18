@@ -6,7 +6,7 @@ import { revokeUserSessions } from '../../api/adminOperations';
 import { createDoctor } from '../../api/doctores';
 import { getModulos } from '../../api/modulos';
 import { PageHeader, SearchFilterBar } from '../../components/shared';
-import PacienteSeguimientoClinicoModal from '../../components/pacientes/PacienteSeguimientoClinicoModal';
+import DesactivarPacienteUsuarioModal from '../../components/pacientes/DesactivarPacienteUsuarioModal';
 import { message } from 'antd';
 import { Button, Input, Select, Table, LoadingSpinner, EmptyState, Badge, Modal } from '../../components/ui';
 import { sanitizeForDisplay } from '../../utils/sanitize';
@@ -27,9 +27,12 @@ export default function UsuariosList() {
   const [submitting, setSubmitting] = useState(false);
   const [reactivating, setReactivating] = useState(false);
 
-  const [seguimientoModalOpen, setSeguimientoModalOpen] = useState(false);
-  const [seguimientoPacienteId, setSeguimientoPacienteId] = useState(null);
-  const [seguimientoEmail, setSeguimientoEmail] = useState('');
+  const [desactivarPacModal, setDesactivarPacModal] = useState({
+    open: false,
+    idUsuario: null,
+    idPaciente: null,
+    email: '',
+  });
 
   const [showNewUserModal, setShowNewUserModal] = useState(false);
   const [modulos, setModulos] = useState([]);
@@ -219,20 +222,21 @@ export default function UsuariosList() {
     }
   };
 
-  const openSeguimientoClinico = (row) => {
-    const id = row.paciente_perfil?.id_paciente;
-    if (!id) {
-      message.warning('Esta cuenta no tiene expediente de paciente vinculado.');
-      return;
-    }
-    setSeguimientoPacienteId(id);
-    setSeguimientoEmail(String(row.email ?? '').trim());
-    setSeguimientoModalOpen(true);
-  };
-
   const handleDesactivar = async (row) => {
     const id = row.id_usuario ?? row.id;
     if (!id) return;
+
+    const idPaciente = row.paciente_perfil?.id_paciente;
+    if (row.rol === 'Paciente' && idPaciente) {
+      setDesactivarPacModal({
+        open: true,
+        idUsuario: id,
+        idPaciente,
+        email: String(row.email ?? '').trim(),
+      });
+      return;
+    }
+
     if (!window.confirm('¿Desactivar este usuario? No podrá iniciar sesión.')) return;
     try {
       await deleteUsuario(id);
@@ -246,6 +250,19 @@ export default function UsuariosList() {
       const msg = err?.response?.data?.error || err?.message || 'Error al desactivar';
       setSubmitError(msg);
       message.error(msg);
+    }
+  };
+
+  const closeDesactivarPacModal = () => {
+    setDesactivarPacModal({ open: false, idUsuario: null, idPaciente: null, email: '' });
+  };
+
+  const onDesactivarPacienteCompletado = () => {
+    load();
+    const uid = desactivarPacModal.idUsuario;
+    if (uid != null && editingId === uid) {
+      setEditingId(null);
+      setEditingRow(null);
     }
   };
 
@@ -314,19 +331,6 @@ export default function UsuariosList() {
       render: (row) => (
         <span style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <button type="button" onClick={() => handleEdit(row)} style={{ background: 'none', border: 'none', color: 'var(--color-primario)', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.9rem' }}>Editar</button>
-          {row.rol === 'Paciente' && row.paciente_perfil?.id_paciente ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => openSeguimientoClinico(row)}
-              style={{
-                borderColor: 'var(--color-error, #cf1322)',
-                color: 'var(--color-error, #cf1322)',
-              }}
-            >
-              Seguimiento clínico
-            </Button>
-          ) : null}
           {row.activo !== false && (
             <button type="button" onClick={() => handleRevokeSessions(row)} style={{ background: 'none', border: 'none', color: 'var(--color-texto-secundario)', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.9rem' }}>Cerrar sesiones</button>
           )}
@@ -519,8 +523,10 @@ export default function UsuariosList() {
               </Badge>
               {editingRow?.activo !== false ? (
                 <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: 'var(--color-texto-secundario)', lineHeight: 1.45 }}>
-                  Para <strong>desactivar</strong> la cuenta (no podrá iniciar sesión), cierra este formulario y usa el enlace
-                  «Desactivar» en la tabla. La cuenta no se borra de la base de datos; solo se desactiva.
+                  Para <strong>desactivar</strong> la cuenta usa «Desactivar» en la tabla.
+                  {editingRow?.rol === 'Paciente' && editingRow?.paciente_perfil?.id_paciente
+                    ? ' Si es paciente con expediente, se pedirá primero la baja del programa (GAM) y luego se desactivará el acceso.'
+                    : ' La cuenta no se borra; solo se desactiva.'}
                 </p>
               ) : (
                 <>
@@ -542,27 +548,6 @@ export default function UsuariosList() {
                 </>
               )}
             </div>
-            {editingRow?.rol === 'Paciente' && editingRow?.paciente_perfil?.id_paciente ? (
-              <div style={{ marginBottom: '1rem' }}>
-                <div style={{ fontWeight: 600, marginBottom: '0.35rem', color: 'var(--color-texto-primario)' }}>
-                  Seguimiento en el programa (GAM)
-                </div>
-                <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--color-texto-secundario)', lineHeight: 1.45 }}>
-                  Activo en el programa, baja y motivo se gestionan aquí (no en la ficha de editar paciente).
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => openSeguimientoClinico(editingRow)}
-                  style={{
-                    borderColor: 'var(--color-error, #cf1322)',
-                    color: 'var(--color-error, #cf1322)',
-                  }}
-                >
-                  Seguimiento clínico
-                </Button>
-              </div>
-            ) : null}
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <Button type="submit" variant="primary" disabled={submitting || reactivating}>
                 {submitting ? 'Guardando…' : 'Guardar'}
@@ -582,16 +567,13 @@ export default function UsuariosList() {
           </form>
         )}
       </Modal>
-      <PacienteSeguimientoClinicoModal
-        open={seguimientoModalOpen}
-        onClose={() => {
-          setSeguimientoModalOpen(false);
-          setSeguimientoPacienteId(null);
-          setSeguimientoEmail('');
-        }}
-        idPaciente={seguimientoPacienteId}
-        userEmail={seguimientoEmail}
-        onSaved={load}
+      <DesactivarPacienteUsuarioModal
+        open={desactivarPacModal.open}
+        onClose={closeDesactivarPacModal}
+        idPaciente={desactivarPacModal.idPaciente}
+        idUsuario={desactivarPacModal.idUsuario}
+        userEmail={desactivarPacModal.email}
+        onCompleted={onDesactivarPacienteCompletado}
       />
       {error && <p style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>{error} <button type="button" onClick={load} style={{ marginLeft: '0.5rem', textDecoration: 'underline' }}>Reintentar</button></p>}
       <div data-tour="section-usuarios-table">
