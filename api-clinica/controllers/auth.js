@@ -486,11 +486,24 @@ export const updateUsuario = async (req, res) => {
     }
 
     const mustCascadeDeactivate = activo === false && usuario.activo !== false;
+    const mustCascadeReactivate = activo === true && usuario.activo === false;
+
     if (mustCascadeDeactivate) {
       const t = await sequelize.transaction();
       try {
         const { cascadeDeactivateLinkedProfiles } = await import('../services/usuarioDeactivateRules.js');
         await cascadeDeactivateLinkedProfiles(usuario.id_usuario, usuario.rol, t);
+        await usuario.update(dataToUpdate, { transaction: t });
+        await t.commit();
+      } catch (txErr) {
+        await t.rollback();
+        throw txErr;
+      }
+    } else if (mustCascadeReactivate) {
+      const t = await sequelize.transaction();
+      try {
+        const { cascadeReactivateLinkedProfiles } = await import('../services/usuarioDeactivateRules.js');
+        await cascadeReactivateLinkedProfiles(usuario.id_usuario, usuario.rol, t);
         await usuario.update(dataToUpdate, { transaction: t });
         await t.commit();
       } catch (txErr) {

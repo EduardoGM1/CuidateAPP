@@ -33,3 +33,31 @@ export async function cascadeDeactivateLinkedProfiles(idUsuario, rol, transactio
     }
   }
 }
+
+/**
+ * Al reactivar la cuenta (Usuario.activo = true), reactiva el perfil Doctor/Paciente vinculado si existe.
+ */
+export async function cascadeReactivateLinkedProfiles(idUsuario, rol, transaction) {
+  const id = parseInt(idUsuario, 10);
+  if (!id || Number.isNaN(id)) {
+    throw new Error('ID de usuario inválido');
+  }
+
+  const r = (rol || '').toString();
+  const { Doctor, Paciente } = await import('../models/associations.js');
+  const opts = transaction ? { transaction } : {};
+
+  if (r === 'Doctor' || r === 'doctor') {
+    const doctor = await Doctor.findOne({ where: { id_usuario: id }, ...opts });
+    if (doctor && doctor.activo === false) {
+      await doctor.update({ activo: true }, opts);
+    }
+  }
+
+  if (r === 'Paciente' || r === 'paciente') {
+    const paciente = await Paciente.findOne({ where: { id_usuario: id }, ...opts });
+    if (paciente && paciente.activo === false) {
+      await paciente.update({ activo: true }, opts);
+    }
+  }
+}

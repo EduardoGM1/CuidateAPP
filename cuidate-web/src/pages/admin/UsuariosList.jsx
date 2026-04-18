@@ -24,6 +24,7 @@ export default function UsuariosList() {
   const [formRol, setFormRol] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
 
   const [showNewUserModal, setShowNewUserModal] = useState(false);
   const [modulos, setModulos] = useState([]);
@@ -184,6 +185,32 @@ export default function UsuariosList() {
     } catch (err) {
       const msg = err?.response?.data?.error || err?.message || 'Error';
       message.error(msg);
+    }
+  };
+
+  const handleReactivarUsuario = async () => {
+    if (!editingId) return;
+    if (
+      !window.confirm(
+        '¿Reactivar esta cuenta? El usuario podrá volver a iniciar sesión. Si tiene perfil de doctor o paciente asociado, también se reactivará.'
+      )
+    ) {
+      return;
+    }
+    setReactivating(true);
+    setSubmitError('');
+    try {
+      await updateUsuario(editingId, { activo: true });
+      setEditingId(null);
+      setEditingRow(null);
+      load();
+      message.success('Usuario reactivado correctamente');
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || 'Error al reactivar';
+      setSubmitError(msg);
+      message.error(msg);
+    } finally {
+      setReactivating(false);
     }
   };
 
@@ -431,7 +458,7 @@ export default function UsuariosList() {
       <Modal
         open={Boolean(editingId)}
         onClose={() => {
-          if (!submitting) {
+          if (!submitting && !reactivating) {
             setEditingId(null);
             setEditingRow(null);
           }
@@ -461,16 +488,39 @@ export default function UsuariosList() {
               <Badge variant={editingRow?.activo !== false ? 'success' : 'neutral'}>
                 {editingRow?.activo !== false ? 'Activo' : 'Inactivo'}
               </Badge>
-              <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: 'var(--color-texto-secundario)', lineHeight: 1.45 }}>
-                Para <strong>desactivar</strong> la cuenta (no podrá iniciar sesión), cierra este formulario y usa el enlace
-                «Desactivar» en la tabla. La cuenta no se borra de la base de datos; solo se desactiva.
-              </p>
+              {editingRow?.activo !== false ? (
+                <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: 'var(--color-texto-secundario)', lineHeight: 1.45 }}>
+                  Para <strong>desactivar</strong> la cuenta (no podrá iniciar sesión), cierra este formulario y usa el enlace
+                  «Desactivar» en la tabla. La cuenta no se borra de la base de datos; solo se desactiva.
+                </p>
+              ) : (
+                <>
+                  <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: 'var(--color-texto-secundario)', lineHeight: 1.45 }}>
+                    Esta cuenta está <strong>inactiva</strong> y no puede iniciar sesión. Puedes reactivarla aquí: volverá a
+                    estar operativa y, si tiene perfil de doctor o paciente vinculado, ese perfil también se reactivará.
+                  </p>
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      onClick={handleReactivarUsuario}
+                      disabled={submitting || reactivating}
+                      loading={reactivating}
+                    >
+                      Reactivar usuario
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <Button type="submit" variant="primary" disabled={submitting}>{submitting ? 'Guardando…' : 'Guardar'}</Button>
+              <Button type="submit" variant="primary" disabled={submitting || reactivating}>
+                {submitting ? 'Guardando…' : 'Guardar'}
+              </Button>
               <Button
                 type="button"
                 variant="outline"
+                disabled={reactivating}
                 onClick={() => {
                   setEditingId(null);
                   setEditingRow(null);
