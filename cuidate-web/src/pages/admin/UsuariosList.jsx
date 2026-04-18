@@ -18,9 +18,10 @@ export default function UsuariosList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  /** Fila completa al abrir «Editar» (estado de cuenta solo lectura; desactivar solo desde la tabla). */
+  const [editingRow, setEditingRow] = useState(null);
   const [formEmail, setFormEmail] = useState('');
   const [formRol, setFormRol] = useState('');
-  const [formActivo, setFormActivo] = useState(true);
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -82,9 +83,9 @@ export default function UsuariosList() {
 
   const handleEdit = (row) => {
     setEditingId(row.id_usuario ?? row.id);
+    setEditingRow(row);
     setFormEmail(row.email ?? '');
     setFormRol(row.rol ?? '');
-    setFormActivo(row.activo !== false);
     setSubmitError('');
   };
 
@@ -101,9 +102,9 @@ export default function UsuariosList() {
       await updateUsuario(editingId, {
         email,
         rol: formRol || undefined,
-        activo: formActivo,
       });
       setEditingId(null);
+      setEditingRow(null);
       load();
       message.success('Usuario actualizado correctamente');
     } catch (err) {
@@ -135,7 +136,10 @@ export default function UsuariosList() {
     try {
       await deleteUsuario(id);
       load();
-      if (editingId === id) setEditingId(null);
+      if (editingId === id) {
+        setEditingId(null);
+        setEditingRow(null);
+      }
       message.success('Usuario desactivado');
     } catch (err) {
       const msg = err?.response?.data?.error || err?.message || 'Error al desactivar';
@@ -351,7 +355,12 @@ export default function UsuariosList() {
       </Modal>
       <Modal
         open={Boolean(editingId)}
-        onClose={() => { if (!submitting) setEditingId(null); }}
+        onClose={() => {
+          if (!submitting) {
+            setEditingId(null);
+            setEditingRow(null);
+          }
+        }}
         title="Editar usuario"
         width={480}
         footer={null}
@@ -372,13 +381,28 @@ export default function UsuariosList() {
                 { value: 'Paciente', label: 'Paciente' },
               ]}
             />
-            <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <input type="checkbox" id="activo-u" checked={formActivo} onChange={(e) => setFormActivo(e.target.checked)} />
-              <label htmlFor="activo-u">Usuario activo</label>
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ fontWeight: 600, marginBottom: '0.35rem', color: 'var(--color-texto-primario)' }}>Estado de la cuenta</div>
+              <Badge variant={editingRow?.activo !== false ? 'success' : 'neutral'}>
+                {editingRow?.activo !== false ? 'Activo' : 'Inactivo'}
+              </Badge>
+              <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: 'var(--color-texto-secundario)', lineHeight: 1.45 }}>
+                Para <strong>desactivar</strong> la cuenta (no podrá iniciar sesión), cierra este formulario y usa el enlace
+                «Desactivar» en la tabla. La cuenta no se borra de la base de datos; solo se desactiva.
+              </p>
             </div>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <Button type="submit" variant="primary" disabled={submitting}>{submitting ? 'Guardando…' : 'Guardar'}</Button>
-              <Button type="button" variant="outline" onClick={() => setEditingId(null)}>Cancelar</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setEditingId(null);
+                  setEditingRow(null);
+                }}
+              >
+                Cancelar
+              </Button>
             </div>
           </form>
         )}

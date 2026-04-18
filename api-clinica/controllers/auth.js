@@ -412,6 +412,15 @@ export const updateUsuario = async (req, res) => {
     if (email) dataToUpdate.email = email.trim().toLowerCase();
     if (rol) dataToUpdate.rol = rol;
     if (activo !== undefined) dataToUpdate.activo = activo;
+
+    // Misma regla que DELETE: no desactivar cuenta si el perfil Doctor/Paciente sigue activo
+    if (activo === false && usuario.activo !== false) {
+      const { validateUsuarioCanBeDeactivated } = await import('../services/usuarioDeactivateRules.js');
+      const deactivateCheck = await validateUsuarioCanBeDeactivated(usuario.id_usuario, usuario.rol);
+      if (!deactivateCheck.ok) {
+        return res.status(409).json({ success: false, error: deactivateCheck.error });
+      }
+    }
     
     // Actualizar contraseña si se proporciona
     if (password) {
@@ -450,7 +459,7 @@ export const updateUsuario = async (req, res) => {
 };
 
 /**
- * Eliminar/Desactivar usuario (solo Admin)
+ * Desactivar usuario (solo Admin). Baja lógica: activo = false (no borra la fila).
  * DELETE /api/auth/usuarios/:id
  */
 export const deleteUsuario = async (req, res) => {
@@ -464,7 +473,7 @@ export const deleteUsuario = async (req, res) => {
       });
     }
     
-    logger.info(`Eliminando/desactivando usuario ID ${id}`);
+    logger.info(`Desactivando usuario ID ${id}`);
     
     const usuario = await Usuario.findByPk(id);
     
@@ -475,27 +484,10 @@ export const deleteUsuario = async (req, res) => {
       });
     }
     
-    // Verificar si el usuario está asociado a un doctor o paciente activo
-    const { Doctor, Paciente } = await import('../models/associations.js');
-    
-    if (usuario.rol === 'Doctor') {
-      const doctorAsociado = await Doctor.findOne({ where: { id_usuario: id } });
-      if (doctorAsociado && doctorAsociado.activo) {
-        return res.status(409).json({ 
-          success: false,
-          error: 'No se puede eliminar el usuario porque está asociado a un doctor activo. Desactiva primero el doctor.' 
-        });
-      }
-    }
-    
-    if (usuario.rol === 'Paciente') {
-      const pacienteAsociado = await Paciente.findOne({ where: { id_usuario: id } });
-      if (pacienteAsociado && pacienteAsociado.activo) {
-        return res.status(409).json({ 
-          success: false,
-          error: 'No se puede eliminar el usuario porque está asociado a un paciente activo. Desactiva primero el paciente.' 
-        });
-      }
+    const { validateUsuarioCanBeDeactivated } = await import('../services/usuarioDeactivateRules.js');
+    const deactivateCheck = await validateUsuarioCanBeDeactivated(usuario.id_usuario, usuario.rol);
+    if (!deactivateCheck.ok) {
+      return res.status(409).json({ success: false, error: deactivateCheck.error });
     }
     
     // En lugar de eliminar físicamente, desactivamos el usuario
@@ -508,7 +500,7 @@ export const deleteUsuario = async (req, res) => {
       message: 'Usuario desactivado exitosamente'
     });
   } catch (error) {
-    logger.error('Error eliminando usuario', error);
+    logger.error('Error desactivando usuario', error);
     res.status(500).json({ 
       success: false,
       error: error.message 
