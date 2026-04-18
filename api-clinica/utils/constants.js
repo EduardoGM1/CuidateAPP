@@ -59,6 +59,10 @@ export const ALERT_SEVERITY = {
   CRITICAL: 'critical'
 };
 
+/** Mensaje cuando un usuario existe pero su cuenta está desactivada (login Doctor/Admin). */
+export const AUTH_ACCOUNT_DISABLED_MESSAGE =
+  'Tu cuenta está inhabilitada o desactivada. Contacta con un administrador.';
+
 export default {
   HTTP_STATUS,
   ENCRYPTION,

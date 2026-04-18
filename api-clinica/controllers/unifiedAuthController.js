@@ -1,6 +1,7 @@
 import UnifiedAuthService from '../services/unifiedAuthService.js';
 import logger from '../utils/logger.js';
 import auditoriaService from '../services/auditoriaService.js';
+import { AUTH_ACCOUNT_DISABLED_MESSAGE } from '../utils/constants.js';
 
 /**
  * Controlador unificado de autenticación
@@ -26,27 +27,41 @@ export const loginDoctorAdmin = async (req, res) => {
 
     logger.info('Iniciando login unificado Doctor/Admin', { email });
 
-    // Buscar usuario
     const { Usuario } = await import('../models/associations.js');
-    const usuario = await Usuario.findOne({
-      where: { email: email.trim().toLowerCase(), activo: true }
+    const emailNorm = email.trim().toLowerCase();
+    const usuarioPorEmail = await Usuario.findOne({
+      where: { email: emailNorm },
     });
 
-    if (!usuario) {
-      // Registrar login fallido
+    if (!usuarioPorEmail) {
       await auditoriaService.registrarLoginFallido(email, ip_address, user_agent, 'Usuario no encontrado');
-      
-      // Detectar accesos sospechosos
+
       const deteccion = await auditoriaService.detectarAccesosSospechosos(ip_address, user_agent);
       if (deteccion.esSospechoso) {
         await auditoriaService.registrarAccesoSospechoso(null, ip_address, user_agent, deteccion.sospechas[0].descripcion);
       }
-      
+
       return res.status(401).json({
         success: false,
-        error: 'Credenciales inválidas'
+        error: 'Credenciales inválidas',
       });
     }
+
+    if (!usuarioPorEmail.activo) {
+      await auditoriaService.registrarLoginFallido(
+        email,
+        ip_address,
+        user_agent,
+        'Cuenta desactivada'
+      );
+      return res.status(403).json({
+        success: false,
+        error: AUTH_ACCOUNT_DISABLED_MESSAGE,
+        code: 'ACCOUNT_DISABLED',
+      });
+    }
+
+    const usuario = usuarioPorEmail;
 
     // Validar rol
     if (!['Doctor', 'Admin'].includes(usuario.rol)) {

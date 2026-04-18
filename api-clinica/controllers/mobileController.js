@@ -4,6 +4,7 @@ import pushNotificationService from '../services/pushNotificationService.js';
 import realtimeService from '../services/realtimeService.js';
 import { generateTestToken } from '../utils/mobileAuth.js';
 import logger from '../utils/logger.js';
+import { AUTH_ACCOUNT_DISABLED_MESSAGE } from '../utils/constants.js';
 
 // Registrar dispositivo móvil
 export const registerMobileDevice = async (req, res) => {
@@ -157,18 +158,29 @@ export const mobileLogin = async (req, res) => {
     const emailNorm = (email || '').trim().toLowerCase();
     const passwordStr = typeof password === 'string' ? password : (password != null ? String(password) : '');
 
-    const usuario = await Usuario.findOne({
-      where: { email: emailNorm, activo: true }
+    const usuarioPorEmail = await Usuario.findOne({
+      where: { email: emailNorm },
     });
 
-    if (!usuario) {
+    if (!usuarioPorEmail) {
       logger.info('Mobile login 401: usuario no encontrado', { email: emailNorm });
       return res.status(401).json({
         success: false,
         error: 'Credenciales inválidas',
-        code: 'INVALID_CREDENTIALS'
+        code: 'INVALID_CREDENTIALS',
       });
     }
+
+    if (!usuarioPorEmail.activo) {
+      logger.info('Mobile login 403: cuenta desactivada', { email: emailNorm });
+      return res.status(403).json({
+        success: false,
+        error: AUTH_ACCOUNT_DISABLED_MESSAGE,
+        code: 'ACCOUNT_DISABLED',
+      });
+    }
+
+    const usuario = usuarioPorEmail;
 
     // Solo Doctor y Admin pueden usar este endpoint
     if (!['Doctor', 'Admin'].includes(usuario.rol)) {

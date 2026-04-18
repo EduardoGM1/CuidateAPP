@@ -8,6 +8,7 @@ import { SecurityValidator } from '../middlewares/securityValidator.js';
 import MassAssignmentProtection from '../middlewares/massAssignmentProtection.js';
 import logger from '../utils/logger.js';
 import emailService from '../services/emailService.js';
+import { AUTH_ACCOUNT_DISABLED_MESSAGE } from '../utils/constants.js';
 
 export const register = async (req, res) => {
   try {
@@ -621,17 +622,27 @@ export const login = async (req, res) => {
 
     logger.info('Iniciando login Doctor/Admin', { email });
 
-    // Buscar usuario
-    const usuario = await Usuario.findOne({ 
-      where: { email: email.trim().toLowerCase(), activo: true } 
+    const emailNorm = email.trim().toLowerCase();
+    const usuarioPorEmail = await Usuario.findOne({
+      where: { email: emailNorm },
     });
-    
-    if (!usuario) {
-      return res.status(401).json({ 
+
+    if (!usuarioPorEmail) {
+      return res.status(401).json({
         success: false,
-        error: 'Credenciales inválidas' 
+        error: 'Credenciales inválidas',
       });
     }
+
+    if (!usuarioPorEmail.activo) {
+      return res.status(403).json({
+        success: false,
+        error: AUTH_ACCOUNT_DISABLED_MESSAGE,
+        code: 'ACCOUNT_DISABLED',
+      });
+    }
+
+    const usuario = usuarioPorEmail;
 
     // Validar rol
     if (!['Doctor', 'Admin'].includes(usuario.rol)) {

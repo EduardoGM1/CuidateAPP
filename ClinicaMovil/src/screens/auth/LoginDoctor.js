@@ -93,6 +93,14 @@ const LoginDoctor = ({ navigation }) => {
       if (error.status === 401) {
         errorMessage = 'Email o contraseña incorrectos. Verifica tus credenciales.';
         errorTitle = 'Credenciales Incorrectas';
+      } else if (error.status === 403) {
+        errorMessage =
+          error.message ||
+          'No tienes permiso para acceder con esta cuenta.';
+        errorTitle =
+          error.details?.code === 'ACCOUNT_DISABLED'
+            ? 'Cuenta desactivada'
+            : 'Acceso denegado';
       } else if (error.status === 423) {
         errorMessage = 'Tu cuenta ha sido bloqueada temporalmente por demasiados intentos fallidos. Intenta más tarde.';
         errorTitle = 'Cuenta Bloqueada';
