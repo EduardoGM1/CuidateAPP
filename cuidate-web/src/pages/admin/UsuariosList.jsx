@@ -317,30 +317,131 @@ export default function UsuariosList() {
     }
   };
 
-  const columns = [
-    { key: 'email', label: 'Correo', render: (row) => sanitizeForDisplay(row.email) || '—' },
-    { key: 'rol', label: 'Rol', render: (row) => sanitizeForDisplay(row.rol) || '—' },
-    {
-      key: 'activo',
-      label: 'Estado',
-      render: (row) => <Badge variant={row.activo !== false ? 'success' : 'neutral'}>{row.activo !== false ? 'Activo' : 'Inactivo'}</Badge>,
-    },
-    {
+  const columns = useMemo(() => {
+    const motivoBajaCol = {
+      key: 'motivo_baja',
+      label: 'Motivo de baja',
+      render: (row) => {
+        const rol = (row.rol || '').toString();
+        const motivoPaciente = row.paciente_perfil?.motivo_baja;
+        if (rol === 'Paciente') {
+          const t = motivoPaciente != null ? String(motivoPaciente).trim() : '';
+          if (t) {
+            return (
+              <span
+                style={{
+                  fontSize: '0.875rem',
+                  lineHeight: 1.4,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  display: 'inline-block',
+                  maxWidth: 'min(28rem, 100%)',
+                }}
+              >
+                {sanitizeForDisplay(t)}
+              </span>
+            );
+          }
+          return (
+            <span style={{ fontSize: '0.85rem', color: 'var(--color-texto-secundario)' }} title="Sin motivo GAM en expediente">
+              —
+            </span>
+          );
+        }
+        if (rol === 'Doctor') {
+          return (
+            <span
+              style={{ fontSize: '0.85rem', color: 'var(--color-texto-secundario)' }}
+              title="No hay campo de motivo de baja para doctores; solo se desactiva la cuenta."
+            >
+              —
+            </span>
+          );
+        }
+        return (
+          <span
+            style={{ fontSize: '0.85rem', color: 'var(--color-texto-secundario)' }}
+            title="Cuenta administrativa desactivada."
+          >
+            —
+          </span>
+        );
+      },
+    };
+
+    const base = [
+      { key: 'email', label: 'Correo', render: (row) => sanitizeForDisplay(row.email) || '—' },
+      { key: 'rol', label: 'Rol', render: (row) => sanitizeForDisplay(row.rol) || '—' },
+      {
+        key: 'activo',
+        label: 'Estado',
+        render: (row) => (
+          <Badge variant={row.activo !== false ? 'success' : 'neutral'}>{row.activo !== false ? 'Activo' : 'Inactivo'}</Badge>
+        ),
+      },
+    ];
+
+    if ((params.estado || '').toString().toLowerCase() === 'inactivos') {
+      base.push(motivoBajaCol);
+    }
+
+    base.push({
       key: '_actions',
       label: 'Acciones',
       render: (row) => (
         <span style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <button type="button" onClick={() => handleEdit(row)} style={{ background: 'none', border: 'none', color: 'var(--color-primario)', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.9rem' }}>Editar</button>
+          <button
+            type="button"
+            onClick={() => handleEdit(row)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--color-primario)',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              fontSize: '0.9rem',
+            }}
+          >
+            Editar
+          </button>
           {row.activo !== false && (
-            <button type="button" onClick={() => handleRevokeSessions(row)} style={{ background: 'none', border: 'none', color: 'var(--color-texto-secundario)', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.9rem' }}>Cerrar sesiones</button>
+            <button
+              type="button"
+              onClick={() => handleRevokeSessions(row)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--color-texto-secundario)',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                fontSize: '0.9rem',
+              }}
+            >
+              Cerrar sesiones
+            </button>
           )}
           {row.activo !== false && (
-            <button type="button" onClick={() => handleDesactivar(row)} style={{ background: 'none', border: 'none', color: 'var(--color-error)', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.9rem' }}>Desactivar</button>
+            <button
+              type="button"
+              onClick={() => handleDesactivar(row)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--color-error)',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                fontSize: '0.9rem',
+              }}
+            >
+              Desactivar
+            </button>
           )}
         </span>
       ),
-    },
-  ];
+    });
+
+    return base;
+  }, [params.estado]);
 
   const emptyUsersMessage = (params.search || '').trim()
     ? `No se encontraron usuarios para "${(params.search || '').trim()}".`
