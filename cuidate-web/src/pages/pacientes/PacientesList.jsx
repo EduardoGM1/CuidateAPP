@@ -236,13 +236,35 @@ export default function PacientesList() {
             style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}
           >
             {row.activo !== false ? (
-              <Button type="button" variant="outline" size="small" onClick={() => openDarBaja(row)}>
-                Dar de baja
-              </Button>
+              <button
+                type="button"
+                onClick={() => openDarBaja(row)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-error)',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  fontSize: '0.9rem',
+                }}
+              >
+                Desactivar
+              </button>
             ) : (
-              <Button type="button" variant="primary" size="small" onClick={() => handleReactivarPaciente(row)}>
+              <button
+                type="button"
+                onClick={() => handleReactivarPaciente(row)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-primario)',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  fontSize: '0.9rem',
+                }}
+              >
                 Reactivar
-              </Button>
+              </button>
             )}
           </span>
         ),
