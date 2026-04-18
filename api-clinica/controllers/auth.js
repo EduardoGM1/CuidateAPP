@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Op } from 'sequelize';
 import { Usuario, PasswordResetToken } from '../models/associations.js';
+import sequelize from '../config/db.js';
 import { SecurityValidator } from '../middlewares/securityValidator.js';
 import MassAssignmentProtection from '../middlewares/massAssignmentProtection.js';
 import logger from '../utils/logger.js';
@@ -413,15 +414,6 @@ export const updateUsuario = async (req, res) => {
     if (rol) dataToUpdate.rol = rol;
     if (activo !== undefined) dataToUpdate.activo = activo;
 
-    // Misma regla que DELETE: no desactivar cuenta si el perfil Doctor/Paciente sigue activo
-    if (activo === false && usuario.activo !== false) {
-      const { validateUsuarioCanBeDeactivated } = await import('../services/usuarioDeactivateRules.js');
-      const deactivateCheck = await validateUsuarioCanBeDeactivated(usuario.id_usuario, usuario.rol);
-      if (!deactivateCheck.ok) {
-        return res.status(409).json({ success: false, error: deactivateCheck.error });
-      }
-    }
-    
     // Actualizar contraseña si se proporciona
     if (password) {
       if (password.length < 6) {
@@ -432,8 +424,22 @@ export const updateUsuario = async (req, res) => {
       }
       dataToUpdate.password_hash = await bcrypt.hash(password, 10);
     }
-    
-    await usuario.update(dataToUpdate);
+
+    const mustCascadeDeactivate = activo === false && usuario.activo !== false;
+    if (mustCascadeDeactivate) {
+      const t = await sequelize.transaction();
+      try {
+        const { cascadeDeactivateLinkedProfiles } = await import('../services/usuarioDeactivateRules.js');
+        await cascadeDeactivateLinkedProfiles(usuario.id_usuario, usuario.rol, t);
+        await usuario.update(dataToUpdate, { transaction: t });
+        await t.commit();
+      } catch (txErr) {
+        await t.rollback();
+        throw txErr;
+      }
+    } else {
+      await usuario.update(dataToUpdate);
+    }
     
     logger.info(`Usuario ID ${id} actualizado exitosamente`);
     
@@ -484,14 +490,16 @@ export const deleteUsuario = async (req, res) => {
       });
     }
     
-    const { validateUsuarioCanBeDeactivated } = await import('../services/usuarioDeactivateRules.js');
-    const deactivateCheck = await validateUsuarioCanBeDeactivated(usuario.id_usuario, usuario.rol);
-    if (!deactivateCheck.ok) {
-      return res.status(409).json({ success: false, error: deactivateCheck.error });
+    const t = await sequelize.transaction();
+    try {
+      const { cascadeDeactivateLinkedProfiles } = await import('../services/usuarioDeactivateRules.js');
+      await cascadeDeactivateLinkedProfiles(usuario.id_usuario, usuario.rol, t);
+      await usuario.update({ activo: false }, { transaction: t });
+      await t.commit();
+    } catch (txErr) {
+      await t.rollback();
+      throw txErr;
     }
-    
-    // En lugar de eliminar físicamente, desactivamos el usuario
-    await usuario.update({ activo: false });
     
     logger.info(`Usuario ${usuario.email} desactivado exitosamente`);
     

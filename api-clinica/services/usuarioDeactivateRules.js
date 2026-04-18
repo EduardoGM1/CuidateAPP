@@ -1,43 +1,35 @@
 /**
- * Reglas compartidas antes de marcar un registro de Usuario como inactivo (desactivar cuenta).
- * Debe coincidir con la lógica usada en DELETE /api/auth/usuarios/:id y en PUT cuando activo pasa a false.
+ * Al desactivar la cuenta de un Usuario con rol Doctor o Paciente,
+ * se desactiva también el perfil clínico vinculado (misma transacción).
+ * Evita el error 409 y deja datos coherentes en un solo paso desde «Usuarios».
  */
 
 /**
  * @param {number|string} idUsuario
- * @param {string} rol - Rol actual del usuario en BD (Doctor, Paciente, Admin, …)
- * @returns {Promise<{ ok: true } | { ok: false, error: string }>}
+ * @param {string} rol - Rol actual del usuario en BD
+ * @param {import('sequelize').Transaction} [transaction]
  */
-export async function validateUsuarioCanBeDeactivated(idUsuario, rol) {
+export async function cascadeDeactivateLinkedProfiles(idUsuario, rol, transaction) {
   const id = parseInt(idUsuario, 10);
   if (!id || Number.isNaN(id)) {
-    return { ok: false, error: 'ID de usuario inválido' };
+    throw new Error('ID de usuario inválido');
   }
 
   const r = (rol || '').toString();
   const { Doctor, Paciente } = await import('../models/associations.js');
+  const opts = transaction ? { transaction } : {};
 
   if (r === 'Doctor' || r === 'doctor') {
-    const doctorAsociado = await Doctor.findOne({ where: { id_usuario: id } });
-    if (doctorAsociado && doctorAsociado.activo) {
-      return {
-        ok: false,
-        error:
-          'No se puede desactivar la cuenta porque está vinculada a un doctor activo. Desactiva primero el doctor en la sección Doctores.',
-      };
+    const doctor = await Doctor.findOne({ where: { id_usuario: id }, ...opts });
+    if (doctor?.activo) {
+      await doctor.update({ activo: false }, opts);
     }
   }
 
   if (r === 'Paciente' || r === 'paciente') {
-    const pacienteAsociado = await Paciente.findOne({ where: { id_usuario: id } });
-    if (pacienteAsociado && pacienteAsociado.activo) {
-      return {
-        ok: false,
-        error:
-          'No se puede desactivar la cuenta porque está vinculada a un paciente activo. Desactiva primero el paciente.',
-      };
+    const paciente = await Paciente.findOne({ where: { id_usuario: id }, ...opts });
+    if (paciente?.activo) {
+      await paciente.update({ activo: false }, opts);
     }
   }
-
-  return { ok: true };
 }
