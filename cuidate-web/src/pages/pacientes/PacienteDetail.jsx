@@ -9,7 +9,11 @@ import { createCita, getCitaById } from '../../api/citas';
 import { getMedicamentos } from '../../api/medicamentos';
 import { useAuthStore } from '../../stores/authStore';
 import { getExpedienteHTML, getFormaData, getFormaMesesDisponibles, openNotasMedicasPDF } from '../../api/reportes';
-import { downloadFormaExcel } from '../../utils/formaExcelUtils';
+import {
+  downloadFormaExcel,
+  EXCEL_FORMATO_REGISTRO_MENSUAL_FILE_PREFIX,
+  EXCEL_FORMATO_REGISTRO_MENSUAL_LABEL,
+} from '../../utils/formaExcelUtils';
 import {
   getPacienteCitas,
   getPacienteSignosVitales,
@@ -3418,7 +3422,7 @@ export default function PacienteDetail() {
           </div>
           <div className="patient-header-actions" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
             <Button variant="outline" type="button" onClick={() => setFormaModalOpen(true)}>
-              Descargar Excel
+              {EXCEL_FORMATO_REGISTRO_MENSUAL_LABEL}
             </Button>
             <Button
               variant="outline"
@@ -3614,14 +3618,14 @@ export default function PacienteDetail() {
         )}
       </Modal>
 
-      {/* Modal FORMA (solo web): periodos con registros del paciente */}
+      {/* Modal Excel formato registro mensual (solo web): periodos con registros del paciente */}
       <Modal
         className="modal-forma-periodo"
         open={formaModalOpen}
         onClose={() => { setFormaModalOpen(false); setPeriodoSeleccionado(''); }}
-        title="Descargar FORMA (Registro Mensual GAM)"
+        title={`Descargar ${EXCEL_FORMATO_REGISTRO_MENSUAL_LABEL}`}
         cancelText="Cancelar"
-        okText="Descargar Excel"
+        okText="Descargar archivo"
         confirmLoading={formaLoading}
         onOk={async () => {
           if (!periodoSeleccionado) return;
@@ -3632,7 +3636,10 @@ export default function PacienteDetail() {
           setFormaError(null);
           try {
             const data = await getFormaData({ idPaciente: parsedId, mes, anio });
-            downloadFormaExcel(data, `forma-paciente-${parsedId}-${anio}-${String(mes).padStart(2, '0')}.xlsx`);
+            downloadFormaExcel(
+              data,
+              `${EXCEL_FORMATO_REGISTRO_MENSUAL_FILE_PREFIX}-paciente-${parsedId}-${anio}-${String(mes).padStart(2, '0')}.xlsx`,
+            );
             message.success('Descarga iniciada');
             setFormaModalOpen(false);
             setPeriodoSeleccionado('');

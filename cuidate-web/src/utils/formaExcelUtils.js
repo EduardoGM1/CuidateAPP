@@ -1,10 +1,22 @@
 /**
- * Genera un libro Excel en formato FORMA (Formato de Registro Mensual de Actividades GAM - SIC).
+ * Genera un libro Excel alineado al formato de registro mensual GAM - SIC.
  * Misma estructura, colores y diseño que el formato oficial ODS del SIC.
  * Solo para uso en la app web.
  */
 
 import ExcelJS from 'exceljs';
+
+/** Texto visible en UI y en el libro (sustituye la palabra «FORMA» en etiquetas). */
+export const EXCEL_FORMATO_REGISTRO_MENSUAL_LABEL = 'Excel formato de registro mensual';
+
+/** Prefijo de archivo descargado (sin espacios ni tildes, compatible con todos los sistemas). */
+export const EXCEL_FORMATO_REGISTRO_MENSUAL_FILE_PREFIX = 'excel-formato-registro-mensual';
+
+/**
+ * Nombre de la hoja de cálculo (Excel limita a 31 caracteres).
+ * Debe ser ≤ 31.
+ */
+const EXCEL_FORMATO_REGISTRO_MENSUAL_SHEET_NAME = 'Excel formato registro mensual';
 
 /** Colores del formato oficial SIC (ODS - FORMATO DE REGISTRO MENSUAL agosto SIC 2025) */
 const COLORS = {
@@ -136,7 +148,7 @@ function thinBorder() {
 /**
  * Genera el libro Excel con formato SIC (colores, secciones, bordes).
  * @param {object} data - { cabecera: object, filas: object[] } desde getFormaData
- * @param {string} [nombreHoja='FORMA'] - Nombre de la hoja
+ * @param {string} [nombreHoja] - Nombre de la hoja (por defecto etiqueta corta ≤31 caracteres)
  * @returns {Promise<ArrayBuffer>}
  */
 /** Claves y valores por defecto de cabecera FORMA (por si la API devuelve objeto incompleto). */
@@ -173,11 +185,12 @@ function normalizeCabecera(cabecera) {
   };
 }
 
-export async function buildFormaExcel(data, nombreHoja = 'FORMA') {
+export async function buildFormaExcel(data, nombreHoja = EXCEL_FORMATO_REGISTRO_MENSUAL_SHEET_NAME) {
   const { cabecera: rawCabecera = {}, filas = [] } = data;
   const cabecera = normalizeCabecera(rawCabecera);
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet(nombreHoja, { views: [{ state: 'frozen', ySplit: 15 }] });
+  const nombreHojaFinal = String(nombreHoja || EXCEL_FORMATO_REGISTRO_MENSUAL_SHEET_NAME).slice(0, 31);
+  const ws = wb.addWorksheet(nombreHojaFinal, { views: [{ state: 'frozen', ySplit: 15 }] });
 
   let row = 1;
 
@@ -186,7 +199,7 @@ export async function buildFormaExcel(data, nombreHoja = 'FORMA') {
     'CENTRO NACIONAL DE PROGRAMAS PREVENTIVOS Y CONTROL DE ENFERMEDADES',
     'PROGRAMA DE SALUD EN EL ADULTO Y ANCIANO',
     'GRUPOS DE AYUDA MUTUA ENFERMEDADES CRÓNICAS',
-    'FORMATO DE REGISTRO MENSUAL DE ACTIVIDADES GAM (FORMA)',
+    `FORMATO DE REGISTRO MENSUAL DE ACTIVIDADES GAM (${EXCEL_FORMATO_REGISTRO_MENSUAL_LABEL})`,
   ];
   titleLines.forEach((text) => {
     const cell = ws.getCell(row, 1);
@@ -317,7 +330,7 @@ export async function buildFormaExcel(data, nombreHoja = 'FORMA') {
 }
 
 /**
- * Descarga el Excel FORMA en el navegador (mismo formato y colores que el ODS SIC).
+ * Descarga el Excel de formato de registro mensual en el navegador (mismo diseño que el ODS SIC).
  * @param {object} data - { cabecera, filas } desde getFormaData
  * @param {string} [filename] - Nombre del archivo
  */
@@ -328,7 +341,7 @@ export async function downloadFormaExcel(data, filename) {
   });
   const name =
     filename ||
-    `forma-registro-mensual-${data.cabecera?.anio ?? '2025'}-${String(data.cabecera?.mes ?? '').padStart(2, '0')}.xlsx`;
+    `${EXCEL_FORMATO_REGISTRO_MENSUAL_FILE_PREFIX}-${data.cabecera?.anio ?? '2025'}-${String(data.cabecera?.mes ?? '').padStart(2, '0')}.xlsx`;
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

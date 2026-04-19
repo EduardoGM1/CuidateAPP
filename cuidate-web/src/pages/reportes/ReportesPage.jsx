@@ -10,7 +10,11 @@ import { Card, Button, Input, Select } from '../../components/ui';
 import { LoadingSpinner } from '../../components/ui';
 import ComorbilidadesHeatmap from '../../components/reportes/ComorbilidadesHeatmap';
 import { ReportesBarChart, ReportesPieChart, ReportesHorizontalBarChart } from '../../components/reportes/ReportesCharts';
-import { downloadFormaExcel } from '../../utils/formaExcelUtils';
+import {
+  downloadFormaExcel,
+  EXCEL_FORMATO_REGISTRO_MENSUAL_FILE_PREFIX,
+  EXCEL_FORMATO_REGISTRO_MENSUAL_LABEL,
+} from '../../utils/formaExcelUtils';
 import StatCard, { IconUsers, IconUser, IconCalendar, IconTrendingUp, IconMessageCircle, IconAlertTriangle } from '../../components/dashboard/StatCard';
 import { useAuthStore } from '../../stores/authStore';
 import { sanitizeForDisplay } from '../../utils/sanitize';
@@ -185,7 +189,7 @@ function ReporteFormaExcelCard() {
       apiParams.modulo = parseInt(filtroModulo, 10);
     }
 
-    let filename = 'forma-pacientes.xlsx';
+    let filename = `${EXCEL_FORMATO_REGISTRO_MENSUAL_FILE_PREFIX}-pacientes.xlsx`;
 
     if (modoFecha === 'rango') {
       if (!fechaInicio || !fechaFin) {
@@ -198,7 +202,7 @@ function ReporteFormaExcelCard() {
       apiParams.fechaFin = fechaFin;
       const a = fechaInicio.replace(/-/g, '');
       const b = fechaFin.replace(/-/g, '');
-      filename = `forma-pacientes-${a}-${b}.xlsx`;
+      filename = `${EXCEL_FORMATO_REGISTRO_MENSUAL_FILE_PREFIX}-pacientes-${a}-${b}.xlsx`;
     } else {
       let mes = parseInt(mesSeleccionado, 10);
       let anio = parseInt(anioSeleccionado, 10);
@@ -224,7 +228,7 @@ function ReporteFormaExcelCard() {
       apiParams.mes = mes;
       apiParams.anio = anio;
       if (dia != null) apiParams.dia = dia;
-      const fileNameBase = `forma-pacientes-${anio}-${String(mes).padStart(2, '0')}`;
+      const fileNameBase = `${EXCEL_FORMATO_REGISTRO_MENSUAL_FILE_PREFIX}-pacientes-${anio}-${String(mes).padStart(2, '0')}`;
       filename = dia != null ? `${fileNameBase}-${String(dia).padStart(2, '0')}.xlsx` : `${fileNameBase}.xlsx`;
     }
 
@@ -240,7 +244,7 @@ function ReporteFormaExcelCard() {
       }
       message.success('Descarga iniciada');
     } catch (err) {
-      const msg = err?.response?.data?.error || err?.message || 'Error al descargar FORMA';
+      const msg = err?.response?.data?.error || err?.message || `Error al descargar ${EXCEL_FORMATO_REGISTRO_MENSUAL_LABEL}`;
       setError(msg);
       message.error(msg);
     } finally {
@@ -261,11 +265,11 @@ function ReporteFormaExcelCard() {
 
   return (
     <ReporteCardWrapper
-      title="FORMA Excel (listado de pacientes)"
+      title={`${EXCEL_FORMATO_REGISTRO_MENSUAL_LABEL} (listado de pacientes)`}
       description={
         isAdmin()
-          ? 'Exporta un Excel con el FORMA de todos los pacientes activos (opcional: filtra por módulo). Puedes elegir mes completo, un día o un rango de fechas (máx. 370 días).'
-          : 'Exporta un Excel con el FORMA de tus pacientes asignados. Elige mes completo, un día o un rango de fechas (máx. 370 días).'
+          ? `Exporta el ${EXCEL_FORMATO_REGISTRO_MENSUAL_LABEL} para todos los pacientes activos (opcional: filtra por módulo). Puedes elegir mes completo, un día o un rango de fechas (máx. 370 días).`
+          : `Exporta el ${EXCEL_FORMATO_REGISTRO_MENSUAL_LABEL} para tus pacientes asignados. Elige mes completo, un día o un rango de fechas (máx. 370 días).`
       }
     >
       {error && (
