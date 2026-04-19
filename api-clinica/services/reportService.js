@@ -1180,7 +1180,7 @@ class ReportService {
     const localidadVal = p && p.localidad != null && p.localidad !== '' ? String(p.localidad).trim() : '';
     const institucionVal = p && p.institucion_salud != null && p.institucion_salud !== '' ? String(p.institucion_salud).trim() : '';
     const nombreModulo = p?.Modulo?.nombre_modulo ? String(p.Modulo.nombre_modulo).trim() : '';
-    const primerDoctor = Array.isArray(p?.Doctores) && p.Doctores.length > 0 ? p.Doctores[0] : null;
+    const primerDoctor = Array.isArray(p?.Doctors) && p.Doctors.length > 0 ? p.Doctors[0] : null;
     const institucionDoctor = primerDoctor?.institucion_hospitalaria != null && primerDoctor.institucion_hospitalaria !== ''
       ? String(primerDoctor.institucion_hospitalaria).trim()
       : '';
@@ -1309,7 +1309,7 @@ class ReportService {
     return Paciente.findByPk(idPaciente, {
       include: [
         { model: Modulo, attributes: ['id_modulo', 'nombre_modulo'], required: false },
-        { model: Doctor, as: 'Doctores', attributes: ['id_doctor', 'institucion_hospitalaria', 'id_modulo'], through: { attributes: [] }, required: false },
+        { model: Doctor, as: 'Doctors', attributes: ['id_doctor', 'institucion_hospitalaria', 'id_modulo'], through: { attributes: [] }, required: false },
         {
           model: Comorbilidad,
           as: 'Comorbilidades',
