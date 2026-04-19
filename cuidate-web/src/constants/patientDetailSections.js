@@ -16,7 +16,7 @@ export const PATIENT_DETAIL_SECTIONS = [
   { id: 'red-apoyo', label: 'Red de apoyo', icon: '👥' },
   { id: 'vacunacion', label: 'Vacunación', icon: '💉' },
   { id: 'comorbilidades', label: 'Comorbilidades', icon: '📊' },
-  { id: 'detecciones', label: 'Detecciones complicaciones', icon: '⚠️' },
+  { id: 'detecciones', label: 'Detecciones', icon: '⚠️' },
   { id: 'sesiones-educativas', label: 'Sesiones educativas', icon: '📚' },
   { id: 'salud-bucal', label: 'Salud bucal', icon: '🦷' },
   { id: 'detecciones-tb', label: 'Detección tuberculosis', icon: '🫁' },
