@@ -6,6 +6,7 @@ import { toDateString } from '../utils/reportUtils';
 const REPORTES = API_PATHS.REPORTES;
 const ESTADISTICAS_HTML = API_PATHS.REPORTES_ESTADISTICAS_HTML;
 const REPORTES_FORMA = API_PATHS.REPORTES_FORMA;
+const REPORTES_FORMA_LISTA = API_PATHS.REPORTES_FORMA_LISTA;
 const REPORTES_FORMA_MESES_DISPONIBLES = API_PATHS.REPORTES_FORMA_MESES_DISPONIBLES;
 
 /**
@@ -90,6 +91,25 @@ export async function getFormaData(params) {
   const url = `${REPORTES_FORMA(id)}?${q.toString()}`;
   const { data } = await client.get(url, { timeout: 60000 });
   return data?.data != null ? data.data : data;
+}
+
+/**
+ * FORMA para todos los pacientes visibles (Admin / Doctor) en un periodo.
+ * @param {{ mes?: number, anio?: number, dia?: number, fechaInicio?: string, fechaFin?: string, modulo?: number }} params
+ * @returns {Promise<{ cabecera: object, filas: object[], truncado?: boolean }>}
+ */
+export async function getFormaListaPacientes(params = {}) {
+  const q = new URLSearchParams();
+  if (params.mes != null && params.mes !== '') q.set('mes', String(params.mes));
+  if (params.anio != null && params.anio !== '') q.set('anio', String(params.anio));
+  if (params.dia != null && params.dia !== '') q.set('dia', String(params.dia));
+  if (params.fechaInicio) q.set('fechaInicio', toDateString(params.fechaInicio));
+  if (params.fechaFin) q.set('fechaFin', toDateString(params.fechaFin));
+  if (params.modulo != null && params.modulo > 0) q.set('modulo', String(params.modulo));
+  const url = `${REPORTES_FORMA_LISTA}?${q.toString()}`;
+  const { data } = await client.get(url, { timeout: 120000 });
+  const payload = data?.data != null ? data.data : data;
+  return payload;
 }
 
 /**

@@ -4,7 +4,7 @@ import { openReporteEstadisticasPDF } from '../../api/reportes';
 import { getPacientes } from '../../api/pacientes';
 import { getModulos } from '../../api/modulos';
 import { getDoctorSummary } from '../../api/dashboard';
-import { getFormaData } from '../../api/reportes';
+import { getFormaListaPacientes } from '../../api/reportes';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, Input, Select } from '../../components/ui';
 import { LoadingSpinner } from '../../components/ui';
@@ -159,85 +159,85 @@ function ReporteEstadisticasCard() {
 }
 
 function ReporteFormaExcelCard() {
-  const [pacientes, setPacientes] = useState([]);
-  const [pacientesLoading, setPacientesLoading] = useState(false);
+  const isAdmin = useAuthStore((s) => s.isAdmin);
+  const [modulos, setModulos] = useState([]);
+  const [filtroModulo, setFiltroModulo] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [pacienteId, setPacienteId] = useState('');
   const [modoFecha, setModoFecha] = useState('mes');
   const [mesSeleccionado, setMesSeleccionado] = useState(String(new Date().getMonth() + 1));
   const [anioSeleccionado, setAnioSeleccionado] = useState(String(new Date().getFullYear()));
   const [fechaDia, setFechaDia] = useState('');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
 
   useEffect(() => {
-    let cancelled = false;
-    setPacientesLoading(true);
-    getPacientes({ limit: PAGE_SIZE_MAX, estado: 'activos' })
-      .then((res) => {
-        if (cancelled) return;
-        const list = res?.pacientes ?? (Array.isArray(res) ? res : []);
-        setPacientes(Array.isArray(list) ? list : []);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setPacientes([]);
-        setError(err?.response?.data?.error || err?.message || 'Error al cargar pacientes');
-      })
-      .finally(() => {
-        if (!cancelled) setPacientesLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    if (!isAdmin()) return;
+    getModulos()
+      .then((list) => setModulos(Array.isArray(list) ? list : []))
+      .catch(() => setModulos([]));
+  }, [isAdmin]);
 
   const handleDescargar = useCallback(async () => {
     setError(null);
-    const parsedPacienteId = parseInt(pacienteId, 10);
-    if (!parsedPacienteId) {
-      const msg = 'Selecciona un paciente';
-      setError(msg);
-      message.error(msg);
-      return;
+    const apiParams = {};
+    if (isAdmin() && filtroModulo && parseInt(filtroModulo, 10) > 0) {
+      apiParams.modulo = parseInt(filtroModulo, 10);
     }
 
-    let mes = parseInt(mesSeleccionado, 10);
-    let anio = parseInt(anioSeleccionado, 10);
-    let dia = null;
+    let filename = 'forma-pacientes.xlsx';
 
-    if (modoFecha === 'dia') {
-      if (!fechaDia) {
-        const msg = 'Selecciona una fecha (día)';
+    if (modoFecha === 'rango') {
+      if (!fechaInicio || !fechaFin) {
+        const msg = 'Indica fecha de inicio y fecha de fin del rango';
         setError(msg);
         message.error(msg);
         return;
       }
-      const [anioStr, mesStr, diaStr] = fechaDia.split('-');
-      anio = parseInt(anioStr, 10);
-      mes = parseInt(mesStr, 10);
-      dia = parseInt(diaStr, 10);
-    }
-
-    if (!mes || mes < 1 || mes > 12 || !anio || anio < 2000 || anio > 2100) {
-      const msg = 'Mes o año inválido';
-      setError(msg);
-      message.error(msg);
-      return;
+      apiParams.fechaInicio = fechaInicio;
+      apiParams.fechaFin = fechaFin;
+      const a = fechaInicio.replace(/-/g, '');
+      const b = fechaFin.replace(/-/g, '');
+      filename = `forma-pacientes-${a}-${b}.xlsx`;
+    } else {
+      let mes = parseInt(mesSeleccionado, 10);
+      let anio = parseInt(anioSeleccionado, 10);
+      let dia = null;
+      if (modoFecha === 'dia') {
+        if (!fechaDia) {
+          const msg = 'Selecciona una fecha (día)';
+          setError(msg);
+          message.error(msg);
+          return;
+        }
+        const [anioStr, mesStr, diaStr] = fechaDia.split('-');
+        anio = parseInt(anioStr, 10);
+        mes = parseInt(mesStr, 10);
+        dia = parseInt(diaStr, 10);
+      }
+      if (!mes || mes < 1 || mes > 12 || !anio || anio < 2000 || anio > 2100) {
+        const msg = 'Mes o año inválido';
+        setError(msg);
+        message.error(msg);
+        return;
+      }
+      apiParams.mes = mes;
+      apiParams.anio = anio;
+      if (dia != null) apiParams.dia = dia;
+      const fileNameBase = `forma-pacientes-${anio}-${String(mes).padStart(2, '0')}`;
+      filename = dia != null ? `${fileNameBase}-${String(dia).padStart(2, '0')}.xlsx` : `${fileNameBase}.xlsx`;
     }
 
     setLoading(true);
     try {
-      const data = await getFormaData({
-        idPaciente: parsedPacienteId,
-        mes,
-        anio,
-        ...(dia != null ? { dia } : {}),
-      });
-      const fileNameBase = `forma-paciente-${parsedPacienteId}-${anio}-${String(mes).padStart(2, '0')}`;
-      const filename = dia != null
-        ? `${fileNameBase}-${String(dia).padStart(2, '0')}.xlsx`
-        : `${fileNameBase}.xlsx`;
-      await downloadFormaExcel(data, filename);
+      const data = await getFormaListaPacientes(apiParams);
+      const { truncado, ...excelPayload } = data;
+      await downloadFormaExcel(excelPayload, filename);
+      if (truncado) {
+        message.warning(
+          'La lista supera el límite de exportación: se incluyen los primeros pacientes según el orden del sistema.',
+        );
+      }
       message.success('Descarga iniciada');
     } catch (err) {
       const msg = err?.response?.data?.error || err?.message || 'Error al descargar FORMA';
@@ -246,34 +246,50 @@ function ReporteFormaExcelCard() {
     } finally {
       setLoading(false);
     }
-  }, [pacienteId, modoFecha, mesSeleccionado, anioSeleccionado, fechaDia]);
+  }, [
+    isAdmin,
+    filtroModulo,
+    modoFecha,
+    mesSeleccionado,
+    anioSeleccionado,
+    fechaDia,
+    fechaInicio,
+    fechaFin,
+  ]);
+
+  const canFilterByModulo = isAdmin() && modulos.length > 0;
 
   return (
     <ReporteCardWrapper
-      title="FORMA Excel por paciente"
-      description="Descarga el FORMA del paciente en Excel filtrando por mes completo o por un día específico."
+      title="FORMA Excel (listado de pacientes)"
+      description={
+        isAdmin()
+          ? 'Exporta un Excel con el FORMA de todos los pacientes activos (opcional: filtra por módulo). Puedes elegir mes completo, un día o un rango de fechas (máx. 370 días).'
+          : 'Exporta un Excel con el FORMA de tus pacientes asignados. Elige mes completo, un día o un rango de fechas (máx. 370 días).'
+      }
     >
       {error && (
         <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.875rem' }}>
           {error}
         </p>
       )}
-      <div className="form-row-inline" style={{ marginBottom: '1rem' }}>
-        <Select
-          label="Paciente"
-          placeholder={pacientesLoading ? 'Cargando pacientes…' : 'Selecciona paciente'}
-          value={pacienteId || undefined}
-          onChange={(v) => setPacienteId(v ?? '')}
-          disabled={pacientesLoading}
-          options={(pacientes || []).map((p) => {
-            const id = p.id_paciente ?? p.id;
-            const nombre = sanitizeForDisplay(
-              [p.nombre, p.apellido_paterno, p.apellido_materno].filter(Boolean).join(' ')
-            ) || `Paciente ${id}`;
-            return { value: String(id), label: nombre };
-          })}
-          style={{ marginBottom: 0, minWidth: 280 }}
-        />
+      <div className="form-row-inline" style={{ marginBottom: '1rem', flexWrap: 'wrap' }}>
+        {canFilterByModulo && (
+          <Select
+            label="Módulo"
+            placeholder="Todos"
+            value={filtroModulo || undefined}
+            onChange={(v) => setFiltroModulo(v ?? '')}
+            options={[
+              { value: '', label: 'Todos' },
+              ...modulos.map((m) => ({
+                value: String(m.id_modulo ?? m.id),
+                label: sanitizeForDisplay(m.nombre_modulo ?? m.nombre) || '—',
+              })),
+            ]}
+            style={{ marginBottom: 0, minWidth: 160 }}
+          />
+        )}
         <Select
           label="Filtrar por"
           value={modoFecha}
@@ -281,8 +297,9 @@ function ReporteFormaExcelCard() {
           options={[
             { value: 'mes', label: 'Mes' },
             { value: 'dia', label: 'Día' },
+            { value: 'rango', label: 'Rango de fechas' },
           ]}
-          style={{ marginBottom: 0, minWidth: 140 }}
+          style={{ marginBottom: 0, minWidth: 160 }}
         />
         {modoFecha === 'mes' ? (
           <>
@@ -301,7 +318,7 @@ function ReporteFormaExcelCard() {
               style={{ marginBottom: 0, width: 110 }}
             />
           </>
-        ) : (
+        ) : modoFecha === 'dia' ? (
           <Input
             label="Fecha (día)"
             type="date"
@@ -309,14 +326,26 @@ function ReporteFormaExcelCard() {
             onChange={(e) => setFechaDia(e.target.value)}
             style={{ marginBottom: 0, minWidth: 180 }}
           />
+        ) : (
+          <>
+            <Input
+              label="Desde"
+              type="date"
+              value={fechaInicio}
+              onChange={(e) => setFechaInicio(e.target.value)}
+              style={{ marginBottom: 0 }}
+            />
+            <Input
+              label="Hasta"
+              type="date"
+              value={fechaFin}
+              onChange={(e) => setFechaFin(e.target.value)}
+              style={{ marginBottom: 0 }}
+            />
+          </>
         )}
       </div>
-      <Button
-        variant="outline"
-        type="button"
-        disabled={loading || pacientesLoading}
-        onClick={handleDescargar}
-      >
+      <Button variant="outline" type="button" disabled={loading} onClick={handleDescargar}>
         {loading ? 'Generando…' : 'Descargar Excel'}
       </Button>
     </ReporteCardWrapper>

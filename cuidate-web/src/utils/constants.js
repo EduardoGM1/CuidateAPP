@@ -34,6 +34,7 @@ export const API_PATHS = {
   REPORTES: '/api/reportes',
   REPORTES_ESTADISTICAS_HTML: '/api/reportes/estadisticas/html',
   REPORTES_FORMA: (id) => `/api/reportes/forma/${id}`,
+  REPORTES_FORMA_LISTA: '/api/reportes/forma-lista',
   REPORTES_FORMA_MESES_DISPONIBLES: (id) => `/api/reportes/forma/${id}/meses-disponibles`,
   REPORTES_EXPEDIENTE_HTML: (id) => `/api/reportes/expediente/${id}/html`,
   REPORTES_NOTAS_MEDICAS_HTML: (id) => `/api/reportes/notas-medicas/${id}/html`,

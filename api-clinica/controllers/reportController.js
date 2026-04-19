@@ -252,6 +252,93 @@ export const getFormaMesesDisponibles = async (req, res) => {
 };
 
 /**
+ * FORMA Excel: todos los pacientes visibles (Admin: activos; Doctor: asignados) en el periodo.
+ * GET /api/reportes/forma-lista?mes=4&anio=2026 | ?mes=4&anio=2026&dia=19 | ?fechaInicio=2026-04-01&fechaFin=2026-04-30
+ * Query opcional (solo Admin): modulo=id_modulo
+ */
+export const getFormaListaPacientes = async (req, res) => {
+  try {
+    const rol = (req.user?.rol || req.user?.user_type || '').toLowerCase();
+    const isAdmin = rol === 'admin' || rol === 'administrador';
+    const fechaInicio = req.query.fechaInicio != null ? String(req.query.fechaInicio).trim() : '';
+    const fechaFin = req.query.fechaFin != null ? String(req.query.fechaFin).trim() : '';
+    const mes = req.query.mes != null && req.query.mes !== '' ? parseInt(req.query.mes, 10) : null;
+    const anio = req.query.anio != null && req.query.anio !== '' ? parseInt(req.query.anio, 10) : null;
+    const dia = req.query.dia != null && req.query.dia !== '' ? parseInt(req.query.dia, 10) : null;
+    const moduloRaw = req.query.modulo;
+    const modulo = isAdmin && moduloRaw != null && String(moduloRaw).trim() !== ''
+      ? parseInt(String(moduloRaw), 10)
+      : null;
+
+    if ((fechaInicio && !fechaFin) || (!fechaInicio && fechaFin)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Para rango de fechas debes enviar fechaInicio y fechaFin (YYYY-MM-DD)',
+      });
+    }
+
+    if (!fechaInicio && (!Number.isInteger(mes) || !Number.isInteger(anio))) {
+      return res.status(400).json({
+        success: false,
+        error: 'Indica mes y año, o bien fechaInicio y fechaFin',
+      });
+    }
+
+    if (Number.isInteger(mes) && Number.isInteger(anio) && dia != null) {
+      const maxDia = new Date(anio, mes, 0).getDate();
+      if (!Number.isInteger(dia) || dia < 1 || dia > maxDia) {
+        return res.status(400).json({
+          success: false,
+          error: `Parámetro dia inválido para ${mes}/${anio}`,
+        });
+      }
+    }
+
+    if (modulo != null && (!Number.isInteger(modulo) || modulo <= 0)) {
+      return res.status(400).json({ success: false, error: 'Parámetro modulo inválido' });
+    }
+
+    const data = await reportService.getFormaListaPacientes({
+      user: req.user,
+      mes,
+      anio,
+      dia: Number.isInteger(dia) ? dia : null,
+      fechaInicio: fechaInicio || undefined,
+      fechaFin: fechaFin || undefined,
+      modulo: Number.isInteger(modulo) && modulo > 0 ? modulo : null,
+    });
+
+    const c = data.cabecera || {};
+    res.json({
+      truncado: !!data.truncado,
+      cabecera: {
+        institucion: c.institucion ?? '',
+        entidad: c.entidad ?? '',
+        jurisdiccion: c.jurisdiccion ?? '',
+        municipio: c.municipio ?? '',
+        unidadMedica: c.unidadMedica ?? '',
+        nombreGAM: c.nombreGAM ?? '',
+        etapa: c.etapa ?? '',
+        mes: c.mes,
+        anio: c.anio,
+        mesNombre: c.mesNombre ?? '',
+        coordinador: c.coordinador ?? '',
+      },
+      filas: Array.isArray(data.filas) ? data.filas : [],
+    });
+  } catch (error) {
+    logger.error('Error getFormaListaPacientes:', error);
+    const msg = error?.message || 'Error al generar FORMA';
+    const forbidden = /solo admin|solo el administrador|solo admin o doctor/i.test(msg);
+    const bad = /parámetro|fecha|rango|doctor no encontrado|YYYY-MM-DD|370 días/i.test(msg);
+    const status = forbidden ? 403 : bad ? 400 : 500;
+    if (!res.headersSent) {
+      res.status(status).json({ success: false, error: msg });
+    }
+  }
+};
+
+/**
  * Datos para exportar FORMA (Formato de Registro Mensual GAM - SIC).
  * GET /api/reportes/forma/:idPaciente?mes=8&anio=2025
  * Solo web: la app móvil no usa este endpoint. Datos de un solo paciente para la fecha.

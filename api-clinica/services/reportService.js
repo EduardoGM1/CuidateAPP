@@ -23,7 +23,8 @@ import {
   DeteccionComplicacion,
   SaludBucal,
   DeteccionTuberculosis,
-  SesionEducativa
+  SesionEducativa,
+  DoctorPaciente
 } from '../models/associations.js';
 import logger from '../utils/logger.js';
 import EncryptionService from './encryptionService.js';
@@ -59,14 +60,8 @@ function decryptForReport(value) {
 const MESES_NOMBRE = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 import DashboardService from './dashboardService.js';
 
-/** Nombre completo en formato "Apellido paterno Apellido materno Nombre" (ej. González Morales José). */
-function formatNombreCompleto(obj) {
-  if (obj == null || typeof obj !== 'object') return '';
-  const ap = String(obj.apellido_paterno ?? obj.apellido ?? '').trim();
-  const am = String(obj.apellido_materno ?? '').trim();
-  const n = String(obj.nombre ?? '').trim();
-  return [ap, am, n].filter(Boolean).join(' ') || '';
-}
+/** Máximo de pacientes por exportación FORMA masiva (evita timeouts). */
+const FORMA_LISTA_MAX_PACIENTES = 200;
 
 /** Ancho y alto por defecto para gráficas SVG en el reporte PDF */
 const CHART_WIDTH = 420;
@@ -1107,6 +1102,225 @@ class ReportService {
     return html;
   }
 
+  _resolveFormaDateRangeFromMesAnioDia(mes, anio, dia = null) {
+    const ultimoDia = new Date(anio, mes, 0).getDate();
+    const hasDia = Number.isInteger(dia) && dia >= 1 && dia <= ultimoDia;
+    const inicioMesStr = `${anio}-${String(mes).padStart(2, '0')}-01`;
+    const finMesStr = `${anio}-${String(mes).padStart(2, '0')}-${String(ultimoDia).padStart(2, '0')}`;
+    const inicioRangoStr = hasDia
+      ? `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+      : inicioMesStr;
+    const finRangoStr = hasDia ? inicioRangoStr : finMesStr;
+    return { inicioRangoStr, finRangoStr, hasDia };
+  }
+
+  /**
+   * Rango de fechas y texto de periodo para FORMA (mes/día o rango explícito).
+   * @param {{ mes?: number, anio?: number, dia?: number|null, fechaInicio?: string, fechaFin?: string }} params
+   */
+  _resolveFormaListaDateRange(params) {
+    const { mes, anio, dia, fechaInicio, fechaFin } = params;
+    const fiIn = fechaInicio != null && String(fechaInicio).trim() !== '' ? String(fechaInicio).trim() : '';
+    const ffIn = fechaFin != null && String(fechaFin).trim() !== '' ? String(fechaFin).trim() : '';
+    const iso = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+    if (fiIn || ffIn) {
+      if (!fiIn || !ffIn) {
+        throw new Error('Para filtrar por rango debes enviar fechaInicio y fechaFin (YYYY-MM-DD)');
+      }
+      if (!iso(fiIn) || !iso(ffIn)) {
+        throw new Error('fechaInicio y fechaFin deben tener formato YYYY-MM-DD');
+      }
+      if (fiIn > ffIn) {
+        throw new Error('fechaInicio no puede ser posterior a fechaFin');
+      }
+      const d0 = new Date(`${fiIn}T12:00:00`);
+      const d1 = new Date(`${ffIn}T12:00:00`);
+      const maxMs = 370 * 24 * 60 * 60 * 1000;
+      if (d1 - d0 > maxMs) {
+        throw new Error('El rango máximo permitido es de 370 días');
+      }
+      const mesRef = d0.getMonth() + 1;
+      const anioRef = d0.getFullYear();
+      return {
+        inicioRangoStr: fiIn,
+        finRangoStr: ffIn,
+        cabeceraMeta: {
+          mes: mesRef,
+          anio: anioRef,
+          mesNombre: `${fiIn} a ${ffIn}`,
+        },
+      };
+    }
+
+    const m = Number(mes);
+    const y = Number(anio);
+    if (!Number.isInteger(m) || m < 1 || m > 12) {
+      throw new Error('Parámetro mes requerido (1-12), o bien fechaInicio y fechaFin');
+    }
+    if (!Number.isInteger(y) || y < 2000 || y > 2100) {
+      throw new Error('Parámetro anio requerido (2000-2100), o bien fechaInicio y fechaFin');
+    }
+    const ultimoDia = new Date(y, m, 0).getDate();
+    let d = dia != null && dia !== '' ? Number(dia) : null;
+    if (d != null && (!Number.isInteger(d) || d < 1 || d > ultimoDia)) {
+      throw new Error(`Parámetro dia inválido para ${m}/${y}`);
+    }
+    const { inicioRangoStr, finRangoStr, hasDia } = this._resolveFormaDateRangeFromMesAnioDia(m, y, d);
+    const mesNombre = hasDia ? `${d} de ${MESES_NOMBRE[m]} ${y}` : (MESES_NOMBRE[m] || '');
+    return {
+      inicioRangoStr,
+      finRangoStr,
+      cabeceraMeta: { mes: m, anio: y, mesNombre },
+    };
+  }
+
+  _buildFormaCabeceraFromPatientPlain(p, mes, anio, mesNombreOverride = null) {
+    const estadoVal = p && p.estado != null && p.estado !== '' ? String(p.estado).trim() : '';
+    const localidadVal = p && p.localidad != null && p.localidad !== '' ? String(p.localidad).trim() : '';
+    const institucionVal = p && p.institucion_salud != null && p.institucion_salud !== '' ? String(p.institucion_salud).trim() : '';
+    const nombreModulo = p?.Modulo?.nombre_modulo ? String(p.Modulo.nombre_modulo).trim() : '';
+    const primerDoctor = Array.isArray(p?.Doctores) && p.Doctores.length > 0 ? p.Doctores[0] : null;
+    const institucionDoctor = primerDoctor?.institucion_hospitalaria != null && primerDoctor.institucion_hospitalaria !== ''
+      ? String(primerDoctor.institucion_hospitalaria).trim()
+      : '';
+    const mesNombre = mesNombreOverride != null && String(mesNombreOverride).trim() !== ''
+      ? String(mesNombreOverride).trim()
+      : (MESES_NOMBRE[mes] || '');
+    return {
+      institucion: (institucionVal && String(institucionVal).trim()) ? String(institucionVal).trim() : (institucionDoctor || process.env.FORMA_INSTITUCION || 'Institución'),
+      entidad: (estadoVal && String(estadoVal).trim()) ? String(estadoVal).trim() : (process.env.FORMA_ENTIDAD || 'Entidad Federativa'),
+      jurisdiccion: (estadoVal && String(estadoVal).trim()) ? String(estadoVal).trim() : (process.env.FORMA_JURISDICCION || process.env.FORMA_ENTIDAD || 'Jurisdicción'),
+      municipio: (localidadVal && String(localidadVal).trim()) ? String(localidadVal).trim() : (process.env.FORMA_MUNICIPIO || 'Municipio'),
+      unidadMedica: (institucionVal && String(institucionVal).trim()) ? String(institucionVal).trim() : (institucionDoctor || process.env.FORMA_UNIDAD_MEDICA || 'Unidad Médica'),
+      clues: process.env.FORMA_CLUES || '',
+      nombreGAM: (nombreModulo && String(nombreModulo).trim()) ? String(nombreModulo).trim() : (process.env.FORMA_NOMBRE_GAM || 'Nombre del Grupo de Ayuda Mutua EC'),
+      etapa: process.env.FORMA_ETAPA || 'Etapa',
+      mes,
+      anio,
+      mesNombre,
+      coordinador: process.env.FORMA_COORDINADOR || 'Nombre Coordinador del GAM EC',
+    };
+  }
+
+  _defaultFormaCabecera(cabeceraMeta) {
+    const { mes, anio, mesNombre } = cabeceraMeta;
+    return {
+      institucion: process.env.FORMA_INSTITUCION || 'Institución',
+      entidad: process.env.FORMA_ENTIDAD || 'Entidad Federativa',
+      jurisdiccion: process.env.FORMA_JURISDICCION || process.env.FORMA_ENTIDAD || 'Jurisdicción',
+      municipio: process.env.FORMA_MUNICIPIO || 'Municipio',
+      unidadMedica: process.env.FORMA_UNIDAD_MEDICA || 'Unidad Médica',
+      clues: process.env.FORMA_CLUES || '',
+      nombreGAM: process.env.FORMA_NOMBRE_GAM || 'Nombre del Grupo de Ayuda Mutua EC',
+      etapa: process.env.FORMA_ETAPA || 'Etapa',
+      mes,
+      anio,
+      mesNombre: mesNombre || MESES_NOMBRE[mes] || '',
+      coordinador: process.env.FORMA_COORDINADOR || 'Nombre Coordinador del GAM EC',
+    };
+  }
+
+  async _fetchFormaMetricsForPaciente(idPaciente, inicioRangoStr, finRangoStr) {
+    const [signosVitales, deteccionesComplicaciones, saludBucal, deteccionesTb, sesionesEducativas, planesMedicacion] = await Promise.all([
+      SignoVital.findAll({
+        where: { id_paciente: idPaciente, fecha_medicion: { [Op.between]: [inicioRangoStr, finRangoStr] } },
+        order: [['fecha_medicion', 'DESC']],
+        limit: 1,
+        attributes: ['id_paciente', 'peso_kg', 'talla_m', 'imc', 'presion_sistolica', 'presion_diastolica', 'glucosa_mg_dl', 'colesterol_mg_dl', 'trigliceridos_mg_dl', 'fecha_medicion'],
+      }),
+      DeteccionComplicacion.findAll({
+        where: { id_paciente: idPaciente, fecha_deteccion: { [Op.between]: [inicioRangoStr, finRangoStr] } },
+        attributes: ['id_paciente'],
+      }),
+      SaludBucal.findAll({
+        where: { id_paciente: idPaciente, fecha_registro: { [Op.between]: [inicioRangoStr, finRangoStr] } },
+        order: [['fecha_registro', 'DESC']],
+        attributes: ['id_paciente', 'fecha_registro'],
+      }),
+      DeteccionTuberculosis.findAll({
+        where: { id_paciente: idPaciente, fecha_deteccion: { [Op.between]: [inicioRangoStr, finRangoStr] } },
+        order: [['fecha_deteccion', 'DESC']],
+        attributes: ['id_paciente', 'fecha_deteccion', 'baciloscopia_resultado'],
+      }),
+      SesionEducativa.findAll({
+        where: { id_paciente: idPaciente, fecha_sesion: { [Op.between]: [inicioRangoStr, finRangoStr] } },
+        attributes: ['id_paciente', 'tipo_sesion'],
+      }),
+      PlanMedicacion.findAll({
+        where: { id_paciente: idPaciente, activo: true },
+        limit: 1,
+        attributes: ['id_paciente'],
+      }),
+    ]);
+
+    const signo = signosVitales[0] || null;
+    const detecciones = deteccionesComplicaciones || [];
+    const tieneSaludBucal = saludBucal.length > 0;
+    const tieneTb = deteccionesTb.length > 0;
+    const sesiones = sesionesEducativas || [];
+    const tiposSesion = new Set(sesiones.map((s) => (s.tipo_sesion || '').toLowerCase()));
+    const tienePlanMedicacion = planesMedicacion.length > 0;
+    return { signo, detecciones, tieneSaludBucal, tieneTb, tiposSesion, tienePlanMedicacion };
+  }
+
+  _buildFormaFilaFromPacienteAndMetrics(paciente, metrics) {
+    const { signo, detecciones, tieneSaludBucal, tieneTb, tiposSesion, tienePlanMedicacion } = metrics;
+    const p = paciente;
+    const fechaNac = p.fecha_nacimiento ? new Date(p.fecha_nacimiento) : null;
+    const edad = fechaNac ? Math.floor((new Date() - fechaNac) / (365.25 * 24 * 60 * 60 * 1000)) : '';
+    const sexo = p.sexo === 'Mujer' ? 'F' : p.sexo === 'Hombre' ? 'M' : '';
+    const nombreCompleto = formatNombreCompleto(p);
+    const toNumSigno = (val) => {
+      const d = decryptForReport(val);
+      return (d !== '' && d != null && !Number.isNaN(Number(d))) ? Number(d) : '';
+    };
+
+    return {
+      nombre: nombreCompleto,
+      edad,
+      sexo,
+      recibeTratamiento: tienePlanMedicacion ? 1 : '',
+      saludBucal: tieneSaludBucal ? 1 : '',
+      tuberculosis: tieneTb ? 1 : '',
+      basal: (p.Comorbilidades && p.Comorbilidades.length) ? 1 : '',
+      anoDx: '',
+      dxAgregados: '',
+      noFarmacologico: tiposSesion.has('nutricional') ? 1 : '',
+      farmacologico: tienePlanMedicacion ? 1 : '',
+      nutricional: tiposSesion.has('nutricional') ? 1 : '',
+      actividadFisica: tiposSesion.has('actividad_fisica') ? 1 : '',
+      medicoPreventiva: tiposSesion.has('medico_preventiva') || detecciones.length > 0 ? 1 : '',
+      psicologica: tiposSesion.has('psicologica') ? 1 : '',
+      odontologica: tiposSesion.has('odontologica') || tieneSaludBucal ? 1 : '',
+      talla: signo && signo.talla_m != null ? Number(signo.talla_m) : '',
+      imc: signo && signo.imc != null ? Number(signo.imc) : '',
+      colesterol: signo ? toNumSigno(signo.colesterol_mg_dl) : '',
+      trigliceridos: signo ? toNumSigno(signo.trigliceridos_mg_dl) : '',
+      glucosa: signo ? toNumSigno(signo.glucosa_mg_dl) : '',
+      presionSistolica: signo ? toNumSigno(signo.presion_sistolica) : '',
+      presionDiastolica: signo ? toNumSigno(signo.presion_diastolica) : '',
+      microalbuminuria: '',
+      fondoOjo: '',
+    };
+  }
+
+  async _loadPacienteFormaIncludes(idPaciente) {
+    return Paciente.findByPk(idPaciente, {
+      include: [
+        { model: Modulo, attributes: ['id_modulo', 'nombre_modulo'], required: false },
+        { model: Doctor, as: 'Doctores', attributes: ['id_doctor', 'institucion_hospitalaria', 'id_modulo'], through: { attributes: [] }, required: false },
+        {
+          model: Comorbilidad,
+          as: 'Comorbilidades',
+          through: { attributes: ['fecha_deteccion', 'anos_padecimiento'] },
+          attributes: ['id_comorbilidad', 'nombre_comorbilidad'],
+          required: false,
+        },
+      ],
+    });
+  }
+
   /**
    * Datos para el FORMA (Formato de Registro Mensual de Actividades GAM - SIC).
    * GET /api/reportes/forma/:idPaciente?mes=8&anio=2025
@@ -1118,150 +1332,127 @@ class ReportService {
    */
   async getFormaData(idPaciente, mes, anio, dia = null) {
     try {
-      const paciente = await Paciente.findByPk(idPaciente, {
-        include: [
-          { model: Modulo, attributes: ['id_modulo', 'nombre_modulo'], required: false },
-          { model: Doctor, as: 'Doctores', attributes: ['id_doctor', 'institucion_hospitalaria', 'id_modulo'], through: { attributes: [] }, required: false },
-          {
-            model: Comorbilidad,
-            as: 'Comorbilidades',
-            through: { attributes: ['fecha_deteccion', 'anos_padecimiento'] },
-            attributes: ['id_comorbilidad', 'nombre_comorbilidad'],
-            required: false
-          }
-        ]
-      });
-
-      const meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-      // Usar objeto plano para leer atributos (evita problemas con getters/serialización de Sequelize)
+      const paciente = await this._loadPacienteFormaIncludes(idPaciente);
       const p = paciente && typeof paciente.get === 'function' ? paciente.get({ plain: true }) : paciente;
-      const estadoVal = p && p.estado != null && p.estado !== '' ? String(p.estado).trim() : '';
-      const localidadVal = p && p.localidad != null && p.localidad !== '' ? String(p.localidad).trim() : '';
-      const institucionVal = p && p.institucion_salud != null && p.institucion_salud !== '' ? String(p.institucion_salud).trim() : '';
-      const nombreModulo = p?.Modulo?.nombre_modulo ? String(p.Modulo.nombre_modulo).trim() : '';
-      const primerDoctor = Array.isArray(p?.Doctores) && p.Doctores.length > 0 ? p.Doctores[0] : null;
-      const institucionDoctor = primerDoctor?.institucion_hospitalaria != null && primerDoctor.institucion_hospitalaria !== '' ? String(primerDoctor.institucion_hospitalaria).trim() : '';
-      // Mapeo cabecera FORMA -> BD (y fallbacks):
-      // - institucion / unidadMedica: pacientes.institucion_salud; si vacío → Doctores[0].institucion_hospitalaria → env → "Institución"/"Unidad Médica"
-      // - entidad / jurisdiccion: pacientes.estado → env → "Entidad Federativa"/"Jurisdicción"
-      // - municipio: pacientes.localidad → env → "Municipio"
-      // - nombreGAM: modulos.nombre_modulo (por paciente.id_modulo) → env → "Nombre del Grupo de Ayuda Mutua EC"
-      // - etapa / coordinador: solo env (no hay campo en BD)
-      const cabecera = {
-        institucion: (institucionVal && String(institucionVal).trim()) ? String(institucionVal).trim() : (institucionDoctor || process.env.FORMA_INSTITUCION || 'Institución'),
-        entidad: (estadoVal && String(estadoVal).trim()) ? String(estadoVal).trim() : (process.env.FORMA_ENTIDAD || 'Entidad Federativa'),
-        jurisdiccion: (estadoVal && String(estadoVal).trim()) ? String(estadoVal).trim() : (process.env.FORMA_JURISDICCION || process.env.FORMA_ENTIDAD || 'Jurisdicción'),
-        municipio: (localidadVal && String(localidadVal).trim()) ? String(localidadVal).trim() : (process.env.FORMA_MUNICIPIO || 'Municipio'),
-        unidadMedica: (institucionVal && String(institucionVal).trim()) ? String(institucionVal).trim() : (institucionDoctor || process.env.FORMA_UNIDAD_MEDICA || 'Unidad Médica'),
-        clues: process.env.FORMA_CLUES || '',
-        nombreGAM: (nombreModulo && String(nombreModulo).trim()) ? String(nombreModulo).trim() : (process.env.FORMA_NOMBRE_GAM || 'Nombre del Grupo de Ayuda Mutua EC'),
-        etapa: process.env.FORMA_ETAPA || 'Etapa',
-        mes,
-        anio,
-        mesNombre: meses[mes] || '',
-        coordinador: process.env.FORMA_COORDINADOR || 'Nombre Coordinador del GAM EC'
-      };
+      const cabecera = this._buildFormaCabeceraFromPatientPlain(p, mes, anio, null);
+
       logger.debug('FORMA cabecera (origen BD/env)', {
         idPaciente,
-        fromDb: { estado: estadoVal || '(vacío)', localidad: localidadVal || '(vacío)', institucion_salud: institucionVal ? '(presente)' : '(vacío)', nombreModulo: nombreModulo || '(vacío)', institucionDoctor: institucionDoctor || '(vacío)' },
-        cabecera: { institucion: cabecera.institucion, entidad: cabecera.entidad, municipio: cabecera.municipio, nombreGAM: cabecera.nombreGAM }
+        cabecera: { institucion: cabecera.institucion, entidad: cabecera.entidad, municipio: cabecera.municipio, nombreGAM: cabecera.nombreGAM },
       });
 
       if (!paciente || !paciente.activo) {
         return { cabecera, filas: [] };
       }
 
-      const inicioMesStr = `${anio}-${String(mes).padStart(2, '0')}-01`;
       const ultimoDia = new Date(anio, mes, 0).getDate();
-      const finMesStr = `${anio}-${String(mes).padStart(2, '0')}-${String(ultimoDia).padStart(2, '0')}`;
       const hasDia = Number.isInteger(dia) && dia >= 1 && dia <= ultimoDia;
-      const inicioRangoStr = hasDia
-        ? `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
-        : inicioMesStr;
-      const finRangoStr = hasDia ? inicioRangoStr : finMesStr;
+      const { inicioRangoStr, finRangoStr } = this._resolveFormaDateRangeFromMesAnioDia(mes, anio, hasDia ? dia : null);
 
-      const [signosVitales, deteccionesComplicaciones, saludBucal, deteccionesTb, sesionesEducativas, planesMedicacion] = await Promise.all([
-        SignoVital.findAll({
-          where: { id_paciente: idPaciente, fecha_medicion: { [Op.between]: [inicioRangoStr, finRangoStr] } },
-          order: [['fecha_medicion', 'DESC']],
-          limit: 1,
-          attributes: ['id_paciente', 'peso_kg', 'talla_m', 'imc', 'presion_sistolica', 'presion_diastolica', 'glucosa_mg_dl', 'colesterol_mg_dl', 'trigliceridos_mg_dl', 'fecha_medicion']
-        }),
-        DeteccionComplicacion.findAll({
-          where: { id_paciente: idPaciente, fecha_deteccion: { [Op.between]: [inicioRangoStr, finRangoStr] } },
-          attributes: ['id_paciente']
-        }),
-        SaludBucal.findAll({
-          where: { id_paciente: idPaciente, fecha_registro: { [Op.between]: [inicioRangoStr, finRangoStr] } },
-          order: [['fecha_registro', 'DESC']],
-          attributes: ['id_paciente', 'fecha_registro']
-        }),
-        DeteccionTuberculosis.findAll({
-          where: { id_paciente: idPaciente, fecha_deteccion: { [Op.between]: [inicioRangoStr, finRangoStr] } },
-          order: [['fecha_deteccion', 'DESC']],
-          attributes: ['id_paciente', 'fecha_deteccion', 'baciloscopia_resultado']
-        }),
-        SesionEducativa.findAll({
-          where: { id_paciente: idPaciente, fecha_sesion: { [Op.between]: [inicioRangoStr, finRangoStr] } },
-          attributes: ['id_paciente', 'tipo_sesion']
-        }),
-        PlanMedicacion.findAll({
-          where: { id_paciente: idPaciente, activo: true },
-          limit: 1,
-          attributes: ['id_paciente']
-        })
-      ]);
-
-      const signo = signosVitales[0] || null;
-      const detecciones = deteccionesComplicaciones || [];
-      const tieneSaludBucal = saludBucal.length > 0;
-      const tieneTb = deteccionesTb.length > 0;
-      const sesiones = sesionesEducativas || [];
-      const tiposSesion = new Set(sesiones.map(s => (s.tipo_sesion || '').toLowerCase()));
-      const tienePlanMedicacion = planesMedicacion.length > 0;
-
-      const p = paciente;
-      const fechaNac = p.fecha_nacimiento ? new Date(p.fecha_nacimiento) : null;
-      const edad = fechaNac ? Math.floor((new Date() - fechaNac) / (365.25 * 24 * 60 * 60 * 1000)) : '';
-      const sexo = p.sexo === 'Mujer' ? 'F' : p.sexo === 'Hombre' ? 'M' : '';
-      const nombreCompleto = formatNombreCompleto(p);
-
-      const toNumSigno = (val) => { const d = decryptForReport(val); return (d !== '' && d != null && !Number.isNaN(Number(d))) ? Number(d) : ''; };
-
-      const filas = [{
-        n: 1,
-        nombre: nombreCompleto,
-        edad,
-        sexo,
-        recibeTratamiento: tienePlanMedicacion ? 1 : '',
-        saludBucal: tieneSaludBucal ? 1 : '',
-        tuberculosis: tieneTb ? 1 : '',
-        basal: (p.Comorbilidades && p.Comorbilidades.length) ? 1 : '',
-        anoDx: '',
-        dxAgregados: '',
-        noFarmacologico: tiposSesion.has('nutricional') ? 1 : '',
-        farmacologico: tienePlanMedicacion ? 1 : '',
-        nutricional: tiposSesion.has('nutricional') ? 1 : '',
-        actividadFisica: tiposSesion.has('actividad_fisica') ? 1 : '',
-        medicoPreventiva: tiposSesion.has('medico_preventiva') || detecciones.length > 0 ? 1 : '',
-        psicologica: tiposSesion.has('psicologica') ? 1 : '',
-        odontologica: tiposSesion.has('odontologica') || tieneSaludBucal ? 1 : '',
-        talla: signo && signo.talla_m != null ? Number(signo.talla_m) : '',
-        imc: signo && signo.imc != null ? Number(signo.imc) : '',
-        colesterol: signo ? toNumSigno(signo.colesterol_mg_dl) : '',
-        trigliceridos: signo ? toNumSigno(signo.trigliceridos_mg_dl) : '',
-        glucosa: signo ? toNumSigno(signo.glucosa_mg_dl) : '',
-        presionSistolica: signo ? toNumSigno(signo.presion_sistolica) : '',
-        presionDiastolica: signo ? toNumSigno(signo.presion_diastolica) : '',
-        microalbuminuria: '',
-        fondoOjo: ''
-      }];
+      const metrics = await this._fetchFormaMetricsForPaciente(idPaciente, inicioRangoStr, finRangoStr);
+      const filaBase = this._buildFormaFilaFromPacienteAndMetrics(paciente, metrics);
+      const filas = [{ n: 1, ...filaBase }];
 
       return { cabecera, filas };
     } catch (error) {
       logger.error('Error getFormaData', { error: error.message, stack: error.stack });
       throw error;
     }
+  }
+
+  /**
+   * FORMA para todos los pacientes visibles (Admin: activos; Doctor: asignados), en un periodo.
+   * GET /api/reportes/forma-lista
+   * @param {{ user: object, mes?: number, anio?: number, dia?: number|null, fechaInicio?: string, fechaFin?: string, modulo?: number|null }} opts
+   */
+  async getFormaListaPacientes(opts) {
+    const { user, mes, anio, dia, fechaInicio, fechaFin, modulo } = opts;
+    const rol = String(user?.rol || user?.user_type || '').toLowerCase();
+    const isAdmin = rol === 'admin' || rol === 'administrador';
+    const isDoctor = rol === 'doctor';
+    if (!isAdmin && !isDoctor) {
+      throw new Error('Solo Admin o Doctor pueden exportar el FORMA');
+    }
+
+    const { inicioRangoStr, finRangoStr, cabeceraMeta } = this._resolveFormaListaDateRange({
+      mes, anio, dia, fechaInicio, fechaFin,
+    });
+
+    let idModulo = null;
+    if (modulo != null && modulo !== '') {
+      const m = Number(modulo);
+      if (Number.isInteger(m) && m > 0) {
+        if (!isAdmin) {
+          throw new Error('Solo el administrador puede filtrar por módulo');
+        }
+        idModulo = m;
+      }
+    }
+
+    let ids = [];
+    let truncado = false;
+    if (isAdmin) {
+      const where = { activo: true };
+      if (idModulo) where.id_modulo = idModulo;
+      const total = await Paciente.count({ where });
+      truncado = total > FORMA_LISTA_MAX_PACIENTES;
+      const rows = await Paciente.findAll({
+        where,
+        attributes: ['id_paciente'],
+        order: [['id_paciente', 'ASC']],
+        limit: FORMA_LISTA_MAX_PACIENTES,
+      });
+      ids = rows.map((r) => r.id_paciente);
+    } else {
+      const idDoctor = user?.id_doctor || user?.id_doctor_usuario;
+      if (!idDoctor) {
+        throw new Error('Doctor no encontrado para este usuario');
+      }
+      const links = await DoctorPaciente.findAll({
+        where: { id_doctor: idDoctor },
+        attributes: ['id_paciente'],
+      });
+      const raw = [...new Set(links.map((l) => l.id_paciente))];
+      if (raw.length === 0) {
+        return { cabecera: this._defaultFormaCabecera(cabeceraMeta), filas: [], truncado: false };
+      }
+      const nActivos = await Paciente.count({
+        where: { id_paciente: { [Op.in]: raw }, activo: true },
+      });
+      truncado = nActivos > FORMA_LISTA_MAX_PACIENTES;
+      const activos = await Paciente.findAll({
+        where: { id_paciente: { [Op.in]: raw }, activo: true },
+        attributes: ['id_paciente'],
+        order: [['id_paciente', 'ASC']],
+        limit: FORMA_LISTA_MAX_PACIENTES,
+      });
+      ids = activos.map((r) => r.id_paciente);
+    }
+
+    let cabecera = null;
+    const filas = [];
+    for (const idPaciente of ids) {
+      const paciente = await this._loadPacienteFormaIncludes(idPaciente);
+      if (!paciente || !paciente.activo) continue;
+      const pPlain = paciente.get({ plain: true });
+      if (!cabecera) {
+        cabecera = this._buildFormaCabeceraFromPatientPlain(
+          pPlain,
+          cabeceraMeta.mes,
+          cabeceraMeta.anio,
+          cabeceraMeta.mesNombre,
+        );
+      }
+      const metrics = await this._fetchFormaMetricsForPaciente(idPaciente, inicioRangoStr, finRangoStr);
+      const filaBase = this._buildFormaFilaFromPacienteAndMetrics(paciente, metrics);
+      filas.push({ n: filas.length + 1, ...filaBase });
+    }
+
+    if (!cabecera) {
+      cabecera = this._defaultFormaCabecera(cabeceraMeta);
+    }
+
+    return { cabecera, filas, truncado };
   }
 
   /**
