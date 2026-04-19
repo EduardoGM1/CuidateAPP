@@ -566,10 +566,13 @@ export default function ReportesPage() {
   const isDoctor = useAuthStore((s) => s.isDoctor);
   const admin = isAdmin();
   const { summary, loading: loadingSummary, error: errorSummary, refresh: refreshSummary } = useReportesSummary({ isAdmin: admin });
-  const detalle = useReportesDetalle({ enabled: admin && !loadingSummary && summary != null });
-  const showDetalle = admin && !detalle.loading;
+  const puedeVerDetalle = admin || isDoctor();
+  const detalle = useReportesDetalle({
+    enabled: puedeVerDetalle && !loadingSummary && summary != null,
+  });
+  const showDetalle = puedeVerDetalle && !detalle.loading;
 
-  const reportesListos = !loadingSummary && (!admin || !detalle.loading);
+  const reportesListos = !loadingSummary && (!puedeVerDetalle || !detalle.loading);
   useOnboardingPageReady(reportesListos);
 
   const chartData = summary?.chartData ?? {};
@@ -678,9 +681,9 @@ export default function ReportesPage() {
                 barName="Citas"
               />
             )}
-            {admin && Array.isArray(chartData.pacientesNuevos) && chartData.pacientesNuevos.length > 0 && (
+            {puedeVerDetalle && Array.isArray(chartData.pacientesNuevos) && chartData.pacientesNuevos.length > 0 && (
               <ReportesBarChart
-                title="Pacientes nuevos (últimos 7 días)"
+                title={admin ? 'Pacientes nuevos (últimos 7 días)' : 'Pacientes nuevos asignados a ti (últimos 7 días)'}
                 data={chartData.pacientesNuevos}
                 dataKey="pacientes"
                 nameKey="dia"
@@ -705,8 +708,8 @@ export default function ReportesPage() {
         </section>
       )}
 
-      {/* Análisis detallado (solo Admin) */}
-      {admin && (
+      {/* Análisis detallado (Admin y Doctor; sin ranking de doctores más activos arriba) */}
+      {puedeVerDetalle && (
         <section className="saas-section" aria-labelledby="reportes-detalle-title" style={{ marginBottom: '1.5rem' }}>
           <h2 id="reportes-detalle-title" className="saas-section-title">
             Análisis detallado
@@ -728,7 +731,7 @@ export default function ReportesPage() {
             <div className="saas-charts-grid">
               {detalle.pacientesPorDoctor.length > 0 && (
                 <ReportesHorizontalBarChart
-                  title="Distribución de pacientes por doctor"
+                  title={admin ? 'Distribución de pacientes por doctor' : 'Pacientes por doctor (tu cartera)'}
                   data={detalle.pacientesPorDoctor}
                   dataKey="total"
                   nameKey="nombre"

@@ -1,4 +1,4 @@
-import { Paciente, Doctor, Cita, SignoVital, Diagnostico, PlanMedicacion, MensajeChat, Usuario, Modulo } from '../models/index.js';
+import { Paciente, Doctor, Cita, SignoVital, Diagnostico, PlanMedicacion, MensajeChat, Usuario, Modulo, DoctorPaciente } from '../models/index.js';
 import { SistemaAuditoria } from '../models/associations.js';
 import sequelize from '../config/db.js';
 import { Op } from 'sequelize';
@@ -311,58 +311,11 @@ export class DashboardRepository {
 
   async getCitasPorEstado() {
     try {
-      // logger.info('Obteniendo citas por estado');
-
-      // Obtener todas las citas para agrupar por estado
       const citas = await Cita.findAll({
         attributes: ['id_cita', 'estado', 'asistencia'],
-        raw: true
+        raw: true,
       });
-
-      const resultado = {
-        completadas: 0,
-        pendientes: 0,
-        canceladas: 0,
-        reprogramadas: 0,
-        no_asistidas: 0
-      };
-
-      citas.forEach(cita => {
-        // Usar campo estado si existe, fallback a asistencia para compatibilidad
-        let estadoActual = cita.estado;
-        
-        if (!estadoActual) {
-          // Fallback: calcular estado basado en asistencia
-          if (cita.asistencia === true) {
-            estadoActual = 'atendida';
-          } else if (cita.asistencia === false) {
-            estadoActual = 'no_asistida';
-          } else {
-            estadoActual = 'pendiente';
-          }
-        }
-
-        switch (estadoActual) {
-          case 'atendida':
-            resultado.completadas++;
-            break;
-          case 'pendiente':
-            resultado.pendientes++;
-            break;
-          case 'cancelada':
-            resultado.canceladas++;
-            break;
-          case 'reprogramada':
-            resultado.reprogramadas++;
-            break;
-          case 'no_asistida':
-            resultado.no_asistidas++;
-            break;
-        }
-      });
-
-      // logger.info('Citas por estado obtenidas', resultado);
-      return resultado;
+      return this._aggregateCitasPorEstadoRows(citas);
     } catch (error) {
       logger.error('Error obteniendo citas por estado:', error);
       throw error;
@@ -510,6 +463,157 @@ export class DashboardRepository {
       return resultado;
     } catch (error) {
       logger.error('Error obteniendo tasa de asistencia:', error);
+      throw error;
+    }
+  }
+
+  /** Agrupa citas por estado (misma lógica que getCitasPorEstado). */
+  _aggregateCitasPorEstadoRows(citas) {
+    const resultado = {
+      completadas: 0,
+      pendientes: 0,
+      canceladas: 0,
+      reprogramadas: 0,
+      no_asistidas: 0,
+    };
+    (citas || []).forEach((cita) => {
+      let estadoActual = cita.estado;
+      if (!estadoActual) {
+        if (cita.asistencia === true) estadoActual = 'atendida';
+        else if (cita.asistencia === false) estadoActual = 'no_asistida';
+        else estadoActual = 'pendiente';
+      }
+      switch (estadoActual) {
+        case 'atendida':
+          resultado.completadas++;
+          break;
+        case 'pendiente':
+          resultado.pendientes++;
+          break;
+        case 'cancelada':
+          resultado.canceladas++;
+          break;
+        case 'reprogramada':
+          resultado.reprogramadas++;
+          break;
+        case 'no_asistida':
+          resultado.no_asistidas++;
+          break;
+        default:
+          break;
+      }
+    });
+    return resultado;
+  }
+
+  async getCitasPorEstadoDoctor(doctorId) {
+    try {
+      const citas = await Cita.findAll({
+        where: { id_doctor: doctorId },
+        attributes: ['id_cita', 'estado', 'asistencia'],
+        raw: true,
+      });
+      return this._aggregateCitasPorEstadoRows(citas);
+    } catch (error) {
+      logger.error('Error obteniendo citas por estado (doctor):', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Pacientes nuevos por día (últimos 7) entre los asignados al doctor.
+   */
+  async getPacientesNuevosUltimos7DiasDoctor(doctorId) {
+    try {
+      const hoy = new Date();
+      hoy.setHours(23, 59, 59, 999);
+      const sieteDiasAtras = new Date(hoy);
+      sieteDiasAtras.setDate(sieteDiasAtras.getDate() - 6);
+      sieteDiasAtras.setHours(0, 0, 0, 0);
+
+      const asignados = await DoctorPaciente.findAll({
+        where: { id_doctor: doctorId },
+        attributes: ['id_paciente'],
+        raw: true,
+      });
+      const ids = [...new Set((asignados || []).map((r) => r.id_paciente).filter((id) => id != null))];
+      if (ids.length === 0) {
+        return this._buildPacientesNuevos7DiasVacios(sieteDiasAtras);
+      }
+
+      const pacientes = await Paciente.findAll({
+        where: {
+          id_paciente: { [Op.in]: ids },
+          fecha_registro: {
+            [Op.gte]: sieteDiasAtras,
+            [Op.lte]: hoy,
+          },
+          activo: true,
+        },
+        attributes: [
+          [sequelize.fn('DATE', sequelize.col('fecha_registro')), 'fecha'],
+          [sequelize.fn('COUNT', sequelize.col('id_paciente')), 'total'],
+        ],
+        group: [sequelize.fn('DATE', sequelize.col('fecha_registro'))],
+        order: [[sequelize.fn('DATE', sequelize.col('fecha_registro')), 'ASC']],
+        raw: true,
+      });
+
+      const pacientesPorFecha = new Map();
+      pacientes.forEach((item) => {
+        const fecha = new Date(item.fecha);
+        const fechaKey = fecha.toISOString().split('T')[0];
+        pacientesPorFecha.set(fechaKey, parseInt(item.total, 10));
+      });
+
+      const resultado = [];
+      const diasSemana = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+      for (let i = 0; i < 7; i++) {
+        const fecha = new Date(sieteDiasAtras);
+        fecha.setDate(fecha.getDate() + i);
+        const fechaKey = fecha.toISOString().split('T')[0];
+        const diaSemana = diasSemana[(fecha.getDay() + 6) % 7];
+        resultado.push({
+          dia: diaSemana,
+          pacientes: pacientesPorFecha.get(fechaKey) || 0,
+          fecha: fechaKey,
+        });
+      }
+      return resultado;
+    } catch (error) {
+      logger.error('Error obteniendo pacientes nuevos (doctor):', error);
+      throw error;
+    }
+  }
+
+  _buildPacientesNuevos7DiasVacios(sieteDiasAtras) {
+    const resultado = [];
+    const diasSemana = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    for (let i = 0; i < 7; i++) {
+      const fecha = new Date(sieteDiasAtras);
+      fecha.setDate(fecha.getDate() + i);
+      const fechaKey = fecha.toISOString().split('T')[0];
+      const diaSemana = diasSemana[(fecha.getDay() + 6) % 7];
+      resultado.push({ dia: diaSemana, pacientes: 0, fecha: fechaKey });
+    }
+    return resultado;
+  }
+
+  /** Porcentaje 0–100 de citas atendidas del doctor. */
+  async getTasaAsistenciaDoctor(doctorId) {
+    try {
+      const citas = await Cita.findAll({
+        where: { id_doctor: doctorId },
+        raw: true,
+      });
+      const citasCompletadas = citas.filter((cita) => {
+        if (cita.estado) return cita.estado === 'atendida';
+        return cita.asistencia === true;
+      }).length;
+      const totalCitas = citas.length;
+      return totalCitas > 0 ? Math.round((citasCompletadas / totalCitas) * 100) : 0;
+    } catch (error) {
+      logger.error('Error obteniendo tasa de asistencia (doctor):', error);
       throw error;
     }
   }

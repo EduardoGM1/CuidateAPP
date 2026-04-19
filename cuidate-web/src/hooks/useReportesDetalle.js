@@ -13,6 +13,19 @@ const RANGOS_EDAD = [
   { rango: '65+', min: 66, max: 150 },
 ];
 
+/** id_doctor asociado al paciente en listados (plano API / Sequelize). */
+function pacientePrimaryDoctorId(p) {
+  if (p == null) return null;
+  if (p.id_doctor != null) return Number(p.id_doctor);
+  if (p.doctor_id != null) return Number(p.doctor_id);
+  const d0 = Array.isArray(p.Doctors)
+    ? p.Doctors[0]
+    : Array.isArray(p.Doctores)
+      ? p.Doctores[0]
+      : null;
+  return d0?.id_doctor != null ? Number(d0.id_doctor) : null;
+}
+
 function calcularEdad(fechaNac) {
   if (!fechaNac) return null;
   const d = new Date(String(fechaNac).slice(0, 10));
@@ -25,7 +38,7 @@ function calcularEdad(fechaNac) {
 }
 
 /**
- * Carga pacientes, doctores y citas y calcula estadísticas para el análisis detallado (solo Admin).
+ * Carga pacientes, doctores y citas y calcula estadísticas para el análisis detallado (Admin y Doctor).
  * Solo ejecuta la carga cuando enabled es true (p. ej. después de que el resumen esté cargado) para evitar 3+1 requests simultáneos y timeouts.
  * @param {{ enabled?: boolean }} [options]
  * @returns {{
@@ -76,7 +89,7 @@ export function useReportesDetalle(options = {}) {
       // Pacientes por doctor
       const countPorDoctor = {};
       (pacientes || []).forEach((p) => {
-        const id = p.id_doctor ?? p.doctor_id;
+        const id = pacientePrimaryDoctorId(p);
         if (id != null) {
           countPorDoctor[id] = (countPorDoctor[id] || 0) + 1;
         }

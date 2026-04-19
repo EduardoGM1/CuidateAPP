@@ -188,7 +188,10 @@ export class DashboardService {
         proximasCitas,
         citasUltimos7Dias,
         signosVitalesCriticos,
-        comorbilidadesData
+        comorbilidadesData,
+        citasPorEstadoDoctor,
+        pacientesNuevosDoctor,
+        tasaAsistenciaDoctor,
       ] = await Promise.all([
         this.dashboardRepository.getCitasDoctorHoy(doctorId),
         this.dashboardRepository.getPacientesDoctor(doctorId),
@@ -196,7 +199,10 @@ export class DashboardService {
         this.dashboardRepository.getProximasCitasDoctor(doctorId),
         this.dashboardRepository.getCitasDoctorUltimos7Dias(doctorId),
         this.dashboardRepository.getSignosVitalesCriticosDoctor(doctorId),
-        comorbilidadesPromise
+        comorbilidadesPromise,
+        this.dashboardRepository.getCitasPorEstadoDoctor(doctorId),
+        this.dashboardRepository.getPacientesNuevosUltimos7DiasDoctor(doctorId),
+        this.dashboardRepository.getTasaAsistenciaDoctor(doctorId),
       ]);
 
       // Log crítico: Verificar citas de hoy
@@ -207,7 +213,8 @@ export class DashboardService {
           citasHoy: citasHoy.length,
           pacientesAsignados: pacientes.length,
           mensajesPendientes: mensajesPendientes.length,
-          proximasCitas: proximasCitas.length
+          proximasCitas: proximasCitas.length,
+          tasaAsistencia: tasaAsistenciaDoctor,
         },
         citasHoy: citasHoy.map(cita => {
           const fechaISO = cita.fecha_cita 
@@ -250,9 +257,13 @@ export class DashboardService {
         })),
         chartData: {
           citasUltimos7Dias: citasUltimos7Dias,
+          pacientesNuevos: pacientesNuevosDoctor,
           comorbilidadesMasFrecuentes: periodo ? null : comorbilidadesData,
           comorbilidadesPorPeriodo: periodo ? comorbilidadesData : null,
-          periodo: periodo || null
+          periodo: periodo || null,
+        },
+        charts: {
+          citasPorEstado: citasPorEstadoDoctor,
         },
         alertas: {
           signosVitalesCriticos: signosVitalesCriticos.map(sv => ({
