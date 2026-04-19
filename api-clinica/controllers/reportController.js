@@ -261,6 +261,7 @@ export const getFormaData = async (req, res) => {
     const idPaciente = parseInt(req.params.idPaciente, 10);
     const mes = parseInt(req.query.mes, 10);
     const anio = parseInt(req.query.anio, 10);
+    const dia = req.query.dia != null && req.query.dia !== '' ? parseInt(req.query.dia, 10) : null;
 
     if (!Number.isInteger(idPaciente) || idPaciente <= 0) {
       return res.status(400).json({ success: false, error: 'ID de paciente inválido' });
@@ -271,8 +272,14 @@ export const getFormaData = async (req, res) => {
     if (!Number.isInteger(anio) || anio < 2000 || anio > 2100) {
       return res.status(400).json({ success: false, error: 'Parámetro anio requerido (2000-2100)' });
     }
+    if (dia != null) {
+      const maxDia = new Date(anio, mes, 0).getDate();
+      if (!Number.isInteger(dia) || dia < 1 || dia > maxDia) {
+        return res.status(400).json({ success: false, error: `Parámetro dia inválido para ${mes}/${anio}` });
+      }
+    }
 
-    const data = await reportService.getFormaData(idPaciente, mes, anio);
+    const data = await reportService.getFormaData(idPaciente, mes, anio, dia);
     const c = data.cabecera || {};
     res.json({
       cabecera: {

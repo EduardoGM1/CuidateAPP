@@ -1,13 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
+import { message } from 'antd';
 import { openReporteEstadisticasPDF } from '../../api/reportes';
 import { getPacientes } from '../../api/pacientes';
 import { getModulos } from '../../api/modulos';
 import { getDoctorSummary } from '../../api/dashboard';
+import { getFormaData } from '../../api/reportes';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, Input, Select } from '../../components/ui';
 import { LoadingSpinner } from '../../components/ui';
 import ComorbilidadesHeatmap from '../../components/reportes/ComorbilidadesHeatmap';
 import { ReportesBarChart, ReportesPieChart, ReportesHorizontalBarChart } from '../../components/reportes/ReportesCharts';
+import { downloadFormaExcel } from '../../utils/formaExcelUtils';
 import StatCard, { IconUsers, IconUser, IconCalendar, IconTrendingUp, IconMessageCircle, IconAlertTriangle } from '../../components/dashboard/StatCard';
 import { useAuthStore } from '../../stores/authStore';
 import { sanitizeForDisplay } from '../../utils/sanitize';
@@ -151,6 +154,171 @@ function ReporteEstadisticasCard() {
       <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--color-texto-secundario)' }}>
         Para guardar como PDF: al abrirse el reporte, usa Imprimir → Guardar como PDF.
       </p>
+    </ReporteCardWrapper>
+  );
+}
+
+function ReporteFormaExcelCard() {
+  const [pacientes, setPacientes] = useState([]);
+  const [pacientesLoading, setPacientesLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [pacienteId, setPacienteId] = useState('');
+  const [modoFecha, setModoFecha] = useState('mes');
+  const [mesSeleccionado, setMesSeleccionado] = useState(String(new Date().getMonth() + 1));
+  const [anioSeleccionado, setAnioSeleccionado] = useState(String(new Date().getFullYear()));
+  const [fechaDia, setFechaDia] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    setPacientesLoading(true);
+    getPacientes({ limit: PAGE_SIZE_MAX, estado: 'activos' })
+      .then((res) => {
+        if (cancelled) return;
+        const list = res?.pacientes ?? (Array.isArray(res) ? res : []);
+        setPacientes(Array.isArray(list) ? list : []);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setPacientes([]);
+        setError(err?.response?.data?.error || err?.message || 'Error al cargar pacientes');
+      })
+      .finally(() => {
+        if (!cancelled) setPacientesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleDescargar = useCallback(async () => {
+    setError(null);
+    const parsedPacienteId = parseInt(pacienteId, 10);
+    if (!parsedPacienteId) {
+      const msg = 'Selecciona un paciente';
+      setError(msg);
+      message.error(msg);
+      return;
+    }
+
+    let mes = parseInt(mesSeleccionado, 10);
+    let anio = parseInt(anioSeleccionado, 10);
+    let dia = null;
+
+    if (modoFecha === 'dia') {
+      if (!fechaDia) {
+        const msg = 'Selecciona una fecha (día)';
+        setError(msg);
+        message.error(msg);
+        return;
+      }
+      const [anioStr, mesStr, diaStr] = fechaDia.split('-');
+      anio = parseInt(anioStr, 10);
+      mes = parseInt(mesStr, 10);
+      dia = parseInt(diaStr, 10);
+    }
+
+    if (!mes || mes < 1 || mes > 12 || !anio || anio < 2000 || anio > 2100) {
+      const msg = 'Mes o año inválido';
+      setError(msg);
+      message.error(msg);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await getFormaData({
+        idPaciente: parsedPacienteId,
+        mes,
+        anio,
+        ...(dia != null ? { dia } : {}),
+      });
+      const fileNameBase = `forma-paciente-${parsedPacienteId}-${anio}-${String(mes).padStart(2, '0')}`;
+      const filename = dia != null
+        ? `${fileNameBase}-${String(dia).padStart(2, '0')}.xlsx`
+        : `${fileNameBase}.xlsx`;
+      await downloadFormaExcel(data, filename);
+      message.success('Descarga iniciada');
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || 'Error al descargar FORMA';
+      setError(msg);
+      message.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }, [pacienteId, modoFecha, mesSeleccionado, anioSeleccionado, fechaDia]);
+
+  return (
+    <ReporteCardWrapper
+      title="FORMA Excel por paciente"
+      description="Descarga el FORMA del paciente en Excel filtrando por mes completo o por un día específico."
+    >
+      {error && (
+        <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.875rem' }}>
+          {error}
+        </p>
+      )}
+      <div className="form-row-inline" style={{ marginBottom: '1rem' }}>
+        <Select
+          label="Paciente"
+          placeholder={pacientesLoading ? 'Cargando pacientes…' : 'Selecciona paciente'}
+          value={pacienteId || undefined}
+          onChange={(v) => setPacienteId(v ?? '')}
+          disabled={pacientesLoading}
+          options={(pacientes || []).map((p) => {
+            const id = p.id_paciente ?? p.id;
+            const nombre = sanitizeForDisplay(
+              [p.nombre, p.apellido_paterno, p.apellido_materno].filter(Boolean).join(' ')
+            ) || `Paciente ${id}`;
+            return { value: String(id), label: nombre };
+          })}
+          style={{ marginBottom: 0, minWidth: 280 }}
+        />
+        <Select
+          label="Filtrar por"
+          value={modoFecha}
+          onChange={(v) => setModoFecha(v || 'mes')}
+          options={[
+            { value: 'mes', label: 'Mes' },
+            { value: 'dia', label: 'Día' },
+          ]}
+          style={{ marginBottom: 0, minWidth: 140 }}
+        />
+        {modoFecha === 'mes' ? (
+          <>
+            <Select
+              label="Mes"
+              value={mesSeleccionado}
+              onChange={(v) => setMesSeleccionado(v ?? '')}
+              options={MESES.map((m) => ({ value: String(m.value), label: m.label }))}
+              style={{ marginBottom: 0, minWidth: 140 }}
+            />
+            <Input
+              label="Año"
+              type="number"
+              value={anioSeleccionado}
+              onChange={(e) => setAnioSeleccionado(e.target.value)}
+              style={{ marginBottom: 0, width: 110 }}
+            />
+          </>
+        ) : (
+          <Input
+            label="Fecha (día)"
+            type="date"
+            value={fechaDia}
+            onChange={(e) => setFechaDia(e.target.value)}
+            style={{ marginBottom: 0, minWidth: 180 }}
+          />
+        )}
+      </div>
+      <Button
+        variant="outline"
+        type="button"
+        disabled={loading || pacientesLoading}
+        onClick={handleDescargar}
+      >
+        {loading ? 'Generando…' : 'Descargar Excel'}
+      </Button>
     </ReporteCardWrapper>
   );
 }
@@ -580,6 +748,7 @@ export default function ReportesPage() {
       >
         {(admin || isDoctor()) && <ReporteComorbilidadesHeatmapCard summaryFromParent={summary} />}
         {(admin || isDoctor()) && <ReporteEstadisticasCard />}
+        {(admin || isDoctor()) && <ReporteFormaExcelCard />}
       </div>
     </div>
   );

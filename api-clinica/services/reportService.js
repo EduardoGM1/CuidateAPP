@@ -1116,7 +1116,7 @@ class ReportService {
    * @param {number} anio - Año (ej. 2025)
    * @returns {Promise<{ cabecera: object, filas: object[] }>}
    */
-  async getFormaData(idPaciente, mes, anio) {
+  async getFormaData(idPaciente, mes, anio, dia = null) {
     try {
       const paciente = await Paciente.findByPk(idPaciente, {
         include: [
@@ -1174,30 +1174,35 @@ class ReportService {
       const inicioMesStr = `${anio}-${String(mes).padStart(2, '0')}-01`;
       const ultimoDia = new Date(anio, mes, 0).getDate();
       const finMesStr = `${anio}-${String(mes).padStart(2, '0')}-${String(ultimoDia).padStart(2, '0')}`;
+      const hasDia = Number.isInteger(dia) && dia >= 1 && dia <= ultimoDia;
+      const inicioRangoStr = hasDia
+        ? `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+        : inicioMesStr;
+      const finRangoStr = hasDia ? inicioRangoStr : finMesStr;
 
       const [signosVitales, deteccionesComplicaciones, saludBucal, deteccionesTb, sesionesEducativas, planesMedicacion] = await Promise.all([
         SignoVital.findAll({
-          where: { id_paciente: idPaciente, fecha_medicion: { [Op.between]: [inicioMesStr, finMesStr] } },
+          where: { id_paciente: idPaciente, fecha_medicion: { [Op.between]: [inicioRangoStr, finRangoStr] } },
           order: [['fecha_medicion', 'DESC']],
           limit: 1,
           attributes: ['id_paciente', 'peso_kg', 'talla_m', 'imc', 'presion_sistolica', 'presion_diastolica', 'glucosa_mg_dl', 'colesterol_mg_dl', 'trigliceridos_mg_dl', 'fecha_medicion']
         }),
         DeteccionComplicacion.findAll({
-          where: { id_paciente: idPaciente, fecha_deteccion: { [Op.between]: [inicioMesStr, finMesStr] } },
+          where: { id_paciente: idPaciente, fecha_deteccion: { [Op.between]: [inicioRangoStr, finRangoStr] } },
           attributes: ['id_paciente']
         }),
         SaludBucal.findAll({
-          where: { id_paciente: idPaciente, fecha_registro: { [Op.between]: [inicioMesStr, finMesStr] } },
+          where: { id_paciente: idPaciente, fecha_registro: { [Op.between]: [inicioRangoStr, finRangoStr] } },
           order: [['fecha_registro', 'DESC']],
           attributes: ['id_paciente', 'fecha_registro']
         }),
         DeteccionTuberculosis.findAll({
-          where: { id_paciente: idPaciente, fecha_deteccion: { [Op.between]: [inicioMesStr, finMesStr] } },
+          where: { id_paciente: idPaciente, fecha_deteccion: { [Op.between]: [inicioRangoStr, finRangoStr] } },
           order: [['fecha_deteccion', 'DESC']],
           attributes: ['id_paciente', 'fecha_deteccion', 'baciloscopia_resultado']
         }),
         SesionEducativa.findAll({
-          where: { id_paciente: idPaciente, fecha_sesion: { [Op.between]: [inicioMesStr, finMesStr] } },
+          where: { id_paciente: idPaciente, fecha_sesion: { [Op.between]: [inicioRangoStr, finRangoStr] } },
           attributes: ['id_paciente', 'tipo_sesion']
         }),
         PlanMedicacion.findAll({

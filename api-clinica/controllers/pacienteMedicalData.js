@@ -1506,15 +1506,8 @@ export const createPacienteSignosVitales = async (req, res) => {
       edadCalculada = parseInt(edad_paciente_en_medicion, 10);
     }
 
-    // ✅ Validar HbA1c si se proporciona (usar edad calculada o proporcionada)
+    // ✅ Validar HbA1c si se proporciona (edad opcional: rangos GAM solo si hay edad)
     if (hba1c_porcentaje !== undefined && hba1c_porcentaje !== null && hba1c_porcentaje !== '') {
-      if (edadCalculada === null) {
-        return res.status(400).json({
-          success: false,
-          error: 'No se puede validar HbA1c sin edad del paciente. Proporcione edad_paciente_en_medicion o asegúrese de que el paciente tenga fecha_nacimiento registrada.'
-        });
-      }
-
       const hba1cValidationError = validarHbA1c(hba1c_porcentaje, edadCalculada);
       if (hba1cValidationError) {
         return res.status(400).json({
@@ -1524,13 +1517,7 @@ export const createPacienteSignosVitales = async (req, res) => {
       }
     }
 
-    // Validar que se proporcione al menos un campo
-    if (!peso_kg && !talla_m && !medida_cintura_cm && !presion_sistolica && !glucosa_mg_dl && !colesterol_mg_dl) {
-      return res.status(400).json({
-        success: false,
-        error: 'Debe proporcionar al menos un signo vital'
-      });
-    }
+    // Todos los signos vitales son opcionales: se permite crear un registro aunque solo vengan observaciones o un subconjunto de campos.
 
     // Convertir y validar id_cita si se proporciona
     let citaId = null;

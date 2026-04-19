@@ -11,6 +11,7 @@ import PushNotification from 'react-native-push-notification';
 import { Platform, NativeEventEmitter, DeviceEventEmitter } from 'react-native';
 import Logger from './logger';
 import servicioApi from '../api/servicioApi';
+import { storageService } from './storageService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
@@ -970,11 +971,18 @@ class PushTokenService {
    */
   async limpiarToken() {
     try {
-      if (this.userId && this.currentToken) {
-        // Desregistrar token del servidor
+      // POST /mobile/device/unregister exige JWT (authenticateToken en api-clinica).
+      // Tras handleSessionExpired() los tokens ya se borraron: si llamamos igual, 401 →
+      // interceptor → otra alerta "Sesión expirada" en bucle.
+      const authToken = await storageService.getAuthToken();
+      if (this.userId && this.currentToken && authToken) {
         await servicioApi.post('/mobile/device/unregister', {
           device_token: this.currentToken,
         });
+      } else if (this.userId && this.currentToken && !authToken) {
+        Logger.info(
+          'Unregister push omitido: no hay sesión en almacenamiento (p. ej. cierre tras sesión expirada)'
+        );
       }
 
       // Limpiar datos locales

@@ -77,7 +77,7 @@ export async function downloadExpedientePDF(idPaciente) {
  * Obtiene datos para el FORMA (Formato de Registro Mensual GAM - SIC).
  * Solo uso en web app; la app móvil no usa este endpoint.
  * Datos de un solo paciente para el mes/año seleccionado.
- * @param {{ idPaciente: number, mes: number, anio: number }} params
+ * @param {{ idPaciente: number, mes: number, anio: number, dia?: number }} params
  * @returns {Promise<{ cabecera: object, filas: object[] }>}
  */
 export async function getFormaData(params) {
@@ -86,6 +86,7 @@ export async function getFormaData(params) {
   const q = new URLSearchParams();
   if (params.mes != null) q.set('mes', String(params.mes));
   if (params.anio != null) q.set('anio', String(params.anio));
+  if (params.dia != null) q.set('dia', String(params.dia));
   const url = `${REPORTES_FORMA(id)}?${q.toString()}`;
   const { data } = await client.get(url, { timeout: 60000 });
   return data?.data != null ? data.data : data;

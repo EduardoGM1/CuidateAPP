@@ -119,8 +119,9 @@ const RegistrarSignosVitales = () => {
 
   // Validaciones personalizadas
   const validarPeso = (peso) => {
+    if (peso === undefined || peso === null || String(peso).trim() === '') return null;
     const pesoNum = parseFloat(peso);
-    if (!peso || isNaN(pesoNum)) {
+    if (isNaN(pesoNum)) {
       return 'Por favor ingresa un peso válido';
     }
     if (pesoNum < 10 || pesoNum > 300) {
@@ -130,8 +131,9 @@ const RegistrarSignosVitales = () => {
   };
 
   const validarTalla = (talla) => {
+    if (talla === undefined || talla === null || String(talla).trim() === '') return null;
     const tallaNum = parseFloat(talla);
-    if (!talla || isNaN(tallaNum)) {
+    if (isNaN(tallaNum)) {
       return 'Por favor ingresa una talla válida';
     }
     if (tallaNum < 0.5 || tallaNum > 2.5) {
@@ -141,8 +143,9 @@ const RegistrarSignosVitales = () => {
   };
 
   const validarPresion = (presion, tipo) => {
+    if (presion === undefined || presion === null || String(presion).trim() === '') return null;
     const presionNum = parseFloat(presion);
-    if (!presion || isNaN(presionNum)) {
+    if (isNaN(presionNum)) {
       return `Por favor ingresa una presión ${tipo} válida`;
     }
     if (presionNum < 40 || presionNum > 250) {
@@ -152,8 +155,9 @@ const RegistrarSignosVitales = () => {
   };
 
   const validarGlucosa = (glucosa) => {
+    if (glucosa === undefined || glucosa === null || String(glucosa).trim() === '') return null;
     const glucosaNum = parseFloat(glucosa);
-    if (!glucosa || isNaN(glucosaNum)) {
+    if (isNaN(glucosaNum)) {
       return 'Por favor ingresa un nivel de glucosa válido';
     }
     if (glucosaNum < 50 || glucosaNum > 500) {
@@ -163,8 +167,9 @@ const RegistrarSignosVitales = () => {
   };
 
   const validarNumero = (valor, min, max, unidad) => {
+    if (valor === undefined || valor === null || String(valor).trim() === '') return null;
     const num = parseFloat(valor);
-    if (!valor || isNaN(num)) {
+    if (isNaN(num)) {
       return `Por favor ingresa un valor válido`;
     }
     if (num < min || num > max) {
@@ -177,7 +182,7 @@ const RegistrarSignosVitales = () => {
   const formFieldsBase = [
     {
       key: 'peso_kg',
-      label: 'Peso',
+      label: 'Peso (opcional)',
       type: 'number',
       placeholder: 'Ejemplo: 70',
       speakInstruction: 'Ingresa tu peso en kilogramos. Por ejemplo, setenta kilogramos,solo escribe el numero',
@@ -185,7 +190,7 @@ const RegistrarSignosVitales = () => {
     },
     {
       key: 'talla_m',
-      label: 'Talla',
+      label: 'Talla (opcional)',
       type: 'number',
       placeholder: 'Ejemplo: 1.65',
       speakInstruction: 'Ingresa tu talla en metros. Por ejemplo, uno punto sesenta y cinco',
@@ -193,7 +198,7 @@ const RegistrarSignosVitales = () => {
     },
     {
       key: 'presion_sistolica',
-      label: 'Presión Sistólica',
+      label: 'Presión Sistólica (opcional)',
       type: 'number',
       placeholder: 'Ejemplo: 120',
       speakInstruction: 'Ingresa tu presión sistólica. El número alto de la presión',
@@ -201,7 +206,7 @@ const RegistrarSignosVitales = () => {
     },
     {
       key: 'presion_diastolica',
-      label: 'Presión Diastólica',
+      label: 'Presión Diastólica (opcional)',
       type: 'number',
       placeholder: 'Ejemplo: 80',
       speakInstruction: 'Ingresa tu presión diastólica. El número bajo de la presión',
@@ -209,7 +214,7 @@ const RegistrarSignosVitales = () => {
     },
     {
       key: 'glucosa_mg_dl',
-      label: 'Glucosa',
+      label: 'Glucosa (opcional)',
       type: 'number',
       placeholder: 'Ejemplo: 95',
       speakInstruction: 'Ingresa tu nivel de glucosa en miligramos por decilitro',
@@ -273,15 +278,15 @@ const RegistrarSignosVitales = () => {
   const formFieldsFinales = [
     {
       key: 'hba1c_porcentaje',
-      label: 'HbA1c (%) - Opcional',
+      label: 'HbA1c (%) (opcional)',
       type: 'number',
       placeholder: 'Ejemplo: 6.5',
       speakInstruction: 'Ingresa tu nivel de hemoglobina glicosilada en porcentaje. Si no lo sabes, puedes dejarlo en blanco y presionar siguiente',
       validate: (valor) => {
-        if (!valor || valor.trim() === '') return null; // Opcional
+        if (valor === undefined || valor === null || String(valor).trim() === '') return null;
         const num = parseFloat(valor);
-        if (isNaN(num) || num < 4.0 || num > 15.0) {
-          return 'HbA1c debe estar entre 4.0 y 15.0%';
+        if (isNaN(num) || num < 3.0 || num > 15.0) {
+          return 'HbA1c debe estar entre 3.0 y 15.0%';
         }
         return null;
       },
@@ -365,54 +370,78 @@ const RegistrarSignosVitales = () => {
     hapticService.medium();
 
     try {
-      // Preparar datos para enviar
+      // Preparar datos: solo enviar campos con valor válido (evita NaN y campos fantasma obligatorios)
       // NOTA: No enviar fecha_medicion ni registrado_por - el backend los crea automáticamente
-      const signosVitalesData = {
-        peso_kg: parseFloat(formValues.peso_kg),
-        talla_m: parseFloat(formValues.talla_m),
-        presion_sistolica: parseInt(formValues.presion_sistolica),
-        presion_diastolica: parseInt(formValues.presion_diastolica),
-        glucosa_mg_dl: parseInt(formValues.glucosa_mg_dl),
+      const trim = (v) => (v === undefined || v === null ? '' : String(v).trim());
+      const optionalFloat = (v) => {
+        const t = trim(v);
+        if (!t) return null;
+        const n = parseFloat(t);
+        return !Number.isNaN(n) && Number.isFinite(n) ? n : null;
+      };
+      const optionalInt = (v) => {
+        const t = trim(v);
+        if (!t) return null;
+        const n = parseInt(t, 10);
+        return !Number.isNaN(n) ? n : null;
       };
 
-      // Calcular IMC (el backend también lo calcula, pero lo enviamos por si acaso)
-      const imc = calcularIMC(formValues.peso_kg, formValues.talla_m);
-      if (imc && !isNaN(imc) && isFinite(imc)) {
+      const signosVitalesData = {};
+
+      const peso = optionalFloat(formValues.peso_kg);
+      const talla = optionalFloat(formValues.talla_m);
+      if (peso !== null) signosVitalesData.peso_kg = peso;
+      if (talla !== null) signosVitalesData.talla_m = talla;
+
+      const ps = optionalInt(formValues.presion_sistolica);
+      const pd = optionalInt(formValues.presion_diastolica);
+      if (ps !== null) signosVitalesData.presion_sistolica = ps;
+      if (pd !== null) signosVitalesData.presion_diastolica = pd;
+
+      const gluc = optionalInt(formValues.glucosa_mg_dl);
+      if (gluc !== null) signosVitalesData.glucosa_mg_dl = gluc;
+
+      const imc = calcularIMC(
+        trim(formValues.peso_kg) ? formValues.peso_kg : null,
+        trim(formValues.talla_m) ? formValues.talla_m : null
+      );
+      if (imc != null && !Number.isNaN(imc) && Number.isFinite(imc)) {
         signosVitalesData.imc = imc;
       }
 
-      // Campos opcionales
-      if (formValues.medida_cintura_cm && formValues.medida_cintura_cm.trim() !== '') {
-        signosVitalesData.medida_cintura_cm = parseFloat(formValues.medida_cintura_cm);
-      }
-      // ✅ HbA1c (%) - Campo obligatorio para criterios de acreditación
-      if (formValues.hba1c_porcentaje && formValues.hba1c_porcentaje.trim() !== '') {
+      const mc = optionalFloat(formValues.medida_cintura_cm);
+      if (mc !== null) signosVitalesData.medida_cintura_cm = mc;
+
+      if (trim(formValues.hba1c_porcentaje)) {
         const hba1c = parseFloat(formValues.hba1c_porcentaje);
-        if (!isNaN(hba1c) && hba1c >= 4.0 && hba1c <= 15.0) {
+        if (!Number.isNaN(hba1c) && hba1c >= 3.0 && hba1c <= 15.0) {
           signosVitalesData.hba1c_porcentaje = hba1c;
         }
       }
-      // ✅ Edad en medición - Para validar rangos de HbA1c
-      if (formValues.edad_paciente_en_medicion && formValues.edad_paciente_en_medicion.trim() !== '') {
+
+      if (trim(formValues.edad_paciente_en_medicion)) {
         const edad = parseInt(formValues.edad_paciente_en_medicion, 10);
-        if (!isNaN(edad) && edad >= 0 && edad <= 120) {
+        if (!Number.isNaN(edad) && edad >= 0 && edad <= 120) {
           signosVitalesData.edad_paciente_en_medicion = edad;
         }
-      } else if (paciente?.fecha_nacimiento) {
-        // Calcular automáticamente si no se proporciona
+      } else if (signosVitalesData.hba1c_porcentaje != null && paciente?.fecha_nacimiento) {
         const fechaNac = new Date(paciente.fecha_nacimiento);
         const hoy = new Date();
-        const edadCalculada = hoy.getFullYear() - fechaNac.getFullYear();
+        let edadCalculada = hoy.getFullYear() - fechaNac.getFullYear();
         const mes = hoy.getMonth() - fechaNac.getMonth();
         if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
-          edadCalculada--;
+          edadCalculada -= 1;
         }
         if (edadCalculada >= 0 && edadCalculada <= 120) {
           signosVitalesData.edad_paciente_en_medicion = edadCalculada;
         }
       }
-      if (formValues.colesterol_mg_dl && formValues.colesterol_mg_dl.trim() !== '') {
-        signosVitalesData.colesterol_mg_dl = parseFloat(formValues.colesterol_mg_dl);
+
+      if (trim(formValues.colesterol_mg_dl)) {
+        const col = parseFloat(formValues.colesterol_mg_dl);
+        if (!Number.isNaN(col)) {
+          signosVitalesData.colesterol_mg_dl = col;
+        }
       }
       // ✅ Colesterol LDL/HDL - Solo para pacientes con Hipercolesterolemia
       if (tieneHipercolesterolemia()) {
