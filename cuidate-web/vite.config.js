@@ -6,7 +6,7 @@ import { securityHeadersDev, securityHeadersProd } from './vite.security-headers
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
   server: {
     port: 5174,
@@ -21,6 +21,9 @@ export default defineConfig({
   preview: {
     headers: securityHeadersProd,
   },
+  esbuild: {
+    drop: mode === 'production' ? ['console', 'debugger'] : [],
+  },
   resolve: {
     alias: {
       // Fuerza resolución de exceljs desde node_modules (evita fallo en build Vite/Rollup)
@@ -33,6 +36,9 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    target: 'es2020',
+    cssTarget: 'chrome91',
+    chunkSizeWarningLimit: 1200,
     commonjsOptions: {
       transformMixedEsModules: true,
     },
@@ -42,4 +48,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

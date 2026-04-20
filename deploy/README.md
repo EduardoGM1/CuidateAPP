@@ -15,6 +15,7 @@ Repositorio: **git@github.com:EduardoGM1/CuidateAPP.git**
 | `nginx-cuidateapp-domain.conf` | Nginx: modo dominio (web en tudominio.com, API en api.tudominio.com) |
 | `nginx-security-headers.inc` | Cabeceras HTTP de seguridad (CSP, X-Frame-Options, etc.) para la SPA — incluir desde el `server` de la web |
 | `nginx-security-headers-api.inc` | Cabeceras mínimas para el `server` que hace proxy solo a la API (modo dominio) |
+| `rebuild-cuidate-web.sh` | Reinstala deps y ejecuta `vite build` con `.env.production` (servidor ya desplegado) |
 | `ecosystem.config.cjs` | PM2: arranque de api-clinica |
 
 ## Guía completa
@@ -95,6 +96,17 @@ add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" alway
 Opcional sobre HTTPS: si todo el sitio es HTTPS, puedes añadir `upgrade-insecure-requests` al final del valor de `Content-Security-Policy` en `nginx-security-headers.inc` (y mantener la misma cadena en `cuidate-web/vite.security-headers.js` para `vite preview`).
 
 La app en desarrollo (`npm run dev`) envía cabeceras equivalentes vía **`vite.config.js`** y `vite.security-headers.js`.
+
+## Actualizar solo la web en un servidor que ya corre
+
+1. `cd /var/www/CuidateAPP` (o tu `APP_ROOT`) y `git pull`.
+2. Ejecutar **`sudo bash deploy/rebuild-cuidate-web.sh`** con el argumento adecuado:
+   - **API en subdominio:** `sudo bash deploy/rebuild-cuidate-web.sh "https://api.tudominio.com"`
+   - **Mismo host + Nginx `/api`:** `sudo bash deploy/rebuild-cuidate-web.sh -`
+   - **Sin argumento:** no sobrescribe `.env.production` si ya existe; si no existe, copia `cuidate-web/.env.production.example`.
+3. Recargar Nginx si hace falta: `sudo nginx -t && sudo systemctl reload nginx`.
+
+Variables de build: ver **`cuidate-web/.env.production.example`**. Ese archivo puede versionarse; **`.env.production`** en el servidor no debe subirse a Git (está en `.gitignore`).
 
 ## PM2
 

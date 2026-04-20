@@ -128,24 +128,26 @@ pm2 start index.js --name "api-clinica" || pm2 restart "api-clinica"
 pm2 save
 pm2 startup -u root --hp /root 2>/dev/null || true
 
-# 4. Frontend (cuidate-web)
+# 4. Frontend (cuidate-web): build producción (.env.production + vite build)
 WEB_DIR="$APP_ROOT/cuidate-web"
 if [ ! -d "$WEB_DIR" ]; then
   log_err "No existe $WEB_DIR. Clona el repo en $APP_ROOT."
   exit 1
 fi
 
-cd "$WEB_DIR"
-log_info "Instalando dependencias de cuidate-web..."
-npm install
-
-log_info "Creando .env.production y generando build..."
-if [ "$USE_DOMAIN" = true ]; then
-  echo "VITE_API_BASE_URL=https://${API_DOMAIN}" > .env.production
-else
-  echo "VITE_API_BASE_URL=" > .env.production
+REBUILD_WEB="$APP_ROOT/deploy/rebuild-cuidate-web.sh"
+if [ ! -f "$REBUILD_WEB" ]; then
+  log_err "No existe $REBUILD_WEB"
+  exit 1
 fi
-npm run build
+
+if [ "$USE_DOMAIN" = true ]; then
+  log_info "Compilando cuidate-web (API en https://${API_DOMAIN})..."
+  bash "$REBUILD_WEB" "https://${API_DOMAIN}"
+else
+  log_info "Compilando cuidate-web (mismo origen /api)..."
+  bash "$REBUILD_WEB" "-"
+fi
 
 # 5. Nginx
 log_info "Configurando Nginx..."
