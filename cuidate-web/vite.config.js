@@ -2,6 +2,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { securityHeadersDev, securityHeadersProd } from './vite.security-headers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -9,12 +10,16 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5174,
+    headers: securityHeadersDev,
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
       },
     },
+  },
+  preview: {
+    headers: securityHeadersProd,
   },
   resolve: {
     alias: {

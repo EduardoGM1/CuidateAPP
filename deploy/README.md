@@ -13,6 +13,8 @@ Repositorio: **git@github.com:EduardoGM1/CuidateAPP.git**
 | `nginx-cuidateapp.conf` | Plantilla Nginx por defecto (solo IP) |
 | `nginx-cuidateapp-ip.conf` | Nginx: modo solo IP (web + `/api` en la misma IP) |
 | `nginx-cuidateapp-domain.conf` | Nginx: modo dominio (web en tudominio.com, API en api.tudominio.com) |
+| `nginx-security-headers.inc` | Cabeceras HTTP de seguridad (CSP, X-Frame-Options, etc.) para la SPA — incluir desde el `server` de la web |
+| `nginx-security-headers-api.inc` | Cabeceras mínimas para el `server` que hace proxy solo a la API (modo dominio) |
 | `ecosystem.config.cjs` | PM2: arranque de api-clinica |
 
 ## Guía completa
@@ -73,6 +75,26 @@ El script crea `/var/www`, clona **git@github.com:EduardoGM1/CuidateAPP.git** en
    ```bash
    certbot --nginx -d tudominio.com -d www.tudominio.com -d api.tudominio.com
    ```
+
+## Cabeceras de seguridad y HSTS
+
+Las plantillas Nginx incluyen **`nginx-security-headers.inc`** (y **`nginx-security-headers-api.inc`** en el subdominio de API) con:
+
+- **Content-Security-Policy (CSP)** alineada con la SPA (fuentes Google, `/api` o APIs HTTPS, sin `unsafe-eval` en producción).
+- **X-Frame-Options: SAMEORIGIN** (web) / **DENY** (API en subdominio).
+- **X-Content-Type-Options: nosniff**
+- **Referrer-Policy**
+- **Permissions-Policy** (cámara, micrófono, geolocalización, etc. deshabilitados por defecto).
+
+**Strict-Transport-Security (HSTS)** no se envía en plantillas que solo escuchan en **HTTP (puerto 80)**; los navegadores deben recibir HSTS solo sobre **HTTPS**. Después de **Certbot** (o certificado TLS), añade en cada `server { ... }` que escuche en **443 ssl**:
+
+```nginx
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+```
+
+Opcional sobre HTTPS: si todo el sitio es HTTPS, puedes añadir `upgrade-insecure-requests` al final del valor de `Content-Security-Policy` en `nginx-security-headers.inc` (y mantener la misma cadena en `cuidate-web/vite.security-headers.js` para `vite preview`).
+
+La app en desarrollo (`npm run dev`) envía cabeceras equivalentes vía **`vite.config.js`** y `vite.security-headers.js`.
 
 ## PM2
 
