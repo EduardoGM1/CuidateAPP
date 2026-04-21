@@ -831,8 +831,8 @@ const MisCitas = () => {
                   </View>
                 )}
 
-                {/* Botón para solicitar reprogramación (solo para citas futuras) */}
-                {new Date(cita.fecha_cita) > new Date() && cita.estado !== 'cancelada' && (() => {
+                {/* Reprogramación: cualquier momento si la cita no está cancelada ni atendida (incluye citas vencidas) */}
+                {cita.estado !== 'cancelada' && cita.estado !== 'atendida' && (() => {
                   const solicitudPendiente = tieneSolicitudPendiente(cita.id_cita || cita.id);
                   const yaTieneSolicitud = !!solicitudPendiente;
                   

@@ -2111,18 +2111,8 @@ export const solicitarReprogramacion = async (req, res) => {
       return sendError(res, 'No se puede solicitar reprogramación de una cita ya atendida', 400);
     }
 
-    // Validar que la cita no esté en el pasado
-    const ahora = new Date();
-    const fechaCita = new Date(cita.fecha_cita);
-    if (fechaCita < ahora) {
-      return sendError(res, 'No se puede solicitar reprogramación de una cita que ya pasó', 400);
-    }
-
-    // Validar tiempo mínimo antes de la cita (1 hora)
-    const horasRestantes = (fechaCita - ahora) / (1000 * 60 * 60);
-    if (horasRestantes < 1) {
-      return sendError(res, 'Solo se pueden solicitar reprogramaciones con al menos 1 hora de anticipación', 400);
-    }
+    // La fecha/hora de la cita ya no limita la solicitud: el paciente puede pedir reprogramación
+    // en cualquier momento (incluidas citas ya vencidas). El doctor/admin fija la nueva fecha al aprobar.
 
     // Los pacientes NO pueden elegir fecha, solo enviar solicitud
     // El doctor/admin decidirá la nueva fecha al aprobar la solicitud
