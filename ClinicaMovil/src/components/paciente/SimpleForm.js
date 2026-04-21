@@ -45,12 +45,33 @@ const SimpleForm = ({
   const totalSteps = fields.length;
   const isLastStep = currentStep === totalSteps - 1;
   const isFirstStep = currentStep === 0;
+  const getIsRequiredField = useCallback(
+    (field) => field?.required !== false && !/\(opcional\)/i.test(field?.label || ''),
+    []
+  );
+
+  const currentValue = currentField ? values[currentField.key] : '';
+  const isCurrentFieldRequired = getIsRequiredField(currentField);
+  const isCurrentFieldEmpty =
+    currentValue === undefined || currentValue === null || String(currentValue).trim() === '';
+  const isNextDisabled = isCurrentFieldRequired && isCurrentFieldEmpty;
 
   // Validar campo actual
   const validateCurrentField = useCallback(() => {
     if (!currentField) return true;
 
     const value = values[currentField.key];
+    const isRequiredField = getIsRequiredField(currentField);
+    const isEmpty = value === undefined || value === null || String(value).trim() === '';
+
+    if (isRequiredField && isEmpty) {
+      const requiredError = 'Este campo es obligatorio';
+      setErrors({ ...errors, [currentField.key]: requiredError });
+      speakError(requiredError);
+      hapticService.error();
+      return false;
+    }
+
     const error = currentField.validate
       ? currentField.validate(value, values)
       : null;
@@ -64,7 +85,7 @@ const SimpleForm = ({
 
     setErrors({ ...errors, [currentField.key]: null });
     return true;
-  }, [currentField, values, errors, speakError]);
+  }, [currentField, values, errors, speakError, getIsRequiredField]);
 
   // Avanzar al siguiente paso
   const handleNext = useCallback(async () => {
@@ -237,9 +258,9 @@ const SimpleForm = ({
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, styles.buttonNext]}
+          style={[styles.button, styles.buttonNext, isNextDisabled && styles.buttonNextDisabled]}
           onPress={handleNext}
-          disabled={!values[currentField.key]}
+          disabled={isNextDisabled}
         >
           <Text style={styles.buttonText}>
             {isLastStep ? '✅ Enviar' : 'Siguiente →'}
@@ -370,6 +391,10 @@ const styles = StyleSheet.create({
   },
   buttonNext: {
     backgroundColor: COLORES.PRIMARIO,
+  },
+  buttonNextDisabled: {
+    backgroundColor: COLORES.TEXTO_SECUNDARIO,
+    opacity: 0.7,
   },
   buttonText: {
     fontSize: 18,

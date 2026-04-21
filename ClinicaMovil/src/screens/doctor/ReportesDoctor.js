@@ -25,7 +25,8 @@ import { useAuth } from '../../context/AuthContext';
 import Logger from '../../services/logger';
 import { useDoctorDashboard } from '../../hooks/useDashboard';
 import { usePacientes } from '../../hooks/useGestion';
-import gestionService from '../../api/gestionService';
+import { useReportesDetalle } from '../../hooks/useReportesDetalle';
+import ReportesExportPanel from '../../components/reportes/ReportesExportPanel';
 import ModalBase from '../../components/DetallePaciente/shared/ModalBase';
 import EstadoSelector from '../../components/forms/EstadoSelector';
 import { COLORES, NETWORK_STAGGER } from '../../utils/constantes';
@@ -58,14 +59,20 @@ const ReportesDoctor = ({ navigation }) => {
   }, [userRole, navigation]);
 
   // Hook para datos del dashboard del doctor
-  const { 
-    metrics, 
+  const {
+    metrics,
     chartData,
+    pacientesNuevosData,
+    citasPorEstadoData,
     comorbilidadesMasFrecuentes,
     comorbilidadesPorPeriodo,
-    loading: dashboardLoading, 
-    refresh: refreshDashboard 
+    loading: dashboardLoading,
+    refresh: refreshDashboard,
   } = useDoctorDashboard();
+
+  const detalleReportes = useReportesDetalle({
+    enabled: userRole === 'Doctor' || userRole === 'doctor',
+  });
 
   // Actualizar datos cuando cambien los filtros (solo cuando realmente cambien)
   useEffect(() => {
@@ -121,7 +128,8 @@ const ReportesDoctor = ({ navigation }) => {
       await Promise.all([
         refreshDashboard(),
         refreshPacientes(),
-        loadEstadisticas()
+        loadEstadisticas(),
+        detalleReportes.refresh(),
       ]);
       Logger.info('ReportesDoctor: Datos refrescados exitosamente');
     } catch (error) {
@@ -129,7 +137,7 @@ const ReportesDoctor = ({ navigation }) => {
     } finally {
       setRefreshing(false);
     }
-  }, [refreshDashboard, refreshPacientes, loadEstadisticas]);
+  }, [refreshDashboard, refreshPacientes, loadEstadisticas, detalleReportes.refresh]);
 
   // Renderizar gráfico simple de barras
   const renderChartCard = (title, data, dataKey = 'citas') => {
@@ -447,6 +455,56 @@ const ReportesDoctor = ({ navigation }) => {
     setShowFiltroModal(false);
   }, [estadoFiltro, periodoFiltro, rangoMesesFiltro]);
 
+  const renderPieChart = (title, data) => {
+    if (!data || Object.keys(data).length === 0) {
+      return (
+        <Card style={styles.chartCard}>
+          <Card.Content>
+            <Title style={styles.chartTitle}>{title}</Title>
+            <Text style={styles.noDataText}>No hay datos disponibles</Text>
+          </Card.Content>
+        </Card>
+      );
+    }
+
+    const total = Object.values(data).reduce((sum, val) => sum + val, 0);
+    const colors = [
+      COLORES.PRIMARIO,
+      COLORES.SECUNDARIO,
+      COLORES.ADVERTENCIA,
+      COLORES.ERROR,
+      COLORES.IMSS_VERDE_MEDIO,
+      COLORES.IMSS_CLARO,
+    ];
+    const entries = Object.entries(data).map(([key, value], index) => ({
+      label: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
+      value,
+      percentage: total > 0 ? ((value / total) * 100).toFixed(1) : 0,
+      color: colors[index % colors.length],
+    }));
+
+    return (
+      <Card style={styles.chartCard}>
+        <Card.Content>
+          <Title style={styles.chartTitle}>{title}</Title>
+          <View style={styles.pieChartContainer}>
+            {entries.map((item, index) => (
+              <View key={index} style={styles.pieChartItem}>
+                <View style={[styles.pieChartColor, { backgroundColor: item.color }]} />
+                <View style={styles.pieChartInfo}>
+                  <Text style={styles.pieChartLabel}>{item.label}</Text>
+                  <Text style={styles.pieChartValue}>
+                    {item.value} ({item.percentage}%)
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </Card.Content>
+      </Card>
+    );
+  };
+
   // Renderizar card de estadística
   const renderStatCard = (title, value, subtitle, color = COLORES.NAV_PRIMARIO) => (
     <Card style={[styles.statCard, { borderLeftColor: color }]}>
@@ -495,6 +553,8 @@ const ReportesDoctor = ({ navigation }) => {
           <Text style={styles.headerSubtitle}>Dr. {userData?.email?.split('@')[0] || 'Usuario'}</Text>
         </View>
 
+        <ReportesExportPanel isAdmin={false} />
+
         {/* Estadísticas Principales */}
         <View style={styles.statsContainer}>
           <Text style={styles.sectionTitle}>Resumen General</Text>
@@ -526,6 +586,67 @@ const ReportesDoctor = ({ navigation }) => {
             {renderChartCard('Citas Últimos 7 Días', chartData)}
           </View>
         )}
+
+        {pacientesNuevosData && pacientesNuevosData.length > 0 && (
+          <View style={styles.chartsContainer}>
+            {renderChartCard('Pacientes nuevos (7 días)', pacientesNuevosData, 'pacientes')}
+          </View>
+        )}
+
+        {citasPorEstadoData && Object.keys(citasPorEstadoData).length > 0 && (
+          <View style={styles.chartsContainer}>
+            {renderPieChart('Citas por estado (tus asignadas)', citasPorEstadoData)}
+          </View>
+        )}
+
+        <View style={styles.chartsContainer}>
+          <Text style={styles.sectionTitle}>Análisis detallado</Text>
+          {detalleReportes.error ? (
+            <Text style={styles.errorDetalleText}>{detalleReportes.error}</Text>
+          ) : null}
+          {detalleReportes.loading && !detalleReportes.pacientesPorDoctor?.length ? (
+            <ActivityIndicator size="small" color={COLORES.NAV_PRIMARIO} style={{ marginVertical: 12 }} />
+          ) : null}
+          {detalleReportes.pacientesPorDoctor?.length > 0 &&
+            renderHorizontalBarChart(
+              'Pacientes por doctor (vista reciente)',
+              detalleReportes.pacientesPorDoctor.map((r) => ({
+                nombre: r.nombre,
+                frecuencia: r.total,
+              })),
+              'frecuencia',
+              'nombre',
+              false,
+            )}
+          {detalleReportes.citasPorDiaSemana?.some((d) => d.citas > 0) ? (
+            <View style={{ marginTop: 8 }}>{renderChartCard('Citas por día de la semana', detalleReportes.citasPorDiaSemana, 'citas')}</View>
+          ) : null}
+          {detalleReportes.distribucionEdad?.length > 0 ? (
+            <View style={{ marginTop: 8 }}>
+              {renderHorizontalBarChart(
+                'Distribución por edad',
+                detalleReportes.distribucionEdad.map((r) => ({
+                  nombre: r.name,
+                  frecuencia: r.value,
+                })),
+                'frecuencia',
+                'nombre',
+                false,
+              )}
+            </View>
+          ) : null}
+          {detalleReportes.distribucionGenero?.length > 0 ? (
+            <View style={{ marginTop: 8 }}>
+              {renderPieChart(
+                'Distribución por género',
+                detalleReportes.distribucionGenero.reduce((acc, cur) => {
+                  acc[cur.name] = cur.value;
+                  return acc;
+                }, {}),
+              )}
+            </View>
+          ) : null}
+        </View>
 
         {/* Gráfico de Comorbilidades */}
         {periodoFiltro && comorbilidadesPorPeriodo?.datos ? (
@@ -976,6 +1097,45 @@ const styles = StyleSheet.create({
   periodoSelectorButtonTextActive: {
     color: COLORES.NAV_PRIMARIO,
     fontWeight: '600',
+  },
+  pieChartContainer: {
+    paddingVertical: 10,
+  },
+  pieChartItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingVertical: 4,
+  },
+  pieChartColor: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  pieChartInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pieChartLabel: {
+    fontSize: 14,
+    color: COLORES.TEXTO_PRIMARIO,
+    fontWeight: '500',
+    flex: 1,
+  },
+  pieChartValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORES.NAV_PRIMARIO,
+    marginLeft: 8,
+  },
+  errorDetalleText: {
+    fontSize: 13,
+    color: COLORES.ERROR,
+    marginBottom: 8,
+    paddingHorizontal: 4,
   },
 });
 

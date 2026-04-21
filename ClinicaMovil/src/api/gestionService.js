@@ -1371,9 +1371,21 @@ export const gestionService = {
       };
     } catch (error) {
       Logger.error('GestionService: Error solicitando reprogramación', error);
+      const backendError = error.response?.data?.error || error.message || 'Error al enviar solicitud';
+      const normalized = String(backendError).toLowerCase();
+
+      // Compatibilidad con servidores antiguos que aún bloquean citas pasadas.
+      if (normalized.includes('ya pasó') || normalized.includes('ya paso')) {
+        return {
+          success: false,
+          error: 'No se pudo enviar la solicitud porque el servidor aún no tiene aplicada la regla nueva de reprogramación.',
+          errorCode: 'REPROGRAM_LEGACY_RULE'
+        };
+      }
+
       return {
         success: false,
-        error: error.response?.data?.error || error.message || 'Error al enviar solicitud'
+        error: backendError
       };
     }
   },
@@ -3536,19 +3548,57 @@ export const gestionService = {
    * GET /api/reportes/estadisticas/html
    * @returns {Promise<string>} HTML del reporte
    */
-  async getReporteEstadisticasHTML() {
+  /**
+   * @param {{ modulo?: number, fechaInicio?: string, fechaFin?: string }} [params] Query opcional (paridad con web; el servidor puede ignorar filtros no soportados).
+   */
+  async getReporteEstadisticasHTML(params = {}) {
     try {
-      Logger.info('Obteniendo reporte de estadísticas HTML');
+      Logger.info('Obteniendo reporte de estadísticas HTML', params);
       const apiClient = await ensureApiClient();
-      const response = await apiClient.get('/reportes/estadisticas/html', {
+      const q = new URLSearchParams();
+      if (params.modulo != null && Number(params.modulo) > 0) {
+        q.set('modulo', String(params.modulo));
+      }
+      if (params.fechaInicio) q.set('fechaInicio', String(params.fechaInicio).trim());
+      if (params.fechaFin) q.set('fechaFin', String(params.fechaFin).trim());
+      const qs = q.toString();
+      const url = qs ? `/reportes/estadisticas/html?${qs}` : '/reportes/estadisticas/html';
+      const response = await apiClient.get(url, {
         responseType: 'text',
-        timeout: 60000, // 60s: generación del reporte en servidor puede tardar
+        timeout: 60000,
       });
       const html = typeof response.data === 'string' ? response.data : String(response.data);
       Logger.success('Reporte de estadísticas HTML obtenido', { length: html.length });
       return html;
     } catch (error) {
       Logger.error('Error obteniendo reporte de estadísticas HTML', error);
+      throw this.handleError(error);
+    }
+  },
+
+  /**
+   * FORMA listado masivo (Admin/Doctor). GET /api/reportes/forma-lista
+   * @param {{ mes?: number, anio?: number, dia?: number, fechaInicio?: string, fechaFin?: string, modulo?: number }} params
+   */
+  async getFormaListaPacientes(params = {}) {
+    try {
+      const apiClient = await ensureApiClient();
+      const q = new URLSearchParams();
+      if (params.mes != null && params.mes !== '') q.set('mes', String(params.mes));
+      if (params.anio != null && params.anio !== '') q.set('anio', String(params.anio));
+      if (params.dia != null && params.dia !== '') q.set('dia', String(params.dia));
+      if (params.fechaInicio) q.set('fechaInicio', String(params.fechaInicio).trim());
+      if (params.fechaFin) q.set('fechaFin', String(params.fechaFin).trim());
+      if (params.modulo != null && Number(params.modulo) > 0) {
+        q.set('modulo', String(params.modulo));
+      }
+      const url = `/reportes/forma-lista?${q.toString()}`;
+      const response = await apiClient.get(url, { timeout: 120000 });
+      const payload = response.data?.data != null ? response.data.data : response.data;
+      Logger.success('FORMA lista pacientes obtenida');
+      return payload;
+    } catch (error) {
+      Logger.error('Error obteniendo forma-lista', error);
       throw this.handleError(error);
     }
   },

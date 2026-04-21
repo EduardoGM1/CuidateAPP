@@ -490,6 +490,19 @@ export const useDoctorDashboard = () => {
     }));
   }, [data]);
 
+  const pacientesNuevosData = useMemo(() => {
+    if (!data?.chartData?.pacientesNuevos) return [];
+    return data.chartData.pacientesNuevos.map((item) => ({
+      dia: item.dia,
+      pacientes: item.pacientes,
+    }));
+  }, [data]);
+
+  const citasPorEstadoData = useMemo(() => {
+    if (!data?.charts?.citasPorEstado) return null;
+    return data.charts.citasPorEstado;
+  }, [data]);
+
   // Memoizar comorbilidades más frecuentes
   const comorbilidadesMasFrecuentes = useMemo(() => {
     if (!data?.chartData?.comorbilidadesMasFrecuentes) return [];
@@ -535,6 +548,8 @@ export const useDoctorDashboard = () => {
     mensajesPendientes,
     proximasCitas,
     chartData,
+    pacientesNuevosData,
+    citasPorEstadoData,
     comorbilidadesMasFrecuentes,
     comorbilidadesPorPeriodo,
     alertasSignosVitales,

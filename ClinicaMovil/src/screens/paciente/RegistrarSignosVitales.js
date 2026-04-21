@@ -328,7 +328,12 @@ const RegistrarSignosVitales = () => {
   ];
 
   // ✅ Combinar todos los campos
-  const formFields = [...formFieldsBase, ...camposColesterol, ...camposTrigliceridos, ...formFieldsFinales];
+  const formFields = [...formFieldsBase, ...camposColesterol, ...camposTrigliceridos, ...formFieldsFinales]
+    .map((field) => ({
+      ...field,
+      // En este flujo todos los signos vitales son opcionales.
+      required: false,
+    }));
 
   // Calcular IMC cuando hay peso y talla
   const calcularIMC = (peso, talla) => {

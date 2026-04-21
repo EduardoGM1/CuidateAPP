@@ -26,9 +26,8 @@ import Logger from '../../services/logger';
 import { useAdminDashboard } from '../../hooks/useDashboard';
 import { usePacientes, useDoctores, useModulos } from '../../hooks/useGestion';
 import gestionService from '../../api/gestionService';
-import { generatePdfFromHtml } from '../../utils/fileDownloader';
 import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
-import FileViewer from 'react-native-file-viewer';
+import ReportesExportPanel from '../../components/reportes/ReportesExportPanel';
 import ModalBase from '../../components/DetallePaciente/shared/ModalBase';
 import RangoMesesSelector from '../../components/forms/RangoMesesSelector';
 import { COLORES, NETWORK_STAGGER } from '../../utils/constantes';
@@ -66,7 +65,6 @@ const ReportesAdmin = ({ navigation }) => {
   });
   const [citas, setCitas] = useState([]);
   const [loadingCitas, setLoadingCitas] = useState(false);
-  const [exportingPdf, setExportingPdf] = useState(false);
 
   // Validar que solo administradores puedan acceder
   useEffect(() => {
@@ -440,43 +438,6 @@ const ReportesAdmin = ({ navigation }) => {
       setRefreshing(false);
     }
   }, [refreshDashboard, refreshPacientes, refreshDoctores, loadEstadisticas, loadComorbilidades, loadCitas]);
-
-  // Exportar reporte de estadísticas a PDF y abrirlo automáticamente
-  const handleExportarPdf = useCallback(async () => {
-    setExportingPdf(true);
-    try {
-      const html = await gestionService.getReporteEstadisticasHTML();
-      const filename = `reporte-estadisticas-${new Date().toISOString().split('T')[0]}.pdf`;
-      const result = await generatePdfFromHtml({ html, filename });
-      if (result.success) {
-        try {
-          await FileViewer.open(result.filePath, {
-            showOpenWithDialog: true,
-            showAppsSuggestions: true,
-          });
-        } catch (openError) {
-          Logger.warn('ReportesAdmin: No se pudo abrir el PDF automáticamente', openError);
-          Alert.alert(
-            'Reporte generado',
-            'El PDF se guardó correctamente. Si no se abrió, búscalo en Descargas/Documents.'
-          );
-          return;
-        }
-        Alert.alert('Listo', 'El reporte se generó y se abrió correctamente.');
-      } else {
-        Alert.alert('Error', result.error || 'No se pudo generar el PDF.');
-      }
-    } catch (error) {
-      Logger.error('ReportesAdmin: Error exportando PDF', error);
-      const isNetwork = error?.code === 'ERR_NETWORK' || error?.type === 'connection_error' || error?.message?.includes('Network Error');
-      const msg = isNetwork
-        ? 'No se pudo conectar con el servidor. Comprueba que la API esté en marcha (puerto 3000) y que el dispositivo esté en la misma red.'
-        : (error?.message || 'No se pudo generar el reporte en PDF.');
-      Alert.alert('Error al exportar', msg);
-    } finally {
-      setExportingPdf(false);
-    }
-  }, []);
 
   // Renderizar gráfico simple de barras
   const renderChartCard = (title, data, dataKey = 'citas') => {
@@ -937,18 +898,9 @@ const ReportesAdmin = ({ navigation }) => {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>📊 Reportes y Estadísticas</Text>
           <Text style={styles.headerSubtitle}>Administrador</Text>
-          <TouchableOpacity
-            style={[styles.exportPdfButton, exportingPdf && styles.exportPdfButtonDisabled]}
-            onPress={handleExportarPdf}
-            disabled={exportingPdf}
-          >
-            {exportingPdf ? (
-              <ActivityIndicator size="small" color={COLORES.TEXTO_EN_PRIMARIO} />
-            ) : (
-              <Text style={styles.exportPdfButtonText}>Exportar PDF</Text>
-            )}
-          </TouchableOpacity>
         </View>
+
+        <ReportesExportPanel isAdmin modulos={modulos || []} />
 
         {/* Estadísticas Principales */}
         <View style={styles.statsContainer}>
@@ -1284,25 +1236,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORES.SECUNDARIO_LIGHT,
     marginBottom: 12,
-  },
-  exportPdfButton: {
-    alignSelf: 'center',
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.5)',
-    minWidth: 140,
-    alignItems: 'center',
-  },
-  exportPdfButtonDisabled: {
-    opacity: 0.7,
-  },
-  exportPdfButtonText: {
-    color: COLORES.TEXTO_EN_PRIMARIO,
-    fontSize: 14,
-    fontWeight: '600',
   },
   sectionTitle: {
     fontSize: 18,
