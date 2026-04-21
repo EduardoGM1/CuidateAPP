@@ -537,7 +537,19 @@ export default function UsuariosList() {
                     placeholder="Seleccionar módulo"
                     value={field.value ?? undefined}
                     onChange={field.onChange}
-                    options={[{ value: '', label: '— Sin módulo —' }, ...modulos.map((m) => ({ value: String(m.id_modulo ?? m.id), label: m.nombre || String(m.id_modulo ?? m.id) }))]}
+                    options={[
+                      { value: '', label: '— Sin módulo —' },
+                      ...modulos.map((m) => {
+                        const id = m.id_modulo ?? m.id;
+                        const nombre = sanitizeForDisplay(
+                          m.nombre_modulo ?? m.nombre ?? m.modulo ?? m.nombreModulo
+                        );
+                        return {
+                          value: String(id),
+                          label: nombre || String(id),
+                        };
+                      }),
+                    ]}
                   />
                 )}
               />
