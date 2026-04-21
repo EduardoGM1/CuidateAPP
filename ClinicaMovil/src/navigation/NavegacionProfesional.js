@@ -39,10 +39,15 @@ import GraficosEvolucion from '../screens/admin/GraficosEvolucion';
 // Pantallas del doctor
 import ListaPacientesDoctor from '../screens/doctor/ListaPacientesDoctor';
 import ReportesAdmin from '../screens/admin/ReportesAdmin';
+import ReportesDoctor from '../screens/doctor/ReportesDoctor';
 import HistorialMedicoDoctor from '../screens/doctor/HistorialMedicoDoctor';
 import GestionSolicitudesReprogramacion from '../screens/doctor/GestionSolicitudesReprogramacion';
 import ChatPaciente from '../screens/doctor/ChatPaciente';
 import ListaChats from '../screens/doctor/ListaChats';
+import UsuariosAdmin from '../screens/admin/UsuariosAdmin';
+import TicketsSoporte from '../screens/soporte/TicketsSoporte';
+import TicketNuevo from '../screens/soporte/TicketNuevo';
+import TicketDetalle from '../screens/soporte/TicketDetalle';
 import ChangePasswordScreen from '../screens/settings/ChangePasswordScreen';
 import OnboardingShellModal from '../components/onboarding/OnboardingShellModal';
 import SectionTipModal from '../components/onboarding/SectionTipModal';
@@ -202,7 +207,9 @@ const ACCESOS_RAPIDOS_ADMIN = [
   { label: 'Registrar Paciente', icon: '👥', screen: 'AgregarPaciente' },
   { label: 'Todas las Citas', icon: '📅', screen: 'VerTodasCitas' },
   { label: 'Reportes', icon: '📊', screen: 'ReportesAdmin' },
+  { label: 'Tickets Soporte', icon: '🎫', screen: 'TicketsSoporte' },
   { label: 'Historial de Auditoría', icon: '📜', screen: 'HistorialAuditoria' },
+  { label: 'Usuarios', icon: '👤', screen: 'GestionUsuariosAdmin' },
   { label: 'Módulos', icon: '🏢', screen: 'GestionModulos' },
   { label: 'Instituciones', icon: '🏥', screen: 'GestionInstituciones' },
   { label: 'Medicamentos', icon: '💊', screen: 'GestionMedicamentos' },
@@ -214,6 +221,8 @@ const ACCESOS_RAPIDOS_DOCTOR = [
   { label: 'Ver Todas las Citas', icon: '📅', screen: 'VerTodasCitas' },
   { label: 'Mis Pacientes', icon: '👥', screen: 'ListaPacientesDoctor' },
   { label: 'Nuevo Paciente', icon: '➕', screen: 'AgregarPaciente' },
+  { label: 'Reportes', icon: '📊', screen: 'ReportesDoctor' },
+  { label: 'Tickets Soporte', icon: '🎫', screen: 'TicketsSoporte' },
   { label: 'Historial Médico', icon: '📋', screen: 'HistorialMedicoDoctor' },
   { label: 'Solicitudes reprogramación', icon: '🔄', screen: 'GestionSolicitudesReprogramacion' },
   { label: 'Notificaciones', icon: '🔔', screen: 'HistorialNotificaciones' },
@@ -556,8 +565,43 @@ const NavegacionProfesional = () => {
         }}
       />
       <Stack.Screen 
+        name="GestionUsuariosAdmin" 
+        component={UsuariosAdmin}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
         name="ReportesAdmin" 
         component={ReportesAdmin}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="ReportesDoctor"
+        component={ReportesDoctor}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="TicketsSoporte"
+        component={TicketsSoporte}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="TicketNuevo"
+        component={TicketNuevo}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="TicketDetalle"
+        component={TicketDetalle}
         options={{
           headerShown: false,
         }}

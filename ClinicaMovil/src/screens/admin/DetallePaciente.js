@@ -33,6 +33,7 @@ import { canExecute } from '../../utils/validation';
 import { ESTADOS_CITA, COLORES, NOMBRE_APP } from '../../utils/constantes';
 import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 import { downloadFile, downloadAndOpenFile, downloadCSV, downloadPDF } from '../../utils/fileDownloader';
+import { saveFormaExcelToDevice } from '../../utils/formaExcelUtils';
 import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 import { storageService } from '../../services/storageService';
@@ -202,6 +203,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
     esquemaVacunacion: false,
     complicaciones: false,
     comorbilidades: false,
+    diagnosticos: false,
+    doctores: false,
     medicamentos: false,
     registroTomas: false, // Registro de tomas de medicamentos (adherencia)
     sesionesEducativas: false,
@@ -211,6 +214,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
   // Registro de tomas de medicamentos (para doctor/admin)
   const [tomasRegistro, setTomasRegistro] = useState([]);
   const [loadingTomasRegistro, setLoadingTomasRegistro] = useState(false);
+  const [tomasRangeDays, setTomasRangeDays] = useState(7);
   const [formDeteccion, setFormDeteccion] = useState({
     tipo_complicacion: '', // Instrucción ⑩
     fecha_deteccion: new Date().toISOString().split('T')[0], // Obligatorio
@@ -844,6 +848,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
     return diagnosticos?.length || 0;
   }, [diagnosticos]);
 
+  const totalDoctoresAsignados = useMemo(() => {
+    if (Array.isArray(doctoresPaciente) && doctoresPaciente.length > 0) {
+      return doctoresPaciente.length;
+    }
+    return nombresDoctoresAsignados?.length || 0;
+  }, [doctoresPaciente, nombresDoctoresAsignados]);
+
   const totalMedicamentos = useMemo(() => {
     return medicamentos?.length || 0;
   }, [medicamentos]);
@@ -894,6 +905,14 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const comorbilidadesMostrar = useMemo(() => {
     return comorbilidadesPaciente?.slice(0, 5) || [];
   }, [comorbilidadesPaciente]);
+
+  const diagnosticosMostrar = useMemo(() => {
+    return diagnosticos?.slice(0, 5) || [];
+  }, [diagnosticos]);
+
+  const doctoresPacienteMostrar = useMemo(() => {
+    return doctoresPaciente?.slice(0, 5) || [];
+  }, [doctoresPaciente]);
 
   const deteccionesMostrar = useMemo(() => {
     return detecciones?.slice(0, 5) || [];
@@ -949,7 +968,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
     try {
       const fin = new Date();
       const inicio = new Date();
-      inicio.setDate(inicio.getDate() - 7);
+      inicio.setDate(inicio.getDate() - tomasRangeDays);
       const fechaInicio = inicio.toISOString().split('T')[0];
       const fechaFin = fin.toISOString().split('T')[0];
       const data = await gestionService.getTomasMedicamento(pacienteId, { fechaInicio, fechaFin });
@@ -960,13 +979,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
     } finally {
       setLoadingTomasRegistro(false);
     }
-  }, [pacienteId]);
+  }, [pacienteId, tomasRangeDays]);
 
   useEffect(() => {
     if (accordionState.registroTomas && pacienteId) {
       loadTomasRegistro();
     }
-  }, [accordionState.registroTomas, pacienteId, loadTomasRegistro]);
+  }, [accordionState.registroTomas, pacienteId, loadTomasRegistro, tomasRangeDays]);
 
   const renderAccordionIcon = useCallback((expanded) => (
     <Text style={{ fontSize: 18, color: COLORES.PRIMARIO, fontWeight: 'bold' }}>
@@ -1631,6 +1650,139 @@ const DetallePacienteContent = ({ route, navigation }) => {
       }
     });
   }, [pacienteId, abrirPDFConFileViewer]);
+
+  const handleExportarNotasMedicas = useCallback(async () => {
+    if (!pacienteId) return;
+
+    Alert.alert(
+      'Exportar Notas Médicas',
+      'Se generará un PDF de notas médicas del paciente.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Exportar',
+          onPress: async () => {
+            try {
+              setExportandoExpediente(true);
+              const fecha = new Date().toISOString().split('T')[0];
+              const filename = `notas-medicas-${pacienteId}-${fecha}.pdf`;
+              const apiConfig = await getApiConfig();
+              const token = await storageService.getAuthToken();
+              const deviceId = await storageService.getOrCreateDeviceId();
+              const htmlUrl = `${apiConfig.baseURL}/api/reportes/notas-medicas/${pacienteId}/html`;
+
+              const htmlResponse = await fetch(htmlUrl, {
+                method: 'GET',
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  'X-Device-ID': deviceId,
+                  'X-Platform': Platform.OS,
+                  'X-App-Version': '1.0.0',
+                  'X-Client-Type': 'mobile',
+                },
+              });
+
+              if (!htmlResponse.ok) {
+                const errorText = await htmlResponse.text();
+                throw new Error(`No se pudo descargar notas médicas (${htmlResponse.status}): ${errorText}`);
+              }
+
+              const htmlContent = await htmlResponse.text();
+              const htmlToPdfModule = require('react-native-html-to-pdf');
+              const generatePDF = htmlToPdfModule.generatePDF || htmlToPdfModule.default?.generatePDF;
+              if (!generatePDF || typeof generatePDF !== 'function') {
+                throw new Error('No se encontró el generador de PDF en el dispositivo.');
+              }
+
+              const options = {
+                html: htmlContent,
+                fileName: filename.replace('.pdf', ''),
+                directory: Platform.OS === 'ios' ? 'Documents' : 'Downloads',
+                base64: false,
+                width: 595,
+                height: 842,
+              };
+              const pdfResult = await generatePDF(options);
+              const finalFilePath = pdfResult?.filePath;
+              if (!finalFilePath) throw new Error('No se pudo generar el archivo PDF.');
+
+              const fileExists = await RNFS.exists(finalFilePath);
+              if (!fileExists) throw new Error('El archivo generado no existe.');
+
+              const fileInfo = await RNFS.stat(finalFilePath);
+              const fileSize = parseInt(fileInfo.size, 10) || 0;
+              const opened = await abrirPDFConFileViewer(finalFilePath, filename);
+
+              Alert.alert(
+                '✅ Éxito',
+                opened
+                  ? `Notas médicas generadas y abiertas.\n\nArchivo: ${filename}\nTamaño: ${(fileSize / 1024).toFixed(2)} KB`
+                  : `Notas médicas generadas.\n\nArchivo: ${filename}\nTamaño: ${(fileSize / 1024).toFixed(2)} KB`
+              );
+            } catch (error) {
+              const msg = error?.message || 'No se pudieron exportar las notas médicas.';
+              Logger.error('Error exportando notas médicas', error);
+              Alert.alert('Error', msg);
+            } finally {
+              setExportandoExpediente(false);
+            }
+          },
+        },
+      ]
+    );
+  }, [abrirPDFConFileViewer, pacienteId]);
+
+  const handleExportarFormaPaciente = useCallback(async () => {
+    if (!pacienteId) return;
+    const now = new Date();
+    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+    const runExport = async (mes, anio) => {
+      try {
+        setExportandoExpediente(true);
+        const data = await gestionService.getFormaDataPaciente(pacienteId, { mes, anio });
+        const totalFilas = Array.isArray(data?.filas) ? data.filas.length : 0;
+        const filename = `forma-paciente-${pacienteId}-${anio}-${String(mes).padStart(2, '0')}.xlsx`;
+        const filePath = await saveFormaExcelToDevice(data, filename);
+
+        try {
+          await FileViewer.open(filePath, {
+            showOpenWithDialog: true,
+            showAppsSuggestions: true,
+          });
+        } catch (openError) {
+          Logger.warn('FORMA exportado, pero no se pudo abrir automáticamente', openError);
+        }
+
+        Alert.alert(
+          '✅ Éxito',
+          `Formato de registro mensual exportado.\n\nRegistros: ${totalFilas}\nArchivo: ${filename}`
+        );
+      } catch (error) {
+        const msg = error?.message || 'No se pudo exportar el formato de registro mensual.';
+        Logger.error('Error exportando FORMA por paciente', error);
+        Alert.alert('Error', msg);
+      } finally {
+        setExportandoExpediente(false);
+      }
+    };
+
+    Alert.alert(
+      'Exportar Formato Registro Mensual',
+      'Selecciona el periodo a exportar.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: `Mes actual (${now.getMonth() + 1}/${now.getFullYear()})`,
+          onPress: () => runExport(now.getMonth() + 1, now.getFullYear()),
+        },
+        {
+          text: `Mes anterior (${prev.getMonth() + 1}/${prev.getFullYear()})`,
+          onPress: () => runExport(prev.getMonth() + 1, prev.getFullYear()),
+        },
+      ]
+    );
+  }, [pacienteId]);
 
   const handleExportarSignosVitales = useCallback(async () => {
     if (!pacienteId) return;
@@ -4369,6 +4521,24 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 Expediente Médico Completo
               </Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.exportButton, styles.graficosEvolucionButton, { marginTop: 10 }]}
+              onPress={handleExportarNotasMedicas}
+            >
+              <Text style={[styles.exportButtonIcon, { color: COLORES.TEXTO_EN_PRIMARIO }]}>📝</Text>
+              <Text style={[styles.exportButtonText, styles.graficosEvolucionText]}>
+                Notas Médicas (PDF)
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.exportButton, { marginTop: 10, backgroundColor: COLORES.SECUNDARIO_LIGHT }]}
+              onPress={handleExportarFormaPaciente}
+            >
+              <Text style={[styles.exportButtonIcon, { color: COLORES.TEXTO_EN_PRIMARIO }]}>📊</Text>
+              <Text style={[styles.exportButtonText, { color: COLORES.TEXTO_EN_PRIMARIO }]}>
+                Formato Registro Mensual (Excel)
+              </Text>
+            </TouchableOpacity>
             {/* Botón de Chat (solo para doctores) */}
             {(userRole === 'Doctor' || userRole === 'doctor') && (
               <View style={styles.chatButtonContainer}>
@@ -4473,6 +4643,129 @@ const DetallePacienteContent = ({ route, navigation }) => {
           onShowDetalle={handleOpenMonitoreoDetalle}
           refreshTrigger={refreshSignosTrigger}
         />
+
+        {/* Diagnósticos */}
+        <Card style={styles.card}>
+          <Card.Content>
+            <View style={styles.cardHeader}>
+              <Title style={styles.cardTitle}>🩺 Diagnósticos ({totalDiagnosticos})</Title>
+              <View style={styles.cardActions}>
+                <TouchableOpacity onPress={() => modalManager.open('optionsDiagnosticos')}>
+                  <Text style={styles.optionsText}>Opciones</Text>
+                </TouchableOpacity>
+                <IconButton
+                  icon={() => renderAccordionIcon(accordionState.diagnosticos)}
+                  size={28}
+                  onPress={() => toggleAccordion('diagnosticos')}
+                />
+              </View>
+            </View>
+            {accordionState.diagnosticos && (
+              <>
+                {diagnosticos && diagnosticos.length > 0 ? (
+                  <>
+                    {diagnosticos.length > 5 && (
+                      <Text style={styles.cardResumenText}>Mostrando 5 de {diagnosticos.length}. Ver historial en Opciones.</Text>
+                    )}
+                    {diagnosticosMostrar.map((diagnostico, diagIndex) => (
+                      <View key={`diag-card-${diagnostico.id_diagnostico}-${diagIndex}`} style={styles.listItem}>
+                        <View style={styles.listItemHeader}>
+                          <Text style={styles.listItemTitle}>
+                            {formatearFecha(diagnostico.fecha_registro)}
+                          </Text>
+                          <Text style={styles.listItemSubtitle}>
+                            {diagnostico.doctor_nombre || 'Sin doctor asignado'}
+                          </Text>
+                        </View>
+                        <Text style={styles.listItemDescription}>
+                          {diagnostico.descripcion || 'Sin descripción'}
+                        </Text>
+                        <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORES.BORDE_CLARO }}>
+                          <TouchableOpacity
+                            style={{ flex: 1, backgroundColor: COLORES.PRIMARIO, padding: 8, borderRadius: 6, alignItems: 'center' }}
+                            onPress={() => handleEditDiagnostico(diagnostico)}
+                          >
+                            <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>✏️ Editar</Text>
+                          </TouchableOpacity>
+                          {canDelete() && (
+                            <TouchableOpacity
+                              style={{ flex: 1, backgroundColor: COLORES.ERROR, padding: 8, borderRadius: 6, alignItems: 'center' }}
+                              onPress={() => handleDeleteDiagnostico(diagnostico)}
+                            >
+                              <Text style={{ color: COLORES.TEXTO_EN_PRIMARIO, fontWeight: '600', fontSize: 12 }}>🗑️ Eliminar</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </View>
+                    ))}
+                  </>
+                ) : (
+                  <Text style={styles.noDataText}>No hay diagnósticos registrados</Text>
+                )}
+              </>
+            )}
+          </Card.Content>
+        </Card>
+
+        {/* Doctores asignados */}
+        <Card style={styles.card}>
+          <Card.Content>
+            <View style={styles.cardHeader}>
+              <Title style={styles.cardTitle}>👨‍⚕️ Doctores Asignados ({totalDoctoresAsignados})</Title>
+              <View style={styles.cardActions}>
+                {(userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador') && (
+                  <TouchableOpacity onPress={handleChangeDoctor}>
+                    <Text style={styles.optionsText}>Opciones</Text>
+                  </TouchableOpacity>
+                )}
+                <IconButton
+                  icon={() => renderAccordionIcon(accordionState.doctores)}
+                  size={28}
+                  onPress={() => toggleAccordion('doctores')}
+                />
+              </View>
+            </View>
+            {accordionState.doctores && (
+              <>
+                {loadingDoctoresPaciente ? (
+                  <ActivityIndicator size="large" color={COLORES.PRIMARIO} style={{ padding: 20 }} />
+                ) : doctoresPacienteMostrar.length > 0 ? (
+                  <>
+                    {doctoresPaciente.length > 5 && (
+                      <Text style={styles.cardResumenText}>Mostrando 5 de {doctoresPaciente.length}. Ver historial en Opciones.</Text>
+                    )}
+                    {doctoresPacienteMostrar.map((doctor, index) => (
+                      <View key={`doctor-card-${doctor.id_doctor}-${index}`} style={styles.listItem}>
+                        <View style={styles.listItemHeader}>
+                          <Text style={styles.listItemTitle}>
+                            {doctor.nombre_completo || formatNombreCompleto(doctor)}
+                          </Text>
+                          <Chip
+                            mode="outlined"
+                            style={[
+                              styles.statusChip,
+                              doctor.activo ? styles.statusActive : styles.statusInactive
+                            ]}
+                          >
+                            {doctor.activo ? 'Activo' : 'Inactivo'}
+                          </Chip>
+                        </View>
+                        {doctor.institucion_hospitalaria && (
+                          <Text style={styles.listItemDescription}>{doctor.institucion_hospitalaria}</Text>
+                        )}
+                        {doctor.fecha_asignacion && (
+                          <Text style={styles.listItemSubtitle}>Asignado: {formatearFecha(doctor.fecha_asignacion)}</Text>
+                        )}
+                      </View>
+                    ))}
+                  </>
+                ) : (
+                  <Text style={styles.noDataText}>No hay doctores asignados</Text>
+                )}
+              </>
+            )}
+          </Card.Content>
+        </Card>
 
         {/* Medicamentos - máx. 5 en card; resto en Opciones → Ver historial completo */}
         <Card style={styles.card}>
@@ -4596,6 +4889,29 @@ const DetallePacienteContent = ({ route, navigation }) => {
             </View>
             {accordionState.registroTomas && (
               <>
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+                  {[7, 30, 90].map((days) => {
+                    const selected = tomasRangeDays === days;
+                    return (
+                      <TouchableOpacity
+                        key={String(days)}
+                        style={{
+                          paddingHorizontal: 10,
+                          paddingVertical: 6,
+                          borderRadius: 14,
+                          backgroundColor: selected ? COLORES.PRIMARIO : COLORES.FONDO_CARD,
+                          borderWidth: 1,
+                          borderColor: selected ? COLORES.PRIMARIO : COLORES.BORDE_CLARO,
+                        }}
+                        onPress={() => setTomasRangeDays(days)}
+                      >
+                        <Text style={{ color: selected ? COLORES.TEXTO_EN_PRIMARIO : COLORES.TEXTO_PRIMARIO, fontWeight: '600' }}>
+                          {days} días
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
                 {loadingTomasRegistro ? (
                   <ActivityIndicator size="large" color={COLORES.PRIMARIO} style={{ padding: 20 }} />
                 ) : tomasRegistro && tomasRegistro.length > 0 ? (

@@ -3603,6 +3603,101 @@ export const gestionService = {
     }
   },
 
+  /**
+   * FORMA por paciente (Detalle Paciente) - solo Admin/Doctor.
+   * GET /api/reportes/forma/:idPaciente
+   */
+  async getFormaDataPaciente(idPaciente, params = {}) {
+    try {
+      const apiClient = await ensureApiClient();
+      const q = new URLSearchParams();
+      if (params.mes != null && params.mes !== '') q.set('mes', String(params.mes));
+      if (params.anio != null && params.anio !== '') q.set('anio', String(params.anio));
+      if (params.dia != null && params.dia !== '') q.set('dia', String(params.dia));
+      const url = q.toString()
+        ? `/reportes/forma/${idPaciente}?${q.toString()}`
+        : `/reportes/forma/${idPaciente}`;
+      const response = await apiClient.get(url, { timeout: 120000 });
+      const payload = response?.data?.data != null ? response.data.data : response.data;
+      return payload;
+    } catch (error) {
+      Logger.error('Error obteniendo FORMA por paciente', error);
+      throw this.handleError(error);
+    }
+  },
+
+  // =====================================================
+  // MÉTODOS PARA TICKETS DE SOPORTE
+  // =====================================================
+  async createTicket(ticketData) {
+    try {
+      const apiClient = await ensureApiClient();
+      const response = await apiClient.post('/tickets', ticketData);
+      return response?.data?.data ?? response?.data;
+    } catch (error) {
+      Logger.error('Error creando ticket', error);
+      throw this.handleError(error);
+    }
+  },
+
+  async getMyTickets() {
+    try {
+      const apiClient = await ensureApiClient();
+      const response = await apiClient.get('/tickets/mios');
+      return response?.data?.data ?? response?.data;
+    } catch (error) {
+      Logger.error('Error obteniendo mis tickets', error);
+      throw this.handleError(error);
+    }
+  },
+
+  async getAdminTickets(params = {}) {
+    try {
+      const apiClient = await ensureApiClient();
+      const q = new URLSearchParams();
+      if (params.estado) q.set('estado', String(params.estado));
+      const url = q.toString() ? `/tickets/admin/lista?${q.toString()}` : '/tickets/admin/lista';
+      const response = await apiClient.get(url);
+      return response?.data?.data ?? response?.data;
+    } catch (error) {
+      Logger.error('Error obteniendo tickets admin', error);
+      throw this.handleError(error);
+    }
+  },
+
+  async getTicket(ticketId) {
+    try {
+      const apiClient = await ensureApiClient();
+      const response = await apiClient.get(`/tickets/${ticketId}`);
+      return response?.data?.data ?? response?.data;
+    } catch (error) {
+      Logger.error('Error obteniendo ticket', error);
+      throw this.handleError(error);
+    }
+  },
+
+  async postTicketMessage(ticketId, cuerpo) {
+    try {
+      const apiClient = await ensureApiClient();
+      const response = await apiClient.post(`/tickets/${ticketId}/mensajes`, { cuerpo });
+      return response?.data?.data ?? response?.data;
+    } catch (error) {
+      Logger.error('Error enviando mensaje de ticket', error);
+      throw this.handleError(error);
+    }
+  },
+
+  async patchTicket(ticketId, patchData) {
+    try {
+      const apiClient = await ensureApiClient();
+      const response = await apiClient.patch(`/tickets/${ticketId}`, patchData);
+      return response?.data?.data ?? response?.data;
+    } catch (error) {
+      Logger.error('Error actualizando ticket', error);
+      throw this.handleError(error);
+    }
+  },
+
   // =====================================================
   // SERVICIOS PARA NOTIFICACIONES DE DOCTORES
   // =====================================================
