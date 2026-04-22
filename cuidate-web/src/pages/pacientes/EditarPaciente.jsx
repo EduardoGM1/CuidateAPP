@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,6 +22,7 @@ import {
 } from '../../constants/enfermedadesCronicas';
 import { createEmptyRedApoyoItem } from '../../constants/redApoyo';
 import RedApoyoFormFields from '../../components/pacientes/RedApoyoFormFields';
+import PacienteEditSection from '../../components/pacientes/edit/PacienteEditSection';
 import { registerInitialMedicalData } from '../../utils/registerInitialMedicalData';
 import { adminResetPatientPin } from '../../api/auth';
 import { useAuthStore } from '../../stores/authStore';
@@ -35,6 +36,27 @@ import { formatNombreCompleto } from '../../utils/format';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const OPCIONES_SEXO = [{ value: '', label: '—' }, { value: 'Hombre', label: 'Hombre' }, { value: 'Mujer', label: 'Mujer' }, { value: 'Otro', label: 'Otro' }];
+const PERSONAL_FIELDS = [
+  'nombre',
+  'apellido_paterno',
+  'apellido_materno',
+  'fecha_nacimiento',
+  'curp',
+  'numero_celular',
+  'direccion',
+  'estado',
+  'localidad',
+  'sexo',
+  'institucion_salud',
+  'id_modulo',
+];
+const SECTION_KEYS = {
+  GENERAL: 'general',
+  RED_APOYO: 'redApoyo',
+  PRIMERA_CONSULTA: 'primeraConsulta',
+  CRONICAS: 'cronicas',
+  PIN: 'pin',
+};
 
 /** Convierte fecha del backend a YYYY-MM-DD para input type="date" */
 function toInputDate(value) {
@@ -83,6 +105,27 @@ export default function EditarPaciente() {
   const [staffPinLoading, setStaffPinLoading] = useState(false);
   const [staffPinMessage, setStaffPinMessage] = useState('');
   const [staffPinError, setStaffPinError] = useState('');
+  const [sectionOpen, setSectionOpen] = useState({
+    [SECTION_KEYS.GENERAL]: true,
+    [SECTION_KEYS.RED_APOYO]: false,
+    [SECTION_KEYS.PRIMERA_CONSULTA]: false,
+    [SECTION_KEYS.CRONICAS]: false,
+    [SECTION_KEYS.PIN]: false,
+  });
+  const [sectionStatus, setSectionStatus] = useState({
+    [SECTION_KEYS.GENERAL]: 'clean',
+    [SECTION_KEYS.RED_APOYO]: 'clean',
+    [SECTION_KEYS.PRIMERA_CONSULTA]: 'clean',
+    [SECTION_KEYS.CRONICAS]: 'clean',
+    [SECTION_KEYS.PIN]: 'clean',
+  });
+  const [redApoyoDeletedIds, setRedApoyoDeletedIds] = useState([]);
+  const initializedRef = useRef(false);
+  const skipAutosaveRef = useRef({ general: true, redApoyo: true, primeraConsulta: true, cronicas: true });
+  const generalLastSavedRef = useRef('');
+  const redApoyoLastSavedRef = useRef('');
+  const primeraConsultaLastSavedRef = useRef('');
+  const cronicasLastSavedRef = useRef('');
 
   useOnboardingPageReady(parsedId > 0 && !loading && !!paciente);
 
@@ -91,6 +134,7 @@ export default function EditarPaciente() {
     handleSubmit,
     reset,
     watch,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(pacienteEditResolverSchema),
@@ -111,7 +155,24 @@ export default function EditarPaciente() {
   });
 
   const estadoWatch = watch('estado');
+  const watchedPersonalFields = watch(PERSONAL_FIELDS);
   const municipiosOpciones = useMemo(() => getMunicipiosByEstado(estadoWatch || ''), [estadoWatch]);
+  const personalSnapshot = useMemo(() => JSON.stringify(watchedPersonalFields), [watchedPersonalFields]);
+  const redApoyoSnapshot = useMemo(() => JSON.stringify(redApoyoList), [redApoyoList]);
+  const primeraConsultaSnapshot = useMemo(
+    () => JSON.stringify({ enabled: primeraConsultaEnabled, data: primeraConsulta }),
+    [primeraConsultaEnabled, primeraConsulta]
+  );
+  const cronicasSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        enfermedadesCronicas,
+        tratamientoNoFarmaco,
+        tratamientoFarmaco,
+        anioDiagnostico,
+      }),
+    [enfermedadesCronicas, tratamientoNoFarmaco, tratamientoFarmaco, anioDiagnostico]
+  );
 
   const load = useCallback(async () => {
     if (parsedId === 0) return;
@@ -132,20 +193,22 @@ export default function EditarPaciente() {
       setInstitucionesSalud(Array.isArray(insts) ? insts : []);
 
       const redList = Array.isArray(redRes?.data) ? redRes.data : [];
+      const normalizedRedList =
+        redList.length > 0
+          ? redList.map((c) => ({
+              id_contacto: c.id_contacto ?? c.id,
+              nombre_contacto: String(c.nombre_contacto ?? '').trim(),
+              numero_celular: String(c.numero_celular ?? '').trim(),
+              email: String(c.email ?? '').trim(),
+              direccion: String(c.direccion ?? '').trim(),
+              localidad: String(c.localidad ?? '').trim(),
+              parentesco: String(c.parentesco ?? '').trim(),
+            }))
+          : [createEmptyRedApoyoItem()];
       if (redList.length > 0) {
-        setRedApoyoList(
-          redList.map((c) => ({
-            id_contacto: c.id_contacto ?? c.id,
-            nombre_contacto: String(c.nombre_contacto ?? '').trim(),
-            numero_celular: String(c.numero_celular ?? '').trim(),
-            email: String(c.email ?? '').trim(),
-            direccion: String(c.direccion ?? '').trim(),
-            localidad: String(c.localidad ?? '').trim(),
-            parentesco: String(c.parentesco ?? '').trim(),
-          }))
-        );
+        setRedApoyoList(normalizedRedList);
       } else {
-        setRedApoyoList([createEmptyRedApoyoItem()]);
+        setRedApoyoList(normalizedRedList);
       }
 
       const tel = p.numero_celular ?? p.telefono ?? '';
@@ -164,6 +227,17 @@ export default function EditarPaciente() {
         id_modulo: p.id_modulo != null ? String(p.id_modulo) : '',
       };
       reset(formValues);
+      generalLastSavedRef.current = JSON.stringify(PERSONAL_FIELDS.map((key) => formValues[key] ?? ''));
+      redApoyoLastSavedRef.current = JSON.stringify(normalizedRedList);
+      primeraConsultaLastSavedRef.current = JSON.stringify({ enabled: false, data: primeraConsulta });
+      cronicasLastSavedRef.current = JSON.stringify({
+        enfermedadesCronicas: getInitialEnfermedadesCronicas(),
+        tratamientoNoFarmaco: false,
+        tratamientoFarmaco: false,
+        anioDiagnostico: '',
+      });
+      skipAutosaveRef.current = { general: true, redApoyo: true, primeraConsulta: true, cronicas: true };
+      initializedRef.current = true;
     } catch {
       setPaciente(null);
     } finally {
@@ -211,6 +285,158 @@ export default function EditarPaciente() {
         setCatalogoComorbilidades([]);
       });
   }, []);
+
+  const setSectionStatusValue = useCallback((section, status) => {
+    setSectionStatus((prev) => (prev[section] === status ? prev : { ...prev, [section]: status }));
+  }, []);
+
+  const toggleSection = useCallback((section) => {
+    setSectionOpen((prev) => ({ ...prev, [section]: !prev[section] }));
+  }, []);
+
+  const saveGeneralSection = useCallback(async () => {
+    const data = getValues();
+    const payload = {
+      nombre: data.nombre?.trim() || '',
+      apellido_paterno: data.apellido_paterno?.trim() || '',
+      apellido_materno: data.apellido_materno?.trim() || null,
+      fecha_nacimiento: data.fecha_nacimiento?.trim() || '',
+      curp: data.curp?.trim() ? data.curp.trim().toUpperCase() : null,
+      numero_celular: data.numero_celular?.trim() || null,
+      direccion: data.direccion?.trim() || null,
+      estado: data.estado?.trim() || null,
+      localidad: data.localidad?.trim() || null,
+      sexo: data.sexo?.trim() || null,
+      institucion_salud: data.institucion_salud?.trim() || null,
+      id_modulo: data.id_modulo ?? null,
+    };
+    setSectionStatusValue(SECTION_KEYS.GENERAL, 'saving');
+    await updatePaciente(parsedId, payload);
+    generalLastSavedRef.current = JSON.stringify(PERSONAL_FIELDS.map((key) => data[key] ?? ''));
+    setSectionStatusValue(SECTION_KEYS.GENERAL, 'saved');
+  }, [getValues, parsedId, setSectionStatusValue]);
+
+  const saveRedApoyoSection = useCallback(async () => {
+    setSectionStatusValue(SECTION_KEYS.RED_APOYO, 'saving');
+    for (const deletedId of redApoyoDeletedIds) {
+      try {
+        await deletePacienteRedApoyo(parsedId, deletedId);
+      } catch (e) {
+        console.error('Error al eliminar contacto de red de apoyo', e);
+      }
+    }
+    for (const contacto of redApoyoList) {
+      const nombreRed = (contacto.nombre_contacto ?? '').trim();
+      const telRed = (contacto.numero_celular ?? '').trim();
+      if (!nombreRed && !telRed) continue;
+      const body = {
+        nombre_contacto: nombreRed || 'Contacto',
+        numero_celular: telRed || undefined,
+        email: (contacto.email ?? '').trim() || undefined,
+        direccion: (contacto.direccion ?? '').trim() || undefined,
+        localidad: (contacto.localidad ?? '').trim() || undefined,
+        parentesco: (contacto.parentesco ?? '').trim() || undefined,
+      };
+      if (contacto.id_contacto != null) {
+        await updatePacienteRedApoyo(parsedId, contacto.id_contacto, body);
+      } else {
+        await createPacienteRedApoyo(parsedId, body);
+      }
+    }
+    const refreshed = await getPacienteRedApoyo(parsedId, { limit: 50 }).catch(() => ({ data: [] }));
+    const normalized = Array.isArray(refreshed?.data) && refreshed.data.length > 0
+      ? refreshed.data.map((c) => ({
+          id_contacto: c.id_contacto ?? c.id,
+          nombre_contacto: String(c.nombre_contacto ?? '').trim(),
+          numero_celular: String(c.numero_celular ?? '').trim(),
+          email: String(c.email ?? '').trim(),
+          direccion: String(c.direccion ?? '').trim(),
+          localidad: String(c.localidad ?? '').trim(),
+          parentesco: String(c.parentesco ?? '').trim(),
+        }))
+      : [createEmptyRedApoyoItem()];
+    skipAutosaveRef.current.redApoyo = true;
+    setRedApoyoList(normalized);
+    setRedApoyoDeletedIds([]);
+    redApoyoLastSavedRef.current = JSON.stringify(normalized);
+    setSectionStatusValue(SECTION_KEYS.RED_APOYO, 'saved');
+  }, [parsedId, redApoyoDeletedIds, redApoyoList, setSectionStatusValue]);
+
+  useEffect(() => {
+    if (!initializedRef.current) return;
+    if (skipAutosaveRef.current.general) {
+      skipAutosaveRef.current.general = false;
+      return;
+    }
+    if (personalSnapshot === generalLastSavedRef.current) return;
+    setSectionStatusValue(SECTION_KEYS.GENERAL, 'pending');
+    const t = setTimeout(async () => {
+      try {
+        await saveGeneralSection();
+      } catch (err) {
+        setSectionStatusValue(SECTION_KEYS.GENERAL, 'error');
+      }
+    }, 900);
+    return () => clearTimeout(t);
+  }, [personalSnapshot, saveGeneralSection, setSectionStatusValue]);
+
+  useEffect(() => {
+    if (!initializedRef.current) return;
+    if (skipAutosaveRef.current.redApoyo) {
+      skipAutosaveRef.current.redApoyo = false;
+      return;
+    }
+    if (redApoyoSnapshot === redApoyoLastSavedRef.current && redApoyoDeletedIds.length === 0) return;
+    setSectionStatusValue(SECTION_KEYS.RED_APOYO, 'pending');
+    const t = setTimeout(async () => {
+      try {
+        await saveRedApoyoSection();
+      } catch (err) {
+        setSectionStatusValue(SECTION_KEYS.RED_APOYO, 'error');
+      }
+    }, 1100);
+    return () => clearTimeout(t);
+  }, [redApoyoSnapshot, redApoyoDeletedIds.length, saveRedApoyoSection, setSectionStatusValue]);
+
+  useEffect(() => {
+    if (!initializedRef.current) return;
+    if (skipAutosaveRef.current.primeraConsulta) {
+      skipAutosaveRef.current.primeraConsulta = false;
+      return;
+    }
+    if (primeraConsultaSnapshot === primeraConsultaLastSavedRef.current) return;
+    setSectionStatusValue(SECTION_KEYS.PRIMERA_CONSULTA, 'pending');
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(`paciente:${parsedId}:primera-consulta-draft`, primeraConsultaSnapshot);
+        primeraConsultaLastSavedRef.current = primeraConsultaSnapshot;
+        setSectionStatusValue(SECTION_KEYS.PRIMERA_CONSULTA, 'saved');
+      } catch {
+        setSectionStatusValue(SECTION_KEYS.PRIMERA_CONSULTA, 'error');
+      }
+    }, 700);
+    return () => clearTimeout(t);
+  }, [parsedId, primeraConsultaSnapshot, setSectionStatusValue]);
+
+  useEffect(() => {
+    if (!initializedRef.current) return;
+    if (skipAutosaveRef.current.cronicas) {
+      skipAutosaveRef.current.cronicas = false;
+      return;
+    }
+    if (cronicasSnapshot === cronicasLastSavedRef.current) return;
+    setSectionStatusValue(SECTION_KEYS.CRONICAS, 'pending');
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(`paciente:${parsedId}:cronicas-draft`, cronicasSnapshot);
+        cronicasLastSavedRef.current = cronicasSnapshot;
+        setSectionStatusValue(SECTION_KEYS.CRONICAS, 'saved');
+      } catch {
+        setSectionStatusValue(SECTION_KEYS.CRONICAS, 'error');
+      }
+    }, 700);
+    return () => clearTimeout(t);
+  }, [parsedId, cronicasSnapshot, setSectionStatusValue]);
 
   async function onSubmit(data) {
     setSubmitError('');
@@ -303,8 +529,10 @@ export default function EditarPaciente() {
   const handleStaffPinReset = async () => {
     setStaffPinError('');
     setStaffPinMessage('');
+    setSectionStatusValue(SECTION_KEYS.PIN, 'saving');
     if (staffPinNew !== staffPinConfirm) {
       setStaffPinError('Los PIN no coinciden');
+      setSectionStatusValue(SECTION_KEYS.PIN, 'error');
       return;
     }
     setStaffPinLoading(true);
@@ -313,10 +541,12 @@ export default function EditarPaciente() {
       setStaffPinMessage(
         'PIN actualizado. Informa al paciente su nuevo PIN por un canal seguro (no uses el mismo medio que contraseñas de terceros).'
       );
+      setSectionStatusValue(SECTION_KEYS.PIN, 'saved');
       setStaffPinNew('');
       setStaffPinConfirm('');
     } catch (err) {
       setStaffPinError(err?.response?.data?.error || err?.message || 'No se pudo actualizar el PIN');
+      setSectionStatusValue(SECTION_KEYS.PIN, 'error');
     } finally {
       setStaffPinLoading(false);
     }
@@ -350,6 +580,14 @@ export default function EditarPaciente() {
           {submitError && (
             <p style={{ margin: '0 0 1rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{submitError}</p>
           )}
+          <PacienteEditSection
+            id={SECTION_KEYS.GENERAL}
+            title="Datos generales"
+            description="Información principal del paciente para expediente y contacto."
+            status={sectionStatus[SECTION_KEYS.GENERAL]}
+            open={sectionOpen[SECTION_KEYS.GENERAL]}
+            onToggle={toggleSection}
+          >
           <Controller
             name="apellido_paterno"
             control={control}
@@ -492,25 +730,42 @@ export default function EditarPaciente() {
               />
             )}
           />
-          {/* Red de apoyo: lista de contactos (paridad con app móvil) */}
-          <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--color-borde-claro)' }} />
-          <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: 'var(--color-primario)' }}>
-            Red de apoyo (opcional)
-          </h3>
-          <RedApoyoFormFields
-            list={redApoyoList}
-            onAdd={() => setRedApoyoList((prev) => [...prev, createEmptyRedApoyoItem()])}
-            onRemove={(index) =>
-              setRedApoyoList((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)))
-            }
-            onUpdate={(index, field, value) =>
-              setRedApoyoList((prev) => prev.map((c, i) => (i === index ? { ...c, [field]: value } : c)))
-            }
-            disabled={isSubmitting}
-          />
+          </PacienteEditSection>
+          <PacienteEditSection
+            id={SECTION_KEYS.RED_APOYO}
+            title="Red de apoyo"
+            description="Contactos de apoyo del paciente."
+            status={sectionStatus[SECTION_KEYS.RED_APOYO]}
+            open={sectionOpen[SECTION_KEYS.RED_APOYO]}
+            onToggle={toggleSection}
+          >
+            <RedApoyoFormFields
+              list={redApoyoList}
+              onAdd={() => setRedApoyoList((prev) => [...prev, createEmptyRedApoyoItem()])}
+              onRemove={(index) =>
+                setRedApoyoList((prev) => {
+                  const current = prev[index];
+                  if (current?.id_contacto != null) {
+                    setRedApoyoDeletedIds((ids) => [...ids, current.id_contacto]);
+                  }
+                  return prev.length <= 1 ? prev : prev.filter((_, i) => i !== index);
+                })
+              }
+              onUpdate={(index, field, value) =>
+                setRedApoyoList((prev) => prev.map((c, i) => (i === index ? { ...c, [field]: value } : c)))
+              }
+              disabled={isSubmitting}
+            />
+          </PacienteEditSection>
 
-          {/* Primera consulta rápida en edición */}
-          <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--color-borde-claro)' }} />
+          <PacienteEditSection
+            id={SECTION_KEYS.PRIMERA_CONSULTA}
+            title="Primera consulta"
+            description="Captura rápida opcional de primera consulta y signos iniciales."
+            status={sectionStatus[SECTION_KEYS.PRIMERA_CONSULTA]}
+            open={sectionOpen[SECTION_KEYS.PRIMERA_CONSULTA]}
+            onToggle={toggleSection}
+          >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
             <input
               id="primera-consulta-enabled-edit"
@@ -612,56 +867,61 @@ export default function EditarPaciente() {
               </div>
             </div>
           )}
+          </PacienteEditSection>
 
-          {/* Enfermedades crónicas (misma lista que AgregarPaciente y app móvil) */}
-          <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--color-borde-claro)' }} />
-          <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: 'var(--color-primario)' }}>
-            Enfermedades crónicas (opcional)
-          </h3>
-          <p style={{ margin: '0 0 0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
-            Marca las enfermedades crónicas principales para registrar comorbilidades adicionales de este paciente.
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.75rem' }}>
-            {ENFERMEDADES_CRONICAS_KEYS.map((key) => (
-              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+          <PacienteEditSection
+            id={SECTION_KEYS.CRONICAS}
+            title="Enfermedades crónicas"
+            description="Selección rápida de crónicas y tratamiento."
+            status={sectionStatus[SECTION_KEYS.CRONICAS]}
+            open={sectionOpen[SECTION_KEYS.CRONICAS]}
+            onToggle={toggleSection}
+          >
+            <p style={{ margin: '0 0 0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
+              Marca las enfermedades crónicas principales para registrar comorbilidades adicionales de este paciente.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.75rem' }}>
+              {ENFERMEDADES_CRONICAS_KEYS.map((key) => (
+                <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={!!enfermedadesCronicas[key]}
+                    onChange={(e) =>
+                      setEnfermedadesCronicas((prev) => ({ ...prev, [key]: e.target.checked }))
+                    }
+                  />
+                  <span>{ENFERMEDADES_CRONICAS_LABELS[key] ?? key}</span>
+                </label>
+              ))}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.75rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
-                  checked={!!enfermedadesCronicas[key]}
-                  onChange={(e) =>
-                    setEnfermedadesCronicas((prev) => ({ ...prev, [key]: e.target.checked }))
-                  }
+                  checked={tratamientoNoFarmaco}
+                  onChange={(e) => setTratamientoNoFarmaco(e.target.checked)}
                 />
-                <span>{ENFERMEDADES_CRONICAS_LABELS[key] ?? key}</span>
+                <span>Tratamiento no farmacológico</span>
               </label>
-            ))}
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.75rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={tratamientoNoFarmaco}
-                onChange={(e) => setTratamientoNoFarmaco(e.target.checked)}
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={tratamientoFarmaco}
+                  onChange={(e) => setTratamientoFarmaco(e.target.checked)}
+                />
+                <span>Tratamiento farmacológico</span>
+              </label>
+            </div>
+            <div style={{ maxWidth: 220, marginBottom: '1rem' }}>
+              <Input
+                label="Año de diagnóstico (opcional)"
+                type="number"
+                placeholder="Ej. 2020"
+                value={anioDiagnostico}
+                onChange={(e) => setAnioDiagnostico(e.target.value)}
               />
-              <span>Tratamiento no farmacológico</span>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={tratamientoFarmaco}
-                onChange={(e) => setTratamientoFarmaco(e.target.checked)}
-              />
-              <span>Tratamiento farmacológico</span>
-            </label>
-          </div>
-          <div style={{ maxWidth: 220, marginBottom: '1rem' }}>
-            <Input
-              label="Año de diagnóstico (opcional)"
-              type="number"
-              placeholder="Ej. 2020"
-              value={anioDiagnostico}
-              onChange={(e) => setAnioDiagnostico(e.target.value)}
-            />
-          </div>
+            </div>
+          </PacienteEditSection>
 
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <Button type="submit" variant="primary" disabled={isSubmitting}>
@@ -675,13 +935,14 @@ export default function EditarPaciente() {
       </Card>
 
       {isStaff && (
-        <Card style={{ marginTop: '1.5rem' }}>
-          <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: 'var(--color-primario)' }}>
-            PIN de acceso (app móvil del paciente)
-          </h3>
-          <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
-            Para olvido de PIN o asignación de uno nuevo. El paciente podrá entrar a la app con este PIN de inmediato.
-          </p>
+        <PacienteEditSection
+          id={SECTION_KEYS.PIN}
+          title="PIN de acceso"
+          description="Recuperación o reasignación de PIN para app móvil del paciente."
+          status={sectionStatus[SECTION_KEYS.PIN]}
+          open={sectionOpen[SECTION_KEYS.PIN]}
+          onToggle={toggleSection}
+        >
           {staffPinError ? (
             <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>{staffPinError}</p>
           ) : null}
@@ -713,7 +974,7 @@ export default function EditarPaciente() {
               {staffPinLoading ? 'Guardando…' : 'Guardar nuevo PIN'}
             </Button>
           </div>
-        </Card>
+        </PacienteEditSection>
       )}
     </div>
   );
