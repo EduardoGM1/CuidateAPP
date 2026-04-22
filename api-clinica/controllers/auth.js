@@ -98,6 +98,14 @@ function normalizeRolUsuarioFilter(rol) {
   return null;
 }
 
+function validateAdminPasswordStrength(password) {
+  const p = String(password || '');
+  if (!/[A-Z]/.test(p)) return 'Para cuentas Admin, la contraseña debe incluir al menos una letra mayúscula';
+  if (!/\d/.test(p)) return 'Para cuentas Admin, la contraseña debe incluir al menos un número';
+  if (!/[^A-Za-z0-9]/.test(p)) return 'Para cuentas Admin, la contraseña debe incluir al menos un símbolo';
+  return null;
+}
+
 // Listar usuarios para vincular con perfiles (legacy - mantiene compatibilidad)
 // Query opcional: estado=activos|inactivos|todos, search=email parcial, rol=Admin|Doctor|Paciente, modulo=id (cuentas doctor en ese módulo)
 export const getUsuarios = async (req, res) => {
@@ -324,11 +332,20 @@ export const createUsuario = async (req, res) => {
           error: 'La contraseña es requerida cuando no se usa invitación',
         });
       }
-      if (password.length < 6) {
+      if (password.length < 5) {
         return res.status(400).json({
           success: false,
-          error: 'La contraseña debe tener al menos 6 caracteres',
+          error: 'La contraseña debe tener al menos 5 caracteres',
         });
+      }
+      if (rol === 'Admin') {
+        const adminPwdError = validateAdminPasswordStrength(password);
+        if (adminPwdError) {
+          return res.status(400).json({
+            success: false,
+            error: adminPwdError,
+          });
+        }
       }
     }
 
@@ -505,11 +522,21 @@ export const updateUsuario = async (req, res) => {
 
     // Actualizar contraseña si se proporciona
     if (password) {
-      if (password.length < 6) {
+      if (password.length < 5) {
         return res.status(400).json({ 
           success: false,
-          error: 'La contraseña debe tener al menos 6 caracteres' 
+          error: 'La contraseña debe tener al menos 5 caracteres' 
         });
+      }
+      const targetRol = rol || usuario.rol;
+      if (targetRol === 'Admin') {
+        const adminPwdError = validateAdminPasswordStrength(password);
+        if (adminPwdError) {
+          return res.status(400).json({
+            success: false,
+            error: adminPwdError,
+          });
+        }
       }
       dataToUpdate.password_hash = await bcrypt.hash(password, 10);
     }

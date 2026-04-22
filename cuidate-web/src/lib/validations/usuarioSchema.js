@@ -27,8 +27,35 @@ export const nuevoUsuarioSchema = z
   .superRefine((data, ctx) => {
     if (data.modo === 'password') {
       const p = (data.password || '').trim();
-      if (p.length < 8) {
-        ctx.addIssue({ code: 'custom', path: ['password'], message: 'La contraseña debe tener al menos 8 caracteres' });
+      if (p.length < LIMITS.PASSWORD_MIN) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['password'],
+          message: `La contraseña debe tener al menos ${LIMITS.PASSWORD_MIN} caracteres`,
+        });
+      }
+      if (data.rol === ROLES.ADMIN) {
+        if (!/[A-Z]/.test(p)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['password'],
+            message: 'Para cuentas Admin, agrega al menos una letra mayúscula',
+          });
+        }
+        if (!/\d/.test(p)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['password'],
+            message: 'Para cuentas Admin, agrega al menos un número',
+          });
+        }
+        if (!/[^A-Za-z0-9]/.test(p)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['password'],
+            message: 'Para cuentas Admin, agrega al menos un símbolo',
+          });
+        }
       }
     }
     if (data.rol === ROLES.DOCTOR) {

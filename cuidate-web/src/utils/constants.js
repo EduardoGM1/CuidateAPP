@@ -58,6 +58,6 @@ export const PAGE_SIZE_MAX = 100;
 /** Longitudes máximas para validación */
 export const LIMITS = {
   EMAIL_MAX: 254,
-  PASSWORD_MIN: 6,
+  PASSWORD_MIN: 5,
   PASSWORD_MAX: 128,
 };

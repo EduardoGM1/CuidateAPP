@@ -10,7 +10,7 @@ import DesactivarPacienteUsuarioModal from '../../components/pacientes/Desactiva
 import { message } from 'antd';
 import { Button, Input, Select, Table, LoadingSpinner, EmptyState, Badge, Modal } from '../../components/ui';
 import { sanitizeForDisplay } from '../../utils/sanitize';
-import { ROLES } from '../../utils/constants';
+import { ROLES, LIMITS } from '../../utils/constants';
 import { nuevoUsuarioSchema } from '../../lib/validations/usuarioSchema';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
@@ -67,6 +67,16 @@ export default function UsuariosList() {
 
   const newUserRol = watchNewUser('rol');
   const newUserModo = watchNewUser('modo');
+  const newUserPassword = watchNewUser('password');
+  const adminPasswordChecks = useMemo(() => {
+    const pwd = String(newUserPassword || '').trim();
+    return [
+      { key: 'min', label: `Minimo ${LIMITS.PASSWORD_MIN} caracteres`, ok: pwd.length >= LIMITS.PASSWORD_MIN },
+      { key: 'upper', label: 'Al menos una mayuscula (A-Z)', ok: /[A-Z]/.test(pwd) },
+      { key: 'number', label: 'Al menos un numero (0-9)', ok: /\d/.test(pwd) },
+      { key: 'symbol', label: 'Al menos un simbolo (!@#$...)', ok: /[^A-Za-z0-9]/.test(pwd) },
+    ];
+  }, [newUserPassword]);
 
   useOnboardingPageReady(!loading);
 
@@ -576,20 +586,50 @@ export default function UsuariosList() {
             </p>
           )}
           {newUserModo === 'password' && (
-            <Controller
-              name="password"
-              control={newUserControl}
-              render={({ field }) => (
-                <Input
-                  label="Contraseña"
-                  type="password"
-                  error={newUserErrors.password?.message}
-                  {...field}
-                  placeholder="Mínimo 8 caracteres"
-                  required
-                />
+            <>
+              <Controller
+                name="password"
+                control={newUserControl}
+                render={({ field }) => (
+                  <Input
+                    label="Contraseña"
+                    type="password"
+                    error={newUserErrors.password?.message}
+                    {...field}
+                    placeholder={`Minimo ${LIMITS.PASSWORD_MIN} caracteres`}
+                    required
+                  />
+                )}
+              />
+              {newUserRol === ROLES.ADMIN && (
+                <div style={{ margin: '0.25rem 0 0.75rem' }}>
+                  <p
+                    style={{
+                      margin: '0 0 0.35rem',
+                      fontSize: '0.85rem',
+                      color: 'var(--color-texto-secundario)',
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    Cuentas <strong>Admin</strong>: maximo <strong>{LIMITS.PASSWORD_MAX}</strong> caracteres.
+                  </p>
+                  <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.83rem', lineHeight: 1.5 }}>
+                    {adminPasswordChecks.map((rule) => (
+                      <li
+                        key={rule.key}
+                        style={{
+                          color: rule.ok ? '#15803d' : 'var(--color-texto-secundario)',
+                          fontWeight: rule.ok ? 600 : 400,
+                        }}
+                      >
+                        {rule.ok ? 'Cumple: ' : 'Falta: '}
+                        {rule.label}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
-            />
+            </>
           )}
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
             <Button type="submit" variant="primary" disabled={newUserSubmitting}>

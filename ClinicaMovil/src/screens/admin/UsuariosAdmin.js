@@ -25,6 +25,7 @@ const INITIAL_FORM = {
   rol: 'Admin',
   password: '',
 };
+const PASSWORD_MIN = 5;
 
 const UsuariosAdmin = ({ navigation }) => {
   const { userRole } = useAuth();
@@ -80,6 +81,15 @@ const UsuariosAdmin = ({ navigation }) => {
       );
     });
   }, [estadoFiltro, search, usuarios]);
+  const adminPasswordChecks = useMemo(() => {
+    const pwd = String(form.password || '').trim();
+    return [
+      { key: 'min', label: `Minimo ${PASSWORD_MIN} caracteres`, ok: pwd.length >= PASSWORD_MIN },
+      { key: 'upper', label: 'Al menos una mayuscula (A-Z)', ok: /[A-Z]/.test(pwd) },
+      { key: 'number', label: 'Al menos un numero (0-9)', ok: /\d/.test(pwd) },
+      { key: 'symbol', label: 'Al menos un simbolo (!@#$...)', ok: /[^A-Za-z0-9]/.test(pwd) },
+    ];
+  }, [form.password]);
 
   const openCreate = useCallback(() => {
     setEditing(null);
@@ -106,11 +116,19 @@ const UsuariosAdmin = ({ navigation }) => {
 
   const validateForm = useCallback(() => {
     if (!form.email.trim()) return 'El correo es obligatorio.';
-    if (!editing && form.password.trim().length < 8) {
-      return 'La contraseña debe tener al menos 8 caracteres.';
+    if (!editing) {
+      const password = form.password.trim();
+      if (password.length < PASSWORD_MIN) {
+        return `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres.`;
+      }
+      if (form.rol === 'Admin') {
+        if (!/[A-Z]/.test(password)) return 'Para Admin, agrega al menos una letra mayúscula.';
+        if (!/\d/.test(password)) return 'Para Admin, agrega al menos un número.';
+        if (!/[^A-Za-z0-9]/.test(password)) return 'Para Admin, agrega al menos un símbolo.';
+      }
     }
     return null;
-  }, [editing, form.email, form.password]);
+  }, [editing, form.email, form.password, form.rol]);
 
   const handleSave = useCallback(async () => {
     const validationError = validateForm();
@@ -265,10 +283,20 @@ const UsuariosAdmin = ({ navigation }) => {
               <TextInput
                 value={form.password}
                 onChangeText={(v) => setForm((prev) => ({ ...prev, password: v }))}
-                placeholder="Contraseña (mín. 8)"
+                placeholder={`Contrasena (min. ${PASSWORD_MIN})`}
                 secureTextEntry
                 style={styles.input}
               />
+            )}
+            {!editing && form.rol === 'Admin' && (
+              <View style={styles.rulesBlock}>
+                <Text style={styles.helpText}>Cuentas Admin: maximo 128 caracteres.</Text>
+                {adminPasswordChecks.map((rule) => (
+                  <Text key={rule.key} style={[styles.ruleText, rule.ok ? styles.ruleOk : styles.rulePending]}>
+                    {`${rule.ok ? 'Cumple: ' : 'Falta: '}${rule.label}`}
+                  </Text>
+                ))}
+              </View>
             )}
             {form.rol === 'Doctor' && (
               <Text style={styles.helpText}>
@@ -374,6 +402,10 @@ const styles = StyleSheet.create({
   },
   modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 10 },
   helpText: { color: COLORES.TEXTO_SECUNDARIO, fontSize: 12, marginBottom: 8 },
+  rulesBlock: { marginBottom: 8 },
+  ruleText: { fontSize: 12, marginBottom: 3 },
+  ruleOk: { color: COLORES.EXITO, fontWeight: '600' },
+  rulePending: { color: COLORES.TEXTO_SECUNDARIO },
 });
 
 export default UsuariosAdmin;
