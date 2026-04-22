@@ -121,10 +121,10 @@ const UsuariosAdmin = ({ navigation }) => {
       if (password.length < PASSWORD_MIN) {
         return `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres.`;
       }
-      if (form.rol === 'Admin') {
-        if (!/[A-Z]/.test(password)) return 'Para Admin, agrega al menos una letra mayúscula.';
-        if (!/\d/.test(password)) return 'Para Admin, agrega al menos un número.';
-        if (!/[^A-Za-z0-9]/.test(password)) return 'Para Admin, agrega al menos un símbolo.';
+      if (form.rol === 'Admin' || form.rol === 'Doctor') {
+        if (!/[A-Z]/.test(password)) return `Para ${form.rol}, agrega al menos una letra mayúscula.`;
+        if (!/\d/.test(password)) return `Para ${form.rol}, agrega al menos un número.`;
+        if (!/[^A-Za-z0-9]/.test(password)) return `Para ${form.rol}, agrega al menos un símbolo.`;
       }
     }
     return null;
@@ -288,9 +288,9 @@ const UsuariosAdmin = ({ navigation }) => {
                 style={styles.input}
               />
             )}
-            {!editing && form.rol === 'Admin' && (
+            {!editing && (form.rol === 'Admin' || form.rol === 'Doctor') && (
               <View style={styles.rulesBlock}>
-                <Text style={styles.helpText}>Cuentas Admin: maximo 128 caracteres.</Text>
+                <Text style={styles.helpText}>Cuentas {form.rol}: maximo 128 caracteres.</Text>
                 {adminPasswordChecks.map((rule) => (
                   <Text key={rule.key} style={[styles.ruleText, rule.ok ? styles.ruleOk : styles.rulePending]}>
                     {`${rule.ok ? 'Cumple: ' : 'Falta: '}${rule.label}`}

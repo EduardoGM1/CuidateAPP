@@ -601,7 +601,7 @@ export default function UsuariosList() {
                   />
                 )}
               />
-              {newUserRol === ROLES.ADMIN && (
+              {(newUserRol === ROLES.ADMIN || newUserRol === ROLES.DOCTOR) && (
                 <div style={{ margin: '0.25rem 0 0.75rem' }}>
                   <p
                     style={{
@@ -611,7 +611,8 @@ export default function UsuariosList() {
                       lineHeight: 1.45,
                     }}
                   >
-                    Cuentas <strong>Admin</strong>: maximo <strong>{LIMITS.PASSWORD_MAX}</strong> caracteres.
+                    Cuentas <strong>{newUserRol === ROLES.DOCTOR ? 'Doctor' : 'Admin'}</strong>: maximo{' '}
+                    <strong>{LIMITS.PASSWORD_MAX}</strong> caracteres.
                   </p>
                   <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.83rem', lineHeight: 1.5 }}>
                     {adminPasswordChecks.map((rule) => (

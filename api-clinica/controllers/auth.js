@@ -98,11 +98,11 @@ function normalizeRolUsuarioFilter(rol) {
   return null;
 }
 
-function validateAdminPasswordStrength(password) {
+function validatePrivilegedPasswordStrength(password, rol = 'Admin') {
   const p = String(password || '');
-  if (!/[A-Z]/.test(p)) return 'Para cuentas Admin, la contraseña debe incluir al menos una letra mayúscula';
-  if (!/\d/.test(p)) return 'Para cuentas Admin, la contraseña debe incluir al menos un número';
-  if (!/[^A-Za-z0-9]/.test(p)) return 'Para cuentas Admin, la contraseña debe incluir al menos un símbolo';
+  if (!/[A-Z]/.test(p)) return `Para cuentas ${rol}, la contraseña debe incluir al menos una letra mayúscula`;
+  if (!/\d/.test(p)) return `Para cuentas ${rol}, la contraseña debe incluir al menos un número`;
+  if (!/[^A-Za-z0-9]/.test(p)) return `Para cuentas ${rol}, la contraseña debe incluir al menos un símbolo`;
   return null;
 }
 
@@ -338,12 +338,12 @@ export const createUsuario = async (req, res) => {
           error: 'La contraseña debe tener al menos 5 caracteres',
         });
       }
-      if (rol === 'Admin') {
-        const adminPwdError = validateAdminPasswordStrength(password);
-        if (adminPwdError) {
+      if (rol === 'Admin' || rol === 'Doctor') {
+        const privilegedPwdError = validatePrivilegedPasswordStrength(password, rol);
+        if (privilegedPwdError) {
           return res.status(400).json({
             success: false,
-            error: adminPwdError,
+            error: privilegedPwdError,
           });
         }
       }
@@ -529,12 +529,12 @@ export const updateUsuario = async (req, res) => {
         });
       }
       const targetRol = rol || usuario.rol;
-      if (targetRol === 'Admin') {
-        const adminPwdError = validateAdminPasswordStrength(password);
-        if (adminPwdError) {
+      if (targetRol === 'Admin' || targetRol === 'Doctor') {
+        const privilegedPwdError = validatePrivilegedPasswordStrength(password, targetRol);
+        if (privilegedPwdError) {
           return res.status(400).json({
             success: false,
-            error: adminPwdError,
+            error: privilegedPwdError,
           });
         }
       }

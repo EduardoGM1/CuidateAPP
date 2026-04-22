@@ -34,26 +34,27 @@ export const nuevoUsuarioSchema = z
           message: `La contraseña debe tener al menos ${LIMITS.PASSWORD_MIN} caracteres`,
         });
       }
-      if (data.rol === ROLES.ADMIN) {
+      if (data.rol === ROLES.ADMIN || data.rol === ROLES.DOCTOR) {
+        const roleName = data.rol === ROLES.DOCTOR ? 'Doctor' : 'Admin';
         if (!/[A-Z]/.test(p)) {
           ctx.addIssue({
             code: 'custom',
             path: ['password'],
-            message: 'Para cuentas Admin, agrega al menos una letra mayúscula',
+            message: `Para cuentas ${roleName}, agrega al menos una letra mayúscula`,
           });
         }
         if (!/\d/.test(p)) {
           ctx.addIssue({
             code: 'custom',
             path: ['password'],
-            message: 'Para cuentas Admin, agrega al menos un número',
+            message: `Para cuentas ${roleName}, agrega al menos un número`,
           });
         }
         if (!/[^A-Za-z0-9]/.test(p)) {
           ctx.addIssue({
             code: 'custom',
             path: ['password'],
-            message: 'Para cuentas Admin, agrega al menos un símbolo',
+            message: `Para cuentas ${roleName}, agrega al menos un símbolo`,
           });
         }
       }
