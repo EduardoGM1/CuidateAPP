@@ -119,7 +119,7 @@ export const VALIDATION_RULES = {
   
   // Password
   PASSWORD_MIN_LENGTH: 8,
-  PASSWORD_MAX_LENGTH: 128,
+  PASSWORD_MAX_LENGTH: 20,
   
   // Nombres
   NAME_MIN_LENGTH: 2,

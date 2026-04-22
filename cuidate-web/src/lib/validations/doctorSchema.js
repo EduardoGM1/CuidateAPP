@@ -29,7 +29,7 @@ export const doctorCreateSchema = z
     }),
     activo: z.boolean().optional().default(true),
     usePassword: z.boolean().optional().default(false),
-    password: z.string().min(8, 'Mínimo 8 caracteres').max(128).optional().or(z.literal('')),
+    password: z.string().min(8, 'Mínimo 8 caracteres').max(LIMITS.PASSWORD_MAX, 'Contraseña demasiado larga').optional().or(z.literal('')),
     confirmPassword: z.string().optional().or(z.literal('')),
   })
   .refine((data) => !data.usePassword || (data.password && data.password.length >= 8), {

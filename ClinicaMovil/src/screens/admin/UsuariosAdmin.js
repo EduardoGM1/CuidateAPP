@@ -26,6 +26,7 @@ const INITIAL_FORM = {
   password: '',
 };
 const PASSWORD_MIN = 5;
+const PASSWORD_MAX = 20;
 
 const UsuariosAdmin = ({ navigation }) => {
   const { userRole } = useAuth();
@@ -85,6 +86,7 @@ const UsuariosAdmin = ({ navigation }) => {
     const pwd = String(form.password || '').trim();
     return [
       { key: 'min', label: `Minimo ${PASSWORD_MIN} caracteres`, ok: pwd.length >= PASSWORD_MIN },
+      { key: 'max', label: `Maximo ${PASSWORD_MAX} caracteres`, ok: pwd.length <= PASSWORD_MAX },
       { key: 'upper', label: 'Al menos una mayuscula (A-Z)', ok: /[A-Z]/.test(pwd) },
       { key: 'number', label: 'Al menos un numero (0-9)', ok: /\d/.test(pwd) },
       { key: 'symbol', label: 'Al menos un simbolo (!@#$...)', ok: /[^A-Za-z0-9]/.test(pwd) },
@@ -120,6 +122,9 @@ const UsuariosAdmin = ({ navigation }) => {
       const password = form.password.trim();
       if (password.length < PASSWORD_MIN) {
         return `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres.`;
+      }
+      if (password.length > PASSWORD_MAX) {
+        return `La contraseña no debe exceder ${PASSWORD_MAX} caracteres.`;
       }
       if (form.rol === 'Admin' || form.rol === 'Doctor') {
         if (!/[A-Z]/.test(password)) return `Para ${form.rol}, agrega al menos una letra mayúscula.`;
@@ -284,13 +289,14 @@ const UsuariosAdmin = ({ navigation }) => {
                 value={form.password}
                 onChangeText={(v) => setForm((prev) => ({ ...prev, password: v }))}
                 placeholder={`Contrasena (min. ${PASSWORD_MIN})`}
+                maxLength={PASSWORD_MAX}
                 secureTextEntry
                 style={styles.input}
               />
             )}
             {!editing && (form.rol === 'Admin' || form.rol === 'Doctor') && (
               <View style={styles.rulesBlock}>
-                <Text style={styles.helpText}>Cuentas {form.rol}: maximo 128 caracteres.</Text>
+                <Text style={styles.helpText}>Cuentas {form.rol}: maximo {PASSWORD_MAX} caracteres.</Text>
                 {adminPasswordChecks.map((rule) => (
                   <Text key={rule.key} style={[styles.ruleText, rule.ok ? styles.ruleOk : styles.rulePending]}>
                     {`${rule.ok ? 'Cumple: ' : 'Falta: '}${rule.label}`}

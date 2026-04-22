@@ -32,7 +32,7 @@ export async function createUsuario(payload) {
   if (invite) {
     body.invite = true;
   } else {
-    body.password = normalizeString(payload.password, { maxLength: 128 });
+    body.password = normalizeString(payload.password, { maxLength: 20 });
   }
   const { data } = await client.post(API_PATHS.AUTH_USUARIOS, body);
   return data;
@@ -57,7 +57,7 @@ export async function changePassword(payload) {
  * @param {{ userId: number, newPassword: string }} payload
  */
 export async function adminChangePassword(payload) {
-  const newPassword = normalizeString(payload.newPassword, { maxLength: 128 });
+  const newPassword = normalizeString(payload.newPassword, { maxLength: 20 });
   if (!newPassword || newPassword.length < 8) throw new Error('La contraseña debe tener al menos 8 caracteres');
   const body = { newPassword };
   if (payload.userId != null) body.userId = Number(payload.userId);
@@ -151,7 +151,7 @@ export async function forgotPassword(payload) {
  */
 export async function resetPassword(payload) {
   const token = payload?.token?.trim();
-  const newPassword = normalizeString(payload?.newPassword, { maxLength: 128 });
+  const newPassword = normalizeString(payload?.newPassword, { maxLength: 20 });
   if (!token || !newPassword) throw new Error('Token y nueva contraseña son requeridos');
   const { data } = await client.post(API_PATHS.AUTH_RESET_PASSWORD, { token, newPassword });
   return data;

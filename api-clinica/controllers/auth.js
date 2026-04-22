@@ -10,6 +10,8 @@ import logger from '../utils/logger.js';
 import emailService from '../services/emailService.js';
 import { AUTH_ACCOUNT_DISABLED_MESSAGE } from '../utils/constants.js';
 
+const PASSWORD_MAX_LENGTH = 20;
+
 export const register = async (req, res) => {
   try {
     logger.info('Register request received', { 
@@ -338,6 +340,12 @@ export const createUsuario = async (req, res) => {
           error: 'La contraseña debe tener al menos 5 caracteres',
         });
       }
+      if (password.length > PASSWORD_MAX_LENGTH) {
+        return res.status(400).json({
+          success: false,
+          error: `La contraseña no debe exceder ${PASSWORD_MAX_LENGTH} caracteres`,
+        });
+      }
       if (rol === 'Admin' || rol === 'Doctor') {
         const privilegedPwdError = validatePrivilegedPasswordStrength(password, rol);
         if (privilegedPwdError) {
@@ -526,6 +534,12 @@ export const updateUsuario = async (req, res) => {
         return res.status(400).json({ 
           success: false,
           error: 'La contraseña debe tener al menos 5 caracteres' 
+        });
+      }
+      if (password.length > PASSWORD_MAX_LENGTH) {
+        return res.status(400).json({
+          success: false,
+          error: `La contraseña no debe exceder ${PASSWORD_MAX_LENGTH} caracteres`,
         });
       }
       const targetRol = rol || usuario.rol;
@@ -1016,6 +1030,12 @@ export const changePassword = async (req, res) => {
         error: 'La nueva contraseña debe tener al menos 8 caracteres'
       });
     }
+    if (newPassword.length > PASSWORD_MAX_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        error: `La nueva contraseña no debe exceder ${PASSWORD_MAX_LENGTH} caracteres`,
+      });
+    }
 
     // Hashear nueva contraseña
     logger.info('Cambiando contraseña para usuario', { 
@@ -1211,6 +1231,12 @@ export const resetPassword = async (req, res) => {
         error: 'La contraseña debe tener al menos 8 caracteres'
       });
     }
+    if (newPassword.length > PASSWORD_MAX_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        error: `La contraseña no debe exceder ${PASSWORD_MAX_LENGTH} caracteres`,
+      });
+    }
 
     // Buscar token
     const resetToken = await PasswordResetToken.findOne({
@@ -1355,6 +1381,12 @@ export const adminChangePassword = async (req, res) => {
       return res.status(400).json({ 
         success: false,
         error: 'La contraseña debe tener al menos 8 caracteres'
+      });
+    }
+    if (newPassword.length > PASSWORD_MAX_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        error: `La contraseña no debe exceder ${PASSWORD_MAX_LENGTH} caracteres`,
       });
     }
 

@@ -59,5 +59,5 @@ export const PAGE_SIZE_MAX = 100;
 export const LIMITS = {
   EMAIL_MAX: 254,
   PASSWORD_MIN: 5,
-  PASSWORD_MAX: 128,
+  PASSWORD_MAX: 20,
 };

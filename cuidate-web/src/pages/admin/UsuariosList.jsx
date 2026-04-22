@@ -72,6 +72,7 @@ export default function UsuariosList() {
     const pwd = String(newUserPassword || '').trim();
     return [
       { key: 'min', label: `Minimo ${LIMITS.PASSWORD_MIN} caracteres`, ok: pwd.length >= LIMITS.PASSWORD_MIN },
+      { key: 'max', label: `Maximo ${LIMITS.PASSWORD_MAX} caracteres`, ok: pwd.length <= LIMITS.PASSWORD_MAX },
       { key: 'upper', label: 'Al menos una mayuscula (A-Z)', ok: /[A-Z]/.test(pwd) },
       { key: 'number', label: 'Al menos un numero (0-9)', ok: /\d/.test(pwd) },
       { key: 'symbol', label: 'Al menos un simbolo (!@#$...)', ok: /[^A-Za-z0-9]/.test(pwd) },

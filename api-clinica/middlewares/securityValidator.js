@@ -64,8 +64,8 @@ class SecurityValidator {
    */
   static validatePassword() {
     return body('password')
-      .isLength({ min: 6, max: 128 })
-      .withMessage('Password debe tener entre 6-128 caracteres')
+      .isLength({ min: 6, max: 20 })
+      .withMessage('Password debe tener entre 6-20 caracteres')
       .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
       .withMessage('Password debe contener al menos una mayúscula, una minúscula y un número')
       .custom((value) => {
@@ -95,8 +95,8 @@ class SecurityValidator {
    */
   static validateNewPassword() {
     return body('newPassword')
-      .isLength({ min: 8, max: 128 })
-      .withMessage('La contraseña debe tener entre 8-128 caracteres')
+      .isLength({ min: 8, max: 20 })
+      .withMessage('La contraseña debe tener entre 8-20 caracteres')
       .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
       .withMessage('La contraseña debe contener al menos una mayúscula, una minúscula y un número')
       .custom((value) => {
@@ -323,8 +323,8 @@ class SecurityValidator {
       // Contraseña opcional (flujo invitación: no se envía; el doctor crea contraseña por correo)
       body('password')
         .optional({ values: 'falsy' })
-        .isLength({ min: 6, max: 100 })
-        .withMessage('Contraseña debe tener entre 6-100 caracteres')
+        .isLength({ min: 6, max: 20 })
+        .withMessage('Contraseña debe tener entre 6-20 caracteres')
         .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
         .withMessage('Contraseña debe contener al menos una mayúscula, una minúscula y un número'),
 
@@ -527,7 +527,7 @@ class SecurityValidator {
         },
         validation_requirements: {
           email: 'Debe ser un email válido',
-          password: 'Mínimo 6 caracteres, 1 mayúscula, 1 minúscula, 1 número',
+          password: 'Mínimo 6 caracteres, máximo 20, 1 mayúscula, 1 minúscula, 1 número',
           rol: 'Paciente, Doctor o Admin'
         }
       });
