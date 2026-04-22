@@ -120,6 +120,36 @@ const ESTADO_CITA = {
   cancelada: 'Cancelada',
 };
 
+const ANIO_DIAGNOSTICO_FIELD = 'año_diagnostico';
+
+const COMORBILIDAD_FORM_INITIAL = {
+  id_comorbilidad: '',
+  fecha_deteccion: '',
+  observaciones: '',
+  anos_padecimiento: '',
+  es_diagnostico_basal: false,
+  [ANIO_DIAGNOSTICO_FIELD]: '',
+  es_agregado_posterior: false,
+  recibe_tratamiento_no_farmacologico: false,
+  recibe_tratamiento_farmacologico: false,
+};
+
+const DETECCION_FORM_INITIAL = {
+  tipo_complicacion: '',
+  fecha_deteccion: '',
+  fecha_diagnostico: '',
+  observaciones: '',
+  exploracion_pies: false,
+  exploracion_fondo_ojo: false,
+  realiza_auto_monitoreo: false,
+  auto_monitoreo_glucosa: false,
+  auto_monitoreo_presion: false,
+  microalbuminuria_realizada: false,
+  microalbuminuria_resultado: '',
+  fue_referido: false,
+  referencia_observaciones: '',
+};
+
 export default function PacienteDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -179,11 +209,7 @@ export default function PacienteDetail() {
   });
   const [vacunaSubmitting, setVacunaSubmitting] = useState(false);
   const [vacunaError, setVacunaError] = useState('');
-  const [comorbilidadForm, setComorbilidadForm] = useState({
-    id_comorbilidad: '',
-    fecha_deteccion: '',
-    observaciones: '',
-  });
+  const [comorbilidadForm, setComorbilidadForm] = useState(COMORBILIDAD_FORM_INITIAL);
   const [comorbilidadSubmitting, setComorbilidadSubmitting] = useState(false);
   const [comorbilidadError, setComorbilidadError] = useState('');
   const [sesionForm, setSesionForm] = useState({
@@ -305,12 +331,7 @@ export default function PacienteDetail() {
   const [editingComorbilidad, setEditingComorbilidad] = useState(null);
   const [editingDeteccion, setEditingDeteccion] = useState(null);
   const [deteccionCreating, setDeteccionCreating] = useState(false);
-  const [deteccionEditForm, setDeteccionEditForm] = useState({
-    tipo_complicacion: '',
-    fecha_deteccion: '',
-    fecha_diagnostico: '',
-    observaciones: '',
-  });
+  const [deteccionEditForm, setDeteccionEditForm] = useState(DETECCION_FORM_INITIAL);
   const [saludModalOpen, setSaludModalOpen] = useState(false);
   const [editingSalud, setEditingSalud] = useState(null);
   const [tbModalOpen, setTbModalOpen] = useState(false);
@@ -2182,9 +2203,17 @@ export default function PacienteDetail() {
                           onClick={() => {
                             setComorbilidadError('');
                             setComorbilidadForm({
+                              ...COMORBILIDAD_FORM_INITIAL,
                               id_comorbilidad: String(c.id_comorbilidad ?? c.id ?? ''),
                               fecha_deteccion: c.fecha_deteccion ? String(c.fecha_deteccion).slice(0, 10) : '',
                               observaciones: c.observaciones ?? '',
+                              anos_padecimiento: c.anos_padecimiento != null ? String(c.anos_padecimiento) : '',
+                              es_diagnostico_basal: !!c.es_diagnostico_basal,
+                              [ANIO_DIAGNOSTICO_FIELD]:
+                                c[ANIO_DIAGNOSTICO_FIELD] != null ? String(c[ANIO_DIAGNOSTICO_FIELD]) : '',
+                              es_agregado_posterior: !!c.es_agregado_posterior,
+                              recibe_tratamiento_no_farmacologico: !!c.recibe_tratamiento_no_farmacologico,
+                              recibe_tratamiento_farmacologico: !!c.recibe_tratamiento_farmacologico,
                             });
                             setEditingComorbilidad(c);
                             setComorbilidadModalOpen(true);
@@ -2231,11 +2260,7 @@ export default function PacienteDetail() {
                   onClick={() => {
                     setComorbilidadError('');
                     setEditingComorbilidad(null);
-                    setComorbilidadForm({
-                      id_comorbilidad: '',
-                      fecha_deteccion: '',
-                      observaciones: '',
-                    });
+                    setComorbilidadForm(COMORBILIDAD_FORM_INITIAL);
                     setComorbilidadModalOpen(true);
                   }}
                 >
@@ -2265,6 +2290,16 @@ export default function PacienteDetail() {
                         id_comorbilidad: idCom,
                         fecha_deteccion: comorbilidadForm.fecha_deteccion || undefined,
                         observaciones: comorbilidadForm.observaciones?.trim() || undefined,
+                        anos_padecimiento: comorbilidadForm.anos_padecimiento
+                          ? Number.parseInt(comorbilidadForm.anos_padecimiento, 10)
+                          : undefined,
+                        es_diagnostico_basal: !!comorbilidadForm.es_diagnostico_basal,
+                        [ANIO_DIAGNOSTICO_FIELD]: comorbilidadForm[ANIO_DIAGNOSTICO_FIELD]
+                          ? Number.parseInt(comorbilidadForm[ANIO_DIAGNOSTICO_FIELD], 10)
+                          : undefined,
+                        es_agregado_posterior: !!comorbilidadForm.es_agregado_posterior,
+                        recibe_tratamiento_no_farmacologico: !!comorbilidadForm.recibe_tratamiento_no_farmacologico,
+                        recibe_tratamiento_farmacologico: !!comorbilidadForm.recibe_tratamiento_farmacologico,
                       };
                       if (editingComorbilidad) {
                         const idRel = editingComorbilidad.id ?? editingComorbilidad.id_relacion ?? editingComorbilidad.id_paciente_comorbilidad;
@@ -2275,7 +2310,7 @@ export default function PacienteDetail() {
                       } else {
                         await apiAddComorbilidad(parsedId, body);
                       }
-                      setComorbilidadForm({ id_comorbilidad: '', fecha_deteccion: '', observaciones: '' });
+                      setComorbilidadForm(COMORBILIDAD_FORM_INITIAL);
                       setEditingComorbilidad(null);
                       setComorbilidadModalOpen(false);
                       loadComorbilidades();
@@ -2346,6 +2381,68 @@ export default function PacienteDetail() {
                         }))
                       }
                     />
+                    <Input
+                      label="Años con el padecimiento (opcional)"
+                      value={comorbilidadForm.anos_padecimiento}
+                      onChange={(e) =>
+                        setComorbilidadForm((f) => ({
+                          ...f,
+                          anos_padecimiento: e.target.value.replace(/[^0-9]/g, ''),
+                        }))
+                      }
+                    />
+                    <Input
+                      label="Año de diagnóstico (YYYY)"
+                      value={comorbilidadForm[ANIO_DIAGNOSTICO_FIELD]}
+                      onChange={(e) =>
+                        setComorbilidadForm((f) => ({
+                          ...f,
+                          [ANIO_DIAGNOSTICO_FIELD]: e.target.value.replace(/[^0-9]/g, '').slice(0, 4),
+                        }))
+                      }
+                    />
+                    <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={!!comorbilidadForm.es_diagnostico_basal}
+                        onChange={(e) => setComorbilidadForm((f) => ({ ...f, es_diagnostico_basal: e.target.checked }))}
+                      />
+                      Es diagnóstico basal
+                    </label>
+                    <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={!!comorbilidadForm.es_agregado_posterior}
+                        onChange={(e) => setComorbilidadForm((f) => ({ ...f, es_agregado_posterior: e.target.checked }))}
+                      />
+                      Dx. agregado posterior al basal
+                    </label>
+                    <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={!!comorbilidadForm.recibe_tratamiento_no_farmacologico}
+                        onChange={(e) =>
+                          setComorbilidadForm((f) => ({
+                            ...f,
+                            recibe_tratamiento_no_farmacologico: e.target.checked,
+                          }))
+                        }
+                      />
+                      Recibe tratamiento no farmacológico
+                    </label>
+                    <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={!!comorbilidadForm.recibe_tratamiento_farmacologico}
+                        onChange={(e) =>
+                          setComorbilidadForm((f) => ({
+                            ...f,
+                            recibe_tratamiento_farmacologico: e.target.checked,
+                          }))
+                        }
+                      />
+                      Recibe tratamiento farmacológico
+                    </label>
                   </div>
                 </Modal>
               </div>
@@ -2358,10 +2455,8 @@ export default function PacienteDetail() {
           setDeteccionCreating(true);
           setEditingDeteccion(null);
           setDeteccionEditForm({
-            tipo_complicacion: '',
+            ...DETECCION_FORM_INITIAL,
             fecha_deteccion: new Date().toISOString().slice(0, 10),
-            fecha_diagnostico: '',
-            observaciones: '',
           });
         };
         return (
@@ -2409,10 +2504,21 @@ export default function PacienteDetail() {
                             setDeteccionCreating(false);
                             setEditingDeteccion(d);
                             setDeteccionEditForm({
+                              ...DETECCION_FORM_INITIAL,
                               tipo_complicacion: d.tipo_complicacion ?? '',
                               fecha_deteccion: d.fecha_deteccion ? String(d.fecha_deteccion).slice(0, 10) : '',
                               fecha_diagnostico: d.fecha_diagnostico ? String(d.fecha_diagnostico).slice(0, 10) : '',
                               observaciones: d.observaciones ?? '',
+                              exploracion_pies: !!d.exploracion_pies,
+                              exploracion_fondo_ojo: !!d.exploracion_fondo_ojo,
+                              realiza_auto_monitoreo: !!d.realiza_auto_monitoreo,
+                              auto_monitoreo_glucosa: !!d.auto_monitoreo_glucosa,
+                              auto_monitoreo_presion: !!d.auto_monitoreo_presion,
+                              microalbuminuria_realizada: !!d.microalbuminuria_realizada,
+                              microalbuminuria_resultado:
+                                d.microalbuminuria_resultado != null ? String(d.microalbuminuria_resultado) : '',
+                              fue_referido: !!d.fue_referido,
+                              referencia_observaciones: d.referencia_observaciones ?? '',
                             });
                           }}
                         >
@@ -2467,6 +2573,21 @@ export default function PacienteDetail() {
                         fecha_deteccion: deteccionEditForm.fecha_deteccion || undefined,
                         fecha_diagnostico: deteccionEditForm.fecha_diagnostico || undefined,
                         observaciones: deteccionEditForm.observaciones?.trim() || undefined,
+                        exploracion_pies: !!deteccionEditForm.exploracion_pies,
+                        exploracion_fondo_ojo: !!deteccionEditForm.exploracion_fondo_ojo,
+                        realiza_auto_monitoreo: !!deteccionEditForm.realiza_auto_monitoreo,
+                        auto_monitoreo_glucosa: !!deteccionEditForm.auto_monitoreo_glucosa,
+                        auto_monitoreo_presion: !!deteccionEditForm.auto_monitoreo_presion,
+                        microalbuminuria_realizada: !!deteccionEditForm.microalbuminuria_realizada,
+                        microalbuminuria_resultado:
+                          deteccionEditForm.microalbuminuria_realizada &&
+                          Number.isFinite(Number.parseFloat(deteccionEditForm.microalbuminuria_resultado))
+                            ? Number.parseFloat(deteccionEditForm.microalbuminuria_resultado)
+                            : undefined,
+                        fue_referido: !!deteccionEditForm.fue_referido,
+                        referencia_observaciones: deteccionEditForm.fue_referido
+                          ? deteccionEditForm.referencia_observaciones?.trim() || undefined
+                          : undefined,
                       });
                       message.success('Complicación registrada');
                       setDeteccionCreating(false);
@@ -2476,6 +2597,21 @@ export default function PacienteDetail() {
                         fecha_deteccion: deteccionEditForm.fecha_deteccion || undefined,
                         fecha_diagnostico: deteccionEditForm.fecha_diagnostico || undefined,
                         observaciones: deteccionEditForm.observaciones?.trim() || undefined,
+                        exploracion_pies: !!deteccionEditForm.exploracion_pies,
+                        exploracion_fondo_ojo: !!deteccionEditForm.exploracion_fondo_ojo,
+                        realiza_auto_monitoreo: !!deteccionEditForm.realiza_auto_monitoreo,
+                        auto_monitoreo_glucosa: !!deteccionEditForm.auto_monitoreo_glucosa,
+                        auto_monitoreo_presion: !!deteccionEditForm.auto_monitoreo_presion,
+                        microalbuminuria_realizada: !!deteccionEditForm.microalbuminuria_realizada,
+                        microalbuminuria_resultado:
+                          deteccionEditForm.microalbuminuria_realizada &&
+                          Number.isFinite(Number.parseFloat(deteccionEditForm.microalbuminuria_resultado))
+                            ? Number.parseFloat(deteccionEditForm.microalbuminuria_resultado)
+                            : undefined,
+                        fue_referido: !!deteccionEditForm.fue_referido,
+                        referencia_observaciones: deteccionEditForm.fue_referido
+                          ? deteccionEditForm.referencia_observaciones?.trim() || undefined
+                          : undefined,
                       });
                       message.success('Detección actualizada');
                       setEditingDeteccion(null);
@@ -2511,6 +2647,110 @@ export default function PacienteDetail() {
                     value={deteccionEditForm.observaciones}
                     onChange={(e) => setDeteccionEditForm((f) => ({ ...f, observaciones: e.target.value }))}
                   />
+                  <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={!!deteccionEditForm.exploracion_pies}
+                      onChange={(e) => setDeteccionEditForm((f) => ({ ...f, exploracion_pies: e.target.checked }))}
+                    />
+                    Exploración de pies
+                  </label>
+                  <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={!!deteccionEditForm.exploracion_fondo_ojo}
+                      onChange={(e) => setDeteccionEditForm((f) => ({ ...f, exploracion_fondo_ojo: e.target.checked }))}
+                    />
+                    Exploración de fondo de ojo
+                  </label>
+                  <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={!!deteccionEditForm.realiza_auto_monitoreo}
+                      onChange={(e) =>
+                        setDeteccionEditForm((f) => ({
+                          ...f,
+                          realiza_auto_monitoreo: e.target.checked,
+                          auto_monitoreo_glucosa: e.target.checked ? f.auto_monitoreo_glucosa : false,
+                          auto_monitoreo_presion: e.target.checked ? f.auto_monitoreo_presion : false,
+                        }))
+                      }
+                    />
+                    Realiza auto-monitoreo
+                  </label>
+                  {deteccionEditForm.realiza_auto_monitoreo && (
+                    <>
+                      <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={!!deteccionEditForm.auto_monitoreo_glucosa}
+                          onChange={(e) =>
+                            setDeteccionEditForm((f) => ({ ...f, auto_monitoreo_glucosa: e.target.checked }))
+                          }
+                        />
+                        Auto-monitoreo glucosa
+                      </label>
+                      <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={!!deteccionEditForm.auto_monitoreo_presion}
+                          onChange={(e) =>
+                            setDeteccionEditForm((f) => ({ ...f, auto_monitoreo_presion: e.target.checked }))
+                          }
+                        />
+                        Auto-monitoreo presión
+                      </label>
+                    </>
+                  )}
+                  <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={!!deteccionEditForm.microalbuminuria_realizada}
+                      onChange={(e) =>
+                        setDeteccionEditForm((f) => ({
+                          ...f,
+                          microalbuminuria_realizada: e.target.checked,
+                          microalbuminuria_resultado: e.target.checked ? f.microalbuminuria_resultado : '',
+                        }))
+                      }
+                    />
+                    Microalbuminuria realizada
+                  </label>
+                  {deteccionEditForm.microalbuminuria_realizada && (
+                    <Input
+                      label="Resultado de microalbuminuria"
+                      value={deteccionEditForm.microalbuminuria_resultado}
+                      onChange={(e) =>
+                        setDeteccionEditForm((f) => ({
+                          ...f,
+                          microalbuminuria_resultado: e.target.value.replace(/[^0-9.]/g, ''),
+                        }))
+                      }
+                      placeholder="Ej. 25.5"
+                    />
+                  )}
+                  <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={!!deteccionEditForm.fue_referido}
+                      onChange={(e) =>
+                        setDeteccionEditForm((f) => ({
+                          ...f,
+                          fue_referido: e.target.checked,
+                          referencia_observaciones: e.target.checked ? f.referencia_observaciones : '',
+                        }))
+                      }
+                    />
+                    Fue referido a otro nivel
+                  </label>
+                  {deteccionEditForm.fue_referido && (
+                    <TextArea
+                      label="Observaciones de referencia"
+                      value={deteccionEditForm.referencia_observaciones}
+                      onChange={(e) => setDeteccionEditForm((f) => ({ ...f, referencia_observaciones: e.target.value }))}
+                      rows={3}
+                    />
+                  )}
                 </div>
               </Modal>
             )}

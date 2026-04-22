@@ -65,6 +65,36 @@ import CompletarCitaWizard from '../../components/CompletarCitaWizard';
 // Hooks personalizados
 import useFormState from '../../hooks/useFormState';
 import useSaveHandler from '../../hooks/useSaveHandler';
+
+const LUGAR_APLICACION_OTRO = '__otro__';
+const LUGARES_APLICACION_VACUNA_OPTIONS = [
+  { value: '', label: '— No indicar —' },
+  { value: 'IMSS-Bienestar', label: 'IMSS-Bienestar' },
+  { value: 'IMSS', label: 'IMSS' },
+  { value: 'ISSSTE', label: 'ISSSTE' },
+  { value: 'ISSET', label: 'ISSET' },
+  { value: 'SEDENA', label: 'SEDENA' },
+  { value: 'Secretaría de Salud', label: 'Secretaría de Salud' },
+  { value: LUGAR_APLICACION_OTRO, label: 'Otro (especificar)' },
+];
+
+const LUGARES_APLICACION_PRESET = new Set(
+  LUGARES_APLICACION_VACUNA_OPTIONS.filter((o) => o.value && o.value !== LUGAR_APLICACION_OTRO).map((o) => o.value)
+);
+
+const parseLugarAplicacionVacunaForm = (guardado) => {
+  const value = String(guardado || '').trim();
+  if (!value) return { select: '', otro: '' };
+  if (LUGARES_APLICACION_PRESET.has(value)) return { select: value, otro: '' };
+  return { select: LUGAR_APLICACION_OTRO, otro: value };
+};
+
+const buildLugarAplicacionPayload = (selectValue, otroText) => {
+  if (selectValue === LUGAR_APLICACION_OTRO) {
+    return String(otroText || '').trim().slice(0, 150);
+  }
+  return String(selectValue || '').trim().slice(0, 150);
+};
 // Componente interno que usa los hooks
 const DetallePacienteContent = ({ route, navigation }) => {
   const { paciente: initialPaciente } = route.params;
@@ -512,10 +542,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
   // Estados para formulario de agregar Esquema de Vacunación
   const [showAddEsquemaVacunacion, setShowAddEsquemaVacunacion] = useState(false);
   const [editingEsquemaVacunacion, setEditingEsquemaVacunacion] = useState(null);
+  const [showLugarAplicacionVacunaOptions, setShowLugarAplicacionVacunaOptions] = useState(false);
   const { formData: formDataEsquemaVacunacion, updateField: updateEsquemaVacunacionField, resetForm: resetFormEsquemaVacunacionBase } = useFormState({
     vacuna: '',
     fecha_aplicacion: '',
     lote: '',
+    lugar_aplicacion: '',
+    lugar_aplicacion_otro: '',
     observaciones: ''
   });
   
@@ -523,6 +556,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const resetFormEsquemaVacunacion = useCallback(() => {
     resetFormEsquemaVacunacionBase();
     setShowVacunaSelector(false);
+    setShowLugarAplicacionVacunaOptions(false);
   }, [resetFormEsquemaVacunacionBase]);
 
   // Estados para formulario de agregar Sesiones Educativas
@@ -2153,6 +2187,13 @@ const DetallePacienteContent = ({ route, navigation }) => {
         Alert.alert('Validación', 'La fecha de aplicación es requerida');
         return false;
       }
+      if (
+        formDataEsquemaVacunacion.lugar_aplicacion === LUGAR_APLICACION_OTRO &&
+        !String(formDataEsquemaVacunacion.lugar_aplicacion_otro || '').trim()
+      ) {
+        Alert.alert('Validación', 'Especifica el lugar/institución o selecciona otra opción.');
+        return false;
+      }
       const fechaAplicacion = new Date(formDataEsquemaVacunacion.fecha_aplicacion);
       if (isNaN(fechaAplicacion.getTime())) {
         Alert.alert('Validación', 'La fecha de aplicación no es válida');
@@ -2164,6 +2205,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
       vacuna: formData.vacuna.trim(),
       fecha_aplicacion: formData.fecha_aplicacion.trim(),
       lote: formData.lote?.trim() || null,
+      lugar_aplicacion: buildLugarAplicacionPayload(formData.lugar_aplicacion, formData.lugar_aplicacion_otro) || null,
       observaciones: formData.observaciones?.trim() || null
     }),
     actionName: 'saveEsquemaVacunacion',
@@ -2856,11 +2898,15 @@ const DetallePacienteContent = ({ route, navigation }) => {
   // =====================================================
 
   const handleEditEsquemaVacunacion = (vacuna) => {
+    const lugarAplicacionParsed = parseLugarAplicacionVacunaForm(vacuna.lugar_aplicacion);
     setEditingEsquemaVacunacion(vacuna);
     updateEsquemaVacunacionField('vacuna', vacuna.vacuna || '');
     updateEsquemaVacunacionField('fecha_aplicacion', vacuna.fecha_aplicacion || '');
     updateEsquemaVacunacionField('lote', vacuna.lote || '');
+    updateEsquemaVacunacionField('lugar_aplicacion', lugarAplicacionParsed.select);
+    updateEsquemaVacunacionField('lugar_aplicacion_otro', lugarAplicacionParsed.otro);
     updateEsquemaVacunacionField('observaciones', vacuna.observaciones || '');
+    setShowLugarAplicacionVacunaOptions(false);
     setShowAddEsquemaVacunacion(true);
   };
 
@@ -7738,6 +7784,60 @@ const DetallePacienteContent = ({ route, navigation }) => {
                 onChangeText={(value) => updateEsquemaVacunacionField('lote', value)}
                 editable={!savingEsquemaVacunacion}
               />
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldLabel}>Lugar de aplicación</Text>
+                <TouchableOpacity
+                  style={styles.input}
+                  onPress={() => !savingEsquemaVacunacion && setShowLugarAplicacionVacunaOptions((v) => !v)}
+                  disabled={savingEsquemaVacunacion}
+                >
+                  <Text style={styles.inputText}>
+                    {LUGARES_APLICACION_VACUNA_OPTIONS.find((o) => o.value === formDataEsquemaVacunacion.lugar_aplicacion)?.label ||
+                      '— No indicar —'}
+                  </Text>
+                  <Text style={styles.arrowText}>▼</Text>
+                </TouchableOpacity>
+                {showLugarAplicacionVacunaOptions && (
+                  <View style={styles.dropdownList}>
+                    <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 180 }}>
+                      {LUGARES_APLICACION_VACUNA_OPTIONS.map((option) => (
+                        <TouchableOpacity
+                          key={option.value || '__none__'}
+                          style={[
+                            styles.dropdownItem,
+                            formDataEsquemaVacunacion.lugar_aplicacion === option.value && styles.dropdownItemSelected,
+                          ]}
+                          onPress={() => {
+                            updateEsquemaVacunacionField('lugar_aplicacion', option.value);
+                            if (option.value !== LUGAR_APLICACION_OTRO) {
+                              updateEsquemaVacunacionField('lugar_aplicacion_otro', '');
+                            }
+                            setShowLugarAplicacionVacunaOptions(false);
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.dropdownItemText,
+                              formDataEsquemaVacunacion.lugar_aplicacion === option.value && styles.dropdownItemTextSelected,
+                            ]}
+                          >
+                            {option.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
+              {formDataEsquemaVacunacion.lugar_aplicacion === LUGAR_APLICACION_OTRO && (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Lugar/Institución"
+                  value={formDataEsquemaVacunacion.lugar_aplicacion_otro}
+                  onChangeText={(value) => updateEsquemaVacunacionField('lugar_aplicacion_otro', value)}
+                  editable={!savingEsquemaVacunacion}
+                />
+              )}
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Observaciones"
