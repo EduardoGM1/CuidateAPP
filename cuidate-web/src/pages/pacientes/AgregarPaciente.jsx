@@ -96,6 +96,7 @@ export default function AgregarPaciente() {
       apellido_materno: '',
       fecha_nacimiento: '',
       curp: '',
+      numero_expediente: '',
       numero_celular: '',
       direccion: '',
       estado: '',
@@ -197,6 +198,7 @@ export default function AgregarPaciente() {
         apellido_materno: data.apellido_materno?.trim() || null,
         fecha_nacimiento: data.fecha_nacimiento.trim(),
         curp: data.curp?.trim() ? data.curp.trim().toUpperCase() : null,
+        numero_expediente: data.numero_expediente?.trim() ? data.numero_expediente.trim().toUpperCase() : null,
         numero_celular: data.numero_celular?.trim() || null,
         direccion: data.direccion?.trim() || null,
         estado: data.estado?.trim() || null,
@@ -336,6 +338,13 @@ export default function AgregarPaciente() {
             control={control}
             render={({ field }) => (
               <Input label="CURP" error={errors.curp?.message} {...field} required placeholder="18 caracteres, formato oficial" />
+            )}
+          />
+          <Controller
+            name="numero_expediente"
+            control={control}
+            render={({ field }) => (
+              <Input label="Número de expediente" error={errors.numero_expediente?.message} {...field} required placeholder="Ej. HGSZ-2026-001" />
             )}
           />
           <Controller

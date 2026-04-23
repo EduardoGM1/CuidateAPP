@@ -7,6 +7,7 @@ const maxCelular = 20;
 const maxEstado = 80;
 const maxDireccion = 500;
 const maxLocalidad = 100;
+const maxNumeroExpediente = 50;
 
 /** Fecha en formato YYYY-MM-DD o Date válida */
 const fechaNacimientoSchema = z
@@ -31,6 +32,12 @@ export const pacienteCreateSchema = z.object({
   apellido_materno: z.string().max(maxNombre, 'Demasiado largo').optional().or(z.literal('')),
   fecha_nacimiento: fechaNacimientoSchema,
   curp: curpSchema,
+  numero_expediente: z
+    .string()
+    .min(1, 'El número de expediente es obligatorio')
+    .max(maxNumeroExpediente, 'Número de expediente demasiado largo')
+    .transform((v) => (v ? v.trim().toUpperCase() : ''))
+    .refine((v) => /^[A-Z0-9\-\/\.]+$/.test(v), 'Solo se permiten letras, números, guion (-), diagonal (/) y punto (.)'),
   numero_celular: z.string().max(maxCelular, 'Demasiado largo').optional().or(z.literal('')),
   estado: z.string().min(1, 'El estado es obligatorio').max(maxEstado, 'Demasiado largo'),
   localidad: z.string().min(1, 'La localidad/municipio es obligatorio').max(maxLocalidad, 'Demasiado largo'),
@@ -46,7 +53,13 @@ export const pacienteCreateSchema = z.object({
 
 /** Edición de datos demográficos del paciente (sin seguimiento GAM / baja). */
 export function createPacienteEditSchema() {
-  return pacienteCreateSchema;
+  return pacienteCreateSchema.extend({
+    numero_expediente: z
+      .string()
+      .max(maxNumeroExpediente, 'Número de expediente demasiado largo')
+      .transform((v) => (v ? v.trim().toUpperCase() : ''))
+      .refine((v) => v === '' || /^[A-Z0-9\-\/\.]+$/.test(v), 'Solo se permiten letras, números, guion (-), diagonal (/) y punto (.)'),
+  });
 }
 
 /**

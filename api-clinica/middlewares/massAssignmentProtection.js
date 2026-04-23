@@ -45,6 +45,7 @@ class MassAssignmentProtection {
         'estado', // ✅ Agregado (campo requerido)
         'localidad',
         'institucion_salud',
+        'numero_expediente',
         'id_usuario',
         'id_modulo',
         'activo',
@@ -94,6 +95,7 @@ class MassAssignmentProtection {
         'direccion',
         'localidad',
         'institucion_salud',
+        'numero_expediente',
         'id_modulo',
         'curp',
         'activo', // Solo Admin puede cambiar (controlador)

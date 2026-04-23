@@ -42,6 +42,7 @@ const PERSONAL_FIELDS = [
   'apellido_materno',
   'fecha_nacimiento',
   'curp',
+  'numero_expediente',
   'numero_celular',
   'direccion',
   'estado',
@@ -144,6 +145,7 @@ export default function EditarPaciente() {
       apellido_materno: '',
       fecha_nacimiento: '',
       curp: '',
+      numero_expediente: '',
       numero_celular: '',
       direccion: '',
       estado: '',
@@ -218,6 +220,7 @@ export default function EditarPaciente() {
         apellido_materno: String(p.apellido_materno ?? '').trim(),
         fecha_nacimiento: toInputDate(p.fecha_nacimiento),
         curp: String(p.curp ?? '').trim(),
+        numero_expediente: String(p.numero_expediente ?? '').trim(),
         numero_celular: String(tel).trim(),
         direccion: String(p.direccion ?? '').trim(),
         estado: String(p.estado ?? '').trim(),
@@ -302,6 +305,7 @@ export default function EditarPaciente() {
       apellido_materno: data.apellido_materno?.trim() || null,
       fecha_nacimiento: data.fecha_nacimiento?.trim() || '',
       curp: data.curp?.trim() ? data.curp.trim().toUpperCase() : null,
+      numero_expediente: data.numero_expediente?.trim() ? data.numero_expediente.trim().toUpperCase() : null,
       numero_celular: data.numero_celular?.trim() || null,
       direccion: data.direccion?.trim() || null,
       estado: data.estado?.trim() || null,
@@ -447,6 +451,7 @@ export default function EditarPaciente() {
         apellido_materno: data.apellido_materno?.trim() || null,
         fecha_nacimiento: data.fecha_nacimiento.trim(),
         curp: data.curp?.trim() ? data.curp.trim().toUpperCase() : null,
+        numero_expediente: data.numero_expediente?.trim() ? data.numero_expediente.trim().toUpperCase() : null,
         numero_celular: data.numero_celular?.trim() || null,
         direccion: data.direccion?.trim() || null,
         estado: data.estado?.trim() || null,
@@ -621,6 +626,13 @@ export default function EditarPaciente() {
             control={control}
             render={({ field }) => (
               <Input label="CURP" placeholder="Ej. XXXX000000HDFXXX00" error={errors.curp?.message} {...field} />
+            )}
+          />
+          <Controller
+            name="numero_expediente"
+            control={control}
+            render={({ field }) => (
+              <Input label="Número de expediente" placeholder="Ej. HGSZ-2026-001" error={errors.numero_expediente?.message} {...field} />
             )}
           />
           <Controller

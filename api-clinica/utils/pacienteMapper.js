@@ -164,6 +164,7 @@ export const normalizePaciente = (pacienteData, options = {}) => {
     fecha_nacimiento: fecha_nacimiento || null, // Desencriptado si estaba encriptado
     curp: curp || null, // Desencriptado si estaba encriptado
     institucion_salud: pacienteData.institucion_salud || null,
+    numero_expediente: pacienteData.numero_expediente || null,
     sexo: pacienteData.sexo || null,
     direccion: direccion || null, // Desencriptado si estaba encriptado
     estado: pacienteData.estado || null,

@@ -41,6 +41,23 @@ function normalizeEstadoParam(value) {
   return 'activos';
 }
 
+/**
+ * Normaliza número de expediente (opcional): mayúsculas y sin espacios sobrantes.
+ * Permite letras, números, guion, diagonal y punto.
+ */
+function normalizeNumeroExpediente(value) {
+  if (value == null) return null;
+  const normalized = String(value).trim().toUpperCase();
+  if (!normalized) return null;
+  if (normalized.length > 50) {
+    throw new Error('El número de expediente no puede exceder 50 caracteres');
+  }
+  if (!/^[A-Z0-9\-\/\.]+$/.test(normalized)) {
+    throw new Error('El número de expediente solo permite letras, números, guion (-), diagonal (/) y punto (.)');
+  }
+  return normalized;
+}
+
 /** Escapa %, _ y \ para uso seguro en LIKE */
 function escapeLikePattern(str) {
   return String(str).replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
@@ -504,6 +521,26 @@ export const createPaciente = async (req, res) => {
       });
     }
 
+    let numeroExpediente = null;
+    try {
+      numeroExpediente = normalizeNumeroExpediente(req.body.numero_expediente);
+    } catch (validationError) {
+      return res.status(400).json({
+        success: false,
+        error: validationError.message
+      });
+    }
+
+    if (numeroExpediente) {
+      const existing = await Paciente.findOne({ where: { numero_expediente: numeroExpediente } });
+      if (existing) {
+        return res.status(400).json({
+          success: false,
+          error: 'Ya existe un paciente con este número de expediente'
+        });
+      }
+    }
+
     const pacienteData = {
       id_usuario: req.body.id_usuario ? parseInt(req.body.id_usuario, 10) : null,
       nombre: String(req.body.nombre).trim(),
@@ -517,6 +554,7 @@ export const createPaciente = async (req, res) => {
       estado: req.body.estado ? String(req.body.estado).trim() : null,
       localidad: req.body.localidad ? String(req.body.localidad).trim() : null,
       numero_celular: req.body.numero_celular ? String(req.body.numero_celular).trim() : null,
+      numero_expediente: numeroExpediente,
       id_modulo: req.body.id_modulo ? parseInt(req.body.id_modulo, 10) : null,
       fecha_registro: new Date(),
       activo: req.body.activo !== undefined ? Boolean(req.body.activo) : true
@@ -558,6 +596,10 @@ export const createPaciente = async (req, res) => {
     });
     
     const paciente = await Paciente.create(pacienteData);
+    if (!paciente.numero_expediente) {
+      paciente.numero_expediente = `EXP-${paciente.id_paciente}`;
+      await paciente.save();
+    }
     
     logger.info('PacienteController: Paciente creado exitosamente', { 
       id_paciente: paciente.id_paciente,
@@ -616,7 +658,7 @@ export const createPaciente = async (req, res) => {
     if (error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({
         success: false,
-        error: 'Ya existe un paciente con este CURP o id_usuario'
+        error: 'Ya existe un paciente con este CURP, id_usuario o número de expediente'
       });
     }
 
@@ -668,6 +710,7 @@ export const createPacienteCompleto = async (req, res) => {
       estado,
       localidad,
       numero_celular,
+      numero_expediente,
       id_modulo,
       activo = true,
       
@@ -710,6 +753,7 @@ export const createPacienteCompleto = async (req, res) => {
       estado: estado !== undefined ? (typeof estado === 'string' ? estado.trim() : estado) : null, // REQUERIDO según modelo - normalizar string vacío
       localidad: localidad !== undefined ? (typeof localidad === 'string' ? localidad.trim() : localidad) : null,
       numero_celular: numero_celular !== undefined ? (typeof numero_celular === 'string' ? numero_celular.trim() : numero_celular) : null, // OPCIONAL según modelo
+      numero_expediente: numero_expediente !== undefined ? (typeof numero_expediente === 'string' ? numero_expediente.trim() : numero_expediente) : null,
       id_modulo: id_modulo !== undefined ? id_modulo : null
     };
     
@@ -909,6 +953,31 @@ export const createPacienteCompleto = async (req, res) => {
     // Usar el valor numérico validado
     const idModuloValidado = idModuloNum;
 
+    // Validar número de expediente (opcional) y unicidad si se envía
+    let numeroExpedienteNormalizado = null;
+    try {
+      numeroExpedienteNormalizado = normalizeNumeroExpediente(normalizedFields.numero_expediente);
+    } catch (validationError) {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        error: validationError.message
+      });
+    }
+    if (numeroExpedienteNormalizado) {
+      const existing = await Paciente.findOne({
+        where: { numero_expediente: numeroExpedienteNormalizado },
+        transaction
+      });
+      if (existing) {
+        await transaction.rollback();
+        return res.status(400).json({
+          success: false,
+          error: 'Ya existe un paciente con este número de expediente'
+        });
+      }
+    }
+
     // 1. Crear usuario base para el paciente
     const email = `paciente_${Date.now()}@temp.com`; // Email temporal
     const password = Math.random().toString(36).slice(-8); // Password temporal
@@ -937,10 +1006,16 @@ export const createPacienteCompleto = async (req, res) => {
       estado: normalizedFields.estado, // REQUERIDO
       localidad: normalizedFields.localidad || null,
       numero_celular: normalizedFields.numero_celular || null, // OPCIONAL
+      numero_expediente: numeroExpedienteNormalizado,
       id_modulo: idModuloValidado,
       activo,
       fecha_registro: new Date()
     }, { transaction });
+
+    if (!paciente.numero_expediente) {
+      const generatedNumeroExpediente = `EXP-${paciente.id_paciente}`;
+      await paciente.update({ numero_expediente: generatedNumeroExpediente }, { transaction });
+    }
 
     // 3. Crear autenticación PIN (si se proporciona) - Usando sistema unificado
     if (pin && device_id) {
@@ -1022,6 +1097,7 @@ export const createPacienteCompleto = async (req, res) => {
       institucion_salud: paciente.institucion_salud,
       sexo: paciente.sexo,
       numero_celular: paciente.numero_celular,
+      numero_expediente: paciente.numero_expediente,
       activo: paciente.activo
     };
 
@@ -1053,7 +1129,8 @@ export const createPacienteCompleto = async (req, res) => {
         id_usuario: usuario.id_usuario,
         nombre: paciente.nombre,
         apellido_paterno: paciente.apellido_paterno,
-        apellido_materno: paciente.apellido_materno
+        apellido_materno: paciente.apellido_materno,
+        numero_expediente: paciente.numero_expediente
       }
     });
 
@@ -1219,6 +1296,31 @@ export const updatePaciente = async (req, res) => {
       // Reactivación: siempre limpiar baja en GAM
       updateData.fecha_baja = null;
       updateData.motivo_baja = null;
+    }
+
+    // Validar número de expediente (opcional) y unicidad global
+    if ('numero_expediente' in updateData) {
+      try {
+        const numeroExpedienteNormalizado = normalizeNumeroExpediente(updateData.numero_expediente);
+        updateData.numero_expediente = numeroExpedienteNormalizado;
+        if (numeroExpedienteNormalizado) {
+          const existing = await Paciente.findOne({
+            where: {
+              numero_expediente: numeroExpedienteNormalizado,
+              id_paciente: { [Op.ne]: pacienteId }
+            }
+          });
+          if (existing) {
+            return res.status(400).json({
+              error: 'Ya existe otro paciente con este número de expediente'
+            });
+          }
+        }
+      } catch (validationError) {
+        return res.status(400).json({
+          error: validationError.message
+        });
+      }
     }
     
     // Verificar si hay datos para actualizar

@@ -103,6 +103,12 @@ const Paciente = sequelize.define('Paciente', {
     allowNull: true,
     defaultValue: null,
     comment: 'Número de integrante en el GAM (para fórmulas y reportes). Debe ser único por módulo'
+  },
+  numero_expediente: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    defaultValue: null,
+    comment: 'Número de expediente clínico del paciente. Debe ser único.'
   }
 }, {
   tableName: 'pacientes',
