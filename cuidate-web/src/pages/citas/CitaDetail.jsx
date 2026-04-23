@@ -12,6 +12,7 @@ import { STORAGE_KEYS } from '../../utils/constants';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatDateTime, formatNombreCompleto } from '../../utils/format';
+import { fechaCitaDatetimeLocalToApi, fechaCitaApiToDatetimeLocalInput } from '../../utils/fechaCita';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const ESTADOS_OPCIONES = [
@@ -141,8 +142,8 @@ export default function CitaDetail() {
     }
     setReprogramarSaving(true);
     try {
-      const fechaCita = reprogramarFecha.length <= 10 ? `${reprogramarFecha}T12:00:00` : reprogramarFecha.replace('T', ' ').slice(0, 19);
-      await updateCita(parsedId, { fecha_cita: fechaCita, motivo_reprogramacion: reprogramarMotivo?.trim() || undefined });
+      const fechaLocal = reprogramarFecha.length <= 10 ? `${reprogramarFecha}T12:00:00` : reprogramarFecha;
+      await updateCita(parsedId, { fecha_cita: fechaCitaDatetimeLocalToApi(fechaLocal), motivo_reprogramacion: reprogramarMotivo?.trim() || undefined });
       message.success('Cita reprogramada');
       setReprogramarOpen(false);
       setReprogramarFecha('');
@@ -304,7 +305,15 @@ export default function CitaDetail() {
 
       {canEditCita && (
         <Card style={{ marginTop: '1rem' }}>
-          <Button variant="outline" type="button" onClick={() => setReprogramarOpen(true)}>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => {
+              setReprogramarFecha(cita?.fecha_cita ? fechaCitaApiToDatetimeLocalInput(cita.fecha_cita) : '');
+              setReprogramarMotivo('');
+              setReprogramarOpen(true);
+            }}
+          >
             Reprogramar cita
           </Button>
         </Card>

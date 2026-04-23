@@ -95,7 +95,7 @@ export async function updateCita(id, body) {
   const parsed = parsePositiveInt(id, 0);
   if (parsed === 0) throw new Error('ID de cita inválido');
   const payload = {};
-  if (body?.fecha_cita != null) payload.fecha_cita = String(body.fecha_cita).slice(0, 30);
+  if (body?.fecha_cita != null) payload.fecha_cita = String(body.fecha_cita).slice(0, 40);
   if (body?.motivo != null) payload.motivo = String(body.motivo).slice(0, 500);
   if (body?.motivo_reprogramacion != null) payload.motivo_reprogramacion = String(body.motivo_reprogramacion).slice(0, 500);
   if (Object.keys(payload).length === 0) throw new Error('Nada que actualizar');
@@ -114,7 +114,7 @@ export async function createCita(body) {
   const payload = {
     id_paciente: idPaciente,
     id_doctor: idDoctor,
-    fecha_cita: String(body.fecha_cita || '').slice(0, 30),
+    fecha_cita: String(body.fecha_cita || '').slice(0, 40),
     motivo: body?.motivo != null ? String(body.motivo).slice(0, 500) : undefined,
   };
   const { data } = await client.post(BASE, payload);

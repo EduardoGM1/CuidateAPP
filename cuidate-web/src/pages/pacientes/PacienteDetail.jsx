@@ -84,6 +84,7 @@ import { getComorbilidades } from '../../api/comorbilidades';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatDate, formatDateTime, formatNombreCompleto } from '../../utils/format';
+import { fechaCitaDatetimeLocalToApi } from '../../utils/fechaCita';
 import { openHTMLInNewWindow } from '../../utils/reportUtils';
 import {
   BarChart,
@@ -943,7 +944,7 @@ export default function PacienteDetail() {
             await createCita({
               id_paciente: parsedId,
               id_doctor: idDoctor,
-              fecha_cita: fecha.length <= 10 ? `${fecha}T12:00:00` : fecha,
+              fecha_cita: fechaCitaDatetimeLocalToApi(fecha.length <= 10 ? `${fecha}T12:00:00` : fecha),
               motivo: citaForm.motivo?.trim() || undefined,
             });
             setCitaForm({ id_doctor: '', fecha_cita: '', motivo: '' });

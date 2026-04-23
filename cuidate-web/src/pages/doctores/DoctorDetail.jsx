@@ -31,6 +31,7 @@ import { useCurrentDoctorId } from '../../hooks/useCurrentDoctorId';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatDate, formatDateTime, formatNombreCompleto } from '../../utils/format';
+import { fechaCitaDatetimeLocalToApi, fechaCitaApiToDatetimeLocalInput } from '../../utils/fechaCita';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const ESTADO_CITA = {
@@ -235,8 +236,7 @@ export default function DoctorDetail() {
   };
 
   const openReprogramarModal = (cita) => {
-    const f = cita?.fecha_cita;
-    const fechaStr = f ? (typeof f === 'string' && f.length >= 16 ? f.slice(0, 16) : new Date(f).toISOString().slice(0, 16)) : '';
+    const fechaStr = cita?.fecha_cita ? fechaCitaApiToDatetimeLocalInput(cita.fecha_cita) : '';
     setReprogramarModal({ open: true, cita, fecha: fechaStr, motivo: '' });
   };
 
@@ -249,8 +249,8 @@ export default function DoctorDetail() {
     const citaId = cita.id_cita ?? cita.id;
     setUpdatingReprogramar(true);
     try {
-      const fechaCita = fecha.length <= 10 ? `${fecha}T12:00:00` : fecha.replace('T', ' ').slice(0, 19);
-      await updateCita(citaId, { fecha_cita: fechaCita, motivo_reprogramacion: reprogramarModal.motivo?.trim() || undefined });
+      const fechaLocal = fecha.length <= 10 ? `${fecha}T12:00:00` : fecha;
+      await updateCita(citaId, { fecha_cita: fechaCitaDatetimeLocalToApi(fechaLocal), motivo_reprogramacion: reprogramarModal.motivo?.trim() || undefined });
       message.success('Cita reprogramada');
       setReprogramarModal({ open: false, cita: null, fecha: '', motivo: '' });
       load();

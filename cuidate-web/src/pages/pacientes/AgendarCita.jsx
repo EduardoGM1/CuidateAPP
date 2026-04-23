@@ -4,6 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { getPacienteById } from '../../api/pacientes';
 import { getDoctores } from '../../api/doctores';
 import { createCita } from '../../api/citas';
+import { fechaCitaDatetimeLocalToApi } from '../../utils/fechaCita';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, Input } from '../../components/ui';
 import { LoadingSpinner } from '../../components/ui';
@@ -66,7 +67,7 @@ export default function AgendarCita() {
       const payload = {
         id_paciente: parsedId,
         id_doctor: idDoctor,
-        fecha_cita: fecha.length <= 10 ? `${fecha}T12:00:00` : fecha,
+        fecha_cita: fechaCitaDatetimeLocalToApi(fecha.length <= 10 ? `${fecha}T12:00:00` : fecha),
         motivo: data.motivo?.trim() || undefined,
       };
       await createCita(payload);

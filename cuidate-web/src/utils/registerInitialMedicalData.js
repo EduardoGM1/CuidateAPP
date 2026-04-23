@@ -1,4 +1,5 @@
 import { createCita } from '../api/citas';
+import { fechaCitaDatetimeLocalToApi } from './fechaCita';
 import { createSignosVitales, createDiagnostico, addPacienteComorbilidad } from '../api/pacienteMedicalData';
 import { parsePositiveInt } from './params';
 
@@ -50,7 +51,7 @@ export async function registerInitialMedicalData(options) {
       const cita = await createCita({
         id_paciente: pid,
         id_doctor: did,
-        fecha_cita: fechaCita,
+        fecha_cita: fechaCitaDatetimeLocalToApi(fechaCita),
         motivo: motivo?.trim() || 'Primera consulta',
       });
       citaId = cita?.id_cita ?? cita?.id ?? null;
