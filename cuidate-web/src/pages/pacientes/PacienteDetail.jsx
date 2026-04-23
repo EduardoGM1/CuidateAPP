@@ -1052,14 +1052,6 @@ export default function PacienteDetail() {
       case 'signos': {
         const handleCreateSignos = async () => {
           const body = signosVitalesToPayload(signosForm, paciente?.fecha_nacimiento);
-          const tieneAlgunValor = body.peso_kg != null || body.talla_m != null || body.medida_cintura_cm != null ||
-            body.presion_sistolica != null || body.presion_diastolica != null || body.glucosa_mg_dl != null ||
-            body.colesterol_mg_dl != null || body.colesterol_ldl != null || body.colesterol_hdl != null ||
-            body.trigliceridos_mg_dl != null || body.hba1c_porcentaje != null || (body.observaciones && body.observaciones.length > 0);
-          if (!tieneAlgunValor) {
-            setSignosSubmitError('Indica al menos un valor (peso, talla, presión, glucosa, colesterol, HbA1c, etc.).');
-            return;
-          }
           setSignosSubmitError('');
           setSignosSubmitting(true);
           if (!editingSignoId && signosCitaId) body.id_cita = signosCitaId;

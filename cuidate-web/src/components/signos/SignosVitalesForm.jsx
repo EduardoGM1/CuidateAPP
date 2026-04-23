@@ -36,7 +36,8 @@ const INPUT_STYLE = { marginBottom: 0 };
 /**
  * Convierte el objeto del formulario a payload para API (solo claves con valor).
  * Excluye cadenas vacías y no envía edadEditable (solo UI en móvil).
- * Si se pasa fechaNacimientoPaciente y no hay edad en el form, se calcula y se incluye (paridad con móvil).
+ * Si se pasa fechaNacimientoPaciente y el usuario ingresó al menos una medición u observaciones,
+ * se calcula la edad y se incluye (paridad con móvil). Si todo va vacío, no se añade edad al payload.
  * @param {Record<string, string>} form
  * @param {string} [fechaNacimientoPaciente] - Opcional; para rellenar edad_paciente_en_medicion si falta
  * @returns {Record<string, number|string|undefined>}
@@ -55,8 +56,22 @@ export function signosVitalesToPayload(form, fechaNacimientoPaciente) {
   if (form.colesterol_hdl?.trim()) payload.colesterol_hdl = num(form.colesterol_hdl);
   if (form.trigliceridos_mg_dl?.trim()) payload.trigliceridos_mg_dl = num(form.trigliceridos_mg_dl);
   if (form.hba1c_porcentaje?.trim()) payload.hba1c_porcentaje = num(form.hba1c_porcentaje);
+  const hasTypedMeasurement =
+    !!form.peso_kg?.trim() ||
+    !!form.talla_m?.trim() ||
+    !!form.medida_cintura_cm?.trim() ||
+    !!form.presion_sistolica?.trim() ||
+    !!form.presion_diastolica?.trim() ||
+    !!form.glucosa_mg_dl?.trim() ||
+    !!form.colesterol_mg_dl?.trim() ||
+    !!form.colesterol_ldl?.trim() ||
+    !!form.colesterol_hdl?.trim() ||
+    !!form.trigliceridos_mg_dl?.trim() ||
+    !!form.hba1c_porcentaje?.trim() ||
+    !!form.edad_paciente_en_medicion?.trim();
+  const hasObservaciones = !!form.observaciones?.trim();
   if (form.edad_paciente_en_medicion?.trim()) payload.edad_paciente_en_medicion = num(form.edad_paciente_en_medicion);
-  else if (fechaNacimientoPaciente) {
+  else if (fechaNacimientoPaciente && (hasTypedMeasurement || hasObservaciones)) {
     const ed = calcularEdad(fechaNacimientoPaciente);
     if (ed != null) payload.edad_paciente_en_medicion = ed;
   }

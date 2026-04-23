@@ -117,11 +117,6 @@ export default function CitaDetail() {
 
   const handleSoloSignosVitales = async () => {
     const payload = signosVitalesToPayload(soloSignosForm, fechaNacimientoPaciente);
-    const tieneAlgunValor = Object.keys(payload).some((k) => k !== 'observaciones' && payload[k] != null) || (payload.observaciones && payload.observaciones.length > 0);
-    if (!tieneAlgunValor) {
-      setSoloSignosError('Indica al menos un valor (peso, talla, presión, glucosa, colesterol, HbA1c, etc.).');
-      return;
-    }
     setSoloSignosError('');
     setSoloSignosSaving(true);
     try {

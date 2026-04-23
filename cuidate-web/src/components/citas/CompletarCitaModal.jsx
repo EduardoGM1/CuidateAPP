@@ -119,7 +119,7 @@ export default function CompletarCitaModal({ open, onClose, citaId, onSuccess, c
         body.motivo_no_asistencia = motivoNoAsistencia.trim() || undefined;
       } else if (pasoActual === 'signos_vitales' && !skipCurrent) {
         const signosObj = signosVitalesToPayload(signos, fechaNacimientoPaciente);
-        if (Object.keys(signosObj).length) body.signos_vitales = signosObj;
+        body.signos_vitales = signosObj;
       } else if (pasoActual === 'observaciones') {
         body.observaciones = observaciones.trim() || '';
       } else if (pasoActual === 'diagnostico' && !skipCurrent && diagnostico.trim().length >= 10) {
@@ -135,7 +135,7 @@ export default function CompletarCitaModal({ open, onClose, citaId, onSuccess, c
           marcar_como_atendida: true,
         };
         const signosObj = signosVitalesToPayload(signos, fechaNacimientoPaciente);
-        if (Object.keys(signosObj).length) body.signos_vitales = signosObj;
+        body.signos_vitales = signosObj;
         if (diagnostico.trim().length >= 10) body.diagnostico = { descripcion: diagnostico.trim() };
         if (planObs.trim()) body.plan_medicacion = { observaciones: planObs.trim(), medicamentos: [] };
       }

@@ -2661,52 +2661,51 @@ export const completarCitaWizard = async (req, res) => {
       }
     }
 
-    // PASO 2: Signos Vitales
-    if ((paso === 'signos_vitales' || paso === 'finalizar') && signos_vitales) {
-      const tieneSignos = signos_vitales.peso_kg || signos_vitales.talla_m || 
-                          signos_vitales.presion_sistolica || signos_vitales.glucosa_mg_dl ||
-                          signos_vitales.colesterol_mg_dl || signos_vitales.trigliceridos_mg_dl;
-      
-      if (tieneSignos) {
-        // Verificar si ya existe un registro de signos vitales para esta cita
-        const signosExistentes = await SignoVital.findOne({
-          where: { id_cita: id },
-          transaction
-        });
+    // PASO 2: Signos Vitales (todos los campos opcionales: se persiste aunque el objeto venga vacío)
+    if ((paso === 'signos_vitales' || paso === 'finalizar') && signos_vitales && typeof signos_vitales === 'object') {
+      const signosExistentes = await SignoVital.findOne({
+        where: { id_cita: id },
+        transaction
+      });
 
-        // Calcular IMC si se proporcionan peso y talla
-        let imc = null;
-        if (signos_vitales.peso_kg && signos_vitales.talla_m && parseFloat(signos_vitales.talla_m) > 0) {
-          const peso = parseFloat(signos_vitales.peso_kg);
-          const talla = parseFloat(signos_vitales.talla_m);
-          imc = parseFloat((peso / (talla * talla)).toFixed(2));
-        }
+      let imc = null;
+      if (signos_vitales.peso_kg && signos_vitales.talla_m && parseFloat(signos_vitales.talla_m) > 0) {
+        const peso = parseFloat(signos_vitales.peso_kg);
+        const talla = parseFloat(signos_vitales.talla_m);
+        imc = parseFloat((peso / (talla * talla)).toFixed(2));
+      }
 
-        const datosSignos = {
-          id_paciente: cita.id_paciente,
-          id_cita: parseInt(id),
-          peso_kg: signos_vitales.peso_kg ? parseFloat(signos_vitales.peso_kg) : null,
-          talla_m: signos_vitales.talla_m ? parseFloat(signos_vitales.talla_m) : null,
-          imc: imc,
-          medida_cintura_cm: signos_vitales.medida_cintura_cm ? parseFloat(signos_vitales.medida_cintura_cm) : null,
-          presion_sistolica: signos_vitales.presion_sistolica ? parseInt(signos_vitales.presion_sistolica) : null,
-          presion_diastolica: signos_vitales.presion_diastolica ? parseInt(signos_vitales.presion_diastolica) : null,
-          glucosa_mg_dl: signos_vitales.glucosa_mg_dl ? parseFloat(signos_vitales.glucosa_mg_dl) : null,
-          colesterol_mg_dl: signos_vitales.colesterol_mg_dl ? parseFloat(signos_vitales.colesterol_mg_dl) : null,
-          trigliceridos_mg_dl: signos_vitales.trigliceridos_mg_dl ? parseFloat(signos_vitales.trigliceridos_mg_dl) : null,
-          registrado_por: signos_vitales.registrado_por || 'doctor',
-          observaciones: signos_vitales.observaciones || null,
-          fecha_medicion: cita.fecha_cita,
-          fecha_creacion: new Date()
-        };
+      const datosSignos = {
+        id_paciente: cita.id_paciente,
+        id_cita: parseInt(id, 10),
+        peso_kg: signos_vitales.peso_kg ? parseFloat(signos_vitales.peso_kg) : null,
+        talla_m: signos_vitales.talla_m ? parseFloat(signos_vitales.talla_m) : null,
+        imc: imc,
+        medida_cintura_cm: signos_vitales.medida_cintura_cm ? parseFloat(signos_vitales.medida_cintura_cm) : null,
+        presion_sistolica: signos_vitales.presion_sistolica ? parseInt(signos_vitales.presion_sistolica, 10) : null,
+        presion_diastolica: signos_vitales.presion_diastolica ? parseInt(signos_vitales.presion_diastolica, 10) : null,
+        glucosa_mg_dl: signos_vitales.glucosa_mg_dl ? parseFloat(signos_vitales.glucosa_mg_dl) : null,
+        colesterol_mg_dl: signos_vitales.colesterol_mg_dl ? parseFloat(signos_vitales.colesterol_mg_dl) : null,
+        colesterol_ldl: signos_vitales.colesterol_ldl ? parseFloat(signos_vitales.colesterol_ldl) : null,
+        colesterol_hdl: signos_vitales.colesterol_hdl ? parseFloat(signos_vitales.colesterol_hdl) : null,
+        trigliceridos_mg_dl: signos_vitales.trigliceridos_mg_dl ? parseFloat(signos_vitales.trigliceridos_mg_dl) : null,
+        hba1c_porcentaje: signos_vitales.hba1c_porcentaje ? parseFloat(signos_vitales.hba1c_porcentaje) : null,
+        edad_paciente_en_medicion:
+          signos_vitales.edad_paciente_en_medicion != null && signos_vitales.edad_paciente_en_medicion !== ''
+            ? parseInt(signos_vitales.edad_paciente_en_medicion, 10)
+            : null,
+        registrado_por: signos_vitales.registrado_por || 'doctor',
+        observaciones: signos_vitales.observaciones || null,
+        fecha_medicion: cita.fecha_cita,
+        fecha_creacion: new Date()
+      };
 
-        if (signosExistentes) {
-          await signosExistentes.update(datosSignos, { transaction });
-          logger.info('Signos vitales actualizados para la cita');
-        } else {
-          await SignoVital.create(datosSignos, { transaction });
-          logger.info('Signos vitales creados para la cita');
-        }
+      if (signosExistentes) {
+        await signosExistentes.update(datosSignos, { transaction });
+        logger.info('Signos vitales actualizados para la cita');
+      } else {
+        await SignoVital.create(datosSignos, { transaction });
+        logger.info('Signos vitales creados para la cita');
       }
     }
 
