@@ -632,7 +632,7 @@ export default function EditarPaciente() {
             name="numero_expediente"
             control={control}
             render={({ field }) => (
-              <Input label="Número de expediente" placeholder="Ej. HGSZ-2026-001" error={errors.numero_expediente?.message} {...field} />
+              <Input label="Número de expediente" error={errors.numero_expediente?.message} {...field} />
             )}
           />
           <Controller

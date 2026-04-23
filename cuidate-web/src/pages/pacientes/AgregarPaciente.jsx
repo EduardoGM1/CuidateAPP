@@ -344,7 +344,7 @@ export default function AgregarPaciente() {
             name="numero_expediente"
             control={control}
             render={({ field }) => (
-              <Input label="Número de expediente" error={errors.numero_expediente?.message} {...field} required placeholder="Ej. HGSZ-2026-001" />
+              <Input label="Número de expediente" error={errors.numero_expediente?.message} {...field} required />
             )}
           />
           <Controller
