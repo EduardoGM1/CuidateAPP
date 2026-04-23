@@ -2,7 +2,7 @@ import Modal from '../ui/Modal';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
-import { formatDateTime, formatNombreCompleto } from '../../utils/format';
+import { formatDateTimeAmPm, formatNombreCompleto } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { getCamposFueraDeRango, getPresionValueStyle, getIMCValueStyle } from '../../utils/vitalSignsRanges';
 
@@ -43,7 +43,7 @@ export default function DetalleCitaModal({
   onCompletarWizard,
   onSoloSignosVitales,
 }) {
-  const formatearFecha = formatDateTime;
+  const formatearFecha = formatDateTimeAmPm;
   const safeClose = () => { if (typeof onClose === 'function') onClose(); };
   const idCita = citaDetalle?.id_cita ?? citaDetalle?.id;
   const puedeCompletar = canEditMedical && idCita && (citaDetalle?.estado === 'pendiente' || citaDetalle?.estado === 'no_asistida');

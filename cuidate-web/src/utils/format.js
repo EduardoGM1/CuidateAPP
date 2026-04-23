@@ -62,6 +62,28 @@ export function formatDateTime(date) {
 }
 
 /**
+ * Fecha y hora en 12 h con AM/PM (ej: 23/abr/2026, 8:16 AM).
+ * @param {string|Date|null|undefined} date
+ * @returns {string}
+ */
+export function formatDateTimeAmPm(date) {
+  if (date == null) return '—';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (Number.isNaN(d.getTime())) return '—';
+
+  const dia = String(d.getDate()).padStart(2, '0');
+  const mes = MESES_ABREV[d.getMonth()];
+  const year = d.getFullYear();
+  let horas = d.getHours();
+  const minutos = String(d.getMinutes()).padStart(2, '0');
+  const ampm = horas >= 12 ? 'PM' : 'AM';
+  horas = horas % 12;
+  if (horas === 0) horas = 12;
+
+  return `${dia}/${mes}/${year}, ${horas}:${minutos} ${ampm}`;
+}
+
+/**
  * Formatea solo la hora: HH:MM (ej: 14:30).
  * @param {string|Date|null|undefined} date
  * @returns {string}

@@ -83,7 +83,7 @@ import { getVacunas } from '../../api/vacunas';
 import { getComorbilidades } from '../../api/comorbilidades';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
-import { formatDate, formatDateTime, formatNombreCompleto } from '../../utils/format';
+import { formatDate, formatDateTime, formatDateTimeAmPm, formatNombreCompleto } from '../../utils/format';
 import { fechaCitaDatetimeLocalToApi } from '../../utils/fechaCita';
 import { openHTMLInNewWindow } from '../../utils/reportUtils';
 import {
@@ -832,7 +832,7 @@ export default function PacienteDetail() {
                       }}
                     >
                       <span className="tracking-item-date">
-                        {formatDateTime(cita.fecha_cita)}
+                        {formatDateTimeAmPm(cita.fecha_cita)}
                       </span>
                       <span className="tracking-item-body">
                         {sanitizeForDisplay(cita.motivo_consulta) ||
@@ -949,7 +949,11 @@ export default function PacienteDetail() {
             });
             setCitaForm({ id_doctor: '', fecha_cita: '', motivo: '' });
             setCitaModalOpen(false);
-            loadCitas();
+            const citasActualizadas = await getPacienteCitas(parsedId, { limit: 10, offset: 0 });
+            setCitas(citasActualizadas);
+            queryClient.setQueryData(['pacienteCitas', parsedId, { limit: 10, offset: 0 }], citasActualizadas);
+            await queryClient.invalidateQueries({ queryKey: ['pacienteResumenMedico', parsedId] });
+            await loadResumenMedico();
             message.success('Cita creada');
           } catch (e) {
             setCitaError(e?.response?.data?.error || e?.message || 'Error al crear la cita');
@@ -989,7 +993,7 @@ export default function PacienteDetail() {
                     tabIndex={0}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetalleCita(c.id_cita ?? c.id); } }}
                   >
-                    <span className="tracking-item-date">{formatDateTime(c.fecha_cita)}</span>
+                    <span className="tracking-item-date">{formatDateTimeAmPm(c.fecha_cita)}</span>
                     <span className="tracking-item-body">
                       {sanitizeForDisplay(c.doctor_nombre) || '—'}{' '}
                       <Badge variant={c.estado === 'atendida' ? 'success' : c.estado === 'cancelada' || c.estado === 'no_asistida' ? 'error' : 'neutral'}>
@@ -3789,7 +3793,7 @@ export default function PacienteDetail() {
           <ul className="tracking-list" style={{ maxHeight: '70vh', overflow: 'auto' }}>
             {allCitasData.map((c, i) => (
               <li key={c.id_cita ?? c.id ?? i} className="tracking-item" style={{ cursor: 'pointer' }} onClick={() => { setShowAllCitasOpen(false); openDetalleCita(c.id_cita ?? c.id); }}>
-                <span className="tracking-item-date">{formatDateTime(c.fecha_cita)}</span>
+                <span className="tracking-item-date">{formatDateTimeAmPm(c.fecha_cita)}</span>
                 <span className="tracking-item-body">
                   {sanitizeForDisplay(c.doctor_nombre) || '—'}{' '}
                   <Badge variant={c.estado === 'atendida' ? 'success' : c.estado === 'cancelada' || c.estado === 'no_asistida' ? 'error' : 'neutral'}>{ESTADO_CITA[c.estado] || c.estado}</Badge>

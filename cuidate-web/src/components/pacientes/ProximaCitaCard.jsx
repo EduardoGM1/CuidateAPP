@@ -1,5 +1,5 @@
 import { Card, Button, Badge } from '../ui';
-import { formatDateTime, formatNombreCompleto } from '../../utils/format';
+import { formatDateTimeAmPm, formatNombreCompleto } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 
 /**
@@ -46,7 +46,7 @@ export default function ProximaCitaCard({ citas = [], onVerCita, onVerTodas }) {
       <h2 className="patient-section-title">{titulo}</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
         <div style={{ fontSize: '0.95rem', color: 'var(--color-texto-secundario)' }}>
-          <strong>{formatDateTime(seleccionada.fecha_cita)}</strong>
+          <strong>{formatDateTimeAmPm(seleccionada.fecha_cita)}</strong>
         </div>
         <div style={{ fontSize: '0.95rem' }}>
           <span style={{ color: 'var(--color-texto-secundario)' }}>Doctor: </span>
