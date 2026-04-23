@@ -18,16 +18,49 @@ export default function PacienteEditSection({
   children,
 }) {
   const statusUi = STATUS_MAP[status] ?? STATUS_MAP.clean;
+  const panelId = `paciente-edit-section-${id}-panel`;
+
+  const handleHeaderKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onToggle(id);
+    }
+  };
+
   return (
     <Card style={{ marginBottom: '1rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--color-primario)' }}>{title}</h3>
-          {description ? (
-            <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--color-texto-secundario)' }}>{description}</p>
-          ) : null}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '0.75rem',
+        }}
+      >
+        <div
+          role="button"
+          tabIndex={0}
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => onToggle(id)}
+          onKeyDown={handleHeaderKeyDown}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '0.75rem',
+            cursor: 'pointer',
+            userSelect: 'none',
+          }}
+        >
+          <div style={{ minWidth: 0 }}>
+            <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--color-primario)' }}>{title}</h3>
+            {description ? (
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--color-texto-secundario)' }}>{description}</p>
+            ) : null}
+          </div>
           <span
             style={{
               fontSize: '0.8rem',
@@ -37,16 +70,21 @@ export default function PacienteEditSection({
               borderRadius: 999,
               padding: '0.2rem 0.55rem',
               whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             {statusUi.label}
           </span>
-          <Button type="button" variant="outline" size="small" onClick={() => onToggle(id)}>
-            {open ? 'Ocultar' : 'Mostrar'}
-          </Button>
         </div>
+        <Button type="button" variant="outline" size="small" onClick={() => onToggle(id)}>
+          {open ? 'Ocultar' : 'Mostrar'}
+        </Button>
       </div>
-      {open ? <div style={{ marginTop: '1rem' }}>{children}</div> : null}
+      {open ? (
+        <div id={panelId} style={{ marginTop: '1rem' }}>
+          {children}
+        </div>
+      ) : null}
     </Card>
   );
 }
