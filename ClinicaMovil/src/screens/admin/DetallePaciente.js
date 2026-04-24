@@ -722,6 +722,25 @@ const DetallePacienteContent = ({ route, navigation }) => {
     }
   }, []);
 
+  const formatearHoraClinica = useCallback((valorHora) => {
+    if (valorHora == null || valorHora === '') return '—';
+    const horaTexto = typeof valorHora === 'string' ? valorHora : String(valorHora);
+    return horaTexto.length >= 5 ? horaTexto.slice(0, 5) : horaTexto;
+  }, []);
+
+  const obtenerHoraTomaMedicamento = useCallback((planDetalle) => {
+    if (!planDetalle || typeof planDetalle !== 'object') return '—';
+
+    if (Array.isArray(planDetalle.horarios) && planDetalle.horarios.length > 0) {
+      const horarios = planDetalle.horarios
+        .map((hora) => formatearHoraClinica(hora))
+        .filter((hora) => hora && hora !== '—');
+      return horarios.length > 0 ? horarios.join(', ') : '—';
+    }
+
+    return formatearHoraClinica(planDetalle.horario);
+  }, [formatearHoraClinica]);
+
   // Función para calcular IMC - Memoizada
   const calcularIMC = useCallback((pesoKg, tallaM) => {
     if (!pesoKg || !tallaM || tallaM === 0) return null;
@@ -3995,38 +4014,6 @@ const DetallePacienteContent = ({ route, navigation }) => {
     return resultado ? resultado.toString() : '';
   }, [formDataSignosVitales.peso_kg, formDataSignosVitales.talla_m, calcularIMC]);
 
-  // ✅ Función para verificar si el paciente tiene diagnóstico de Hipercolesterolemia/Dislipidemia
-  const tieneHipercolesterolemia = useCallback(() => {
-    if (!comorbilidadesPaciente || comorbilidadesPaciente.length === 0) {
-      return false;
-    }
-    
-    const nombresRelevantes = ['Dislipidemia', 'Hipercolesterolemia', 'dislipidemia', 'hipercolesterolemia'];
-    
-    return comorbilidadesPaciente.some(comorbilidad => {
-      const nombre = comorbilidad.nombre || comorbilidad.nombre_comorbilidad || '';
-      return nombresRelevantes.some(relevante => 
-        nombre.toLowerCase().includes(relevante.toLowerCase())
-      );
-    });
-  }, [comorbilidadesPaciente]);
-
-  // ✅ Función para verificar si el paciente tiene diagnóstico de Hipertrigliceridemia
-  const tieneHipertrigliceridemia = useCallback(() => {
-    if (!comorbilidadesPaciente || comorbilidadesPaciente.length === 0) {
-      return false;
-    }
-    
-    const nombresRelevantes = ['Hipertrigliceridemia', 'hipertrigliceridemia', 'trigliceridos', 'triglicéridos'];
-    
-    return comorbilidadesPaciente.some(comorbilidad => {
-      const nombre = comorbilidad.nombre || comorbilidad.nombre_comorbilidad || '';
-      return nombresRelevantes.some(relevante => 
-        nombre.toLowerCase().includes(relevante.toLowerCase())
-      );
-    });
-  }, [comorbilidadesPaciente]);
-
   // Función para resetear formulario
   const resetFormSignosVitales = () => {
     setFormDataSignosVitales({
@@ -4121,6 +4108,18 @@ const DetallePacienteContent = ({ route, navigation }) => {
         const col = parseFloat(formDataSignosVitales.colesterol_mg_dl);
         if (!isNaN(col) && col >= 0 && col <= 500) {
           dataToSend.colesterol_mg_dl = col;
+        }
+      }
+      if (formDataSignosVitales.colesterol_ldl) {
+        const ldl = parseFloat(formDataSignosVitales.colesterol_ldl);
+        if (!isNaN(ldl) && ldl >= 0 && ldl <= 500) {
+          dataToSend.colesterol_ldl = ldl;
+        }
+      }
+      if (formDataSignosVitales.colesterol_hdl) {
+        const hdl = parseFloat(formDataSignosVitales.colesterol_hdl);
+        if (!isNaN(hdl) && hdl >= 0 && hdl <= 200) {
+          dataToSend.colesterol_hdl = hdl;
         }
       }
       if (formDataSignosVitales.trigliceridos_mg_dl) {
@@ -4935,27 +4934,34 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       <Text style={styles.cardResumenText}>Mostrando 5 de {tomasRegistro.length}. Ver historial en Opciones.</Text>
                     )}
                     {tomasRegistro.slice(0, 5).map((toma, index) => {
-                    const nombreMedicamento = toma.PlanDetalle?.Medicamento?.nombre_medicamento || 'Sin nombre';
-                    const fechaStr = formatearFecha(toma.fecha_toma, false);
-                    const horaStr = toma.hora_toma || '—';
-                    const confirmadoPor = toma.confirmado_por || '—';
-                    return (
-                      <View
-                        key={`toma-${toma.id_toma ?? index}-${index}`}
-                        style={styles.listItem}
-                      >
-                        <Text style={styles.listItemTitle}>{nombreMedicamento}</Text>
-                        <Text style={styles.listItemSubtitle}>
-                          {fechaStr} · {horaStr}
-                        </Text>
-                        {confirmadoPor !== '—' && (
-                          <Text style={styles.listItemDescription}>
-                            Confirmado por: {confirmadoPor}
+                      const nombreMedicamento = toma.PlanDetalle?.Medicamento?.nombre_medicamento || 'Sin nombre';
+                      const fechaStr = formatearFecha(toma.fecha_toma, false);
+                      const horaTomaMedicamento = obtenerHoraTomaMedicamento(toma.PlanDetalle);
+                      const horaAdministracion = formatearHoraClinica(toma.hora_toma);
+                      const confirmadoPor = toma.confirmado_por || '—';
+                      return (
+                        <View
+                          key={`toma-${toma.id_toma ?? index}-${index}`}
+                          style={styles.listItem}
+                        >
+                          <Text style={styles.listItemTitle}>{nombreMedicamento}</Text>
+                          <Text style={styles.listItemSubtitle}>
+                            Fecha: {fechaStr}
                           </Text>
-                        )}
-                      </View>
-                    );
-                  })}
+                          <Text style={styles.listItemDescription}>
+                            Hora de toma del medicamento: {horaTomaMedicamento}
+                          </Text>
+                          <Text style={styles.listItemDescription}>
+                            Hora de administración registrada: {horaAdministracion}
+                          </Text>
+                          {confirmadoPor !== '—' && (
+                            <Text style={styles.listItemDescription}>
+                              Confirmado por: {confirmadoPor}
+                            </Text>
+                          )}
+                        </View>
+                      );
+                    })}
                   </>
                 ) : (
                   <Text style={styles.noDataText}>No hay tomas registradas en los últimos 7 días</Text>
@@ -5693,8 +5699,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
                     />
                   </View>
                   <View style={styles.formField}>
-                    <Text style={styles.label}>Colesterol Total * (mg/dL)</Text>
-                    <Text style={styles.labelHint}>Campo obligatorio para criterios de acreditación</Text>
+                    <Text style={styles.label}>Colesterol total (mg/dL)</Text>
+                    <View style={styles.labelHintSpacer} />
                     <TextInput
                       style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
                       value={formDataSignosVitales.colesterol_mg_dl}
@@ -5707,64 +5713,59 @@ const DetallePacienteContent = ({ route, navigation }) => {
                   </View>
                 </View>
 
-                {/* ✅ Perfil Lipídico - Solo para pacientes con diagnóstico de Hipercolesterolemia/Dislipidemia */}
-                {tieneHipercolesterolemia() && (
-                  <View style={styles.formSection}>
-                    <Text style={styles.formSectionTitle}>📊 Perfil Lipídico</Text>
-                    <Text style={styles.labelHint}>(Solo para pacientes con diagnóstico de Hipercolesterolemia/Dislipidemia)</Text>
-                    <View style={styles.formRow}>
-                      <View style={styles.formField}>
-                        <Text style={styles.label}>Colesterol LDL (mg/dL)</Text>
-                        <TextInput
-                          style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
-                          value={formDataSignosVitales.colesterol_ldl}
-                          onChangeText={(value) => updateFormField('colesterol_ldl', value)}
-                          placeholder="Ej: 100"
-                          placeholderTextColor={COLORES.TEXTO_DISABLED}
-                          keyboardType="decimal-pad"
-                          editable={!savingSignosVitales}
-                        />
-                      </View>
-                      <View style={styles.formField}>
-                        <Text style={styles.label}>Colesterol HDL (mg/dL)</Text>
-                        <TextInput
-                          style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
-                          value={formDataSignosVitales.colesterol_hdl}
-                          onChangeText={(value) => updateFormField('colesterol_hdl', value)}
-                          placeholder="Ej: 40"
-                          placeholderTextColor={COLORES.TEXTO_DISABLED}
-                          keyboardType="decimal-pad"
-                          editable={!savingSignosVitales}
-                        />
-                      </View>
-                    </View>
-                  </View>
-                )}
-                
-                {/* ✅ Triglicéridos - Solo para pacientes con diagnóstico de Hipertrigliceridemia */}
-                {tieneHipertrigliceridemia() && (
+                <View style={styles.formSection}>
+                  <Text style={styles.formSectionTitle}>📊 Perfil lipídico</Text>
                   <View style={styles.formRow}>
                     <View style={styles.formField}>
-                      <Text style={styles.label}>Triglicéridos * (mg/dL)</Text>
-                      <Text style={styles.labelHint}>(Solo para pacientes con diagnóstico de Hipertrigliceridemia)</Text>
+                      <Text style={styles.label}>Colesterol LDL (mg/dL)</Text>
+                      <View style={styles.labelHintSpacer} />
                       <TextInput
                         style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
-                        value={formDataSignosVitales.trigliceridos_mg_dl}
-                        onChangeText={(value) => updateFormField('trigliceridos_mg_dl', value)}
-                        placeholder="Ej: 120"
+                        value={formDataSignosVitales.colesterol_ldl}
+                        onChangeText={(value) => updateFormField('colesterol_ldl', value)}
+                        placeholder="Ej: 100"
+                        placeholderTextColor={COLORES.TEXTO_DISABLED}
+                        keyboardType="decimal-pad"
+                        editable={!savingSignosVitales}
+                      />
+                    </View>
+                    <View style={styles.formField}>
+                      <Text style={styles.label}>Colesterol HDL (mg/dL)</Text>
+                      <View style={styles.labelHintSpacer} />
+                      <TextInput
+                        style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
+                        value={formDataSignosVitales.colesterol_hdl}
+                        onChangeText={(value) => updateFormField('colesterol_hdl', value)}
+                        placeholder="Ej: 40"
                         placeholderTextColor={COLORES.TEXTO_DISABLED}
                         keyboardType="decimal-pad"
                         editable={!savingSignosVitales}
                       />
                     </View>
                   </View>
-                )}
+                </View>
+
+                <View style={styles.formRow}>
+                  <View style={styles.formField}>
+                    <Text style={styles.label}>Triglicéridos (mg/dL)</Text>
+                    <View style={styles.labelHintSpacer} />
+                    <TextInput
+                      style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
+                      value={formDataSignosVitales.trigliceridos_mg_dl}
+                      onChangeText={(value) => updateFormField('trigliceridos_mg_dl', value)}
+                      placeholder="Ej: 120"
+                      placeholderTextColor={COLORES.TEXTO_DISABLED}
+                      keyboardType="decimal-pad"
+                      editable={!savingSignosVitales}
+                    />
+                  </View>
+                </View>
 
                 {/* ✅ HbA1c (%) - Campo obligatorio para criterios de acreditación */}
                 <View style={styles.formRow}>
                   <View style={styles.formField}>
-                    <Text style={styles.label}>HbA1c (%) *</Text>
-                    <Text style={styles.labelHint}>Campo obligatorio para criterios de acreditación</Text>
+                    <Text style={styles.label}>HbA1c (%)</Text>
+                    <View style={styles.labelHintSpacer} />
                     <TextInput
                       style={[styles.input, !savingSignosVitales && styles.inputEnabled]}
                       value={formDataSignosVitales.hba1c_porcentaje}

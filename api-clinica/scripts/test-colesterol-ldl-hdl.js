@@ -148,7 +148,7 @@ async function testCrearSignoVitalSinLDLHDL() {
 }
 
 async function testCrearSignoVitalConLDLHDLSinDiagnostico() {
-  console.log('\n🧪 PRUEBA 3: Crear Signo Vital CON LDL/HDL (Paciente SIN diagnóstico) - DEBE FALLAR');
+  console.log('\n🧪 PRUEBA 3: Crear Signo Vital CON LDL/HDL (Paciente SIN comorbilidad lipídica) — permitido (solo validación de rango)');
   
   try {
     const response = await axios.post(
@@ -168,39 +168,28 @@ async function testCrearSignoVitalConLDLHDLSinDiagnostico() {
       { headers }
     );
     
-    // Si llega aquí, debería haber fallado
-    registrarResultado(
-      'Crear Signo Vital CON LDL/HDL (Sin diagnóstico)',
-      false,
-      `ERROR: Debería haber fallado pero no falló - Status: ${response.status}`,
-      response.data
-    );
-  } catch (error) {
-    if (error.response?.status === 400) {
-      const errorMessage = error.response.data?.error || error.response.data?.message || 'Error desconocido';
-      if (errorMessage.includes('diagnóstico') || errorMessage.includes('Hipercolesterolemia') || errorMessage.includes('Dislipidemia')) {
-        registrarResultado(
-          'Crear Signo Vital CON LDL/HDL (Sin diagnóstico)',
-          true,
-          `Rechazado correctamente - ${errorMessage}`,
-          { status: error.response.status, error: errorMessage }
-        );
-      } else {
-        registrarResultado(
-          'Crear Signo Vital CON LDL/HDL (Sin diagnóstico)',
-          false,
-          `Rechazado pero mensaje incorrecto: ${errorMessage}`,
-          error.response.data
-        );
-      }
+    if (response.status === 201 && response.data.colesterol_ldl === 130 && response.data.colesterol_hdl === 50) {
+      registrarResultado(
+        'Crear Signo Vital CON LDL/HDL (Sin comorbilidad)',
+        true,
+        `Éxito - Status: ${response.status}`,
+        { id_signo: response.data.id_signo }
+      );
     } else {
       registrarResultado(
-        'Crear Signo Vital CON LDL/HDL (Sin diagnóstico)',
+        'Crear Signo Vital CON LDL/HDL (Sin comorbilidad)',
         false,
-        `Error inesperado: ${error.response?.status || error.message}`,
-        error.response?.data
+        `Respuesta inesperada: ${response.status}`,
+        response.data
       );
     }
+  } catch (error) {
+    registrarResultado(
+      'Crear Signo Vital CON LDL/HDL (Sin comorbilidad)',
+      false,
+      `Error: ${error.response?.status || error.message} - ${error.response?.data?.error || error.message}`,
+      error.response?.data
+    );
   }
 }
 

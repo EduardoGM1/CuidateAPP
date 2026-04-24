@@ -33,6 +33,33 @@ const GRID_STYLE = {
 
 const INPUT_STYLE = { marginBottom: 0 };
 
+/** Permite decimales en inputs type="number" (evita que el navegador solo acepte enteros). */
+const DECIMAL_INPUT_PROPS = { step: 'any' };
+
+/**
+ * Número opcional con soporte de coma decimal (es-ES) y punto.
+ * @param {string|number|null|undefined} v
+ * @returns {number|null}
+ */
+function parseOptionalDecimal(v) {
+  if (v == null) return null;
+  const s = String(v).trim().replace(/\s/g, '').replace(',', '.');
+  if (s === '') return null;
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Entero opcional (presión, edad en años).
+ * @param {string|number|null|undefined} v
+ * @returns {number|null}
+ */
+function parseOptionalIntField(v) {
+  const n = parseOptionalDecimal(v);
+  if (n == null) return null;
+  return Math.round(n);
+}
+
 /**
  * Convierte el objeto del formulario a payload para API (solo claves con valor).
  * Excluye cadenas vacías y no envía edadEditable (solo UI en móvil).
@@ -43,19 +70,28 @@ const INPUT_STYLE = { marginBottom: 0 };
  * @returns {Record<string, number|string|undefined>}
  */
 export function signosVitalesToPayload(form, fechaNacimientoPaciente) {
-  const num = (v) => (v != null && String(v).trim() !== '' ? (v.includes('.') ? parseFloat(v) : parseInt(v, 10)) : null);
   const payload = {};
-  if (form.peso_kg?.trim()) payload.peso_kg = num(form.peso_kg);
-  if (form.talla_m?.trim()) payload.talla_m = num(form.talla_m);
-  if (form.medida_cintura_cm?.trim()) payload.medida_cintura_cm = num(form.medida_cintura_cm);
-  if (form.presion_sistolica?.trim()) payload.presion_sistolica = num(form.presion_sistolica);
-  if (form.presion_diastolica?.trim()) payload.presion_diastolica = num(form.presion_diastolica);
-  if (form.glucosa_mg_dl?.trim()) payload.glucosa_mg_dl = num(form.glucosa_mg_dl);
-  if (form.colesterol_mg_dl?.trim()) payload.colesterol_mg_dl = num(form.colesterol_mg_dl);
-  if (form.colesterol_ldl?.trim()) payload.colesterol_ldl = num(form.colesterol_ldl);
-  if (form.colesterol_hdl?.trim()) payload.colesterol_hdl = num(form.colesterol_hdl);
-  if (form.trigliceridos_mg_dl?.trim()) payload.trigliceridos_mg_dl = num(form.trigliceridos_mg_dl);
-  if (form.hba1c_porcentaje?.trim()) payload.hba1c_porcentaje = num(form.hba1c_porcentaje);
+  const putDec = (key, raw) => {
+    if (!raw?.trim()) return;
+    const v = parseOptionalDecimal(raw);
+    if (v !== null) payload[key] = v;
+  };
+  const putInt = (key, raw) => {
+    if (!raw?.trim()) return;
+    const v = parseOptionalIntField(raw);
+    if (v !== null) payload[key] = v;
+  };
+  putDec('peso_kg', form.peso_kg);
+  putDec('talla_m', form.talla_m);
+  putDec('medida_cintura_cm', form.medida_cintura_cm);
+  putInt('presion_sistolica', form.presion_sistolica);
+  putInt('presion_diastolica', form.presion_diastolica);
+  putDec('glucosa_mg_dl', form.glucosa_mg_dl);
+  putDec('colesterol_mg_dl', form.colesterol_mg_dl);
+  putDec('colesterol_ldl', form.colesterol_ldl);
+  putDec('colesterol_hdl', form.colesterol_hdl);
+  putDec('trigliceridos_mg_dl', form.trigliceridos_mg_dl);
+  putDec('hba1c_porcentaje', form.hba1c_porcentaje);
   const hasTypedMeasurement =
     !!form.peso_kg?.trim() ||
     !!form.talla_m?.trim() ||
@@ -70,8 +106,9 @@ export function signosVitalesToPayload(form, fechaNacimientoPaciente) {
     !!form.hba1c_porcentaje?.trim() ||
     !!form.edad_paciente_en_medicion?.trim();
   const hasObservaciones = !!form.observaciones?.trim();
-  if (form.edad_paciente_en_medicion?.trim()) payload.edad_paciente_en_medicion = num(form.edad_paciente_en_medicion);
-  else if (fechaNacimientoPaciente && (hasTypedMeasurement || hasObservaciones)) {
+  if (form.edad_paciente_en_medicion?.trim()) {
+    putInt('edad_paciente_en_medicion', form.edad_paciente_en_medicion);
+  } else if (fechaNacimientoPaciente && (hasTypedMeasurement || hasObservaciones)) {
     const ed = calcularEdad(fechaNacimientoPaciente);
     if (ed != null) payload.edad_paciente_en_medicion = ed;
   }
@@ -130,17 +167,17 @@ export default function SignosVitalesForm({ value, onChange, showImc = true, fec
   return (
     <div>
       <div style={GRID_STYLE}>
-        <Input type="number" placeholder="Peso (kg)" value={value.peso_kg} onChange={(e) => update('peso_kg', e.target.value)} style={INPUT_STYLE} />
-        <Input type="number" placeholder="Talla (m)" value={value.talla_m} onChange={(e) => update('talla_m', e.target.value)} style={INPUT_STYLE} />
-        <Input type="number" placeholder="Cintura (cm)" value={value.medida_cintura_cm} onChange={(e) => update('medida_cintura_cm', e.target.value)} style={inputStyle('medida_cintura_cm', value.medida_cintura_cm)} />
-        <Input type="number" placeholder="PA sist." value={value.presion_sistolica} onChange={(e) => update('presion_sistolica', e.target.value)} style={{ ...INPUT_STYLE, ...paSistStyle }} />
-        <Input type="number" placeholder="PA diast." value={value.presion_diastolica} onChange={(e) => update('presion_diastolica', e.target.value)} style={{ ...INPUT_STYLE, ...paSistStyle }} />
-        <Input type="number" placeholder="Glucosa (mg/dL)" value={value.glucosa_mg_dl} onChange={(e) => update('glucosa_mg_dl', e.target.value)} style={inputStyle('glucosa_mg_dl', value.glucosa_mg_dl)} />
-        <Input type="number" placeholder="Colesterol total" value={value.colesterol_mg_dl} onChange={(e) => update('colesterol_mg_dl', e.target.value)} style={inputStyle('colesterol_mg_dl', value.colesterol_mg_dl)} />
-        <Input type="number" placeholder="LDL" value={value.colesterol_ldl} onChange={(e) => update('colesterol_ldl', e.target.value)} style={inputStyle('colesterol_ldl', value.colesterol_ldl)} />
-        <Input type="number" placeholder="HDL" value={value.colesterol_hdl} onChange={(e) => update('colesterol_hdl', e.target.value)} style={inputStyle('colesterol_hdl', value.colesterol_hdl)} />
-        <Input type="number" placeholder="Triglicéridos" value={value.trigliceridos_mg_dl} onChange={(e) => update('trigliceridos_mg_dl', e.target.value)} style={inputStyle('trigliceridos_mg_dl', value.trigliceridos_mg_dl)} />
-        <Input type="number" placeholder="HbA1c (%)" value={value.hba1c_porcentaje} onChange={(e) => update('hba1c_porcentaje', e.target.value)} style={inputStyle('hba1c_porcentaje', value.hba1c_porcentaje)} />
+        <Input type="number" placeholder="Peso (kg)" value={value.peso_kg} onChange={(e) => update('peso_kg', e.target.value)} style={INPUT_STYLE} {...DECIMAL_INPUT_PROPS} />
+        <Input type="number" placeholder="Talla (m)" value={value.talla_m} onChange={(e) => update('talla_m', e.target.value)} style={INPUT_STYLE} {...DECIMAL_INPUT_PROPS} />
+        <Input type="number" placeholder="Cintura (cm)" value={value.medida_cintura_cm} onChange={(e) => update('medida_cintura_cm', e.target.value)} style={inputStyle('medida_cintura_cm', value.medida_cintura_cm)} {...DECIMAL_INPUT_PROPS} />
+        <Input type="number" placeholder="PA sist." value={value.presion_sistolica} onChange={(e) => update('presion_sistolica', e.target.value)} style={{ ...INPUT_STYLE, ...paSistStyle }} step={1} />
+        <Input type="number" placeholder="PA diast." value={value.presion_diastolica} onChange={(e) => update('presion_diastolica', e.target.value)} style={{ ...INPUT_STYLE, ...paSistStyle }} step={1} />
+        <Input type="number" placeholder="Glucosa (mg/dL)" value={value.glucosa_mg_dl} onChange={(e) => update('glucosa_mg_dl', e.target.value)} style={inputStyle('glucosa_mg_dl', value.glucosa_mg_dl)} {...DECIMAL_INPUT_PROPS} />
+        <Input type="number" placeholder="Colesterol total" value={value.colesterol_mg_dl} onChange={(e) => update('colesterol_mg_dl', e.target.value)} style={inputStyle('colesterol_mg_dl', value.colesterol_mg_dl)} {...DECIMAL_INPUT_PROPS} />
+        <Input type="number" placeholder="LDL" value={value.colesterol_ldl} onChange={(e) => update('colesterol_ldl', e.target.value)} style={inputStyle('colesterol_ldl', value.colesterol_ldl)} {...DECIMAL_INPUT_PROPS} />
+        <Input type="number" placeholder="HDL" value={value.colesterol_hdl} onChange={(e) => update('colesterol_hdl', e.target.value)} style={inputStyle('colesterol_hdl', value.colesterol_hdl)} {...DECIMAL_INPUT_PROPS} />
+        <Input type="number" placeholder="Triglicéridos" value={value.trigliceridos_mg_dl} onChange={(e) => update('trigliceridos_mg_dl', e.target.value)} style={inputStyle('trigliceridos_mg_dl', value.trigliceridos_mg_dl)} {...DECIMAL_INPUT_PROPS} />
+        <Input type="number" placeholder="HbA1c (%)" value={value.hba1c_porcentaje} onChange={(e) => update('hba1c_porcentaje', e.target.value)} style={inputStyle('hba1c_porcentaje', value.hba1c_porcentaje)} {...DECIMAL_INPUT_PROPS} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <Input
             type="number"
@@ -150,6 +187,7 @@ export default function SignosVitalesForm({ value, onChange, showImc = true, fec
             style={INPUT_STYLE}
             title={fechaNacimientoPaciente ? (edadBloqueada ? 'Desmarca "Edad editable" para usar la calculada' : 'Años para validar rangos HbA1c') : 'Años para validar rangos HbA1c'}
             disabled={edadBloqueada}
+            step={1}
           />
           {puedeMostrarCheckbox && (
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: 'var(--color-texto-secundario)', cursor: 'pointer' }}>

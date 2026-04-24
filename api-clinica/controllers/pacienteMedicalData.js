@@ -83,129 +83,6 @@ const decryptFieldIfNeeded = (value) => {
 };
 
 /**
- * Verifica si un paciente tiene diagnóstico de Hipercolesterolemia o Dislipidemia
- * @param {number} pacienteId - ID del paciente
- * @returns {Promise<boolean>} - true si tiene el diagnóstico, false en caso contrario
- */
-const tieneHipercolesterolemia = async (pacienteId) => {
-  try {
-    // ✅ MEJOR PRÁCTICA: Usar consulta más robusta con logging para debugging
-    const comorbilidades = await PacienteComorbilidad.findAll({
-      where: { id_paciente: pacienteId },
-      include: [{
-        model: Comorbilidad,
-        attributes: ['id_comorbilidad', 'nombre_comorbilidad'],
-        required: true // INNER JOIN para asegurar que existe la relación
-      }]
-    });
-
-    if (!comorbilidades || comorbilidades.length === 0) {
-      logger.debug('No se encontraron comorbilidades para el paciente', { pacienteId });
-      return false;
-    }
-
-    // ✅ MEJOR PRÁCTICA: Búsqueda más flexible y robusta (case-insensitive, trim)
-    // Buscar comorbilidades relacionadas con colesterol
-    const nombresRelevantes = [
-      'dislipidemia', 
-      'hipercolesterolemia',
-      'colesterol',
-      'hiperlipidemia'
-    ];
-    
-    const tieneDiagnostico = comorbilidades.some(pc => {
-      const nombre = (pc.Comorbilidad?.nombre_comorbilidad || '').toLowerCase().trim();
-      
-      // Verificar si el nombre contiene alguna palabra relevante
-      return nombresRelevantes.some(relevante => 
-        nombre.includes(relevante.toLowerCase())
-      );
-    });
-    
-    if (tieneDiagnostico) {
-      logger.debug('Paciente tiene diagnóstico de hipercolesterolemia/dislipidemia', {
-        pacienteId,
-        comorbilidades: comorbilidades.map(pc => pc.Comorbilidad?.nombre_comorbilidad).filter(Boolean)
-      });
-    } else {
-      logger.debug('Paciente NO tiene diagnóstico de hipercolesterolemia/dislipidemia', {
-        pacienteId,
-        comorbilidadesEncontradas: comorbilidades.map(pc => pc.Comorbilidad?.nombre_comorbilidad).filter(Boolean)
-      });
-    }
-    
-    return tieneDiagnostico;
-  } catch (error) {
-    logger.error('Error verificando diagnóstico de hipercolesterolemia:', {
-      error: error.message,
-      stack: error.stack,
-      pacienteId
-    });
-    return false;
-  }
-};
-
-/**
- * Verifica si un paciente tiene diagnóstico de Hipertrigliceridemia
- * @param {number} pacienteId - ID del paciente
- * @returns {Promise<boolean>} - true si tiene el diagnóstico, false en caso contrario
- */
-const tieneHipertrigliceridemia = async (pacienteId) => {
-  try {
-    const comorbilidades = await PacienteComorbilidad.findAll({
-      where: { id_paciente: pacienteId },
-      include: [{
-        model: Comorbilidad,
-        attributes: ['id_comorbilidad', 'nombre_comorbilidad'],
-        required: true
-      }]
-    });
-
-    if (!comorbilidades || comorbilidades.length === 0) {
-      logger.debug('No se encontraron comorbilidades para el paciente', { pacienteId });
-      return false;
-    }
-
-    // Buscar comorbilidades relacionadas con triglicéridos
-    const nombresRelevantes = [
-      'hipertrigliceridemia',
-      'trigliceridos',
-      'hipertrigliceridemia',
-      'dislipidemia' // Dislipidemia puede incluir hipertrigliceridemia
-    ];
-    
-    const tieneDiagnostico = comorbilidades.some(pc => {
-      const nombre = (pc.Comorbilidad?.nombre_comorbilidad || '').toLowerCase().trim();
-      
-      return nombresRelevantes.some(relevante => 
-        nombre.includes(relevante.toLowerCase())
-      );
-    });
-    
-    if (tieneDiagnostico) {
-      logger.debug('Paciente tiene diagnóstico de hipertrigliceridemia', {
-        pacienteId,
-        comorbilidades: comorbilidades.map(pc => pc.Comorbilidad?.nombre_comorbilidad).filter(Boolean)
-      });
-    } else {
-      logger.debug('Paciente NO tiene diagnóstico de hipertrigliceridemia', {
-        pacienteId,
-        comorbilidadesEncontradas: comorbilidades.map(pc => pc.Comorbilidad?.nombre_comorbilidad).filter(Boolean)
-      });
-    }
-    
-    return tieneDiagnostico;
-  } catch (error) {
-    logger.error('Error verificando diagnóstico de hipertrigliceridemia:', {
-      error: error.message,
-      stack: error.stack,
-      pacienteId
-    });
-    return false;
-  }
-};
-
-/**
  * Valida los valores de colesterol LDL y HDL
  * @param {number|null|undefined} colesterol_ldl - Valor de LDL
  * @param {number|null|undefined} colesterol_hdl - Valor de HDL
@@ -1421,18 +1298,10 @@ export const createPacienteSignosVitales = async (req, res) => {
       }
     }
 
-    // ✅ Validar colesterol LDL y HDL
-    if (colesterol_ldl !== undefined || colesterol_hdl !== undefined) {
-      // Verificar que el paciente tenga diagnóstico de Hipercolesterolemia/Dislipidemia
-      const hasHipercolesterolemia = await tieneHipercolesterolemia(pacienteId);
-      if (!hasHipercolesterolemia) {
-        return res.status(400).json({
-          success: false,
-          error: 'No se puede registrar Colesterol LDL/HDL sin diagnóstico de Hipercolesterolemia o Dislipidemia.'
-        });
-      }
-
-      // Validar rangos
+    // LDL/HDL y triglicéridos: opcionales; solo validación de rango si vienen valores (sin exigir comorbilidad).
+    const tieneLdl = colesterol_ldl !== undefined && colesterol_ldl !== null && colesterol_ldl !== '';
+    const tieneHdl = colesterol_hdl !== undefined && colesterol_hdl !== null && colesterol_hdl !== '';
+    if (tieneLdl || tieneHdl) {
       const validationError = validarColesterol(colesterol_ldl, colesterol_hdl);
       if (validationError) {
         return res.status(400).json({
@@ -1442,18 +1311,7 @@ export const createPacienteSignosVitales = async (req, res) => {
       }
     }
 
-    // ✅ Validar triglicéridos (solo para pacientes con diagnóstico de Hipertrigliceridemia)
     if (trigliceridos_mg_dl !== undefined && trigliceridos_mg_dl !== null && trigliceridos_mg_dl !== '') {
-      // Verificar que el paciente tenga diagnóstico de Hipertrigliceridemia
-      const hasHipertrigliceridemia = await tieneHipertrigliceridemia(pacienteId);
-      if (!hasHipertrigliceridemia) {
-        return res.status(400).json({
-          success: false,
-          error: 'No se puede registrar Triglicéridos sin diagnóstico de Hipertrigliceridemia.'
-        });
-      }
-
-      // Validar rango de triglicéridos
       const trigliceridosNum = parseFloat(trigliceridos_mg_dl);
       if (isNaN(trigliceridosNum) || trigliceridosNum < 0 || trigliceridosNum > 1000) {
         return res.status(400).json({
@@ -1547,7 +1405,9 @@ export const createPacienteSignosVitales = async (req, res) => {
       medida_cintura_cm: medida_cintura_cm ? parseFloat(medida_cintura_cm) : null,
       presion_sistolica: presion_sistolica ? parseInt(presion_sistolica, 10) : null,
       presion_diastolica: presion_diastolica ? parseInt(presion_diastolica, 10) : null,
-      glucosa_mg_dl: glucosa_mg_dl ? parseInt(glucosa_mg_dl, 10) : null,
+      glucosa_mg_dl: glucosa_mg_dl !== undefined && glucosa_mg_dl !== null && glucosa_mg_dl !== ''
+        ? parseFloat(glucosa_mg_dl)
+        : null,
       colesterol_mg_dl: colesterol_mg_dl ? parseFloat(colesterol_mg_dl) : null,
       colesterol_ldl: colesterol_ldl !== undefined && colesterol_ldl !== null && colesterol_ldl !== '' 
         ? parseFloat(colesterol_ldl) 
@@ -1555,7 +1415,9 @@ export const createPacienteSignosVitales = async (req, res) => {
       colesterol_hdl: colesterol_hdl !== undefined && colesterol_hdl !== null && colesterol_hdl !== '' 
         ? parseFloat(colesterol_hdl) 
         : null,  // ✅ Colesterol HDL
-      trigliceridos_mg_dl: trigliceridos_mg_dl ? parseInt(trigliceridos_mg_dl, 10) : null,
+      trigliceridos_mg_dl: trigliceridos_mg_dl !== undefined && trigliceridos_mg_dl !== null && trigliceridos_mg_dl !== ''
+        ? parseFloat(trigliceridos_mg_dl)
+        : null,
       hba1c_porcentaje: hba1c_porcentaje !== undefined && hba1c_porcentaje !== null && hba1c_porcentaje !== '' 
         ? parseFloat(hba1c_porcentaje) 
         : null,  // ✅ HbA1c (%)
@@ -2841,18 +2703,9 @@ export const updatePacienteSignosVitales = async (req, res) => {
       });
     }
 
-    // ✅ Validar colesterol LDL y HDL si se están actualizando
-    if (colesterol_ldl !== undefined || colesterol_hdl !== undefined) {
-      // Verificar que el paciente tenga diagnóstico de Hipercolesterolemia/Dislipidemia
-      const hasHipercolesterolemia = await tieneHipercolesterolemia(pacienteId);
-      if (!hasHipercolesterolemia) {
-        return res.status(400).json({
-          success: false,
-          error: 'No se puede registrar Colesterol LDL/HDL sin diagnóstico de Hipercolesterolemia o Dislipidemia.'
-        });
-      }
-
-      // Validar rangos
+    const tieneLdlUpd = colesterol_ldl !== undefined && colesterol_ldl !== null && colesterol_ldl !== '';
+    const tieneHdlUpd = colesterol_hdl !== undefined && colesterol_hdl !== null && colesterol_hdl !== '';
+    if (tieneLdlUpd || tieneHdlUpd) {
       const validationError = validarColesterol(colesterol_ldl, colesterol_hdl);
       if (validationError) {
         return res.status(400).json({
@@ -2862,18 +2715,7 @@ export const updatePacienteSignosVitales = async (req, res) => {
       }
     }
 
-    // ✅ Validar triglicéridos (solo para pacientes con diagnóstico de Hipertrigliceridemia)
     if (trigliceridos_mg_dl !== undefined && trigliceridos_mg_dl !== null && trigliceridos_mg_dl !== '') {
-      // Verificar que el paciente tenga diagnóstico de Hipertrigliceridemia
-      const hasHipertrigliceridemia = await tieneHipertrigliceridemia(pacienteId);
-      if (!hasHipertrigliceridemia) {
-        return res.status(400).json({
-          success: false,
-          error: 'No se puede registrar Triglicéridos sin diagnóstico de Hipertrigliceridemia.'
-        });
-      }
-
-      // Validar rango de triglicéridos
       const trigliceridosNum = parseFloat(trigliceridos_mg_dl);
       if (isNaN(trigliceridosNum) || trigliceridosNum < 0 || trigliceridosNum > 1000) {
         return res.status(400).json({
@@ -2930,7 +2772,11 @@ export const updatePacienteSignosVitales = async (req, res) => {
     if (medida_cintura_cm !== undefined) signoVital.medida_cintura_cm = medida_cintura_cm ? parseFloat(medida_cintura_cm) : null;
     if (presion_sistolica !== undefined) signoVital.presion_sistolica = presion_sistolica ? parseInt(presion_sistolica) : null;
     if (presion_diastolica !== undefined) signoVital.presion_diastolica = presion_diastolica ? parseInt(presion_diastolica) : null;
-    if (glucosa_mg_dl !== undefined) signoVital.glucosa_mg_dl = glucosa_mg_dl ? parseInt(glucosa_mg_dl) : null;
+    if (glucosa_mg_dl !== undefined) {
+      signoVital.glucosa_mg_dl = glucosa_mg_dl !== null && glucosa_mg_dl !== ''
+        ? parseFloat(glucosa_mg_dl)
+        : null;
+    }
     if (colesterol_mg_dl !== undefined) signoVital.colesterol_mg_dl = colesterol_mg_dl ? parseFloat(colesterol_mg_dl) : null;
     if (colesterol_ldl !== undefined) {
       signoVital.colesterol_ldl = colesterol_ldl !== null && colesterol_ldl !== '' 
@@ -2942,7 +2788,11 @@ export const updatePacienteSignosVitales = async (req, res) => {
         ? parseFloat(colesterol_hdl) 
         : null;
     }
-    if (trigliceridos_mg_dl !== undefined) signoVital.trigliceridos_mg_dl = trigliceridos_mg_dl ? parseInt(trigliceridos_mg_dl) : null;
+    if (trigliceridos_mg_dl !== undefined) {
+      signoVital.trigliceridos_mg_dl = trigliceridos_mg_dl !== null && trigliceridos_mg_dl !== ''
+        ? parseFloat(trigliceridos_mg_dl)
+        : null;
+    }
     if (hba1c_porcentaje !== undefined) {
       signoVital.hba1c_porcentaje = hba1c_porcentaje !== null && hba1c_porcentaje !== '' 
         ? parseFloat(hba1c_porcentaje) 

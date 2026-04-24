@@ -1,4 +1,4 @@
-import { SignoVital, Paciente, Comorbilidad, PacienteComorbilidad } from '../models/associations.js';
+import { SignoVital, Paciente } from '../models/associations.js';
 import alertService from '../services/alertService.js';
 import logger from '../utils/logger.js';
 import { Op } from 'sequelize';
@@ -41,40 +41,6 @@ export const getSignosByPaciente = async (req, res) => {
 };
 
 /**
- * Verifica si un paciente tiene diagnóstico de Hipercolesterolemia o Dislipidemia
- * @param {number} pacienteId - ID del paciente
- * @returns {Promise<boolean>} - true si tiene el diagnóstico, false en caso contrario
- */
-const tieneHipercolesterolemia = async (pacienteId) => {
-  try {
-    const comorbilidades = await PacienteComorbilidad.findAll({
-      where: { id_paciente: pacienteId },
-      include: [{
-        model: Comorbilidad,
-        attributes: ['id_comorbilidad', 'nombre_comorbilidad']
-      }]
-    });
-
-    if (!comorbilidades || comorbilidades.length === 0) {
-      return false;
-    }
-
-    // Buscar comorbilidades relacionadas con colesterol
-    const nombresRelevantes = ['Dislipidemia', 'Hipercolesterolemia', 'dislipidemia', 'hipercolesterolemia'];
-    
-    return comorbilidades.some(pc => {
-      const nombre = pc.Comorbilidad?.nombre_comorbilidad || '';
-      return nombresRelevantes.some(relevante => 
-        nombre.toLowerCase().includes(relevante.toLowerCase())
-      );
-    });
-  } catch (error) {
-    logger.error('Error verificando diagnóstico de hipercolesterolemia:', error);
-    return false;
-  }
-};
-
-/**
  * Valida los valores de colesterol LDL y HDL
  * @param {number|null|undefined} colesterol_ldl - Valor de LDL
  * @param {number|null|undefined} colesterol_hdl - Valor de HDL
@@ -104,18 +70,9 @@ export const createSignoVital = async (req, res) => {
   try {
     const { id_paciente, colesterol_ldl, colesterol_hdl, ...rest } = req.body;
 
-    // ✅ Validar colesterol LDL y HDL
-    if (colesterol_ldl !== undefined || colesterol_hdl !== undefined) {
-      // Verificar que el paciente tenga diagnóstico de Hipercolesterolemia/Dislipidemia
-      const hasHipercolesterolemia = await tieneHipercolesterolemia(id_paciente);
-      if (!hasHipercolesterolemia) {
-        return res.status(400).json({
-          success: false,
-          error: 'No se puede registrar Colesterol LDL/HDL sin diagnóstico de Hipercolesterolemia o Dislipidemia.'
-        });
-      }
-
-      // Validar rangos
+    const tieneLdl = colesterol_ldl !== undefined && colesterol_ldl !== null && colesterol_ldl !== '';
+    const tieneHdl = colesterol_hdl !== undefined && colesterol_hdl !== null && colesterol_hdl !== '';
+    if (tieneLdl || tieneHdl) {
       const validationError = validarColesterol(colesterol_ldl, colesterol_hdl);
       if (validationError) {
         return res.status(400).json({
@@ -184,18 +141,9 @@ export const updateSignoVital = async (req, res) => {
     const { colesterol_ldl, colesterol_hdl, ...rest } = req.body;
     const pacienteId = req.body.id_paciente || signoExistente.id_paciente;
 
-    // ✅ Validar colesterol LDL y HDL si se están actualizando
-    if (colesterol_ldl !== undefined || colesterol_hdl !== undefined) {
-      // Verificar que el paciente tenga diagnóstico de Hipercolesterolemia/Dislipidemia
-      const hasHipercolesterolemia = await tieneHipercolesterolemia(pacienteId);
-      if (!hasHipercolesterolemia) {
-        return res.status(400).json({
-          success: false,
-          error: 'No se puede registrar Colesterol LDL/HDL sin diagnóstico de Hipercolesterolemia o Dislipidemia.'
-        });
-      }
-
-      // Validar rangos
+    const tieneLdlUpd = colesterol_ldl !== undefined && colesterol_ldl !== null && colesterol_ldl !== '';
+    const tieneHdlUpd = colesterol_hdl !== undefined && colesterol_hdl !== null && colesterol_hdl !== '';
+    if (tieneLdlUpd || tieneHdlUpd) {
       const validationError = validarColesterol(colesterol_ldl, colesterol_hdl);
       if (validationError) {
         return res.status(400).json({

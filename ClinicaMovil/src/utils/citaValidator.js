@@ -114,15 +114,26 @@ export const validateCita = (data) => {
  */
 export const validateSignosVitales = (data) => {
   const errors = {};
-  
-  // Validar que al menos un campo esté lleno
-  const hasData = data.peso_kg || 
-                  data.talla_m || 
-                  data.presion_sistolica || 
-                  data.glucosa_mg_dl;
-  
+  const s = (v) => (v != null && String(v).trim() !== '' ? String(v).trim() : '');
+
+  // Al menos un dato clínico u observación (todos los campos numéricos son opcionales)
+  const hasData =
+    s(data.peso_kg) ||
+    s(data.talla_m) ||
+    s(data.medida_cintura_cm) ||
+    s(data.presion_sistolica) ||
+    s(data.presion_diastolica) ||
+    s(data.glucosa_mg_dl) ||
+    s(data.colesterol_mg_dl) ||
+    s(data.colesterol_ldl) ||
+    s(data.colesterol_hdl) ||
+    s(data.trigliceridos_mg_dl) ||
+    s(data.hba1c_porcentaje) ||
+    s(data.edad_paciente_en_medicion) ||
+    s(data.observaciones);
+
   if (!hasData) {
-    errors.general = 'Debe completar al menos un campo';
+    errors.general = 'Ingresa al menos un valor de signos vitales o una observación';
     return {
       isValid: false,
       errors
@@ -182,6 +193,25 @@ export const validateSignosVitales = (data) => {
     const trigs = parseFloat(data.trigliceridos_mg_dl);
     if (isNaN(trigs) || trigs < 0 || trigs > 1000) {
       errors.trigliceridos_mg_dl = 'Triglicéridos inválidos (0-1000 mg/dl)';
+    }
+  }
+
+  if (data.colesterol_ldl) {
+    const ldl = parseFloat(data.colesterol_ldl);
+    if (isNaN(ldl) || ldl < 0 || ldl > 500) {
+      errors.colesterol_ldl = 'LDL inválido (0-500 mg/dL)';
+    }
+  }
+  if (data.colesterol_hdl) {
+    const hdl = parseFloat(data.colesterol_hdl);
+    if (isNaN(hdl) || hdl < 0 || hdl > 200) {
+      errors.colesterol_hdl = 'HDL inválido (0-200 mg/dL)';
+    }
+  }
+  if (data.hba1c_porcentaje) {
+    const hba1c = parseFloat(data.hba1c_porcentaje);
+    if (isNaN(hba1c) || hba1c < 4 || hba1c > 15) {
+      errors.hba1c_porcentaje = 'HbA1c inválida (4-15 %)';
     }
   }
   
