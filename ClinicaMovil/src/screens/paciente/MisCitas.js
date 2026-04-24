@@ -34,7 +34,7 @@ import audioFeedbackService from '../../services/audioFeedbackService';
 import Logger from '../../services/logger';
 import { ESTADOS_SOLICITUD_REPROGRAMACION, COLORES } from '../../utils/constantes';
 import useWebSocket from '../../hooks/useWebSocket';
-import { formatDateWithWeekday } from '../../utils/dateUtils';
+import { formatDateWithWeekday, formatTime12hPm } from '../../utils/dateUtils';
 
 const MisCitas = () => {
   const navigation = useNavigation();
@@ -415,34 +415,19 @@ const MisCitas = () => {
       // Verificar si es hoy o mañana
       if (fechaObj.toDateString() === hoy.toDateString()) {
         if (tieneHora) {
-          const horaStr = fechaObj.toLocaleTimeString('es-ES', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-          }).replace(/\s?a\.?\s?m\.?/i, ' AM').replace(/\s?p\.?\s?m\.?/i, ' PM');
-          return `Hoy, hora: ${horaStr}`;
+          return `Hoy, hora: ${formatTime12hPm(fechaObj)}`;
         }
         return 'Hoy';
       } else if (fechaObj.toDateString() === manana.toDateString()) {
         if (tieneHora) {
-          const horaStr = fechaObj.toLocaleTimeString('es-ES', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-          }).replace(/\s?a\.?\s?m\.?/i, ' AM').replace(/\s?p\.?\s?m\.?/i, ' PM');
-          return `Mañana, hora: ${horaStr}`;
+          return `Mañana, hora: ${formatTime12hPm(fechaObj)}`;
         }
         return 'Mañana';
       }
       
       // Fecha normal con hora si la tiene
       if (tieneHora) {
-        const horaStr = fechaObj.toLocaleTimeString('es-ES', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        }).replace(/\s?a\.?\s?m\.?/i, ' AM').replace(/\s?p\.?\s?m\.?/i, ' PM');
-        return `${fechaFormateada}, hora: ${horaStr}`;
+        return `${fechaFormateada}, hora: ${formatTime12hPm(fechaObj)}`;
       }
       
       return fechaFormateada;
@@ -1002,6 +987,14 @@ const MisCitas = () => {
                       <Text style={styles.solicitudMotivoLabel}>Motivo: </Text>
                       {solicitud.motivo || 'Sin motivo especificado'}
                     </Text>
+
+                    {solicitud.estado === ESTADOS_SOLICITUD_REPROGRAMACION.APROBADA &&
+                      (solicitud.Cita?.fecha_reprogramada || solicitud.Cita?.fecha_cita) && (
+                      <Text style={styles.solicitudMotivo}>
+                        <Text style={styles.solicitudMotivoLabel}>Cita confirmada: </Text>
+                        {formatFecha(solicitud.Cita.fecha_reprogramada || solicitud.Cita.fecha_cita)}
+                      </Text>
+                    )}
 
                     {/* Los pacientes ya no pueden solicitar fecha específica */}
                     {/* El doctor decidirá la nueva fecha al aprobar */}

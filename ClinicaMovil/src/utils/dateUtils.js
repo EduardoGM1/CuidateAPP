@@ -3,6 +3,26 @@
  * Proporciona funciones consistentes para mostrar fechas en toda la aplicación
  */
 
+const pad2 = (n) => String(n).padStart(2, '0');
+
+/**
+ * Hora en 12 h con sufijos en minúsculas (ej: "1:00 pm", "12:15 am").
+ * Evita depender del locale (que a veces devuelve 24 h o formatos inconsistentes).
+ * @param {string|Date} timestamp
+ * @returns {string}
+ */
+export const formatTime12hPm = (timestamp) => {
+  if (!timestamp) return 'Hora no disponible';
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return 'Hora inválida';
+  let h = date.getHours();
+  const m = date.getMinutes();
+  const ampm = h >= 12 ? 'pm' : 'am';
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${h}:${pad2(m)} ${ampm}`;
+};
+
 /**
  * Formatea una fecha en formato legible: "6 de noviembre del 2025"
  * @param {string|Date} timestamp - Fecha a formatear
@@ -62,64 +82,25 @@ export const formatDateTime = (timestamp) => {
   const fechaFormateada = `${dia} de ${mes} del ${año}`;
   
   if (tieneHora) {
-    const horaFormateada = date.toLocaleTimeString('es-ES', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    }).replace(/\s?a\.?\s?m\.?/i, ' AM').replace(/\s?p\.?\s?m\.?/i, ' PM');
-    return `${fechaFormateada}, hora: ${horaFormateada}`;
+    return `${fechaFormateada}, hora: ${formatTime12hPm(date)}`;
   }
   
   return fechaFormateada;
 };
 
 /**
- * Formatea una fecha con hora en formato HH:MM (24 horas)
+ * Solo la hora en 12 h (ej: "1:00 pm").
  * @param {string|Date} timestamp - Fecha a formatear
  * @returns {string} Hora formateada o mensaje de error
  */
-export const formatTime = (timestamp) => {
-  if (!timestamp) return 'Hora no disponible';
-  
-  const date = new Date(timestamp);
-  
-  // Validar que la fecha sea válida
-  if (isNaN(date.getTime())) {
-    return 'Hora inválida';
-  }
-  
-  return date.toLocaleTimeString('es-ES', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
+export const formatTime = (timestamp) => formatTime12hPm(timestamp);
 
 /**
- * Formatea una fecha con hora en formato 12 horas con AM/PM (ej: 4:08 PM)
- * @param {string|Date} timestamp - Fecha a formatear
- * @returns {string} Hora formateada en 12 horas o mensaje de error
+ * Alias de {@link formatTime12hPm} (12 h, sufijo en minúsculas).
+ * @param {string|Date} timestamp
+ * @returns {string}
  */
-export const formatTime12h = (timestamp) => {
-  if (!timestamp) return 'Hora no disponible';
-  
-  const date = new Date(timestamp);
-  
-  // Validar que la fecha sea válida
-  if (isNaN(date.getTime())) {
-    return 'Hora inválida';
-  }
-  
-  let hours = date.getHours();
-  const minutes = date.getMinutes();
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  
-  hours = hours % 12;
-  hours = hours ? hours : 12; // La hora 0 debe ser 12
-  
-  const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-  
-  return `${hours}:${minutesStr} ${ampm}`;
-};
+export const formatTime12h = (timestamp) => formatTime12hPm(timestamp);
 
 /**
  * Formatea tiempo relativo (hace X tiempo)
@@ -251,7 +232,7 @@ export const formatAppointmentDate = (timestamp) => {
 /**
  * Formatea una cita del día actual mostrando día de la semana + hora en formato 12h
  * @param {string|Date} timestamp - Fecha a formatear
- * @returns {string} Formato: "Domingo - 4:08 PM"
+ * @returns {string} Formato: "Domingo - 4:08 pm"
  */
 export const formatTodayAppointment = (timestamp) => {
   if (!timestamp) return 'Hora no disponible';
@@ -352,6 +333,7 @@ export default {
   formatDateTime,
   formatTime,
   formatTime12h,
+  formatTime12hPm,
   formatRelativeTime,
   isValidDate,
   getDaysDifference,

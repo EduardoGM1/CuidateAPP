@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform, Pressable } 
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { COLORES } from '../utils/constantes';
 import { fechaCitaDatetimeLocalToApi } from '../utils/fechaCita';
+import { formatTime12hPm } from '../utils/dateUtils';
 
 /**
  * Componente de selector de fecha y hora para citas médicas
@@ -115,11 +116,10 @@ const DateTimePickerButton = ({
       const dia = date.getDate();
       const mes = meses[date.getMonth()];
       const año = date.getFullYear();
-      const horas = String(date.getHours()).padStart(2, '0');
-      const minutos = String(date.getMinutes()).padStart(2, '0');
-      
+      const horaLegible = formatTime12hPm(date);
+
       // Construir el texto sin usar template literals que puedan introducir emojis
-      const formatted = dia + ' ' + mes + ' ' + año + ', ' + horas + ':' + minutos;
+      const formatted = dia + ' ' + mes + ' ' + año + ', ' + horaLegible;
       // Limpiar cualquier emoji que pueda estar
       return removeEmojis(formatted);
     } catch (error) {

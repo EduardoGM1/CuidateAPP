@@ -40,6 +40,7 @@ import {
   parseLugarAplicacionVacunaForm,
   buildLugarAplicacionPayload,
 } from '../../utils/lugaresAplicacionVacuna';
+import { formatTime12hPm } from '../../utils/dateUtils';
 import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 import { storageService } from '../../services/storageService';
@@ -712,12 +713,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
       const fechaFormateada = `${dia} de ${mes} del ${año}`;
       
       if (tieneHora) {
-        const horaStr = fechaObj.toLocaleTimeString('es-MX', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        }).replace(/\s?a\.?\s?m\.?/i, ' AM').replace(/\s?p\.?\s?m\.?/i, ' PM');
-        return `${fechaFormateada}, hora: ${horaStr}`;
+        return `${fechaFormateada}, hora: ${formatTime12hPm(fechaObj)}`;
       }
       
       return fechaFormateada;

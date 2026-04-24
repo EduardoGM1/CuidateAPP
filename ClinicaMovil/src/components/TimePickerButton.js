@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { COLORES } from '../utils/constantes';
+import { formatTime12hPm } from '../utils/dateUtils';
 
 /**
  * Selector solo de hora (HH:mm).
@@ -50,7 +51,7 @@ const TimePickerButton = ({
     }
   };
 
-  const displayValue = selectedTime ? formatTimeToHHmm(selectedTime) : placeholder;
+  const displayValue = selectedTime ? formatTime12hPm(selectedTime) : placeholder;
 
   return (
     <View style={[styles.container, style]}>

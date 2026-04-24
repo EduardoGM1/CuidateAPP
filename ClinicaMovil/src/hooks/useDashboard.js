@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { dashboardService } from '../api/dashboardService';
 import Logger from '../services/logger';
+import { formatTime12hPm } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { formatRelativeTime, formatDate } from '../utils/dateUtils';
 import { formatNombreCompleto } from '../utils/formatNombreCompleto';
@@ -405,10 +406,7 @@ export const useDoctorDashboard = () => {
         // cita.hora viene como fecha_cita (string ISO) del backend
         const fechaCita = cita.hora ? new Date(cita.hora) : null;
         const horaFormateada = fechaCita && !isNaN(fechaCita.getTime())
-          ? fechaCita.toLocaleTimeString('es-ES', { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            })
+          ? formatTime12hPm(fechaCita)
           : 'N/A';
         
         return {
@@ -470,10 +468,7 @@ export const useDoctorDashboard = () => {
       paciente: cita.paciente,
       fecha: cita.fecha, // Mantener fecha original para comparaciones
       fechaFormateada: new Date(cita.fecha).toLocaleDateString('es-ES'),
-      hora: new Date(cita.fecha).toLocaleTimeString('es-ES', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      }),
+      hora: formatTime12hPm(new Date(cita.fecha)),
       motivo: cita.motivo,
       estado: cita.estado,
       telefono: cita.telefono

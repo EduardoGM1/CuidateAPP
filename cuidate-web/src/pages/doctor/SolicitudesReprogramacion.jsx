@@ -6,6 +6,24 @@ import { STORAGE_KEYS } from '../../utils/constants';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, LoadingSpinner, EmptyState, Badge, Modal, Input } from '../../components/ui';
 import { formatDateTime, formatDate } from '../../utils/format';
+
+function textoCitaSolicitud(s) {
+  const estado = (s.estado || '').toLowerCase();
+  const fechaNueva = s.fecha_cita_reprogramada || s.fecha_efectiva_cita || s.fecha_cita_original;
+  if (estado === 'aprobada' && fechaNueva) {
+    return `Cita confirmada: ${formatDateTime(fechaNueva)}`;
+  }
+  if (estado === 'rechazada' || estado === 'cancelada') {
+    const f = s.fecha_cita_original || s.fecha_efectiva_cita;
+    return f ? `Cita (sin reprogramar): ${formatDateTime(f)}` : '—';
+  }
+  const fechaActual = s.fecha_cita_original || s.fecha_efectiva_cita;
+  let linea = fechaActual ? `Cita a reprogramar: ${formatDateTime(fechaActual)}` : '';
+  if (s.fecha_solicitada) {
+    linea += `${linea ? ' — ' : ''}Fecha solicitada por el paciente: ${formatDate(s.fecha_solicitada)}`;
+  }
+  return linea || '—';
+}
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
@@ -122,7 +140,7 @@ export default function SolicitudesReprogramacion() {
                       {s.doctor_nombre && <span style={{ color: 'var(--color-texto-secundario)', marginLeft: '0.5rem' }}> · Dr. {sanitizeForDisplay(s.doctor_nombre)}</span>}
                     </div>
                     <p style={{ margin: '0.25rem 0', fontSize: '0.95rem' }}>
-                      Cita original: {formatDateTime(s.fecha_cita_original)} — Nueva fecha solicitada: {formatDate(s.fecha_solicitada) || '—'}
+                      {textoCitaSolicitud(s)}
                     </p>
                     {s.motivo && <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>Motivo: {sanitizeForDisplay(s.motivo)}</p>}
                     <p style={{ margin: '0.25rem 0', fontSize: '0.85rem', color: 'var(--color-texto-secundario)' }}>{formatDateTime(s.fecha_creacion)}</p>
@@ -145,7 +163,7 @@ export default function SolicitudesReprogramacion() {
         {aprobarModal && (
           <div>
             <p style={{ marginBottom: '1rem', color: 'var(--color-texto-secundario)' }}>
-              {sanitizeForDisplay(aprobarModal.solicitud.paciente_nombre)} — {formatDateTime(aprobarModal.solicitud.fecha_cita_original)}
+              {sanitizeForDisplay(aprobarModal.solicitud.paciente_nombre)} — {textoCitaSolicitud(aprobarModal.solicitud)}
             </p>
             <Input label="Nueva fecha (opcional)" type="date" value={aprobarModal.fecha} onChange={(e) => setAprobarModal((m) => ({ ...m, fecha: e.target.value }))} />
             <Input label="Respuesta para el paciente (opcional)" value={aprobarModal.respuesta} onChange={(e) => setAprobarModal((m) => ({ ...m, respuesta: e.target.value }))} placeholder="Ej: Aprobado para el nuevo horario" />
@@ -163,7 +181,7 @@ export default function SolicitudesReprogramacion() {
         {rechazarModal && (
           <div>
             <p style={{ marginBottom: '1rem', color: 'var(--color-texto-secundario)' }}>
-              {sanitizeForDisplay(rechazarModal.solicitud.paciente_nombre)} — {formatDateTime(rechazarModal.solicitud.fecha_cita_original)}
+              {sanitizeForDisplay(rechazarModal.solicitud.paciente_nombre)} — {textoCitaSolicitud(rechazarModal.solicitud)}
             </p>
             <Input label="Motivo o respuesta (opcional)" value={rechazarModal.respuesta} onChange={(e) => setRechazarModal((m) => ({ ...m, respuesta: e.target.value }))} placeholder="Ej: No hay disponibilidad ese día" />
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>

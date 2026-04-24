@@ -2375,6 +2375,8 @@ export const getAllSolicitudesReprogramacion = async (req, res) => {
         paciente_nombre: paciente 
           ? `${paciente.nombre || ''} ${paciente.apellido_paterno || ''} ${paciente.apellido_materno || ''}`.trim()
           : 'Paciente desconocido',
+        // Fecha vigente de la cita (tras aprobar reprogramación coincide con la nueva fecha)
+        fecha_efectiva_cita: cita?.fecha_reprogramada || cita?.fecha_cita || null,
         // Datos de la cita formateados
         fecha_cita_original: cita?.fecha_cita || null,
         fecha_cita_reprogramada: cita?.fecha_reprogramada || null,

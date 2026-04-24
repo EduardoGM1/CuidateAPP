@@ -26,7 +26,7 @@ import HealthStatusIndicator from '../../components/paciente/HealthStatusIndicat
 import ValueCard from '../../components/paciente/ValueCard';
 import useTTS from '../../hooks/useTTS';
 import SkeletonLoader, { SkeletonCard } from '../../components/common/SkeletonLoader';
-import { formatDate, formatDateShort, formatDateWithWeekday } from '../../utils/dateUtils';
+import { formatDate, formatDateShort, formatDateWithWeekday, formatTime12hPm } from '../../utils/dateUtils';
 import hapticService from '../../services/hapticService';
 import audioFeedbackService from '../../services/audioFeedbackService';
 import Logger from '../../services/logger';
@@ -153,12 +153,7 @@ const HistorialMedico = () => {
       const fechaFormateada = `${dia} de ${mes} del ${año}`;
       
       if (tieneHora) {
-        const horaStr = fechaObj.toLocaleTimeString('es-ES', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        }).replace(/\s?a\.?\s?m\.?/i, ' AM').replace(/\s?p\.?\s?m\.?/i, ' PM');
-        return `${fechaFormateada}, hora: ${horaStr}`;
+        return `${fechaFormateada}, hora: ${formatTime12hPm(fechaObj)}`;
       }
       
       return fechaFormateada;
@@ -933,12 +928,7 @@ const HistorialMedico = () => {
                   ? formatDateWithWeekday(new Date(cita.fecha_cita))
                   : formatFecha(cita.fecha_cita);
                 
-                const horaCompleta = cita.fecha_cita
-                  ? new Date(cita.fecha_cita).toLocaleTimeString('es-MX', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
-                  : '';
+                const horaCompleta = cita.fecha_cita ? formatTime12hPm(cita.fecha_cita) : '';
 
                 const handlePress = async () => {
                   hapticService.medium();
