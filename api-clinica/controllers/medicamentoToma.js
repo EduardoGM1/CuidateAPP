@@ -120,7 +120,7 @@ export const getTomasByPaciente = async (req, res) => {
         },
         {
           model: PlanDetalle,
-          attributes: ['id_detalle', 'id_medicamento', 'dosis', 'frecuencia', 'horario'],
+          attributes: ['id_detalle', 'id_medicamento', 'dosis', 'frecuencia', 'horario', 'horarios'],
           required: false
         }
       ],
@@ -161,7 +161,7 @@ export const getTomasByPlan = async (req, res) => {
       include: [
         {
           model: PlanDetalle,
-          attributes: ['id_detalle', 'id_medicamento', 'dosis', 'frecuencia', 'horario']
+          attributes: ['id_detalle', 'id_medicamento', 'dosis', 'frecuencia', 'horario', 'horarios']
         }
       ],
       order: [['fecha_toma', 'DESC']]

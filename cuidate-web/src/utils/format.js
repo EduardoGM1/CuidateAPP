@@ -111,3 +111,42 @@ export function formatDateWithWeekday(date) {
   const year = d.getFullYear();
   return `${diaSemana}, ${dia}/${mes}/${year}`;
 }
+
+/**
+ * Normaliza un valor de hora (TIME o string) a HH:mm para tablas clínicas.
+ * @param {string|unknown} raw
+ * @returns {string|null}
+ */
+function sliceHoraHHmm(raw) {
+  if (raw == null || raw === '') return null;
+  const s = typeof raw === 'string' ? raw : String(raw);
+  return s.length >= 5 ? s.slice(0, 5) : s;
+}
+
+/**
+ * Horario prescripto del medicamento según PlanDetalle (campo horario o lista horarios).
+ * @param {{ horario?: string|null, horarios?: unknown }|null|undefined} planDetalle
+ * @returns {string}
+ */
+export function formatHorarioPrescriptoMedicamento(planDetalle) {
+  if (planDetalle == null || typeof planDetalle !== 'object') return '—';
+  const list = planDetalle.horarios;
+  if (Array.isArray(list) && list.length > 0) {
+    const parts = list
+      .map((x) => sliceHoraHHmm(x))
+      .filter(Boolean);
+    return parts.length > 0 ? parts.join(', ') : '—';
+  }
+  const single = sliceHoraHHmm(planDetalle.horario);
+  return single ?? '—';
+}
+
+/**
+ * Hora en que se registró la administración del medicamento (registro de toma).
+ * @param {string|unknown|null|undefined} horaToma
+ * @returns {string}
+ */
+export function formatHoraAdministracionRegistrada(horaToma) {
+  if (horaToma == null || horaToma === '') return '—';
+  return sliceHoraHHmm(horaToma) ?? '—';
+}

@@ -83,7 +83,14 @@ import { getVacunas } from '../../api/vacunas';
 import { getComorbilidades } from '../../api/comorbilidades';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
-import { formatDate, formatDateTime, formatDateTimeAmPm, formatNombreCompleto } from '../../utils/format';
+import {
+  formatDate,
+  formatDateTime,
+  formatDateTimeAmPm,
+  formatNombreCompleto,
+  formatHorarioPrescriptoMedicamento,
+  formatHoraAdministracionRegistrada,
+} from '../../utils/format';
 import { fechaCitaDatetimeLocalToApi } from '../../utils/fechaCita';
 import { openHTMLInNewWindow } from '../../utils/reportUtils';
 import {
@@ -1651,21 +1658,36 @@ export default function PacienteDetail() {
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid var(--color-borde-claro)', textAlign: 'left' }}>
-                        <th style={{ padding: '0.5rem 0.5rem 0.5rem 0' }}>Fecha</th>
-                        <th style={{ padding: '0.5rem' }}>Hora</th>
-                        <th style={{ padding: '0.5rem' }}>Medicación / Plan</th>
-                        <th style={{ padding: '0.5rem' }}>Observaciones</th>
+                        <th scope="col" style={{ padding: '0.5rem 0.5rem 0.5rem 0' }}>Fecha</th>
+                        <th
+                          scope="col"
+                          style={{ padding: '0.5rem' }}
+                          title="Horario indicado en el plan de medicación para la toma"
+                        >
+                          Hora de toma del medicamento
+                        </th>
+                        <th
+                          scope="col"
+                          style={{ padding: '0.5rem' }}
+                          title="Hora a la que se registró la administración en el sistema"
+                        >
+                          Hora de administración registrada
+                        </th>
+                        <th scope="col" style={{ padding: '0.5rem' }}>Medicación / Plan</th>
+                        <th scope="col" style={{ padding: '0.5rem' }}>Observaciones</th>
                       </tr>
                     </thead>
                     <tbody>
                       {tomasMedicamento.data.map((toma) => {
                         const planLabel = (medicamentos.data.find((m) => (m.id_plan ?? m.id) === toma.id_plan_medicacion)?.nombre_medicamento ?? medicamentos.data.find((m) => (m.id_plan ?? m.id) === toma.id_plan_medicacion)?.medicamento) || (toma.PlanDetalle?.Medicamento?.nombre_medicamento) || `Plan #${toma.id_plan_medicacion}`;
                         const fechaToma = toma.fecha_toma ? formatDate(toma.fecha_toma) : '—';
-                        const horaToma = toma.hora_toma != null ? (typeof toma.hora_toma === 'string' ? toma.hora_toma.slice(0, 5) : String(toma.hora_toma).slice(0, 5)) : '—';
+                        const horaPrescripta = formatHorarioPrescriptoMedicamento(toma.PlanDetalle);
+                        const horaAdministracion = formatHoraAdministracionRegistrada(toma.hora_toma);
                         return (
                           <tr key={toma.id_toma} style={{ borderBottom: '1px solid var(--color-borde-claro)' }}>
                             <td style={{ padding: '0.5rem 0.5rem 0.5rem 0' }}>{fechaToma}</td>
-                            <td style={{ padding: '0.5rem' }}>{horaToma}</td>
+                            <td style={{ padding: '0.5rem' }}>{horaPrescripta}</td>
+                            <td style={{ padding: '0.5rem' }}>{horaAdministracion}</td>
                             <td style={{ padding: '0.5rem' }}>{sanitizeForDisplay(planLabel)}</td>
                             <td style={{ padding: '0.5rem', color: 'var(--color-texto-secundario)' }}>{toma.observaciones ? sanitizeForDisplay(toma.observaciones) : '—'}</td>
                           </tr>
