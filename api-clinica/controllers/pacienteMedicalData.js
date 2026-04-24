@@ -1823,7 +1823,11 @@ export const createPacienteSignosVitales = async (req, res) => {
 export const createPacienteDiagnostico = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_cita, descripcion } = req.body;
+    let { id_cita, descripcion } = req.body;
+    // Normalizar: cadena vacía o NaN equivalente a "sin cita"
+    if (id_cita === '' || id_cita === undefined) {
+      id_cita = null;
+    }
 
     // Validación básica
     if (!id || isNaN(id)) {
@@ -1876,19 +1880,18 @@ export const createPacienteDiagnostico = async (req, res) => {
       }
     }
 
-    // Validar datos del diagnóstico
-    // ✅ id_cita es opcional - solo validar si se proporciona
+    // Validar datos del diagnóstico — id_cita es opcional
     if (id_cita !== undefined && id_cita !== null) {
-      if (isNaN(id_cita)) {
+      const citaIdNum = parseInt(id_cita, 10);
+      if (Number.isNaN(citaIdNum) || citaIdNum < 1) {
         return res.status(400).json({
           success: false,
           error: 'ID de cita debe ser un número válido'
         });
       }
 
-      // Verificar que la cita existe solo si se proporciona id_cita
       const cita = await Cita.findOne({
-        where: { id_cita: parseInt(id_cita), id_paciente: pacienteId }
+        where: { id_cita: citaIdNum, id_paciente: pacienteId }
       });
 
       if (!cita) {
@@ -1897,6 +1900,7 @@ export const createPacienteDiagnostico = async (req, res) => {
           error: 'Cita no encontrada o no pertenece a este paciente'
         });
       }
+      id_cita = citaIdNum;
     }
 
     if (!descripcion || descripcion.trim().length === 0) {
@@ -1908,7 +1912,7 @@ export const createPacienteDiagnostico = async (req, res) => {
 
     // Crear el diagnóstico
     const diagnosticoData = {
-      id_cita: id_cita || null, // ✅ Asegurar que sea null si no se proporciona
+      id_cita: id_cita != null ? id_cita : null,
       descripcion: descripcion.trim(),
       fecha_registro: new Date()
     };
@@ -3094,16 +3098,8 @@ export const updatePacienteDiagnostico = async (req, res) => {
       });
     }
 
-    // Buscar diagnóstico
     const diagnostico = await Diagnostico.findOne({
-      where: {
-        id_diagnostico: idDiagnostico
-      },
-      include: [{
-        model: Cita,
-        as: 'Cita',
-        where: { id_paciente: pacienteId }
-      }]
+      where: { id_diagnostico: idDiagnostico }
     });
 
     if (!diagnostico) {
@@ -3111,6 +3107,18 @@ export const updatePacienteDiagnostico = async (req, res) => {
         success: false,
         error: 'Diagnóstico no encontrado'
       });
+    }
+
+    if (diagnostico.id_cita != null) {
+      const cita = await Cita.findOne({
+        where: { id_cita: diagnostico.id_cita, id_paciente: pacienteId }
+      });
+      if (!cita) {
+        return res.status(404).json({
+          success: false,
+          error: 'Diagnóstico no encontrado'
+        });
+      }
     }
 
     // Actualizar
@@ -3173,16 +3181,8 @@ export const deletePacienteDiagnostico = async (req, res) => {
       });
     }
 
-    // Buscar y eliminar diagnóstico
     const diagnostico = await Diagnostico.findOne({
-      where: {
-        id_diagnostico: idDiagnostico
-      },
-      include: [{
-        model: Cita,
-        as: 'Cita',
-        where: { id_paciente: pacienteId }
-      }]
+      where: { id_diagnostico: idDiagnostico }
     });
 
     if (!diagnostico) {
@@ -3190,6 +3190,18 @@ export const deletePacienteDiagnostico = async (req, res) => {
         success: false,
         error: 'Diagnóstico no encontrado'
       });
+    }
+
+    if (diagnostico.id_cita != null) {
+      const cita = await Cita.findOne({
+        where: { id_cita: diagnostico.id_cita, id_paciente: pacienteId }
+      });
+      if (!cita) {
+        return res.status(404).json({
+          success: false,
+          error: 'Diagnóstico no encontrado'
+        });
+      }
     }
 
     await diagnostico.destroy();

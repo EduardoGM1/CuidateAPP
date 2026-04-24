@@ -1198,19 +1198,20 @@ export default function PacienteDetail() {
           }
           setDiagnosticoSubmitError('');
           setDiagnosticoSubmitting(true);
-          const idCita = newDiagnosticoCitaId ? parseInt(newDiagnosticoCitaId, 10) : undefined;
+          const rawCita = (newDiagnosticoCitaId || '').toString().trim();
+          const idCitaNum = rawCita ? parseInt(rawCita, 10) : NaN;
+          const payloadCreate = { descripcion: desc };
+          if (Number.isFinite(idCitaNum) && idCitaNum > 0) {
+            payloadCreate.id_cita = idCitaNum;
+          }
           try {
             if (editingDiagnostico) {
               await apiUpdateDiagnostico(parsedId, editingDiagnostico.id_diagnostico ?? editingDiagnostico.id, {
                 descripcion: desc,
-                id_cita: idCita,
               });
               message.success('Diagnóstico actualizado');
             } else {
-              await apiCreateDiagnostico(parsedId, {
-                descripcion: desc,
-                id_cita: idCita,
-              });
+              await apiCreateDiagnostico(parsedId, payloadCreate);
               message.success('Diagnóstico guardado');
             }
             setNewDiagnosticoDescripcion('');

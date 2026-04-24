@@ -30,6 +30,7 @@ const PatientGeneralInfo = ({ paciente, formatearFecha }) => {
   };
 
   const infoItems = [
+    { label: 'Número de Expediente', value: getValue(paciente.numero_expediente) },
     { label: 'Email', value: getValue(paciente.email) },
     { label: 'Teléfono', value: getValue(paciente.numero_celular || paciente.telefono) },
     { label: 'CURP', value: getValue(paciente.curp) },

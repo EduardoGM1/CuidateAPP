@@ -454,13 +454,13 @@ export const usePacienteDiagnosticos = (pacienteId, options = {}) => {
     // Generar cacheKey dentro de la función para evitar dependencias
     const currentCacheKey = `diagnosticos_${pacienteId}_${limit}_${offset}_${sort}`;
 
-    // Verificar cache
-    if (medicalDataCache.diagnosticos[currentCacheKey] && 
-        (Date.now() - medicalDataCache.diagnosticos[currentCacheKey].timestamp < CACHE_DURATION)) {
+    // Verificar cache (estructura: { data: Array, total?: number, timestamp })
+    const diagCacheEntry = medicalDataCache.diagnosticos[currentCacheKey];
+    if (diagCacheEntry && (Date.now() - diagCacheEntry.timestamp < CACHE_DURATION)) {
       Logger.debug(`usePacienteDiagnosticos (${pacienteId}): Sirviendo desde caché`);
-      const cachedData = medicalDataCache.diagnosticos[currentCacheKey].data;
-      setDiagnosticos(cachedData.data);
-      setTotal(cachedData.total);
+      const list = Array.isArray(diagCacheEntry.data) ? diagCacheEntry.data : [];
+      setDiagnosticos(list);
+      setTotal(typeof diagCacheEntry.total === 'number' ? diagCacheEntry.total : list.length);
       setLoading(false);
       return;
     }
@@ -500,12 +500,14 @@ export const usePacienteDiagnosticos = (pacienteId, options = {}) => {
       Logger.debug('🩺 Diagnósticos response:', { response, keys: Object.keys(response) });
       
       const diagnosticosData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+      const diagTotal = typeof response.total === 'number' ? response.total : diagnosticosData.length;
       setDiagnosticos(diagnosticosData);
-      setTotal(response.total || 0);
+      setTotal(diagTotal);
 
       // Guardar en cache usando la clave actual
       medicalDataCache.diagnosticos[currentCacheKey] = {
         data: diagnosticosData,
+        total: diagTotal,
         timestamp: Date.now()
       };
 
@@ -601,13 +603,12 @@ export const usePacienteMedicamentos = (pacienteId, options = {}) => {
     // Generar cacheKey dentro de la función para evitar dependencias
     const currentCacheKey = `medicamentos_${pacienteId}_${limit}_${offset}_${sort}`;
 
-    // Verificar cache
-    if (medicalDataCache.medicamentos[currentCacheKey] && 
-        (Date.now() - medicalDataCache.medicamentos[currentCacheKey].timestamp < CACHE_DURATION)) {
+    const medCacheEntry = medicalDataCache.medicamentos[currentCacheKey];
+    if (medCacheEntry && (Date.now() - medCacheEntry.timestamp < CACHE_DURATION)) {
       Logger.debug(`usePacienteMedicamentos (${pacienteId}): Sirviendo desde caché`);
-      const cachedData = medicalDataCache.medicamentos[currentCacheKey].data;
-      setMedicamentos(cachedData.data);
-      setTotal(cachedData.total);
+      const list = Array.isArray(medCacheEntry.data) ? medCacheEntry.data : [];
+      setMedicamentos(list);
+      setTotal(typeof medCacheEntry.total === 'number' ? medCacheEntry.total : list.length);
       setLoading(false);
       return;
     }
@@ -628,12 +629,14 @@ export const usePacienteMedicamentos = (pacienteId, options = {}) => {
       Logger.debug('💊 Medicamentos response:', { response, keys: Object.keys(response) });
       
       const medicamentosData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+      const medTotal = typeof response.total === 'number' ? response.total : medicamentosData.length;
       setMedicamentos(medicamentosData);
-      setTotal(response.total || 0);
+      setTotal(medTotal);
 
       // Guardar en cache usando la clave actual
       medicalDataCache.medicamentos[currentCacheKey] = {
         data: medicamentosData,
+        total: medTotal,
         timestamp: Date.now()
       };
 

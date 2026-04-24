@@ -416,20 +416,20 @@ const MisCitas = () => {
       if (fechaObj.toDateString() === hoy.toDateString()) {
         if (tieneHora) {
           const horaStr = fechaObj.toLocaleTimeString('es-ES', {
-            hour: '2-digit',
+            hour: 'numeric',
             minute: '2-digit',
-            hour12: false
-          });
+            hour12: true
+          }).replace(/\s?a\.?\s?m\.?/i, ' AM').replace(/\s?p\.?\s?m\.?/i, ' PM');
           return `Hoy, hora: ${horaStr}`;
         }
         return 'Hoy';
       } else if (fechaObj.toDateString() === manana.toDateString()) {
         if (tieneHora) {
           const horaStr = fechaObj.toLocaleTimeString('es-ES', {
-            hour: '2-digit',
+            hour: 'numeric',
             minute: '2-digit',
-            hour12: false
-          });
+            hour12: true
+          }).replace(/\s?a\.?\s?m\.?/i, ' AM').replace(/\s?p\.?\s?m\.?/i, ' PM');
           return `Mañana, hora: ${horaStr}`;
         }
         return 'Mañana';
@@ -438,10 +438,10 @@ const MisCitas = () => {
       // Fecha normal con hora si la tiene
       if (tieneHora) {
         const horaStr = fechaObj.toLocaleTimeString('es-ES', {
-          hour: '2-digit',
+          hour: 'numeric',
           minute: '2-digit',
-          hour12: false
-        });
+          hour12: true
+        }).replace(/\s?a\.?\s?m\.?/i, ' AM').replace(/\s?p\.?\s?m\.?/i, ' PM');
         return `${fechaFormateada}, hora: ${horaStr}`;
       }
       

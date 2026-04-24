@@ -56,6 +56,7 @@ const PacienteForm = ({
     apellidoMaterno: '',
     fechaNacimiento: '',
     curp: '',
+    numeroExpediente: '',
     sexo: 'Hombre',
     
     // Datos de contacto
@@ -94,6 +95,7 @@ const PacienteForm = ({
         apellidoMaterno: initialData.apellido_materno || '',
         fechaNacimiento: initialData.fecha_nacimiento || '',
         curp: initialData.curp || '',
+        numeroExpediente: initialData.numero_expediente || '',
         sexo: initialData.sexo || 'Hombre',
         direccion: initialData.direccion || '',
         estado: initialData.estado || '',
@@ -157,6 +159,9 @@ const PacienteForm = ({
         break;
       case 'curp':
         validation = formValidation.validateCURP(value);
+        break;
+      case 'numeroExpediente':
+        validation = formValidation.validateNumeroExpediente(value);
         break;
       case 'sexo':
         validation = formValidation.validateSex(value);
@@ -386,6 +391,15 @@ const PacienteForm = ({
             required
             error={errors.curp}
             validation={(value) => validateField('curp', value)}
+          />
+
+          <FormField
+            label="Número de Expediente"
+            value={formData.numeroExpediente}
+            onChangeText={(value) => handleFieldChange('numeroExpediente', value.toUpperCase())}
+            placeholder=""
+            error={errors.numeroExpediente}
+            validation={(value) => validateField('numeroExpediente', value)}
           />
 
           {/* Selector de Sexo */}

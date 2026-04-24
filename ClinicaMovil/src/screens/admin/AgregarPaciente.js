@@ -36,6 +36,11 @@ import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 import { pacienteAuthService } from '../../api/authService';
 import gestionService from '../../api/gestionService';
 import { useAuth } from '../../context/AuthContext';
+import {
+  LUGAR_APLICACION_OTRO,
+  LUGARES_APLICACION_VACUNA_OPTIONS,
+  buildLugarAplicacionPayload,
+} from '../../utils/lugaresAplicacionVacuna';
 
 /**
  * Pantalla para agregar un nuevo paciente
@@ -89,6 +94,7 @@ const AgregarPaciente = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1); // 1: PIN, 2: Datos paciente, 3: Red apoyo, 4: Primera consulta
   const [userData, setUserData] = useState(null); // Datos del usuario creado
+  const [vacunaLugarDropdownIndex, setVacunaLugarDropdownIndex] = useState(null);
   
   // Estados del formulario
   const [formData, setFormData] = useState({
@@ -103,6 +109,7 @@ const AgregarPaciente = () => {
     apellidoMaterno: '',
     fechaNacimiento: '',
     curp: '',
+    numeroExpediente: '',
     institucionSalud: '',
     sexo: '',
     direccion: '',
@@ -336,6 +343,14 @@ const AgregarPaciente = () => {
     } else if (!/^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[A-Z0-9]{2}$/.test(formData.curp.toUpperCase())) {
       accumulatedErrors.curp = 'El CURP no tiene un formato válido';
     }
+
+    if (!formData.numeroExpediente.trim()) {
+      accumulatedErrors.numeroExpediente = 'El número de expediente es requerido';
+    } else if (!/^[A-Z0-9./-]+$/.test(formData.numeroExpediente.toUpperCase())) {
+      accumulatedErrors.numeroExpediente = 'Solo se permiten letras, números, guion (-), diagonal (/) y punto (.)';
+    } else if (formData.numeroExpediente.trim().length > 50) {
+      accumulatedErrors.numeroExpediente = 'El número de expediente no puede exceder 50 caracteres';
+    }
     
     if (!formData.institucionSalud) {
       accumulatedErrors.institucionSalud = 'Debe seleccionar una institución de salud';
@@ -370,7 +385,7 @@ const AgregarPaciente = () => {
     }
     
     // Verificar si hay errores de campos del paciente
-    const pacienteErrorKeys = ['nombre', 'apellidoPaterno', 'fechaNacimiento', 'curp', 'institucionSalud', 
+    const pacienteErrorKeys = ['nombre', 'apellidoPaterno', 'fechaNacimiento', 'curp', 'numeroExpediente', 'institucionSalud', 
                                'sexo', 'numeroCelular', 'direccion', 'estado', 'localidad', 'idModulo'];
     return !pacienteErrorKeys.some(key => accumulatedErrors[key]);
   };
@@ -464,6 +479,34 @@ const AgregarPaciente = () => {
     if (!formData.primeraConsulta.observaciones.trim()) {
       accumulatedErrors.observaciones = 'Las observaciones son requeridas';
     }
+
+    // Validar esquema de vacunación (cuando existe captura parcial en una fila)
+    formData.primeraConsulta.vacunas.forEach((vacuna, index) => {
+      const tieneAlgunaCaptura = Boolean(
+        vacuna.vacuna?.trim() ||
+        vacuna.fecha_aplicacion?.trim() ||
+        vacuna.lote_vacuna?.trim() ||
+        vacuna.lugar_aplicacion?.trim() ||
+        vacuna.observaciones?.trim()
+      );
+
+      if (!tieneAlgunaCaptura) return;
+
+      if (!vacuna.vacuna?.trim()) {
+        accumulatedErrors[`vacuna_${index}_vacuna`] = 'Selecciona una vacuna';
+      }
+
+      if (!vacuna.fecha_aplicacion?.trim()) {
+        accumulatedErrors[`vacuna_${index}_fecha_aplicacion`] = 'Selecciona la fecha de aplicación';
+      }
+
+      if (
+        vacuna.lugar_aplicacion === LUGAR_APLICACION_OTRO &&
+        !vacuna.lugar_aplicacion_otro?.trim()
+      ) {
+        accumulatedErrors[`vacuna_${index}_lugar_aplicacion_otro`] = 'Especifica el lugar/institución';
+      }
+    });
     
     // Validar signos vitales básicos
     if (!formData.primeraConsulta.signos_vitales.peso_kg.trim()) {
@@ -631,24 +674,46 @@ const AgregarPaciente = () => {
       ...prev,
       primeraConsulta: {
         ...prev.primeraConsulta,
-        vacunas: [...prev.primeraConsulta.vacunas, { vacuna: '', fecha_aplicacion: '', lote_vacuna: '' }]
+        vacunas: [
+          ...prev.primeraConsulta.vacunas,
+          {
+            vacuna: '',
+            fecha_aplicacion: '',
+            lote_vacuna: '',
+            lugar_aplicacion: '',
+            lugar_aplicacion_otro: '',
+            observaciones: '',
+          }
+        ]
       }
     }));
   };
 
   const updateVacuna = (index, field, value) => {
+    const nextValue = field === 'lugar_aplicacion' && value !== LUGAR_APLICACION_OTRO ? {
+      lugar_aplicacion: value,
+      lugar_aplicacion_otro: '',
+    } : { [field]: value };
+
     setFormData(prev => ({
       ...prev,
       primeraConsulta: {
         ...prev.primeraConsulta,
         vacunas: prev.primeraConsulta.vacunas.map((vacuna, i) => 
-          i === index ? { ...vacuna, [field]: value } : vacuna
+          i === index ? { ...vacuna, ...nextValue } : vacuna
         )
       }
     }));
   };
 
   const removeVacuna = (index) => {
+    setVacunaLugarDropdownIndex((prev) => {
+      if (prev == null) return prev;
+      if (prev === index) return null;
+      if (prev > index) return prev - 1;
+      return prev;
+    });
+
     setFormData(prev => ({
       ...prev,
       primeraConsulta: {
@@ -746,6 +811,7 @@ const AgregarPaciente = () => {
         apellido_materno: formData.apellidoMaterno?.trim() || '',
         fecha_nacimiento: formData.fechaNacimiento || '',
         curp: formData.curp?.trim() || null,
+        numero_expediente: formData.numeroExpediente?.trim().toUpperCase() || null,
         institucion_salud: formData.institucionSalud || null,
         sexo: formData.sexo || null,
         direccion: formData.direccion?.trim() || null,
@@ -889,7 +955,16 @@ const AgregarPaciente = () => {
           },
           
           signos_vitales: signosVitalesCompletos,
-          vacunas: formData.primeraConsulta.vacunas,
+          vacunas: formData.primeraConsulta.vacunas
+            .map((vacuna) => ({
+              vacuna: vacuna.vacuna?.trim() || '',
+              fecha_aplicacion: vacuna.fecha_aplicacion?.trim() || '',
+              lote_vacuna: vacuna.lote_vacuna?.trim() || null,
+              lugar_aplicacion:
+                buildLugarAplicacionPayload(vacuna.lugar_aplicacion, vacuna.lugar_aplicacion_otro) || null,
+              observaciones: vacuna.observaciones?.trim() || null,
+            }))
+            .filter((vacuna) => vacuna.vacuna && vacuna.fecha_aplicacion),
           
           // Comorbilidades para asociar al paciente
           comorbilidades: formData.primeraConsulta.enfermedades_cronicas,
@@ -1137,6 +1212,14 @@ const AgregarPaciente = () => {
                 onChangeText={(text) => setFormData({...formData, curp: text.toUpperCase()})}
                 placeholder="CURP del paciente"
                 error={errors.curp}
+              />
+
+              <FormField
+                label="Número de Expediente *"
+                value={formData.numeroExpediente}
+                onChangeText={(text) => setFormData({...formData, numeroExpediente: text.toUpperCase()})}
+                placeholder=""
+                error={errors.numeroExpediente}
               />
 
               {/* Selector de Institución de Salud (catálogo dinámico) */}
@@ -2086,6 +2169,7 @@ const AgregarPaciente = () => {
                           value={vacuna.vacuna}
                           onValueChange={(nombreVacuna) => updateVacuna(index, 'vacuna', nombreVacuna)}
                           required={false}
+                          error={errors[`vacuna_${index}_vacuna`]}
                         />
                       </View>
                       <View style={styles.vacunaFieldContainer}>
@@ -2093,6 +2177,81 @@ const AgregarPaciente = () => {
                           label="Fecha"
                           value={vacuna.fecha_aplicacion}
                           onChangeText={(text) => updateVacuna(index, 'fecha_aplicacion', text)}
+                          error={errors[`vacuna_${index}_fecha_aplicacion`]}
+                        />
+                      </View>
+                      <View style={styles.vacunaFieldContainer}>
+                        <FormField
+                          label="Número de lote"
+                          value={vacuna.lote_vacuna || ''}
+                          onChangeText={(text) => updateVacuna(index, 'lote_vacuna', text)}
+                          placeholder="Opcional"
+                          required={false}
+                        />
+                      </View>
+                      <View style={styles.vacunaFieldContainer}>
+                        <Text style={styles.fieldLabel}>Lugar de aplicación</Text>
+                        <TouchableOpacity
+                          style={styles.vacunaLugarSelector}
+                          onPress={() => setVacunaLugarDropdownIndex((prev) => (prev === index ? null : index))}
+                        >
+                          <Text style={styles.vacunaLugarSelectorText}>
+                            {LUGARES_APLICACION_VACUNA_OPTIONS.find((o) => o.value === (vacuna.lugar_aplicacion || ''))?.label || '— No indicar —'}
+                          </Text>
+                          <Text style={styles.arrowText}>▼</Text>
+                        </TouchableOpacity>
+                        {vacunaLugarDropdownIndex === index && (
+                          <View style={styles.vacunaLugarDropdown}>
+                            <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 180 }}>
+                              {LUGARES_APLICACION_VACUNA_OPTIONS.map((option) => (
+                                <TouchableOpacity
+                                  key={option.value || '__none__'}
+                                  style={[
+                                    styles.dropdownItem,
+                                    (vacuna.lugar_aplicacion || '') === option.value && styles.dropdownItemSelected,
+                                  ]}
+                                  onPress={() => {
+                                    updateVacuna(index, 'lugar_aplicacion', option.value);
+                                    setVacunaLugarDropdownIndex(null);
+                                  }}
+                                >
+                                  <Text
+                                    style={[
+                                      styles.dropdownItemText,
+                                      (vacuna.lugar_aplicacion || '') === option.value && styles.dropdownItemTextSelected,
+                                    ]}
+                                  >
+                                    {option.label}
+                                  </Text>
+                                </TouchableOpacity>
+                              ))}
+                            </ScrollView>
+                          </View>
+                        )}
+                        {errors[`vacuna_${index}_lugar_aplicacion_otro`] ? (
+                          <Text style={styles.errorText}>{errors[`vacuna_${index}_lugar_aplicacion_otro`]}</Text>
+                        ) : null}
+                      </View>
+                      {(vacuna.lugar_aplicacion || '') === LUGAR_APLICACION_OTRO && (
+                        <View style={styles.vacunaFieldContainer}>
+                          <FormField
+                            label="Lugar/Institución"
+                            value={vacuna.lugar_aplicacion_otro || ''}
+                            onChangeText={(text) => updateVacuna(index, 'lugar_aplicacion_otro', text)}
+                            placeholder="Especifica el lugar"
+                            required={false}
+                          />
+                        </View>
+                      )}
+                      <View style={styles.vacunaFieldContainer}>
+                        <FormField
+                          label="Observaciones"
+                          value={vacuna.observaciones || ''}
+                          onChangeText={(text) => updateVacuna(index, 'observaciones', text)}
+                          placeholder="Opcional"
+                          multiline
+                          numberOfLines={3}
+                          required={false}
                         />
                       </View>
                     </View>
@@ -2604,6 +2763,52 @@ const styles = StyleSheet.create({
   },
   vacunaFieldContainer: {
     marginBottom: 0,
+  },
+  vacunaLugarSelector: {
+    borderWidth: 1,
+    borderColor: COLORES.BORDE_CLARO,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: COLORES.FONDO_CARD,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  vacunaLugarSelectorText: {
+    color: COLORES.TEXTO_PRIMARIO,
+    fontSize: 14,
+    flex: 1,
+    marginRight: 8,
+  },
+  arrowText: {
+    color: COLORES.TEXTO_SECUNDARIO,
+    fontSize: 12,
+  },
+  vacunaLugarDropdown: {
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: COLORES.BORDE_CLARO,
+    borderRadius: 8,
+    backgroundColor: COLORES.FONDO_CARD,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORES.BORDE_CLARO,
+  },
+  dropdownItemSelected: {
+    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
+  },
+  dropdownItemText: {
+    color: COLORES.TEXTO_PRIMARIO,
+    fontSize: 14,
+  },
+  dropdownItemTextSelected: {
+    color: COLORES.PRIMARIO,
+    fontWeight: '600',
   },
 });
 

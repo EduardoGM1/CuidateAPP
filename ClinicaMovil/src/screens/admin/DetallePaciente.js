@@ -34,6 +34,12 @@ import { ESTADOS_CITA, COLORES, NOMBRE_APP } from '../../utils/constantes';
 import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 import { downloadFile, downloadAndOpenFile, downloadCSV, downloadPDF } from '../../utils/fileDownloader';
 import { saveFormaExcelToDevice } from '../../utils/formaExcelUtils';
+import {
+  LUGAR_APLICACION_OTRO,
+  LUGARES_APLICACION_VACUNA_OPTIONS,
+  parseLugarAplicacionVacunaForm,
+  buildLugarAplicacionPayload,
+} from '../../utils/lugaresAplicacionVacuna';
 import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 import { storageService } from '../../services/storageService';
@@ -66,35 +72,6 @@ import CompletarCitaWizard from '../../components/CompletarCitaWizard';
 import useFormState from '../../hooks/useFormState';
 import useSaveHandler from '../../hooks/useSaveHandler';
 
-const LUGAR_APLICACION_OTRO = '__otro__';
-const LUGARES_APLICACION_VACUNA_OPTIONS = [
-  { value: '', label: '— No indicar —' },
-  { value: 'IMSS-Bienestar', label: 'IMSS-Bienestar' },
-  { value: 'IMSS', label: 'IMSS' },
-  { value: 'ISSSTE', label: 'ISSSTE' },
-  { value: 'ISSET', label: 'ISSET' },
-  { value: 'SEDENA', label: 'SEDENA' },
-  { value: 'Secretaría de Salud', label: 'Secretaría de Salud' },
-  { value: LUGAR_APLICACION_OTRO, label: 'Otro (especificar)' },
-];
-
-const LUGARES_APLICACION_PRESET = new Set(
-  LUGARES_APLICACION_VACUNA_OPTIONS.filter((o) => o.value && o.value !== LUGAR_APLICACION_OTRO).map((o) => o.value)
-);
-
-const parseLugarAplicacionVacunaForm = (guardado) => {
-  const value = String(guardado || '').trim();
-  if (!value) return { select: '', otro: '' };
-  if (LUGARES_APLICACION_PRESET.has(value)) return { select: value, otro: '' };
-  return { select: LUGAR_APLICACION_OTRO, otro: value };
-};
-
-const buildLugarAplicacionPayload = (selectValue, otroText) => {
-  if (selectValue === LUGAR_APLICACION_OTRO) {
-    return String(otroText || '').trim().slice(0, 150);
-  }
-  return String(selectValue || '').trim().slice(0, 150);
-};
 // Componente interno que usa los hooks
 const DetallePacienteContent = ({ route, navigation }) => {
   const { paciente: initialPaciente } = route.params;
@@ -544,6 +521,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const [editingEsquemaVacunacion, setEditingEsquemaVacunacion] = useState(null);
   const [showLugarAplicacionVacunaOptions, setShowLugarAplicacionVacunaOptions] = useState(false);
   const { formData: formDataEsquemaVacunacion, updateField: updateEsquemaVacunacionField, resetForm: resetFormEsquemaVacunacionBase } = useFormState({
+    id_vacuna: '',
     vacuna: '',
     fecha_aplicacion: '',
     lote: '',
@@ -734,11 +712,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
       const fechaFormateada = `${dia} de ${mes} del ${año}`;
       
       if (tieneHora) {
-        const horaStr = fechaObj.toLocaleTimeString('es-ES', {
-          hour: '2-digit',
+        const horaStr = fechaObj.toLocaleTimeString('es-MX', {
+          hour: 'numeric',
           minute: '2-digit',
-          hour12: false
-        });
+          hour12: true
+        }).replace(/\s?a\.?\s?m\.?/i, ' AM').replace(/\s?p\.?\s?m\.?/i, ' PM');
         return `${fechaFormateada}, hora: ${horaStr}`;
       }
       
@@ -2100,6 +2078,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
   
   // Función para seleccionar vacuna del catálogo
   const handleSelectVacuna = (vacuna) => {
+    updateEsquemaVacunacionField('id_vacuna', vacuna.id_vacuna ? String(vacuna.id_vacuna) : '');
     updateEsquemaVacunacionField('vacuna', vacuna.nombre_vacuna || vacuna.vacuna);
     setShowVacunaSelector(false);
     Logger.info('Vacuna seleccionada', { nombre: vacuna.nombre_vacuna || vacuna.vacuna });
@@ -2202,6 +2181,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
       return true;
     },
     prepareData: (formData) => ({
+      id_vacuna: formData.id_vacuna ? parseInt(formData.id_vacuna, 10) : null,
       vacuna: formData.vacuna.trim(),
       fecha_aplicacion: formData.fecha_aplicacion.trim(),
       lote: formData.lote?.trim() || null,
@@ -2900,6 +2880,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
   const handleEditEsquemaVacunacion = (vacuna) => {
     const lugarAplicacionParsed = parseLugarAplicacionVacunaForm(vacuna.lugar_aplicacion);
     setEditingEsquemaVacunacion(vacuna);
+    updateEsquemaVacunacionField('id_vacuna', vacuna.id_vacuna ? String(vacuna.id_vacuna) : '');
     updateEsquemaVacunacionField('vacuna', vacuna.vacuna || '');
     updateEsquemaVacunacionField('fecha_aplicacion', vacuna.fecha_aplicacion || '');
     updateEsquemaVacunacionField('lote', vacuna.lote || '');
@@ -3749,17 +3730,8 @@ const DetallePacienteContent = ({ route, navigation }) => {
       }
     }
 
-    // Verificar que hay al menos una sección con datos (excepto cita que es requerida)
-    const tieneSignosVitales = formDataConsultaCompleta.signos_vitales.peso_kg || 
-                                formDataConsultaCompleta.signos_vitales.presion_sistolica || 
-                                formDataConsultaCompleta.signos_vitales.glucosa_mg_dl;
     const tieneDiagnostico = formDataConsultaCompleta.diagnostico.descripcion?.trim();
     const tienePlanMedicacion = formDataConsultaCompleta.plan_medicacion.medicamentos?.length > 0;
-
-    if (!tieneSignosVitales && !tieneDiagnostico && !tienePlanMedicacion) {
-      Alert.alert('Validación', 'Debe completar al menos una sección: Signos Vitales, Diagnóstico o Plan de Medicación');
-      return;
-    }
 
     setSavingConsultaCompleta(true);
     try {
@@ -3777,36 +3749,36 @@ const DetallePacienteContent = ({ route, navigation }) => {
         }
       };
 
-      // Incluir signos vitales solo si tienen datos
-      if (tieneSignosVitales) {
-        const signosData = {};
-        if (formDataConsultaCompleta.signos_vitales.peso_kg) {
-          signosData.peso_kg = parseFloat(formDataConsultaCompleta.signos_vitales.peso_kg);
-        }
-        if (formDataConsultaCompleta.signos_vitales.talla_m) {
-          signosData.talla_m = parseFloat(formDataConsultaCompleta.signos_vitales.talla_m);
-        }
-        if (formDataConsultaCompleta.signos_vitales.medida_cintura_cm) {
-          signosData.medida_cintura_cm = parseFloat(formDataConsultaCompleta.signos_vitales.medida_cintura_cm);
-        }
-        if (formDataConsultaCompleta.signos_vitales.presion_sistolica && formDataConsultaCompleta.signos_vitales.presion_diastolica) {
-          signosData.presion_sistolica = parseInt(formDataConsultaCompleta.signos_vitales.presion_sistolica);
-          signosData.presion_diastolica = parseInt(formDataConsultaCompleta.signos_vitales.presion_diastolica);
-        }
-        if (formDataConsultaCompleta.signos_vitales.glucosa_mg_dl) {
-          signosData.glucosa_mg_dl = parseFloat(formDataConsultaCompleta.signos_vitales.glucosa_mg_dl);
-        }
-        if (formDataConsultaCompleta.signos_vitales.colesterol_mg_dl) {
-          signosData.colesterol_mg_dl = parseFloat(formDataConsultaCompleta.signos_vitales.colesterol_mg_dl);
-        }
-        if (formDataConsultaCompleta.signos_vitales.trigliceridos_mg_dl) {
-          signosData.trigliceridos_mg_dl = parseFloat(formDataConsultaCompleta.signos_vitales.trigliceridos_mg_dl);
-        }
-        if (formDataConsultaCompleta.signos_vitales.observaciones) {
-          signosData.observaciones = formDataConsultaCompleta.signos_vitales.observaciones.trim();
-        }
-        dataToSend.signos_vitales = signosData;
+      // Incluir siempre signos vitales (aunque vengan vacíos)
+      const signosData = {};
+      if (formDataConsultaCompleta.signos_vitales.peso_kg) {
+        signosData.peso_kg = parseFloat(formDataConsultaCompleta.signos_vitales.peso_kg);
       }
+      if (formDataConsultaCompleta.signos_vitales.talla_m) {
+        signosData.talla_m = parseFloat(formDataConsultaCompleta.signos_vitales.talla_m);
+      }
+      if (formDataConsultaCompleta.signos_vitales.medida_cintura_cm) {
+        signosData.medida_cintura_cm = parseFloat(formDataConsultaCompleta.signos_vitales.medida_cintura_cm);
+      }
+      if (formDataConsultaCompleta.signos_vitales.presion_sistolica) {
+        signosData.presion_sistolica = parseInt(formDataConsultaCompleta.signos_vitales.presion_sistolica, 10);
+      }
+      if (formDataConsultaCompleta.signos_vitales.presion_diastolica) {
+        signosData.presion_diastolica = parseInt(formDataConsultaCompleta.signos_vitales.presion_diastolica, 10);
+      }
+      if (formDataConsultaCompleta.signos_vitales.glucosa_mg_dl) {
+        signosData.glucosa_mg_dl = parseFloat(formDataConsultaCompleta.signos_vitales.glucosa_mg_dl);
+      }
+      if (formDataConsultaCompleta.signos_vitales.colesterol_mg_dl) {
+        signosData.colesterol_mg_dl = parseFloat(formDataConsultaCompleta.signos_vitales.colesterol_mg_dl);
+      }
+      if (formDataConsultaCompleta.signos_vitales.trigliceridos_mg_dl) {
+        signosData.trigliceridos_mg_dl = parseFloat(formDataConsultaCompleta.signos_vitales.trigliceridos_mg_dl);
+      }
+      if (formDataConsultaCompleta.signos_vitales.observaciones) {
+        signosData.observaciones = formDataConsultaCompleta.signos_vitales.observaciones.trim();
+      }
+      dataToSend.signos_vitales = signosData;
 
       // Incluir diagnóstico solo si tiene descripción
       if (tieneDiagnostico) {
@@ -4303,10 +4275,6 @@ const DetallePacienteContent = ({ route, navigation }) => {
       setEditingDiagnostico(null);
     },
     validationFn: () => {
-      if (!formDataDiagnostico.id_cita) {
-        Alert.alert('Validación', 'Por favor seleccione una cita');
-        return false;
-      }
       if (!formDataDiagnostico.descripcion || formDataDiagnostico.descripcion.trim().length === 0) {
         Alert.alert('Validación', 'Por favor ingrese la descripción del diagnóstico');
         return false;
@@ -4317,10 +4285,15 @@ const DetallePacienteContent = ({ route, navigation }) => {
       }
       return true;
     },
-    prepareData: (formData) => ({
-      id_cita: parseInt(formData.id_cita),
-      descripcion: formData.descripcion.trim()
-    }),
+    prepareData: (formData) => {
+      const body = { descripcion: formData.descripcion.trim() };
+      const raw = (formData.id_cita || '').toString().trim();
+      if (raw) {
+        const cid = parseInt(raw, 10);
+        if (!Number.isNaN(cid) && cid > 0) body.id_cita = cid;
+      }
+      return body;
+    },
     actionName: 'saveDiagnostico',
     successMessage: 'Diagnóstico registrado correctamente',
     errorMessage: 'No se pudo guardar el diagnóstico. Intente nuevamente.',
@@ -5089,6 +5062,9 @@ const DetallePacienteContent = ({ route, navigation }) => {
                       </View>
                       {vacuna.lote && (
                         <Text style={styles.listItemDescription}>Lote: {vacuna.lote}</Text>
+                      )}
+                      {vacuna.lugar_aplicacion && (
+                        <Text style={styles.listItemDescription}>Lugar: {vacuna.lugar_aplicacion}</Text>
                       )}
                       {vacuna.observaciones && (
                         <Text style={styles.listItemNotes}>{vacuna.observaciones}</Text>
@@ -6796,9 +6772,19 @@ const DetallePacienteContent = ({ route, navigation }) => {
             <ScrollView style={styles.modalFormScrollView} keyboardShouldPersistTaps="handled">
               {/* Selector de cita */}
               <View style={styles.formSection}>
-                <Text style={styles.label}>📅 Cita Asociada *</Text>
+                <Text style={styles.label}>📅 Cita asociada (opcional)</Text>
                 {citas && citas.length > 0 ? (
                   <ScrollView style={{ maxHeight: 200 }}>
+                    <TouchableOpacity
+                      style={[
+                        styles.citaOption,
+                        !formDataDiagnostico.id_cita && styles.citaOptionSelected
+                      ]}
+                      onPress={() => updateDiagnosticoField('id_cita', '')}
+                      disabled={savingDiagnostico}
+                    >
+                      <Text style={styles.citaOptionText}>Sin cita asociada</Text>
+                    </TouchableOpacity>
                     {citas.map((cita, index) => (
                       <TouchableOpacity
                         key={`cita-option-${cita.id_cita}-${index}`}
@@ -6819,7 +6805,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
                     ))}
                   </ScrollView>
                 ) : (
-                  <Text style={styles.noDataText}>No hay citas disponibles</Text>
+                  <Text style={styles.noDataText}>No hay citas registradas; puede guardar el diagnóstico sin cita.</Text>
                 )}
               </View>
 
@@ -8261,6 +8247,9 @@ const DetallePacienteContent = ({ route, navigation }) => {
               </View>
               {vacuna.lote && (
                 <Text style={styles.listItemDescription}>Lote: {vacuna.lote}</Text>
+              )}
+              {vacuna.lugar_aplicacion && (
+                <Text style={styles.listItemDescription}>Lugar: {vacuna.lugar_aplicacion}</Text>
               )}
               {vacuna.observaciones && (
                 <Text style={styles.listItemNotes}>{vacuna.observaciones}</Text>

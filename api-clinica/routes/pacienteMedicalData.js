@@ -213,7 +213,7 @@ router.get('/:id/diagnosticos',
  * POST /api/pacientes/:id/diagnosticos
  * 
  * Parámetros de body:
- * - id_cita: ID de la cita asociada (requerido)
+ * - id_cita: ID de la cita asociada (opcional)
  * - descripcion: Descripción del diagnóstico (requerido)
  * 
  * Respuesta:

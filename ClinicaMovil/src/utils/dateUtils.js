@@ -63,10 +63,10 @@ export const formatDateTime = (timestamp) => {
   
   if (tieneHora) {
     const horaFormateada = date.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
+      hour: 'numeric',
       minute: '2-digit',
-      hour12: false
-    });
+      hour12: true
+    }).replace(/\s?a\.?\s?m\.?/i, ' AM').replace(/\s?p\.?\s?m\.?/i, ' PM');
     return `${fechaFormateada}, hora: ${horaFormateada}`;
   }
   

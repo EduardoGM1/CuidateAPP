@@ -58,6 +58,7 @@ const usePacienteForm = () => {
         municipio: formData.municipio,
         localidad: formData.localidad,
         id_modulo: formData.idModulo,
+        numero_expediente: formData.numeroExpediente ? formData.numeroExpediente.trim().toUpperCase() : null,
         activo: formData.activo,
         // Campos adicionales específicos de pacientes
         contacto_emergencia: formData.contactoEmergencia,
@@ -289,6 +290,9 @@ const usePacienteForm = () => {
         alergias: formData.alergias,
         medicamentos_actuales: formData.medicamentos_actuales,
         id_modulo: formData.id_modulo,
+        numero_expediente: formData.numero_expediente
+          ? String(formData.numero_expediente).trim().toUpperCase()
+          : null,
         activo: formData.activo,
       };
 
@@ -405,6 +409,11 @@ const usePacienteForm = () => {
         ...(formData.activo !== undefined && { activo: formData.activo }),
         // Solo incluir curp si está presente
         ...(formData.curp && { curp: formData.curp }),
+        ...(formData.numeroExpediente !== undefined && {
+          numero_expediente: formData.numeroExpediente
+            ? String(formData.numeroExpediente).trim().toUpperCase()
+            : null
+        }),
       };
 
       Logger.info('usePacienteForm: Actualizando perfil de paciente');

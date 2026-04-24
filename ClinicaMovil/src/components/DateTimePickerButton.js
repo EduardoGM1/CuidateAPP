@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform, Pressable } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { COLORES } from '../utils/constantes';
+import { fechaCitaDatetimeLocalToApi } from '../utils/fechaCita';
 
 /**
  * Componente de selector de fecha y hora para citas médicas
@@ -59,21 +60,22 @@ const DateTimePickerButton = ({
       } else {
         setSelectedDateTime(null);
       }
-    } else if (!selectedDateTime) {
-      // Solo establecer valor por defecto si no hay valor Y no hay selectedDateTime
-      // Usar fecha/hora actual redondeada a la siguiente hora
-      const now = new Date();
-      now.setMinutes(0);
-      now.setSeconds(0);
-      now.setMilliseconds(0);
-      // Si la hora actual es pasada, usar la siguiente hora
-      const minDate = minimumDate instanceof Date ? minimumDate : new Date(minimumDate);
-      if (now < minDate) {
-        now.setHours(now.getHours() + 1);
-      }
-      setSelectedDateTime(now);
+    } else {
+      // Solo establecer valor por defecto si no hay valor y aún no existe fecha seleccionada.
+      setSelectedDateTime((prev) => {
+        if (prev) return prev;
+        const now = new Date();
+        now.setMinutes(0);
+        now.setSeconds(0);
+        now.setMilliseconds(0);
+        const minDate = minimumDate instanceof Date ? minimumDate : new Date(minimumDate);
+        if (now < minDate) {
+          now.setHours(now.getHours() + 1);
+        }
+        return now;
+      });
     }
-  }, [value]);
+  }, [value, minimumDate]);
 
   // Función para remover emojis de forma exhaustiva
   const removeEmojis = (text) => {
@@ -128,14 +130,15 @@ const DateTimePickerButton = ({
   // Convertir Date a ISO string para el backend
   const formatDateTimeToISO = (date) => {
     if (!date) return '';
-    
+
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:00`;
+    const localDatetime = `${year}-${month}-${day}T${hours}:${minutes}:00`;
+
+    return fechaCitaDatetimeLocalToApi(localDatetime);
   };
 
   const handleDateChange = (event, date) => {

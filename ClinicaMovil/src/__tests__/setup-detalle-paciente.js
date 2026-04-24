@@ -489,16 +489,50 @@ jest.mock('../utils/validation', () => {
   };
 });
 
-jest.mock('../utils/constantes', () => ({
-  ESTADOS_CITA: {
-    PROGRAMADA: 'programada',
-    CONFIRMADA: 'confirmada',
-    EN_PROCESO: 'en_proceso',
-    COMPLETADA: 'completada',
-    CANCELADA: 'cancelada',
-    NO_ASISTIO: 'no_asistio',
-  },
+jest.mock('../utils/fileDownloader', () => ({
+  downloadFile: jest.fn(async () => ({ success: true, path: '/tmp/mock-file.pdf' })),
+  downloadAndOpenFile: jest.fn(async () => ({ success: true, path: '/tmp/mock-file.pdf' })),
 }));
+
+jest.mock('../utils/formaExcelUtils', () => ({
+  saveFormaExcelToDevice: jest.fn(async () => ({ success: true, path: '/tmp/mock-forma.xlsx' })),
+}));
+
+jest.mock('react-native-fs', () => ({
+  exists: jest.fn(async () => true),
+  writeFile: jest.fn(async () => true),
+  unlink: jest.fn(async () => true),
+  mkdir: jest.fn(async () => true),
+  readFile: jest.fn(async () => ''),
+  DocumentDirectoryPath: '/tmp',
+  DownloadDirectoryPath: '/tmp',
+  ExternalDirectoryPath: '/tmp',
+}));
+
+jest.mock('react-native-file-viewer', () => ({
+  open: jest.fn(async () => true),
+}));
+
+jest.mock('@react-native-community/netinfo', () => ({
+  fetch: jest.fn(async () => ({ isConnected: true, isInternetReachable: true })),
+  addEventListener: jest.fn(() => jest.fn()),
+}));
+
+jest.mock('../utils/constantes', () => {
+  const actualModule = jest.requireActual('../utils/constantes');
+  return {
+    ...actualModule,
+    ESTADOS_CITA: {
+      ...actualModule.ESTADOS_CITA,
+      PROGRAMADA: 'programada',
+      CONFIRMADA: 'confirmada',
+      EN_PROCESO: 'en_proceso',
+      COMPLETADA: 'completada',
+      CANCELADA: 'cancelada',
+      NO_ASISTIO: 'no_asistio',
+    },
+  };
+});
 
 // Mock de useFormState - debe mantener estado real
 jest.mock('../hooks/useFormState', () => {

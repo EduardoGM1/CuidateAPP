@@ -6,9 +6,9 @@
 import { 
   sanitizeString, 
   isValidDate, 
-  isDateInPast,
   isValidLength 
 } from './validation';
+import { fechaCitaDatetimeLocalToApi } from './fechaCita';
 
 /**
  * Validar datos de cita antes de enviar
@@ -99,7 +99,7 @@ export const validateCita = (data) => {
     motivo: motivoSanitizado || data.motivo || '', // Fallback al valor original si falla
     observaciones: observacionesSanitizadas,
     es_primera_consulta: Boolean(data.es_primera_consulta),
-    fecha_cita: data.fecha_cita || null // Asegurar que fecha_cita esté presente
+    fecha_cita: data.fecha_cita ? fechaCitaDatetimeLocalToApi(data.fecha_cita) : null
   };
   
   return {
@@ -147,8 +147,8 @@ export const validateSignosVitales = (data) => {
   
   // Validar presión arterial
   if (data.presion_sistolica && data.presion_diastolica) {
-    const sistolica = parseInt(data.presion_sistolica);
-    const diastolica = parseInt(data.presion_diastolica);
+    const sistolica = parseInt(data.presion_sistolica, 10);
+    const diastolica = parseInt(data.presion_diastolica, 10);
     
     if (isNaN(sistolica) || sistolica < 50 || sistolica > 250) {
       errors.presion_sistolica = 'Presión sistólica inválida (50-250)';

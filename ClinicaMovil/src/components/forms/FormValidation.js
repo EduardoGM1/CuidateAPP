@@ -260,6 +260,40 @@ export const formValidation = {
   },
 
   /**
+   * Validar número de expediente (opcional)
+   * Permite letras, números, guion, diagonal y punto.
+   */
+  validateNumeroExpediente(numeroExpediente) {
+    if (numeroExpediente == null || String(numeroExpediente).trim() === '') {
+      return {
+        isValid: true,
+        message: 'Número de expediente opcional'
+      };
+    }
+
+    const normalized = String(numeroExpediente).trim().toUpperCase();
+
+    if (normalized.length > 50) {
+      return {
+        isValid: false,
+        message: 'El número de expediente no puede exceder 50 caracteres'
+      };
+    }
+
+    if (!/^[A-Z0-9./-]+$/.test(normalized)) {
+      return {
+        isValid: false,
+        message: 'Solo se permiten letras, números, guion (-), diagonal (/) y punto (.)'
+      };
+    }
+
+    return {
+      isValid: true,
+      message: 'Número de expediente válido'
+    };
+  },
+
+  /**
    * Validar sexo
    */
   validateSex(sexo) {
@@ -436,6 +470,12 @@ export const formValidation = {
     const curpValidation = this.validateCURP(formData.curp);
     if (!curpValidation.isValid) {
       errors.curp = curpValidation.message;
+      isValid = false;
+    }
+
+    const numeroExpedienteValidation = this.validateNumeroExpediente(formData.numeroExpediente);
+    if (!numeroExpedienteValidation.isValid) {
+      errors.numeroExpediente = numeroExpedienteValidation.message;
       isValid = false;
     }
 
