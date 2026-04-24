@@ -31,6 +31,29 @@ const formatearFechaNotificacion = (fecha) => {
 };
 
 /**
+ * Convierte el body de reprogramación a Date.
+ * Las cadenas solo-fecha (YYYY-MM-DD) del input HTML se interpretan en hora local (mediodía)
+ * para evitar el desfase UTC que las marca como “ayer” en zonas como America/Mexico_City.
+ * @param {string|Date|number} value
+ * @returns {Date|null}
+ */
+const parseFechaReprogramacionBody = (value) => {
+  if (value == null || value === '') return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  const s = String(value).trim();
+  const onlyDate = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (onlyDate) {
+    const y = parseInt(onlyDate[1], 10);
+    const mo = parseInt(onlyDate[2], 10) - 1;
+    const d = parseInt(onlyDate[3], 10);
+    const dt = new Date(y, mo, d, 12, 0, 0, 0);
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  }
+  const dt = new Date(s);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+};
+
+/**
  * Enviar notificación push al paciente sobre una cita
  * @param {number} pacienteId - ID del paciente
  * @param {string} tipo - Tipo de notificación: 'creada', 'reprogramada', 'actualizada'
@@ -1942,12 +1965,9 @@ export const reprogramarCita = async (req, res) => {
 
     // Guardar fecha anterior para auditoría
     const fechaAnterior = cita.fecha_cita;
-    const fechaNueva = new Date(fecha_reprogramada);
-
-    // Validar que la fecha reprogramada no sea en el pasado
-    const ahora = new Date();
-    if (fechaNueva < ahora) {
-      return sendError(res, 'La fecha reprogramada no puede ser en el pasado', 400);
+    const fechaNueva = parseFechaReprogramacionBody(fecha_reprogramada);
+    if (!fechaNueva) {
+      return sendError(res, 'La fecha reprogramada no es válida', 400);
     }
 
     const updateData = {
@@ -2443,14 +2463,11 @@ export const responderSolicitudReprogramacion = async (req, res) => {
         return sendError(res, 'La fecha reprogramada es requerida al aprobar la solicitud', 400);
       }
 
-      const fechaFinal = new Date(fecha_reprogramada);
-      
-      // Validar que la fecha reprogramada no sea en el pasado
-      const ahora = new Date();
-      if (fechaFinal < ahora) {
-        return sendError(res, 'La fecha reprogramada no puede ser en el pasado', 400);
+      const fechaFinal = parseFechaReprogramacionBody(fecha_reprogramada);
+      if (!fechaFinal) {
+        return sendError(res, 'La fecha reprogramada no es válida', 400);
       }
-      
+
       await Cita.update({
         estado: 'reprogramada',
         fecha_cita: fechaFinal, // Actualizar la fecha de la cita directamente
