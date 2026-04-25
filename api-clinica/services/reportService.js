@@ -611,6 +611,8 @@ class ReportService {
 
   /**
    * Genera HTML del documento de nota médica (encabezado simplificado; cuerpo tipo expediente).
+   * Signos vitales: último registro por fecha_medicion. Cabecera alineada a la cita de ese registro si existe.
+   * Diagnóstico: el más reciente (fecha_registro), con o sin cita. Medicamentos: planes activos únicamente.
    * GET /api/reportes/notas-medicas/:idPaciente/html
    * @param {number} pacienteId
    * @returns {Promise<string>}
@@ -634,21 +636,25 @@ class ReportService {
       include: [{ model: Medicamento, attributes: ['nombre_medicamento'] }]
     };
 
-    const [citasRecientes, signosSinCita, planesActivos, citasPacienteRows] = await Promise.all([
-      Cita.findAll({
+    const flatMedicamentosFromPlanes = (planes) => (planes || []).flatMap((p) =>
+      (p.PlanDetalles || []).map((d) => ({
+        nombre: d.Medicamento?.nombre_medicamento,
+        dosis: d.dosis,
+        frecuencia: d.frecuencia,
+        via: d.via_administracion
+      }))
+    ).filter((m) => Boolean(m.nombre || m.dosis || m.frecuencia || m.via));
+
+    const [ultimoSigno, planesActivos, citasPacienteRows] = await Promise.all([
+      SignoVital.findOne({
         where: { id_paciente: pacienteId },
-        include: [
-          { model: Doctor, attributes: ['nombre', 'apellido_paterno', 'apellido_materno', 'grado_estudio'] }
-        ],
-        order: [['fecha_cita', 'DESC']],
-        limit: 1
+        order: [['fecha_medicion', 'DESC']]
       }),
-      SignoVital.findOne({ where: { id_paciente: pacienteId, id_cita: null }, order: [['fecha_medicion', 'DESC']] }),
       PlanMedicacion.findAll({
         where: { id_paciente: pacienteId, activo: true },
         include: [planDetalleInclude, { model: Doctor, attributes: ['nombre', 'apellido_paterno'] }],
-        order: [['fecha_inicio', 'DESC']],
-        limit: 10
+        order: [['fecha_inicio', 'DESC'], ['fecha_creacion', 'DESC']],
+        limit: 20
       }),
       Cita.findAll({
         where: { id_paciente: pacienteId },
@@ -662,50 +668,34 @@ class ReportService {
       ? { [Op.or]: [{ id_cita: { [Op.in]: citasPacienteIds } }, { id_cita: null }] }
       : { id_cita: null };
 
-    const cita = Array.isArray(citasRecientes) && citasRecientes.length > 0 ? citasRecientes[0] : null;
+    const ultimoDiagnostico = await Diagnostico.findOne({
+      where: diagnosticoWhere,
+      attributes: ['id_diagnostico', 'descripcion', 'fecha_registro'],
+      order: [['fecha_registro', 'DESC'], ['id_diagnostico', 'DESC']]
+    });
 
-    const flatMedicamentosFromPlanes = (planes) => (planes || []).flatMap((p) =>
-      (p.PlanDetalles || []).map((d) => ({
-        nombre: d.Medicamento?.nombre_medicamento,
-        dosis: d.dosis,
-        frecuencia: d.frecuencia,
-        via: d.via_administracion
-      }))
-    ).filter((m) => Boolean(m.nombre || m.dosis || m.frecuencia || m.via));
+    const diagnosticos = ultimoDiagnostico ? [ultimoDiagnostico] : [];
 
-    const [signoCita, diagnosticos, planesDeLaCita] = await Promise.all([
-      cita
-        ? SignoVital.findOne({ where: { id_cita: cita.id_cita }, order: [['fecha_medicion', 'DESC']] })
-        : Promise.resolve(null),
-      Diagnostico.findAll({
-        where: diagnosticoWhere,
-        attributes: ['id_diagnostico', 'descripcion', 'fecha_registro'],
-        order: [['fecha_registro', 'DESC']],
-        limit: 40
-      }),
-      cita
-        ? PlanMedicacion.findAll({
-            where: { id_paciente: pacienteId, id_cita: cita.id_cita },
-            include: [planDetalleInclude],
-            order: [['fecha_creacion', 'DESC']],
-            limit: 10
-          })
-        : Promise.resolve([])
-    ]);
-
-    const signo = signoCita || signosSinCita;
-
-    let medicamentos = flatMedicamentosFromPlanes(planesDeLaCita);
-    if (!medicamentos.length) medicamentos = flatMedicamentosFromPlanes(planesActivos);
-    if (!medicamentos.length) {
-      const planesRecientes = await PlanMedicacion.findAll({
-        where: { id_paciente: pacienteId },
-        include: [planDetalleInclude],
-        order: [['fecha_creacion', 'DESC']],
-        limit: 20
+    let cita = null;
+    if (ultimoSigno?.id_cita) {
+      cita = await Cita.findByPk(ultimoSigno.id_cita, {
+        include: [
+          { model: Doctor, attributes: ['nombre', 'apellido_paterno', 'apellido_materno', 'grado_estudio'] }
+        ]
       });
-      medicamentos = flatMedicamentosFromPlanes(planesRecientes);
     }
+    if (!cita) {
+      cita = await Cita.findOne({
+        where: { id_paciente: pacienteId },
+        include: [
+          { model: Doctor, attributes: ['nombre', 'apellido_paterno', 'apellido_materno', 'grado_estudio'] }
+        ],
+        order: [['fecha_cita', 'DESC']]
+      });
+    }
+
+    const signo = ultimoSigno;
+    const medicamentos = flatMedicamentosFromPlanes(planesActivos);
 
     const nombreCompleto = formatNombreCompleto(paciente) || '—';
     const edad = paciente.fecha_nacimiento
@@ -713,9 +703,18 @@ class ReportService {
       : '—';
     const sexo = paciente.sexo === 'Mujer' ? 'Fem' : paciente.sexo === 'Hombre' ? 'M' : paciente.sexo || '—';
     const domicilio = [paciente.direccion, paciente.localidad].filter(Boolean).join(', ').trim() || '—';
-    const fechaHoraConsulta = cita?.fecha_cita
-      ? new Date(cita.fecha_cita).toLocaleString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '')
-      : new Date().toLocaleString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+    const fmtFechaHora = (d) =>
+      new Date(d).toLocaleString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+    let fechaHoraConsulta;
+    if (ultimoSigno?.id_cita && cita?.id_cita === ultimoSigno.id_cita && cita.fecha_cita) {
+      fechaHoraConsulta = fmtFechaHora(cita.fecha_cita);
+    } else if (ultimoSigno?.fecha_medicion) {
+      fechaHoraConsulta = fmtFechaHora(ultimoSigno.fecha_medicion);
+    } else if (cita?.fecha_cita) {
+      fechaHoraConsulta = fmtFechaHora(cita.fecha_cita);
+    } else {
+      fechaHoraConsulta = fmtFechaHora(new Date());
+    }
     const nombreDoctor = cita?.Doctor
       ? `Dr. ${formatNombreCompleto(cita.Doctor)}`
       : '—';
