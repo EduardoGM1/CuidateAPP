@@ -629,13 +629,16 @@ class ReportService {
     });
     if (!paciente) throw new Error('Paciente no encontrado');
 
-    const [citasRecientes, signosSinCita, planesActivos] = await Promise.all([
+    const planDetalleInclude = {
+      model: PlanDetalle,
+      include: [{ model: Medicamento, attributes: ['nombre_medicamento'] }]
+    };
+
+    const [citasRecientes, signosSinCita, planesActivos, citasPacienteRows] = await Promise.all([
       Cita.findAll({
         where: { id_paciente: pacienteId },
         include: [
-          { model: Doctor, attributes: ['nombre', 'apellido_paterno', 'apellido_materno', 'grado_estudio'] },
-          { model: Diagnostico, as: 'Diagnosticos', required: false },
-          { model: PlanMedicacion, include: [{ model: PlanDetalle, include: [{ model: Medicamento, attributes: ['nombre_medicamento'] }] }], required: false }
+          { model: Doctor, attributes: ['nombre', 'apellido_paterno', 'apellido_materno', 'grado_estudio'] }
         ],
         order: [['fecha_cita', 'DESC']],
         limit: 1
@@ -643,21 +646,66 @@ class ReportService {
       SignoVital.findOne({ where: { id_paciente: pacienteId, id_cita: null }, order: [['fecha_medicion', 'DESC']] }),
       PlanMedicacion.findAll({
         where: { id_paciente: pacienteId, activo: true },
-        include: [{ model: PlanDetalle, include: [{ model: Medicamento, attributes: ['nombre_medicamento'] }] }, { model: Doctor, attributes: ['nombre', 'apellido_paterno'] }],
+        include: [planDetalleInclude, { model: Doctor, attributes: ['nombre', 'apellido_paterno'] }],
         order: [['fecha_inicio', 'DESC']],
         limit: 10
+      }),
+      Cita.findAll({
+        where: { id_paciente: pacienteId },
+        attributes: ['id_cita'],
+        raw: true
       })
     ]);
 
+    const citasPacienteIds = (citasPacienteRows || []).map((r) => r.id_cita).filter((id) => id != null);
+    const diagnosticoWhere = citasPacienteIds.length
+      ? { [Op.or]: [{ id_cita: { [Op.in]: citasPacienteIds } }, { id_cita: null }] }
+      : { id_cita: null };
+
     const cita = Array.isArray(citasRecientes) && citasRecientes.length > 0 ? citasRecientes[0] : null;
-    const signoCita = cita
-      ? await SignoVital.findOne({ where: { id_cita: cita.id_cita }, order: [['fecha_medicion', 'DESC']] })
-      : null;
+
+    const flatMedicamentosFromPlanes = (planes) => (planes || []).flatMap((p) =>
+      (p.PlanDetalles || []).map((d) => ({
+        nombre: d.Medicamento?.nombre_medicamento,
+        dosis: d.dosis,
+        frecuencia: d.frecuencia,
+        via: d.via_administracion
+      }))
+    ).filter((m) => Boolean(m.nombre || m.dosis || m.frecuencia || m.via));
+
+    const [signoCita, diagnosticos, planesDeLaCita] = await Promise.all([
+      cita
+        ? SignoVital.findOne({ where: { id_cita: cita.id_cita }, order: [['fecha_medicion', 'DESC']] })
+        : Promise.resolve(null),
+      Diagnostico.findAll({
+        where: diagnosticoWhere,
+        attributes: ['id_diagnostico', 'descripcion', 'fecha_registro'],
+        order: [['fecha_registro', 'DESC']],
+        limit: 40
+      }),
+      cita
+        ? PlanMedicacion.findAll({
+            where: { id_paciente: pacienteId, id_cita: cita.id_cita },
+            include: [planDetalleInclude],
+            order: [['fecha_creacion', 'DESC']],
+            limit: 10
+          })
+        : Promise.resolve([])
+    ]);
+
     const signo = signoCita || signosSinCita;
-    const diagnosticos = cita?.Diagnosticos || [];
-    const medicamentos = (cita?.PlanMedicacions && cita.PlanMedicacions.length > 0)
-      ? cita.PlanMedicacions.flatMap(p => (p.PlanDetalles || []).map(d => ({ nombre: d.Medicamento?.nombre_medicamento, dosis: d.dosis, frecuencia: d.frecuencia, via: d.via_administracion })))
-      : planesActivos.flatMap(p => (p.PlanDetalles || []).map(d => ({ nombre: d.Medicamento?.nombre_medicamento, dosis: d.dosis, frecuencia: d.frecuencia, via: d.via_administracion })));
+
+    let medicamentos = flatMedicamentosFromPlanes(planesDeLaCita);
+    if (!medicamentos.length) medicamentos = flatMedicamentosFromPlanes(planesActivos);
+    if (!medicamentos.length) {
+      const planesRecientes = await PlanMedicacion.findAll({
+        where: { id_paciente: pacienteId },
+        include: [planDetalleInclude],
+        order: [['fecha_creacion', 'DESC']],
+        limit: 20
+      });
+      medicamentos = flatMedicamentosFromPlanes(planesRecientes);
+    }
 
     const nombreCompleto = formatNombreCompleto(paciente) || '—';
     const edad = paciente.fecha_nacimiento
@@ -737,17 +785,8 @@ class ReportService {
     <tr><th>O</th><td colspan="5">—</td></tr>
   </table>
 
-  <div class="section"><strong>Laboratorio</strong></div>
-  <table class="notas">
-    <tr><th>Glucosa</th><td>${glucosa}</td><th>Colesterol</th><td>${colesterol}</td><th>Triglicéridos</th><td>${trigliceridos}</td></tr>
-    <tr><th>Creatinina</th><td>—</td><th>Urea</th><td>—</td><th>General orina</th><td>—</td></tr>
-  </table>
-
   <div class="section"><strong>Diagnósticos / Valoraciones</strong></div>
   <table class="notas"><tr><th>Diagnóstico</th></tr>${diagnosticos.length ? diagnosticos.map(d => `<tr><td>${escapeHtml(decryptForReport(d.descripcion) || '—')}</td></tr>`).join('') : '<tr><td>—</td></tr>'}</table>
-
-  <div class="section"><strong>Acciones de línea de vida</strong></div>
-  <p>—</p>
 
   <div class="section"><strong>Medicamentos</strong></div>
   <table class="notas"><thead><tr><th>Medicamento / Dosis / Frecuencia / Vía</th></tr></thead><tbody>${medRows}</tbody></table>
