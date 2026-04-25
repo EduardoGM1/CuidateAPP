@@ -711,7 +711,7 @@ class ReportService {
   <table class="notas">
     <tr><th>Nombre</th><td>${escapeHtml(nombreCompleto)}</td><th>Edad</th><td>${edad}</td><th>Sexo</th><td>${escapeHtml(sexo)}</td></tr>
     <tr><th>Servicio</th><td>—</td><th>No. EXPEDIENTE</th><td>${escapeHtml(paciente.numero_expediente || paciente.codigo_paciente || paciente.id_paciente?.toString() || '—')}</td><th>Domicilio</th><td colspan="3">${escapeHtml(domicilio)}</td></tr>
-    <tr><th>Tipo consulta</th><td>C. EXTERNA</td><th>Paciente ID</th><td colspan="3">${escapeHtml(paciente.id_paciente?.toString() || '—')}</td></tr>
+    <tr><th>Tipo consulta</th><td colspan="5">C. EXTERNA</td></tr>
     <tr><th colspan="2">Fecha y hora</th><td colspan="4">${fechaHoraConsulta}</td></tr>
   </table>
 
