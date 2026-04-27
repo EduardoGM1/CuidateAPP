@@ -24,7 +24,7 @@ import { useAuth } from '../../context/AuthContext';
 
 // Servicios
 import Logger from '../../services/logger';
-import { COLORES } from '../../utils/constantes';
+import { COLORES, NETWORK_STAGGER } from '../../utils/constantes';
 import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 
 /**

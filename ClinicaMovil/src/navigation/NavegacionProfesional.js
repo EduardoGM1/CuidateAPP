@@ -236,6 +236,10 @@ const MainScreenWithMenu = ({ navigation }) => {
   const [sectionTip, setSectionTip] = useState(null);
   const [onboardingBump, setOnboardingBump] = useState(0);
   const { userData, userRole } = useAuth();
+  const onboardingScope = useMemo(() => ({
+    role: userRole,
+    userId: userData?.id || userData?.id_usuario || userData?.id_doctor || null,
+  }), [userRole, userData?.id, userData?.id_usuario, userData?.id_doctor]);
 
   const esDoctor = userRole === 'Doctor' || userRole === 'doctor';
   const esAdmin = userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador';
@@ -256,7 +260,7 @@ const MainScreenWithMenu = ({ navigation }) => {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const done = await isShellComplete();
+      const done = await isShellComplete(onboardingScope);
       if (cancelled) return;
       setShellComplete(done);
       if (!done) {
@@ -267,12 +271,12 @@ const MainScreenWithMenu = ({ navigation }) => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [onboardingScope]);
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener(MOBILE_ONBOARDING_RESET_EVENT, () => {
       (async () => {
-        const done = await isShellComplete();
+        const done = await isShellComplete(onboardingScope);
         setShellComplete(done);
         setShellVisible(!done);
         setSectionTip(null);
@@ -280,7 +284,7 @@ const MainScreenWithMenu = ({ navigation }) => {
       })();
     });
     return () => sub.remove();
-  }, []);
+  }, [onboardingScope]);
 
   useEffect(() => {
     if (shellComplete !== true) return undefined;
@@ -301,13 +305,13 @@ const MainScreenWithMenu = ({ navigation }) => {
   }, [seccion, shellComplete, onboardingBump]);
 
   const finishShell = async () => {
-    await markShellComplete();
+    await markShellComplete(onboardingScope);
     setShellVisible(false);
     setShellComplete(true);
   };
 
   const skipShell = async () => {
-    await markShellComplete();
+    await markShellComplete(onboardingScope);
     setShellVisible(false);
     setShellComplete(true);
   };

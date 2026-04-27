@@ -24,7 +24,7 @@ import {
 const STACK_DEBOUNCE_MS = 480;
 
 export default function NavOnboardingController({ navigationRootState }) {
-  const { isAuthenticated, userRole, isLoading } = useAuth();
+  const { isAuthenticated, userRole, isLoading, userData } = useAuth();
   const [patientShellVisible, setPatientShellVisible] = useState(false);
   const [stackTour, setStackTour] = useState({
     visible: false,
@@ -34,6 +34,11 @@ export default function NavOnboardingController({ navigationRootState }) {
   const [recheckTick, setRecheckTick] = useState(0);
   const userRoleRef = useRef(userRole);
   userRoleRef.current = userRole;
+  const onboardingScope = useRef({ role: userRole, userId: null });
+  onboardingScope.current = {
+    role: userRole,
+    userId: userData?.id || userData?.id_usuario || userData?.id_doctor || null,
+  };
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener(MOBILE_ONBOARDING_RESET_EVENT, () => {
@@ -71,7 +76,7 @@ export default function NavOnboardingController({ navigationRootState }) {
       return;
     }
     if (isProfessionalRole(role)) {
-      const shellOk = await isShellComplete();
+      const shellOk = await isShellComplete(onboardingScope.current);
       if (!shellOk) return;
       const def = PROFESSIONAL_STACK_TOURS[route];
       if (!def) {

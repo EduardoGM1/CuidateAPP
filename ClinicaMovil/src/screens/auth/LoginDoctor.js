@@ -189,7 +189,7 @@ const LoginDoctor = ({ navigation }) => {
                     style={styles.input}
                     value={email}
                     onChangeText={setEmail}
-                        placeholder="admin@clinica.com"
+                        placeholder="Ingresa tu email"
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}

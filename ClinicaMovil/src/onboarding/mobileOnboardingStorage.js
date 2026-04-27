@@ -10,6 +10,13 @@ function shellKey() {
   return `${PREFIX}shell_${VERSION}`;
 }
 
+function scopedShellKey(scope = {}) {
+  const role = String(scope.role || '').trim().toLowerCase();
+  const userId = String(scope.userId || '').trim();
+  if (!role || !userId) return null;
+  return `${PREFIX}shell_${role}_${userId}_${VERSION}`;
+}
+
 function patientShellKey() {
   return `${PREFIX}patient_shell_${VERSION}`;
 }
@@ -22,8 +29,13 @@ export function sectionStorageKey(sectionId) {
   return `${PREFIX}section_${sectionId}_${VERSION}`;
 }
 
-export async function isShellComplete() {
+export async function isShellComplete(scope = null) {
   try {
+    const scopedKey = scopedShellKey(scope || {});
+    if (scopedKey) {
+      const scopedValue = await AsyncStorage.getItem(scopedKey);
+      if (scopedValue === '1') return true;
+    }
     const v = await AsyncStorage.getItem(shellKey());
     return v === '1';
   } catch (e) {
@@ -31,8 +43,13 @@ export async function isShellComplete() {
   }
 }
 
-export async function markShellComplete() {
+export async function markShellComplete(scope = null) {
   try {
+    const scopedKey = scopedShellKey(scope || {});
+    if (scopedKey) {
+      await AsyncStorage.setItem(scopedKey, '1');
+    }
+    // Mantener la llave legacy para compatibilidad y usuarios sin scope
     await AsyncStorage.setItem(shellKey(), '1');
   } catch (e) {
     /* ignore */
