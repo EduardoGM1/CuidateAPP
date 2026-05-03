@@ -22,6 +22,14 @@ function isTokenInvalidResponse(error) {
   return status === 401 || (status === 403 && tokenInvalidMessage);
 }
 
+/** No limpiar sesión por credenciales incorrectas en login (401 esperado). */
+function shouldClearSessionOnAuthError(error) {
+  if (!isTokenInvalidResponse(error)) return false;
+  const url = String(error.config?.url ?? '');
+  if (url.includes('/api/auth/login')) return false;
+  return true;
+}
+
 let isClearingSession = false;
 
 /** Limpia sesión en localStorage (token, user, persist) y redirige a login con motivo de sesión caducada. Solo se ejecuta una vez aunque varios interceptores reciban 401 a la vez. */
@@ -49,7 +57,7 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (isTokenInvalidResponse(error)) {
+    if (shouldClearSessionOnAuthError(error)) {
       clearSessionAndRedirectToLogin();
     }
     return Promise.reject(error);
