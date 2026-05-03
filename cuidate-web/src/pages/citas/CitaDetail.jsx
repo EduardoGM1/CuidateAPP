@@ -6,6 +6,7 @@ import { connect, on, off } from '../../api/socket';
 import { PageHeader, DataCard } from '../../components/shared';
 import { LoadingSpinner, Button, Card, Badge, Input, Select, Modal } from '../../components/ui';
 import CompletarCitaModal from '../../components/citas/CompletarCitaModal';
+import CitaConsultaResumen from '../../components/citas/CitaConsultaResumen';
 import SignosVitalesForm, { INITIAL_SIGNOS_VITALES, signosVitalesToPayload } from '../../components/signos/SignosVitalesForm';
 import { useAuthStore } from '../../stores/authStore';
 import { STORAGE_KEYS } from '../../utils/constants';
@@ -186,6 +187,8 @@ export default function CitaDetail() {
   }
 
   const c = cita;
+  /** Cita cerrada: no reprogramar ni cambiar estado desde esta pantalla. */
+  const citaCerradaParaAcciones = ['atendida', 'cancelada'].includes(String(c.estado ?? '').toLowerCase());
   const pacienteNombre = c.Paciente ? (formatNombreCompleto(c.Paciente) || c.paciente_nombre) : c.paciente_nombre ?? '—';
   const doctorNombre = c.Doctor ? (formatNombreCompleto(c.Doctor) || c.doctor_nombre) : c.doctor_nombre ?? '—';
 
@@ -245,7 +248,9 @@ export default function CitaDetail() {
         </div>
       )}
 
-      {canEditCita && (
+      {c.estado === 'atendida' && <CitaConsultaResumen cita={c} />}
+
+      {canEditCita && !citaCerradaParaAcciones && (
         <DataCard title="Cambiar estado">
           {saveError && (
             <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>
@@ -303,7 +308,7 @@ export default function CitaDetail() {
         </Card>
       )}
 
-      {canEditCita && (
+      {canEditCita && !citaCerradaParaAcciones && (
         <Card style={{ marginTop: '1rem' }}>
           <Button
             variant="outline"
