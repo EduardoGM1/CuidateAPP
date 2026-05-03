@@ -1,6 +1,11 @@
 import axios from 'axios';
 import { STORAGE_KEYS, AUTH_PERSIST_KEY, LOGIN_REASON_SESSION_EXPIRED } from '../utils/constants';
 
+/**
+ * Producción:
+ * - Vacío: rutas relativas /api/... (mismo host que la SPA; Nginx hace proxy a Node).
+ * - URL absoluta: API en otro host; configurar ALLOWED_ORIGINS en api-clinica.
+ */
 const baseURL = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '')}`
   : '';

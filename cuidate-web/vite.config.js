@@ -38,13 +38,30 @@ export default defineConfig(({ mode }) => ({
     sourcemap: false,
     target: 'es2020',
     cssTarget: 'chrome91',
-    chunkSizeWarningLimit: 1200,
+    chunkSizeWarningLimit: 1600,
     commonjsOptions: {
       transformMixedEsModules: true,
     },
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        /**
+         * Separa solo librerías muy pesadas para caché y paralelismo.
+         * El resto de node_modules queda en chunks compartidos (sin chunk `vendor` genérico
+         * que provocaba ciclos con antd/socket.io).
+         */
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('exceljs')) return 'vendor-exceljs';
+          if (id.includes('recharts')) return 'vendor-recharts';
+          if (id.includes('antd') || id.includes('@ant-design')) return 'vendor-antd';
+          if (id.includes('@tanstack')) return 'vendor-react-query';
+          if (id.includes('react-router')) return 'vendor-router';
+          if (id.includes('socket.io')) return 'vendor-socket';
+          if (id.includes('react-dom') || id.includes('/react/') || id.includes('scheduler')) {
+            return 'vendor-react';
+          }
+          return undefined;
+        },
       },
     },
   },

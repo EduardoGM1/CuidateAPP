@@ -1,0 +1,30 @@
+import { lazy } from 'react';
+
+/** Rutas pesadas en chunks separados (code-splitting). Auth públicas siguen en index (carga inmediata). */
+export const Dashboard = lazy(() => import('../pages/Dashboard'));
+export const PacientesList = lazy(() => import('../pages/pacientes/PacientesList'));
+export const PacienteDetail = lazy(() => import('../pages/pacientes/PacienteDetail'));
+export const AgregarPaciente = lazy(() => import('../pages/pacientes/AgregarPaciente'));
+export const EditarPaciente = lazy(() => import('../pages/pacientes/EditarPaciente'));
+export const AgendarCita = lazy(() => import('../pages/pacientes/AgendarCita'));
+export const CitasList = lazy(() => import('../pages/citas/CitasList'));
+export const CitaDetail = lazy(() => import('../pages/citas/CitaDetail'));
+export const ReportesPage = lazy(() => import('../pages/reportes/ReportesPage'));
+export const DoctoresList = lazy(() => import('../pages/doctores/DoctoresList'));
+export const DoctorDetail = lazy(() => import('../pages/doctores/DoctorDetail'));
+export const AgregarDoctor = lazy(() => import('../pages/doctores/AgregarDoctor'));
+export const EditarDoctor = lazy(() => import('../pages/doctores/EditarDoctor'));
+export const AuditoriaList = lazy(() => import('../pages/auditoria/AuditoriaList'));
+export const AuditoriaDetail = lazy(() => import('../pages/auditoria/AuditoriaDetail'));
+export const CatalogosPage = lazy(() => import('../pages/admin/CatalogosPage'));
+export const UsuariosList = lazy(() => import('../pages/admin/UsuariosList'));
+export const AdminOperacionesPage = lazy(() => import('../pages/admin/AdminOperacionesPage'));
+export const AdminTicketsPage = lazy(() => import('../pages/admin/AdminTicketsPage'));
+export const NotificacionesDoctor = lazy(() => import('../pages/doctor/NotificacionesDoctor'));
+export const DoctorTicketsPage = lazy(() => import('../pages/doctor/DoctorTicketsPage'));
+export const TicketNuevoPage = lazy(() => import('../pages/soporte/TicketNuevoPage'));
+export const TicketDetailPage = lazy(() => import('../pages/soporte/TicketDetailPage'));
+export const SolicitudesReprogramacion = lazy(() => import('../pages/doctor/SolicitudesReprogramacion'));
+export const ChatList = lazy(() => import('../pages/doctor/ChatList'));
+export const ChatConversacion = lazy(() => import('../pages/doctor/ChatConversacion'));
+export const Perfil = lazy(() => import('../pages/Perfil'));

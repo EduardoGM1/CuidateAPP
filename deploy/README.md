@@ -108,6 +108,17 @@ La app en desarrollo (`npm run dev`) envía cabeceras equivalentes vía **`vite.
 
 Variables de build: ver **`cuidate-web/.env.production.example`**. Ese archivo puede versionarse; **`.env.production`** en el servidor no debe subirse a Git (está en `.gitignore`).
 
+### Web SPA: API en producción, CORS y rendimiento
+
+| Escenario | Build (`rebuild-cuidate-web.sh`) | Cliente HTTP |
+|-----------|----------------------------------|--------------|
+| **Mismo host** (Nginx hace `location /api` → Node, p. ej. `nginx-cuidateapp.conf`) | Argumento `-` → `VITE_API_BASE_URL` vacío | Peticiones a rutas relativas `/api/...` (mismo origen que la SPA). |
+| **Web y API en hosts distintos** (p. ej. `nginx-cuidateapp-domain.conf`) | URL de la API, p. ej. `https://api.tudominio.com` | Axios usa esa base; en **api-clinica** `ALLOWED_ORIGINS` debe incluir el origen público de la web (`https://tudominio.com`, `https://www...`). |
+
+La **CSP** de `deploy/nginx-security-headers.inc` usa `connect-src 'self' https: wss:`, compatible con API HTTPS en otro subdominio. El **proxy de Vite** (`vite.config.js`) solo aplica en desarrollo; el build de producción no lo incluye.
+
+El **build de producción** aplica *code-splitting* por ruta (páginas bajo `MainLayout` en chunks lazy) y agrupa dependencias pesadas (`vendor-react`, `vendor-antd`, `vendor-exceljs`, etc.) para mejorar caché y tiempo de carga inicial.
+
 ## PM2
 
 - Iniciar (desde la raíz del repo): `pm2 start deploy/ecosystem.config.cjs`

@@ -25,11 +25,12 @@ ARG="${1:-}"
 
 if [ "$ARG" = "-" ]; then
   echo "VITE_API_BASE_URL=" > .env.production
-  echo "[INFO] .env.production → VITE_API_BASE_URL vacío (mismo origen /api)"
+  echo "[INFO] .env.production → VITE_API_BASE_URL vacío (mismo origen /api vía Nginx)"
 elif [ -n "$ARG" ]; then
   BASE="${ARG%/}"
   echo "VITE_API_BASE_URL=$BASE" > .env.production
   echo "[INFO] .env.production → VITE_API_BASE_URL=$BASE"
+  echo "[INFO] Comprueba en api-clinica ALLOWED_ORIGINS incluye el dominio que sirve la SPA (CORS)."
 elif [ ! -f .env.production ]; then
   if [ -f .env.production.example ]; then
     cp .env.production.example .env.production
