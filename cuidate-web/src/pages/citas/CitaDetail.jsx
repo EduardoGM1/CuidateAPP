@@ -189,139 +189,146 @@ export default function CitaDetail() {
   const c = cita;
   /** Cita cerrada: no reprogramar ni cambiar estado desde esta pantalla. */
   const citaCerradaParaAcciones = ['atendida', 'cancelada'].includes(String(c.estado ?? '').toLowerCase());
+  const esAtendida = String(c.estado ?? '').toLowerCase() === 'atendida';
   const pacienteNombre = c.Paciente ? (formatNombreCompleto(c.Paciente) || c.paciente_nombre) : c.paciente_nombre ?? '—';
   const doctorNombre = c.Doctor ? (formatNombreCompleto(c.Doctor) || c.doctor_nombre) : c.doctor_nombre ?? '—';
 
-  const items = [
-    { label: 'Fecha y hora', value: formatDateTime(c.fecha_cita) },
-    { label: 'Paciente', value: sanitizeForDisplay(pacienteNombre) },
-    { label: 'Doctor', value: sanitizeForDisplay(doctorNombre) },
-    { label: 'Motivo', value: sanitizeForDisplay(c.motivo) || '—' },
-    {
-      label: 'Estado actual',
-      value: (
-        <Badge
-          variant={
-            c.estado === 'atendida'
-              ? 'success'
-              : c.estado === 'cancelada' || c.estado === 'no_asistida'
-              ? 'error'
-              : c.estado === 'reprogramada'
-              ? 'warning'
-              : 'neutral'
-          }
-        >
-          {ESTADOS_OPCIONES.find((e) => e.value === c.estado)?.label || sanitizeForDisplay(c.estado) || '—'}
-        </Badge>
-      ),
-    },
-    { label: 'Observaciones', value: sanitizeForDisplay(c.observaciones) || '—' },
-  ];
+  const itemsDatosCita = esAtendida
+    ? null
+    : [
+        { label: 'Fecha y hora', value: formatDateTime(c.fecha_cita) },
+        { label: 'Paciente', value: sanitizeForDisplay(pacienteNombre) },
+        { label: 'Doctor', value: sanitizeForDisplay(doctorNombre) },
+        { label: 'Motivo', value: sanitizeForDisplay(c.motivo) || '—' },
+        {
+          label: 'Estado actual',
+          value: (
+            <Badge
+              variant={
+                c.estado === 'atendida'
+                  ? 'success'
+                  : c.estado === 'cancelada' || c.estado === 'no_asistida'
+                  ? 'error'
+                  : c.estado === 'reprogramada'
+                  ? 'warning'
+                  : 'neutral'
+              }
+            >
+              {ESTADOS_OPCIONES.find((e) => e.value === c.estado)?.label || sanitizeForDisplay(c.estado) || '—'}
+            </Badge>
+          ),
+        },
+        { label: 'Observaciones', value: sanitizeForDisplay(c.observaciones) || '—' },
+      ];
 
   return (
     <div>
-      <PageHeader title="Detalle de cita" showBack backTo="/citas" />
-      <DataCard title="Datos de la cita" items={items} />
-      {c.id_paciente && (
-        <div
-          style={{
-            margin: '0.75rem 0 1.25rem',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '0.5rem',
-          }}
-        >
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate(`/pacientes/${c.id_paciente}`)}
-          >
-            Ver paciente
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => navigate(`/citas?paciente=${c.id_paciente}`)}
-          >
-            Ver citas del paciente
-          </Button>
-        </div>
-      )}
-
-      {c.estado === 'atendida' && <CitaConsultaResumen cita={c} />}
-
-      {canEditCita && !citaCerradaParaAcciones && (
-        <DataCard title="Cambiar estado">
-          {saveError && (
-            <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>
-              {saveError}
-            </p>
-          )}
-          <div className="form-row-inline">
-            <div style={{ minWidth: 180 }}>
-              <Select
-                label="Nuevo estado"
-                value={estadoSelected}
-                onChange={setEstadoSelected}
-                options={ESTADOS_OPCIONES}
-                style={{ marginBottom: 0 }}
-              />
-            </div>
-            <div style={{ flex: '1 1 200px', minWidth: 180 }}>
-              <Input
-                label="Observaciones (opcional)"
-                value={observaciones}
-                onChange={(e) => setObservaciones(e.target.value.slice(0, 2000))}
-                placeholder="Observaciones"
-                maxLength={2000}
-                style={{ marginBottom: 0 }}
-              />
-            </div>
-            <Button
-              variant="primary"
-              type="button"
-              disabled={saving || estadoSelected === (c.estado ?? '')}
-              onClick={handleCambiarEstado}
+      <PageHeader title={esAtendida ? 'Nota médica' : 'Detalle de cita'} showBack backTo="/citas" />
+      {esAtendida ? (
+        <CitaConsultaResumen cita={c} />
+      ) : (
+        <>
+          {itemsDatosCita && <DataCard title="Datos de la cita" items={itemsDatosCita} />}
+          {c.id_paciente && (
+            <div
+              style={{
+                margin: '0.75rem 0 1.25rem',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '0.5rem',
+              }}
             >
-              {saving ? 'Guardando…' : 'Actualizar estado'}
-            </Button>
-          </div>
-        </DataCard>
-      )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate(`/pacientes/${c.id_paciente}`)}
+              >
+                Ver paciente
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => navigate(`/citas?paciente=${c.id_paciente}`)}
+              >
+                Ver citas del paciente
+              </Button>
+            </div>
+          )}
 
-      {canEditCita && (c.estado === 'pendiente' || c.estado === 'no_asistida') && (
-        <Card style={{ marginTop: '1.5rem' }}>
-          <h2 style={{ margin: '0 0 1rem', fontSize: '1.15rem', color: 'var(--color-primario)' }}>
-            Registrar datos de la cita
-          </h2>
-          <p style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
-            Flujo guiado paso a paso con guardado progresivo.
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-            <Button variant="primary" type="button" onClick={() => setWizardModalOpen(true)}>
-              Registrar datos de la cita
-            </Button>
-            <Button variant="outline" type="button" onClick={() => { setSoloSignosError(''); setSoloSignosForm(INITIAL_SIGNOS_VITALES); setSoloSignosOpen(true); }}>
-              Solo Agregar Signos Vitales
-            </Button>
-          </div>
-        </Card>
-      )}
+          {canEditCita && !citaCerradaParaAcciones && (
+            <DataCard title="Cambiar estado">
+              {saveError && (
+                <p style={{ margin: '0 0 0.75rem', color: 'var(--color-error)', fontSize: '0.9rem' }}>
+                  {saveError}
+                </p>
+              )}
+              <div className="form-row-inline">
+                <div style={{ minWidth: 180 }}>
+                  <Select
+                    label="Nuevo estado"
+                    value={estadoSelected}
+                    onChange={setEstadoSelected}
+                    options={ESTADOS_OPCIONES}
+                    style={{ marginBottom: 0 }}
+                  />
+                </div>
+                <div style={{ flex: '1 1 200px', minWidth: 180 }}>
+                  <Input
+                    label="Observaciones (opcional)"
+                    value={observaciones}
+                    onChange={(e) => setObservaciones(e.target.value.slice(0, 2000))}
+                    placeholder="Observaciones"
+                    maxLength={2000}
+                    style={{ marginBottom: 0 }}
+                  />
+                </div>
+                <Button
+                  variant="primary"
+                  type="button"
+                  disabled={saving || estadoSelected === (c.estado ?? '')}
+                  onClick={handleCambiarEstado}
+                >
+                  {saving ? 'Guardando…' : 'Actualizar estado'}
+                </Button>
+              </div>
+            </DataCard>
+          )}
 
-      {canEditCita && !citaCerradaParaAcciones && (
-        <Card style={{ marginTop: '1rem' }}>
-          <Button
-            variant="outline"
-            type="button"
-            onClick={() => {
-              setReprogramarFecha(cita?.fecha_cita ? fechaCitaApiToDatetimeLocalInput(cita.fecha_cita) : '');
-              setReprogramarMotivo('');
-              setReprogramarOpen(true);
-            }}
-          >
-            Reprogramar cita
-          </Button>
-        </Card>
+          {canEditCita && (c.estado === 'pendiente' || c.estado === 'no_asistida') && (
+            <Card style={{ marginTop: '1.5rem' }}>
+              <h2 style={{ margin: '0 0 1rem', fontSize: '1.15rem', color: 'var(--color-primario)' }}>
+                Registrar datos de la cita
+              </h2>
+              <p style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
+                Flujo guiado paso a paso con guardado progresivo.
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <Button variant="primary" type="button" onClick={() => setWizardModalOpen(true)}>
+                  Registrar datos de la cita
+                </Button>
+                <Button variant="outline" type="button" onClick={() => { setSoloSignosError(''); setSoloSignosForm(INITIAL_SIGNOS_VITALES); setSoloSignosOpen(true); }}>
+                  Solo Agregar Signos Vitales
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {canEditCita && !citaCerradaParaAcciones && (
+            <Card style={{ marginTop: '1rem' }}>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  setReprogramarFecha(cita?.fecha_cita ? fechaCitaApiToDatetimeLocalInput(cita.fecha_cita) : '');
+                  setReprogramarMotivo('');
+                  setReprogramarOpen(true);
+                }}
+              >
+                Reprogramar cita
+              </Button>
+            </Card>
+          )}
+        </>
       )}
 
       <Modal open={reprogramarOpen} onClose={() => { if (!reprogramarSaving) { setReprogramarOpen(false); setReprogramarFecha(''); setReprogramarMotivo(''); } }} title="Reprogramar cita" footer={null} width={420}>
