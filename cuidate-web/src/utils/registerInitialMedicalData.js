@@ -20,10 +20,9 @@ import { parsePositiveInt } from './params';
  * @param {string} [options.motivo]
  * @param {string} [options.diagnosticoTexto]
  * @param {Record<string, number|string>} [options.signos] - Payload de signos (ej. resultado de signosVitalesToPayload). Puede incluir peso_kg, talla_m, presion_sistolica, presion_diastolica, glucosa_mg_dl, colesterol_mg_dl, colesterol_ldl, colesterol_hdl, trigliceridos_mg_dl, hba1c_porcentaje, edad_paciente_en_medicion, medida_cintura_cm, observaciones.
- * @param {Array<number|string>} [options.comorbilidadIds]
+ * @param {Array<{ id_comorbilidad: number|string, año_diagnostico?: string|number }>} [options.comorbilidadesIniciales]
  * @param {boolean} [options.tratamientoNoFarmaco]
  * @param {boolean} [options.tratamientoFarmaco]
- * @param {string|number} [options.anioDiagnostico]
  */
 export async function registerInitialMedicalData(options) {
   const {
@@ -33,10 +32,9 @@ export async function registerInitialMedicalData(options) {
     motivo,
     diagnosticoTexto,
     signos = {},
-    comorbilidadIds = [],
+    comorbilidadesIniciales = [],
     tratamientoNoFarmaco,
     tratamientoFarmaco,
-    anioDiagnostico,
   } = options || {};
 
   const pid = parsePositiveInt(pacienteId, 0);
@@ -88,27 +86,31 @@ export async function registerInitialMedicalData(options) {
     });
   }
 
-  // 4) Comorbilidades iniciales (enfermedades crónicas)
-  if (Array.isArray(comorbilidadIds) && comorbilidadIds.length > 0) {
-    const payloads = comorbilidadIds
-      .map((cidRaw) => {
-        const cid = parsePositiveInt(cidRaw, 0);
+  // 4) Comorbilidades iniciales (enfermedades crónicas), una petición por ítem con año propio
+  if (Array.isArray(comorbilidadesIniciales) && comorbilidadesIniciales.length > 0) {
+    const payloads = comorbilidadesIniciales
+      .map((row) => {
+        const cid = parsePositiveInt(row?.id_comorbilidad, 0);
         if (cid === 0) return null;
-        return {
+        const añoRaw = row?.año_diagnostico ?? row?.ano_diagnostico;
+        const añoTrimmed =
+          añoRaw !== undefined && añoRaw !== null && String(añoRaw).trim() !== ''
+            ? String(añoRaw).trim()
+            : undefined;
+        const body = {
           id_comorbilidad: cid,
-          ano_diagnostico: anioDiagnostico || undefined,
           recibe_tratamiento_no_farmacologico: !!tratamientoNoFarmaco,
           recibe_tratamiento_farmacologico: !!tratamientoFarmaco,
           es_diagnostico_basal: true,
         };
+        if (añoTrimmed !== undefined) {
+          body.año_diagnostico = añoTrimmed;
+        }
+        return body;
       })
       .filter(Boolean);
 
-    await Promise.all(
-      payloads.map((body) =>
-        addPacienteComorbilidad(pid, body)
-      )
-    );
+    await Promise.all(payloads.map((body) => addPacienteComorbilidad(pid, body)));
   }
 }
 

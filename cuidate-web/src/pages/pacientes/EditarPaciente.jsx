@@ -12,17 +12,22 @@ import {
   createPacienteRedApoyo,
   updatePacienteRedApoyo,
   deletePacienteRedApoyo,
+  getPacienteComorbilidades,
 } from '../../api/pacienteMedicalData';
 import { getComorbilidades } from '../../api/comorbilidades';
 import {
   ENFERMEDADES_CRONICAS_KEYS,
-  ENFERMEDADES_CRONICAS_LABELS,
   getInitialEnfermedadesCronicas,
   getInitialComorbilidadIds,
+  getInitialAniosDiagnosticoPorEnfermedad,
 } from '../../constants/enfermedadesCronicas';
+import { buildComorbilidadIdsFromCatalog } from '../../utils/comorbilidadesCatalogMap';
+import { buildComorbilidadesInicialesPayload } from '../../utils/enfermedadesCronicasPayload';
+import { hydrateEnfermedadesCronicasFromPacienteRows } from '../../utils/hydrateEnfermedadesCronicasForm';
 import { createEmptyRedApoyoItem } from '../../constants/redApoyo';
 import RedApoyoFormFields from '../../components/pacientes/RedApoyoFormFields';
 import PacienteEditSection from '../../components/pacientes/edit/PacienteEditSection';
+import EnfermedadesCronicasFormBlock from '../../components/pacientes/EnfermedadesCronicasFormBlock';
 import { registerInitialMedicalData } from '../../utils/registerInitialMedicalData';
 import { adminResetPatientPin } from '../../api/auth';
 import { useAuthStore } from '../../stores/authStore';
@@ -97,8 +102,9 @@ export default function EditarPaciente() {
   const [enfermedadesCronicas, setEnfermedadesCronicas] = useState(getInitialEnfermedadesCronicas);
   const [tratamientoNoFarmaco, setTratamientoNoFarmaco] = useState(false);
   const [tratamientoFarmaco, setTratamientoFarmaco] = useState(false);
-  const [anioDiagnostico, setAnioDiagnostico] = useState('');
-  const [catalogoComorbilidades, setCatalogoComorbilidades] = useState([]);
+  const [aniosDiagnosticoPorEnfermedad, setAniosDiagnosticoPorEnfermedad] = useState(
+    getInitialAniosDiagnosticoPorEnfermedad
+  );
   const [comorbilidadIds, setComorbilidadIds] = useState(getInitialComorbilidadIds);
 
   const [staffPinNew, setStaffPinNew] = useState('');
@@ -171,20 +177,22 @@ export default function EditarPaciente() {
         enfermedadesCronicas,
         tratamientoNoFarmaco,
         tratamientoFarmaco,
-        anioDiagnostico,
+        aniosDiagnosticoPorEnfermedad,
       }),
-    [enfermedadesCronicas, tratamientoNoFarmaco, tratamientoFarmaco, anioDiagnostico]
+    [enfermedadesCronicas, tratamientoNoFarmaco, tratamientoFarmaco, aniosDiagnosticoPorEnfermedad]
   );
 
   const load = useCallback(async () => {
     if (parsedId === 0) return;
     setLoading(true);
     try {
-      const [p, mods, insts, redRes] = await Promise.all([
+      const [p, mods, insts, redRes, catalogList, comRes] = await Promise.all([
         getPacienteById(parsedId),
         getModulos(),
         getInstitucionesSalud(),
         getPacienteRedApoyo(parsedId, { limit: 50 }).catch(() => ({ data: [], total: 0 })),
+        getComorbilidades().catch(() => []),
+        getPacienteComorbilidades(parsedId, { limit: 100 }).catch(() => ({ data: [], total: 0 })),
       ]);
       if (!p || typeof p !== 'object') {
         setPaciente(null);
@@ -207,11 +215,18 @@ export default function EditarPaciente() {
               parentesco: String(c.parentesco ?? '').trim(),
             }))
           : [createEmptyRedApoyoItem()];
-      if (redList.length > 0) {
-        setRedApoyoList(normalizedRedList);
-      } else {
-        setRedApoyoList(normalizedRedList);
-      }
+      setRedApoyoList(normalizedRedList);
+
+      const catalogArr = Array.isArray(catalogList) ? catalogList : [];
+      const idMap = buildComorbilidadIdsFromCatalog(catalogArr);
+      setComorbilidadIds(idMap);
+
+      const comRows = Array.isArray(comRes?.data) ? comRes.data : [];
+      const hydrated = hydrateEnfermedadesCronicasFromPacienteRows(comRows, idMap);
+      setEnfermedadesCronicas(hydrated.enfermedadesCronicas);
+      setAniosDiagnosticoPorEnfermedad(hydrated.aniosDiagnosticoPorEnfermedad);
+      setTratamientoNoFarmaco(hydrated.tratamientoNoFarmaco);
+      setTratamientoFarmaco(hydrated.tratamientoFarmaco);
 
       const tel = p.numero_celular ?? p.telefono ?? '';
       const formValues = {
@@ -234,10 +249,10 @@ export default function EditarPaciente() {
       redApoyoLastSavedRef.current = JSON.stringify(normalizedRedList);
       primeraConsultaLastSavedRef.current = JSON.stringify({ enabled: false, data: primeraConsulta });
       cronicasLastSavedRef.current = JSON.stringify({
-        enfermedadesCronicas: getInitialEnfermedadesCronicas(),
-        tratamientoNoFarmaco: false,
-        tratamientoFarmaco: false,
-        anioDiagnostico: '',
+        enfermedadesCronicas: hydrated.enfermedadesCronicas,
+        tratamientoNoFarmaco: hydrated.tratamientoNoFarmaco,
+        tratamientoFarmaco: hydrated.tratamientoFarmaco,
+        aniosDiagnosticoPorEnfermedad: hydrated.aniosDiagnosticoPorEnfermedad,
       });
       skipAutosaveRef.current = { general: true, redApoyo: true, primeraConsulta: true, cronicas: true };
       initializedRef.current = true;
@@ -258,35 +273,6 @@ export default function EditarPaciente() {
       .then((data) => setDoctores(Array.isArray(data) ? data : []))
       .catch(() => setDoctores([]))
       .finally(() => setLoadingDoctores(false));
-    getComorbilidades()
-      .then((list) => {
-        const arr = Array.isArray(list) ? list : [];
-        setCatalogoComorbilidades(arr);
-        const findByKeyword = (keyword) => {
-          const k = keyword.toLowerCase();
-          const item = arr.find((c) => {
-            const nombre = (c.nombre_comorbilidad || c.nombre || '').toLowerCase();
-            return nombre.includes(k);
-          });
-          return item?.id_comorbilidad ?? item?.id ?? null;
-        };
-        setComorbilidadIds({
-          diabetes: findByKeyword('diab'),
-          hipertension: findByKeyword('hipertens'),
-          obesidad: findByKeyword('obes'),
-          dislipidemia: findByKeyword('dislipid') || findByKeyword('colesterol'),
-          enfermedad_renal_cronica: findByKeyword('renal') || findByKeyword('erc'),
-          epoc: findByKeyword('epoc'),
-          enfermedad_cardiovascular: findByKeyword('cardiovascular') || findByKeyword('corazón'),
-          tuberculosis: findByKeyword('tubercul'),
-          asma: findByKeyword('asma'),
-          tabaquismo: findByKeyword('tabaqu'),
-          otro: null,
-        });
-      })
-      .catch(() => {
-        setCatalogoComorbilidades([]);
-      });
   }, []);
 
   const setSectionStatusValue = useCallback((section, status) => {
@@ -295,6 +281,17 @@ export default function EditarPaciente() {
 
   const toggleSection = useCallback((section) => {
     setSectionOpen((prev) => ({ ...prev, [section]: !prev[section] }));
+  }, []);
+
+  const handleEnfermedadCronicaChange = useCallback((key, checked) => {
+    setEnfermedadesCronicas((prev) => ({ ...prev, [key]: checked }));
+    if (!checked) {
+      setAniosDiagnosticoPorEnfermedad((prev) => ({ ...prev, [key]: '' }));
+    }
+  }, []);
+
+  const handleAnioDiagnosticoChange = useCallback((key, value) => {
+    setAniosDiagnosticoPorEnfermedad((prev) => ({ ...prev, [key]: value }));
   }, []);
 
   const saveGeneralSection = useCallback(async () => {
@@ -492,12 +489,11 @@ export default function EditarPaciente() {
         const doctorId = parseInt(primeraConsulta.id_doctor, 10) || undefined;
         const fecha = (primeraConsulta.fecha_cita || '').trim() || undefined;
 
-        const selectedComorbilidadIds = [];
-        ENFERMEDADES_CRONICAS_KEYS.forEach((key) => {
-          if (enfermedadesCronicas[key] && comorbilidadIds[key]) {
-            selectedComorbilidadIds.push(comorbilidadIds[key]);
-          }
-        });
+        const comorbilidadesIniciales = buildComorbilidadesInicialesPayload(
+          enfermedadesCronicas,
+          comorbilidadIds,
+          aniosDiagnosticoPorEnfermedad
+        );
 
         try {
           await registerInitialMedicalData({
@@ -513,10 +509,9 @@ export default function EditarPaciente() {
               presion_diastolica: primeraConsulta.presion_diastolica,
               glucosa_mg_dl: primeraConsulta.glucosa_mg_dl,
             },
-            comorbilidadIds: selectedComorbilidadIds,
+            comorbilidadesIniciales,
             tratamientoNoFarmaco,
             tratamientoFarmaco,
-            anioDiagnostico,
           });
         } catch (e) {
           console.error('Error al registrar datos médicos iniciales en edición', e);
@@ -889,50 +884,17 @@ export default function EditarPaciente() {
             open={sectionOpen[SECTION_KEYS.CRONICAS]}
             onToggle={toggleSection}
           >
-            <p style={{ margin: '0 0 0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
-              Marca las enfermedades crónicas principales para registrar comorbilidades adicionales de este paciente.
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.75rem' }}>
-              {ENFERMEDADES_CRONICAS_KEYS.map((key) => (
-                <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={!!enfermedadesCronicas[key]}
-                    onChange={(e) =>
-                      setEnfermedadesCronicas((prev) => ({ ...prev, [key]: e.target.checked }))
-                    }
-                  />
-                  <span>{ENFERMEDADES_CRONICAS_LABELS[key] ?? key}</span>
-                </label>
-              ))}
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.75rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={tratamientoNoFarmaco}
-                  onChange={(e) => setTratamientoNoFarmaco(e.target.checked)}
-                />
-                <span>Tratamiento no farmacológico</span>
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={tratamientoFarmaco}
-                  onChange={(e) => setTratamientoFarmaco(e.target.checked)}
-                />
-                <span>Tratamiento farmacológico</span>
-              </label>
-            </div>
-            <div style={{ maxWidth: 220, marginBottom: '1rem' }}>
-              <Input
-                label="Año de diagnóstico (opcional)"
-                type="number"
-                placeholder="Ej. 2020"
-                value={anioDiagnostico}
-                onChange={(e) => setAnioDiagnostico(e.target.value)}
-              />
-            </div>
+            <EnfermedadesCronicasFormBlock
+              introText="Marca las enfermedades crónicas principales para registrar comorbilidades adicionales de este paciente. Puedes indicar un año de diagnóstico distinto para cada una."
+              enfermedadesCronicas={enfermedadesCronicas}
+              onEnfermedadChange={handleEnfermedadCronicaChange}
+              aniosDiagnosticoPorEnfermedad={aniosDiagnosticoPorEnfermedad}
+              onAnioDiagnosticoChange={handleAnioDiagnosticoChange}
+              tratamientoNoFarmaco={tratamientoNoFarmaco}
+              tratamientoFarmaco={tratamientoFarmaco}
+              onTratamientoNoFarmacoChange={setTratamientoNoFarmaco}
+              onTratamientoFarmacoChange={setTratamientoFarmaco}
+            />
           </PacienteEditSection>
 
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>

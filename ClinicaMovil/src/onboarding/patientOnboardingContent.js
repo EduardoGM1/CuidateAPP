@@ -55,15 +55,6 @@ export const PATIENT_STACK_TOURS = {
       },
     ],
   },
-  HistorialMedico: {
-    steps: [
-      {
-        title: 'Historial',
-        body:
-          'Aquí aparece lo que tu hospital haya registrado sobre tus consultas y tu historial. Si falta algo, pregunta en recepción o con tu médico.',
-      },
-    ],
-  },
   GraficosEvolucion: {
     steps: [
       {

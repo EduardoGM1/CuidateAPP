@@ -40,7 +40,6 @@ import GraficosEvolucion from '../screens/admin/GraficosEvolucion';
 import ListaPacientesDoctor from '../screens/doctor/ListaPacientesDoctor';
 import ReportesAdmin from '../screens/admin/ReportesAdmin';
 import ReportesDoctor from '../screens/doctor/ReportesDoctor';
-import HistorialMedicoDoctor from '../screens/doctor/HistorialMedicoDoctor';
 import GestionSolicitudesReprogramacion from '../screens/doctor/GestionSolicitudesReprogramacion';
 import ChatPaciente from '../screens/doctor/ChatPaciente';
 import ListaChats from '../screens/doctor/ListaChats';
@@ -66,7 +65,7 @@ import {
 } from '../onboarding/professionalOnboardingContent';
 
 // Pantallas profesionales (placeholder por ahora)
-const GestionScreen = ({ navigation }) => {
+const GestionScreen = ({ navigation, onBackFromSection }) => {
   const { userRole } = useAuth();
   
   // Solo administradores ven la gestión completa
@@ -75,7 +74,12 @@ const GestionScreen = ({ navigation }) => {
   }
   
   // Doctores ven la lista de sus pacientes con filtros
-  return <ListaPacientesDoctor navigation={navigation} />;
+  return (
+    <ListaPacientesDoctor
+      navigation={navigation}
+      onEmbeddedSectionBack={onBackFromSection}
+    />
+  );
 };
 
 const MensajesScreen = ({ navigation, onBackFromSection }) => (
@@ -223,7 +227,6 @@ const ACCESOS_RAPIDOS_DOCTOR = [
   { label: 'Nuevo Paciente', icon: '➕', screen: 'AgregarPaciente' },
   { label: 'Reportes', icon: '📊', screen: 'ReportesDoctor' },
   { label: 'Tickets Soporte', icon: '🎫', screen: 'TicketsSoporte' },
-  { label: 'Historial Médico', icon: '📋', screen: 'HistorialMedicoDoctor' },
   { label: 'Solicitudes reprogramación', icon: '🔄', screen: 'GestionSolicitudesReprogramacion' },
   { label: 'Notificaciones', icon: '🔔', screen: 'HistorialNotificaciones' },
 ];
@@ -352,7 +355,12 @@ const MainScreenWithMenu = ({ navigation }) => {
       {/* Contenido según sección */}
       <View style={styles.mainContent}>
         {seccion === 'Dashboard' && <DashboardSelector navigation={navigation} />}
-        {seccion === 'Gestion' && <GestionScreen navigation={navigation} />}
+        {seccion === 'Gestion' && (
+          <GestionScreen
+            navigation={navigation}
+            onBackFromSection={() => setSeccion('Dashboard')}
+          />
+        )}
         {seccion === 'Mensajes' && <MensajesScreen navigation={navigation} onBackFromSection={() => setSeccion('Dashboard')} />}
         {seccion === 'Perfil' && <PerfilScreen navigation={navigation} />}
       </View>
@@ -606,13 +614,6 @@ const NavegacionProfesional = () => {
       <Stack.Screen
         name="TicketDetalle"
         component={TicketDetalle}
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen 
-        name="HistorialMedicoDoctor" 
-        component={HistorialMedicoDoctor}
         options={{
           headerShown: false,
         }}

@@ -241,7 +241,6 @@ describe('Testing Manual - Requiere App Corriendo', () => {
     console.log('   - Presionar "Signos Vitales" → Debe abrir RegistrarSignosVitales');
     console.log('   - Presionar "Mis Citas" → Debe abrir MisCitas (placeholder)');
     console.log('   - Presionar "Mis Medicamentos" → Debe abrir MisMedicamentos (placeholder)');
-    console.log('   - Presionar "Mi Historia" → Debe abrir HistorialMedico (placeholder)');
   });
 
 });

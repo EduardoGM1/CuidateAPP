@@ -36,7 +36,7 @@ import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
 import { COLORES } from '../../utils/constantes';
 import { listActionButtonStyles } from '../../utils/sharedStyles';
 
-const ListaPacientesDoctor = ({ navigation }) => {
+const ListaPacientesDoctor = ({ navigation, onEmbeddedSectionBack }) => {
   const { userData, userRole } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredPacientes, setFilteredPacientes] = useState([]);
@@ -276,7 +276,12 @@ const ListaPacientesDoctor = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <BackHeader navigation={navigation} title="👥 Mis Pacientes" variant="professional" />
+      <BackHeader
+        navigation={navigation}
+        title="👥 Mis Pacientes"
+        variant="professional"
+        onBack={handleHeaderBack}
+      />
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.headerTextContainer}>

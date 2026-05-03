@@ -47,3 +47,12 @@ export function getInitialComorbilidadIds() {
   });
   return o;
 }
+
+/** Año de diagnóstico opcional por clave de enfermedad (string vacío = sin dato). */
+export function getInitialAniosDiagnosticoPorEnfermedad() {
+  const o = {};
+  ENFERMEDADES_CRONICAS_KEYS.forEach((k) => {
+    o[k] = '';
+  });
+  return o;
+}

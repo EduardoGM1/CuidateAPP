@@ -303,14 +303,6 @@ const DashboardPaciente = () => {
             speakText="Mis medicamentos. Ver medicamentos y horarios"
           />
 
-          <BigIconButton
-            icon="📋"
-            label="Mi Historial"
-            subLabel="Ver historial médico completo"
-            color="orange"
-            onPress={() => handleNavigate('HistorialMedico', 'mi historial médico')}
-            speakText="Ver historial médico completo"
-          />
         </View>
 
         {/* Botón de cerrar sesión */}

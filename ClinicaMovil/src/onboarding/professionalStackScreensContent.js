@@ -229,15 +229,6 @@ export const PROFESSIONAL_STACK_TOURS = {
       },
     ],
   },
-  HistorialMedicoDoctor: {
-    steps: [
-      {
-        title: 'Historial médico',
-        body:
-          'Consultas y datos clínicos según lo que tu rol te permita ver.',
-      },
-    ],
-  },
   GestionSolicitudesReprogramacion: {
     steps: [
       {

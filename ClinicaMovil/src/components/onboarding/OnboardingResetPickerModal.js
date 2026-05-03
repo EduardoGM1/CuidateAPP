@@ -44,7 +44,6 @@ const PRO_STACK_LABELS = {
   GraficosEvolucion: 'Gráficos de evolución',
   ListaPacientesDoctor: 'Mis pacientes',
   ReportesAdmin: 'Reportes',
-  HistorialMedicoDoctor: 'Historial médico (doctor)',
   GestionSolicitudesReprogramacion: 'Solicitudes de reprogramación',
   ChatPaciente: 'Chat con paciente',
   ChangePassword: 'Cambiar contraseña',
