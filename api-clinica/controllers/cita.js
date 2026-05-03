@@ -552,7 +552,19 @@ export const getCita = async (req, res) => {
   try {
     const cita = await Cita.findByPk(req.params.id, {
       include: [
-        { model: Paciente, attributes: ['nombre', 'apellido_paterno', 'fecha_nacimiento'] },
+        {
+          model: Paciente,
+          attributes: [
+            'id_paciente',
+            'nombre',
+            'apellido_paterno',
+            'apellido_materno',
+            'fecha_nacimiento',
+            'sexo',
+            'numero_expediente',
+            'codigo_paciente'
+          ]
+        },
         { model: Doctor, attributes: ['nombre', 'apellido_paterno'] },
         { model: SignoVital, as: 'SignosVitales', required: false },
         { model: Diagnostico, as: 'Diagnosticos', required: false },

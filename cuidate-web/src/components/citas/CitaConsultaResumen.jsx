@@ -5,7 +5,28 @@ import {
   getPresionValueStyle,
   getIMCValueStyle,
 } from '../../utils/vitalSignsRanges';
+import { Badge } from '../ui';
 import styles from './CitaConsultaResumen.module.css';
+
+const ESTADO_CITA_LABEL = {
+  pendiente: 'Pendiente',
+  atendida: 'Atendida',
+  no_asistida: 'No asistida',
+  reprogramada: 'Reprogramada',
+  cancelada: 'Cancelada',
+};
+
+/** Edad en años a partir de fecha de nacimiento; null si la fecha no es válida. */
+function edadAniosDesdeNacimiento(fechaNac) {
+  if (fechaNac == null || fechaNac === '') return null;
+  const birth = new Date(fechaNac);
+  if (Number.isNaN(birth.getTime())) return null;
+  const ms = Date.now() - birth.getTime();
+  if (ms < 0) return null;
+  const years = Math.floor(ms / (365.25 * 24 * 60 * 60 * 1000));
+  if (!Number.isFinite(years) || years < 0 || years > 130) return null;
+  return years;
+}
 
 function fmtText(v) {
   if (v == null || v === '') return '—';
@@ -66,21 +87,43 @@ export default function CitaConsultaResumen({ cita }) {
   const d = cita.Doctor ?? cita.doctor;
   const nombrePaciente = p ? formatNombreCompleto(p) || fmtText(cita.paciente_nombre) : fmtText(cita.paciente_nombre);
   const nombreDoctor = d ? `Dr. ${formatNombreCompleto(d)}` : fmtText(cita.doctor_nombre);
-  const expedienteRaw = p?.numero_expediente || p?.codigo_paciente || (p?.id_paciente != null ? String(p.id_paciente) : '');
+  const expedienteRaw =
+    p?.numero_expediente ||
+    p?.codigo_paciente ||
+    (p?.id_paciente != null ? String(p.id_paciente) : '') ||
+    (cita.id_paciente != null ? String(cita.id_paciente) : '');
   const expediente = sanitizeForDisplay(String(expedienteRaw).trim()) || '—';
-
-  const edadPac =
-    p?.fecha_nacimiento != null
-      ? Math.floor((Date.now() - new Date(p.fecha_nacimiento).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-      : null;
-
-  const sexo = p?.sexo === 'Mujer' ? 'F' : p?.sexo === 'Hombre' ? 'M' : p?.sexo ? String(p.sexo) : '—';
 
   const signosList = pickArray(cita, 'SignosVitales', 'signosVitales');
   const diagnosticos = pickArray(cita, 'Diagnosticos', 'diagnosticos');
   const planes = pickArray(cita, 'PlanMedicacions', 'planMedicacions');
 
   const signo = signosList[0] ?? null;
+
+  const fechaNac = p?.fecha_nacimiento ?? cita.fecha_nacimiento ?? null;
+  let edadPac = edadAniosDesdeNacimiento(fechaNac);
+  if (edadPac == null && signo?.edad_paciente_en_medicion != null && signo.edad_paciente_en_medicion !== '') {
+    const e = Number(signo.edad_paciente_en_medicion);
+    if (Number.isFinite(e) && e >= 0 && e <= 130) edadPac = Math.round(e);
+  }
+
+  const sexoRaw = p?.sexo;
+  const sexo =
+    sexoRaw === 'Mujer' || sexoRaw === 'Femenino'
+      ? 'Femenino'
+      : sexoRaw === 'Hombre' || sexoRaw === 'Masculino'
+        ? 'Masculino'
+        : sexoRaw === 'F' || sexoRaw === 'M'
+          ? sexoRaw === 'F'
+            ? 'Femenino'
+            : 'Masculino'
+          : sexoRaw
+            ? fmtText(sexoRaw)
+            : '—';
+
+  const estadoKey = String(cita.estado ?? '').toLowerCase();
+  const estadoLabel = ESTADO_CITA_LABEL[estadoKey] || sanitizeForDisplay(cita.estado) || '—';
+
   const imc = computeImc(signo);
 
   const sis = signo?.presion_sistolica;
@@ -125,7 +168,7 @@ export default function CitaConsultaResumen({ cita }) {
             <th>Nombre</th>
             <td className={styles.val}>{nombrePaciente}</td>
             <th>Edad</th>
-            <td className={styles.val}>{edadPac != null ? String(edadPac) : '—'}</td>
+            <td className={styles.val}>{edadPac != null && Number.isFinite(edadPac) ? String(edadPac) : '—'}</td>
             <th>Sexo</th>
             <td className={styles.val}>{fmtText(sexo)}</td>
           </tr>
@@ -147,6 +190,24 @@ export default function CitaConsultaResumen({ cita }) {
             <th>Motivo</th>
             <td colSpan={5} className={styles.val}>
               {fmtText(cita.motivo)}
+            </td>
+          </tr>
+          <tr>
+            <th>Estado actual</th>
+            <td colSpan={5} className={styles.val}>
+              <Badge
+                variant={
+                  estadoKey === 'atendida'
+                    ? 'success'
+                    : estadoKey === 'cancelada' || estadoKey === 'no_asistida'
+                      ? 'error'
+                      : estadoKey === 'reprogramada'
+                        ? 'warning'
+                        : 'neutral'
+                }
+              >
+                {estadoLabel}
+              </Badge>
             </td>
           </tr>
           <tr>
