@@ -18,6 +18,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --watchAll=false",
+    "test:automated": "jest --config=jest.automated.config.js --ci --watchAll=false --coverage=false",
     "test:report": "node run-tests.js",
     "test:api": "node scripts/verificar-servicios.js",
     "test:api:endpoints": "node scripts/probar-endpoints-app-movil.js",

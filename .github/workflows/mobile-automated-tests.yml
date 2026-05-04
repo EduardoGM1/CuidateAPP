@@ -1,0 +1,38 @@
+# Tests automatizados de la app móvil (React Native / Jest).
+# No requiere móvil físico ni emulador: se ejecutan en Node en GitHub Actions.
+name: App móvil — tests automatizados
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'ClinicaMovil/**'
+      - '.github/workflows/mobile-automated-tests.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'ClinicaMovil/**'
+
+jobs:
+  jest-automated-smoke:
+    name: Jest (suite CI estable)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ClinicaMovil
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Tests automatizados (revisión funcional)
+        run: npm run test:automated
