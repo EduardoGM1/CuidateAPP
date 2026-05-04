@@ -123,22 +123,67 @@ function sliceHoraHHmm(raw) {
   return s.length >= 5 ? s.slice(0, 5) : s;
 }
 
+function minutesFromMidnight(hhmm) {
+  const m = sliceHoraHHmm(hhmm);
+  if (!m) return null;
+  const [h, min] = m.split(':').map(Number);
+  if (Number.isNaN(h) || Number.isNaN(min)) return null;
+  return h * 60 + min;
+}
+
 /**
- * Horario prescripto del medicamento según PlanDetalle (campo horario o lista horarios).
+ * Lista HH:mm del plan (horarios[] o horario único). Acepta horarios serializados como string JSON.
  * @param {{ horario?: string|null, horarios?: unknown }|null|undefined} planDetalle
- * @returns {string}
+ * @returns {string[]}
  */
-export function formatHorarioPrescriptoMedicamento(planDetalle) {
-  if (planDetalle == null || typeof planDetalle !== 'object') return '—';
-  const list = planDetalle.horarios;
+export function listHorariosPrescriptosPlanDetalle(planDetalle) {
+  if (planDetalle == null || typeof planDetalle !== 'object') return [];
+  let list = planDetalle.horarios;
+  if (typeof list === 'string' && list.trim()) {
+    try {
+      const parsed = JSON.parse(list);
+      list = Array.isArray(parsed) ? parsed : null;
+    } catch {
+      list = null;
+    }
+  }
+  const parts = [];
   if (Array.isArray(list) && list.length > 0) {
-    const parts = list
-      .map((x) => sliceHoraHHmm(x))
-      .filter(Boolean);
-    return parts.length > 0 ? parts.join(', ') : '—';
+    for (const x of list) {
+      const h = sliceHoraHHmm(x);
+      if (h) parts.push(h);
+    }
   }
   const single = sliceHoraHHmm(planDetalle.horario);
-  return single ?? '—';
+  if (single) parts.push(single);
+  return [...new Set(parts)].sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Horario prescripto del medicamento según PlanDetalle (campo horario o lista horarios).
+ * Si hay varios horarios y se pasa `horaReferencia` (p. ej. hora de administración), se muestra el más cercano ese día.
+ * @param {{ horario?: string|null, horarios?: unknown }|null|undefined} planDetalle
+ * @param {string|null|undefined} [horaReferencia] - HH:mm o TIME para elegir ranura (varios horarios)
+ * @returns {string}
+ */
+export function formatHorarioPrescriptoMedicamento(planDetalle, horaReferencia = null) {
+  const parts = listHorariosPrescriptosPlanDetalle(planDetalle);
+  if (parts.length === 0) return '—';
+  if (parts.length === 1) return parts[0];
+  const refMin = minutesFromMidnight(horaReferencia);
+  if (refMin == null) return parts.join(', ');
+  let best = parts[0];
+  let bestDiff = Infinity;
+  for (const p of parts) {
+    const pm = minutesFromMidnight(p);
+    if (pm == null) continue;
+    const d = Math.abs(pm - refMin);
+    if (d < bestDiff) {
+      bestDiff = d;
+      best = p;
+    }
+  }
+  return best;
 }
 
 /**

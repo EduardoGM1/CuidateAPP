@@ -1,8 +1,90 @@
 import MedicamentoToma from '../models/MedicamentoToma.js';
 import { PlanMedicacion, PlanDetalle } from '../models/associations.js';
-import sequelize from '../config/db.js';
 import { Op } from 'sequelize';
 import logger from '../utils/logger.js';
+
+/** TIME / string → HH:mm */
+function sliceHoraHHmm(raw) {
+  if (raw == null || raw === '') return null;
+  const s = typeof raw === 'string' ? raw : String(raw);
+  return s.length >= 5 ? s.slice(0, 5) : s;
+}
+
+/** Horarios de un detalle (array, JSON string o horario único). */
+function horariosFromPlanDetalleJson(dj) {
+  const out = [];
+  let list = dj?.horarios;
+  if (typeof list === 'string' && list.trim()) {
+    try {
+      const parsed = JSON.parse(list);
+      list = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      list = [];
+    }
+  }
+  if (Array.isArray(list)) {
+    for (const x of list) {
+      const h = sliceHoraHHmm(x);
+      if (h) out.push(h);
+    }
+  }
+  const single = sliceHoraHHmm(dj?.horario);
+  if (single) out.push(single);
+  return [...new Set(out)];
+}
+
+/** Une HH:mm de todos los detalles de un plan (ordenados). */
+function mergeHorariosPlanFromDetallesRows(planId, detalleRows) {
+  const set = new Set();
+  for (const row of detalleRows) {
+    const j = row.toJSON ? row.toJSON() : row;
+    if (j.id_plan !== planId) continue;
+    horariosFromPlanDetalleJson(j).forEach((h) => set.add(h));
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
+/** Normaliza PlanDetalle en JSON de toma (horarios como string JSON → array). */
+function normalizePlanDetalleHorariosJson(planDetalle) {
+  if (!planDetalle || typeof planDetalle !== 'object') return;
+  let list = planDetalle.horarios;
+  if (typeof list === 'string' && list.trim()) {
+    try {
+      const parsed = JSON.parse(list);
+      if (Array.isArray(parsed)) planDetalle.horarios = parsed;
+    } catch {
+      /* mantener */
+    }
+  }
+}
+
+/**
+ * Si la toma no trae PlanDetalle (p. ej. id_plan_detalle null), adjunta horarios del plan.
+ * @param {Array} tomasJson - filas toJSON()
+ * @param {number[]} planIds
+ */
+async function enrichTomasPlanDetalleHorarios(tomasJson, planIds) {
+  if (!tomasJson.length || !planIds.length) return;
+  const detalleRows = await PlanDetalle.findAll({
+    where: { id_plan: { [Op.in]: planIds } },
+    attributes: ['id_plan', 'id_detalle', 'horario', 'horarios'],
+    order: [['id_plan', 'ASC'], ['id_detalle', 'ASC']]
+  });
+  const mergedByPlan = {};
+  for (const pid of planIds) {
+    mergedByPlan[pid] = mergeHorariosPlanFromDetallesRows(pid, detalleRows);
+  }
+  for (const row of tomasJson) {
+    if (row.PlanDetalle) {
+      normalizePlanDetalleHorariosJson(row.PlanDetalle);
+    } else if (row.id_plan_medicacion) {
+      const hrs = mergedByPlan[row.id_plan_medicacion];
+      if (hrs && hrs.length > 0) {
+        row.PlanDetalle = { horarios: hrs };
+      }
+    }
+  }
+}
 
 /**
  * Registrar toma de medicamento
@@ -120,7 +202,7 @@ export const getTomasByPaciente = async (req, res) => {
         },
         {
           model: PlanDetalle,
-          attributes: ['id_detalle', 'id_medicamento', 'dosis', 'frecuencia', 'horario', 'horarios'],
+          attributes: ['id_detalle', 'id_plan', 'id_medicamento', 'dosis', 'frecuencia', 'horario', 'horarios'],
           required: false
         }
       ],
@@ -128,7 +210,10 @@ export const getTomasByPaciente = async (req, res) => {
       limit: 100
     });
 
-    res.json({ success: true, data: tomas });
+    const tomasJson = tomas.map((t) => (t.toJSON ? t.toJSON() : t));
+    await enrichTomasPlanDetalleHorarios(tomasJson, planIds);
+
+    res.json({ success: true, data: tomasJson });
   } catch (error) {
     logger.error('Error obteniendo tomas de medicamento:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -156,18 +241,23 @@ export const getTomasByPlan = async (req, res) => {
       return res.status(403).json({ success: false, error: 'No autorizado' });
     }
 
+    const idPlanNum = parseInt(idPlan, 10);
     const tomas = await MedicamentoToma.findAll({
-      where: { id_plan_medicacion: parseInt(idPlan) },
+      where: { id_plan_medicacion: idPlanNum },
       include: [
         {
           model: PlanDetalle,
-          attributes: ['id_detalle', 'id_medicamento', 'dosis', 'frecuencia', 'horario', 'horarios']
+          attributes: ['id_detalle', 'id_plan', 'id_medicamento', 'dosis', 'frecuencia', 'horario', 'horarios'],
+          required: false
         }
       ],
       order: [['fecha_toma', 'DESC']]
     });
 
-    res.json({ success: true, data: tomas });
+    const tomasJson = tomas.map((t) => (t.toJSON ? t.toJSON() : t));
+    await enrichTomasPlanDetalleHorarios(tomasJson, [idPlanNum]);
+
+    res.json({ success: true, data: tomasJson });
   } catch (error) {
     logger.error('Error obteniendo tomas por plan:', error);
     res.status(500).json({ success: false, error: error.message });

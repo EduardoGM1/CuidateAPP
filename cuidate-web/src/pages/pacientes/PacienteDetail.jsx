@@ -1681,8 +1681,11 @@ export default function PacienteDetail() {
                       {tomasMedicamento.data.map((toma) => {
                         const planLabel = (medicamentos.data.find((m) => (m.id_plan ?? m.id) === toma.id_plan_medicacion)?.nombre_medicamento ?? medicamentos.data.find((m) => (m.id_plan ?? m.id) === toma.id_plan_medicacion)?.medicamento) || (toma.PlanDetalle?.Medicamento?.nombre_medicamento) || `Plan #${toma.id_plan_medicacion}`;
                         const fechaToma = toma.fecha_toma ? formatDate(toma.fecha_toma) : '—';
-                        const horaPrescripta = formatHorarioPrescriptoMedicamento(toma.PlanDetalle);
                         const horaAdministracion = formatHoraAdministracionRegistrada(toma.hora_toma);
+                        const horaPrescripta = formatHorarioPrescriptoMedicamento(
+                          toma.PlanDetalle,
+                          toma.hora_toma
+                        );
                         return (
                           <tr key={toma.id_toma} style={{ borderBottom: '1px solid var(--color-borde-claro)' }}>
                             <td style={{ padding: '0.5rem 0.5rem 0.5rem 0' }}>{fechaToma}</td>
