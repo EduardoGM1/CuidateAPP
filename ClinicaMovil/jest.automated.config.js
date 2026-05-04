@@ -17,5 +17,6 @@ module.exports = {
     '<rootDir>/src/__tests__/signos-vitales-create.test.js',
     '<rootDir>/src/__tests__/ChatWebSocket.test.js',
     '<rootDir>/src/__tests__/DetallePaciente-Formularios.test.js',
+    '<rootDir>/src/hooks/__tests__/useWizardStepNavigation.test.js',
   ],
 };

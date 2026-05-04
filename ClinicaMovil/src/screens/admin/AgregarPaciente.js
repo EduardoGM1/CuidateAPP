@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import WizardProgressStepper from '../../components/wizard/WizardProgressStepper';
+import { getPacienteRegistroHeaderTitle } from '../../constants/pacienteRegistroWizard';
+import { useWizardStepNavigation } from '../../hooks/useWizardStepNavigation';
 import {
   View,
   Text,
@@ -92,7 +95,12 @@ const AgregarPaciente = () => {
 
   // Estados locales
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1); // 1: PIN, 2: Datos paciente, 3: Red apoyo, 4: Primera consulta
+  const {
+    currentStep,
+    maxStepReached,
+    goForwardToStep,
+    selectVisitedStep,
+  } = useWizardStepNavigation({ initialStep: 1 });
   const [userData, setUserData] = useState(null); // Datos del usuario creado
   const [vacunaLugarDropdownIndex, setVacunaLugarDropdownIndex] = useState(null);
   
@@ -1060,12 +1068,7 @@ const AgregarPaciente = () => {
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         
-        <Text style={styles.headerTitle}>
-          {currentStep === 1 ? 'Configurar PIN' : 
-           currentStep === 2 ? 'Datos del Paciente' : 
-           currentStep === 3 ? 'Red de Apoyo' :
-           'Primera Consulta'}
-        </Text>
+        <Text style={styles.headerTitle}>{getPacienteRegistroHeaderTitle(currentStep)}</Text>
         
         <View style={styles.headerButtons}>
           <TouchableOpacity 
@@ -1088,24 +1091,11 @@ const AgregarPaciente = () => {
         </View>
       </View>
 
-      {/* Indicador de progreso */}
-      <View style={styles.progressContainer}>
-        <View style={[styles.progressStep, currentStep >= 1 && styles.progressStepActive]}>
-          <Text style={[styles.progressStepText, currentStep >= 1 && styles.progressStepTextActive]}>1</Text>
-        </View>
-        <View style={[styles.progressLine, currentStep >= 2 && styles.progressLineActive]} />
-        <View style={[styles.progressStep, currentStep >= 2 && styles.progressStepActive]}>
-          <Text style={[styles.progressStepText, currentStep >= 2 && styles.progressStepTextActive]}>2</Text>
-        </View>
-        <View style={[styles.progressLine, currentStep >= 3 && styles.progressLineActive]} />
-        <View style={[styles.progressStep, currentStep >= 3 && styles.progressStepActive]}>
-          <Text style={[styles.progressStepText, currentStep >= 3 && styles.progressStepTextActive]}>3</Text>
-        </View>
-        <View style={[styles.progressLine, currentStep >= 4 && styles.progressLineActive]} />
-        <View style={[styles.progressStep, currentStep >= 4 && styles.progressStepActive]}>
-          <Text style={[styles.progressStepText, currentStep >= 4 && styles.progressStepTextActive]}>4</Text>
-        </View>
-      </View>
+      <WizardProgressStepper
+        currentStep={currentStep}
+        maxStepReached={maxStepReached}
+        onStepPress={selectVisitedStep}
+      />
 
       {/* Contenido */}
       <KeyboardAvoidingView 
@@ -1153,7 +1143,7 @@ const AgregarPaciente = () => {
 
               <TouchableOpacity
                 style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
-                onPress={() => setCurrentStep(2)}
+                onPress={() => goForwardToStep(2)}
                 disabled={isSubmitting}
               >
                 <Text style={styles.submitButtonText}>Continuar a Datos del Paciente →</Text>
@@ -1355,7 +1345,7 @@ const AgregarPaciente = () => {
 
               <TouchableOpacity
                 style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
-                onPress={() => setCurrentStep(3)}
+                onPress={() => goForwardToStep(3)}
                 disabled={isSubmitting}
               >
                 <Text style={styles.submitButtonText}>Continuar a Red de Apoyo →</Text>
@@ -1446,7 +1436,7 @@ const AgregarPaciente = () => {
 
               <TouchableOpacity
                 style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
-                onPress={() => setCurrentStep(4)}
+                onPress={() => goForwardToStep(4)}
                 disabled={isSubmitting}
               >
                 <Text style={styles.submitButtonText}>Continuar a Primera Consulta →</Text>
@@ -2383,45 +2373,6 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
-  },
-
-  // Indicador de progreso
-  progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    backgroundColor: COLORES.FONDO_CARD,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORES.BORDE_CLARO,
-  },
-  progressStep: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORES.BORDE_CLARO,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  progressStepActive: {
-    backgroundColor: COLORES.PRIMARIO,
-  },
-  progressStepText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORES.TEXTO_SECUNDARIO,
-  },
-  progressStepTextActive: {
-    color: COLORES.BLANCO,
-  },
-  progressLine: {
-    width: 40,
-    height: 2,
-    backgroundColor: COLORES.BORDE_CLARO,
-    marginHorizontal: 8,
-  },
-  progressLineActive: {
-    backgroundColor: COLORES.PRIMARIO,
   },
 
   // Contenido
