@@ -39,7 +39,7 @@ export async function responderSolicitudReprogramacion(idCita, solicitudId, body
   if (!accion) throw new Error('accion debe ser "aprobar" o "rechazar"');
   const payload = { accion };
   if (body?.respuesta_doctor != null) payload.respuesta_doctor = String(body.respuesta_doctor).slice(0, 1000);
-  if (body?.fecha_reprogramada != null) payload.fecha_reprogramada = String(body.fecha_reprogramada).slice(0, 30);
+  if (body?.fecha_reprogramada != null) payload.fecha_reprogramada = String(body.fecha_reprogramada).slice(0, 48);
   const { data } = await client.put(`${BASE}/${cid}/solicitud-reprogramacion/${sid}`, payload);
   return norm(data) ?? data;
 }

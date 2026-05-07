@@ -42,6 +42,28 @@ const Input = forwardRef(function Input(
     ? type
     : 'text';
   const isPassword = safeType === 'password';
+  const isDatetimeLocal = safeType === 'datetime-local';
+
+  const {
+    style: restInputStyle,
+    className: restInputClassName,
+    maxLength: _omitMaxForNative,
+    ...restForAntOrNative
+  } = restWithoutRef;
+
+  const datetimeLocalStyle = {
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: '4px 11px',
+    fontSize: 'var(--text-base, 14px)',
+    lineHeight: 1.5715,
+    borderRadius: 'var(--radius, 6px)',
+    border: `1px solid ${error ? 'var(--color-error)' : 'var(--color-borde-claro)'}`,
+    background: 'var(--color-fondo-card)',
+    color: 'var(--color-texto-primario)',
+    outline: 'none',
+    ...restInputStyle,
+  };
 
   return (
     <div className={className} style={{ marginBottom: '0.75rem' }}>
@@ -67,7 +89,19 @@ const Input = forwardRef(function Input(
           autoComplete={autoComplete}
           maxLength={maxLength}
           status={error ? 'error' : ''}
-          {...restWithoutRef}
+          style={restInputStyle}
+          className={restInputClassName}
+          {...restForAntOrNative}
+        />
+      ) : isDatetimeLocal ? (
+        <input
+          ref={mergedRef}
+          id={inputId}
+          type="datetime-local"
+          autoComplete={autoComplete}
+          className={restInputClassName}
+          style={datetimeLocalStyle}
+          {...restForAntOrNative}
         />
       ) : (
         <AntInput
@@ -77,7 +111,9 @@ const Input = forwardRef(function Input(
           autoComplete={autoComplete}
           maxLength={maxLength}
           status={error ? 'error' : ''}
-          {...restWithoutRef}
+          style={restInputStyle}
+          className={restInputClassName}
+          {...restForAntOrNative}
         />
       )}
       {error && (

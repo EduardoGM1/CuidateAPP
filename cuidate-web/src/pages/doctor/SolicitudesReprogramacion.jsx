@@ -6,6 +6,7 @@ import { STORAGE_KEYS } from '../../utils/constants';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, LoadingSpinner, EmptyState, Badge, Modal, Input } from '../../components/ui';
 import { formatDateTime, formatDate } from '../../utils/format';
+import { fechaCitaApiToDatetimeLocalInput, fechaCitaDatetimeLocalToApi } from '../../utils/fechaCita';
 
 function textoCitaSolicitud(s) {
   const estado = (s.estado || '').toLowerCase();
@@ -148,7 +149,20 @@ export default function SolicitudesReprogramacion() {
                   </div>
                   {isPendiente && (
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <Button variant="primary" disabled={acting === s.id_solicitud} onClick={() => setAprobarModal({ solicitud: s, fecha: '', respuesta: '' })}>Aprobar</Button>
+                      <Button
+                        variant="primary"
+                        disabled={acting === s.id_solicitud}
+                        onClick={() =>
+                          setAprobarModal({
+                            solicitud: s,
+                            fecha:
+                              fechaCitaApiToDatetimeLocalInput(s.fecha_cita_original || s.fecha_efectiva_cita) || '',
+                            respuesta: '',
+                          })
+                        }
+                      >
+                        Aprobar
+                      </Button>
                       <Button variant="danger" disabled={acting === s.id_solicitud} onClick={() => setRechazarModal({ solicitud: s, respuesta: '' })}>Rechazar</Button>
                     </div>
                   )}
@@ -165,10 +179,29 @@ export default function SolicitudesReprogramacion() {
             <p style={{ marginBottom: '1rem', color: 'var(--color-texto-secundario)' }}>
               {sanitizeForDisplay(aprobarModal.solicitud.paciente_nombre)} — {textoCitaSolicitud(aprobarModal.solicitud)}
             </p>
-            <Input label="Nueva fecha (opcional)" type="date" value={aprobarModal.fecha} onChange={(e) => setAprobarModal((m) => ({ ...m, fecha: e.target.value }))} />
+            <Input
+              label="Nueva fecha y hora *"
+              type="datetime-local"
+              value={aprobarModal.fecha}
+              onChange={(e) => setAprobarModal((m) => ({ ...m, fecha: e.target.value }))}
+            />
             <Input label="Respuesta para el paciente (opcional)" value={aprobarModal.respuesta} onChange={(e) => setAprobarModal((m) => ({ ...m, respuesta: e.target.value }))} placeholder="Ej: Aprobado para el nuevo horario" />
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-              <Button variant="primary" disabled={acting} onClick={() => handleResponder(aprobarModal.solicitud, 'aprobar', { fecha_reprogramada: aprobarModal.fecha || undefined, respuesta_doctor: aprobarModal.respuesta || undefined })}>
+              <Button
+                variant="primary"
+                disabled={acting}
+                onClick={() => {
+                  const raw = aprobarModal.fecha?.trim();
+                  const fechaIso =
+                    raw != null && raw !== ''
+                      ? fechaCitaDatetimeLocalToApi(raw.length <= 10 ? `${raw}T12:00:00` : raw)
+                      : undefined;
+                  handleResponder(aprobarModal.solicitud, 'aprobar', {
+                    fecha_reprogramada: fechaIso,
+                    respuesta_doctor: aprobarModal.respuesta || undefined,
+                  });
+                }}
+              >
                 {acting ? 'Procesando…' : 'Aprobar'}
               </Button>
               <Button variant="outline" onClick={() => setAprobarModal(null)}>Cancelar</Button>
