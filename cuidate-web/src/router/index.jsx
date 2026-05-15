@@ -8,6 +8,8 @@ import Login from '../pages/Login';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
 import ConfirmarCuenta from '../pages/ConfirmarCuenta';
+import AvisoPrivacidad from '../pages/legal/AvisoPrivacidad';
+import PrivacyConsentGate from '../components/legal/PrivacyConsentGate';
 import * as P from './lazyPages';
 
 const router = createBrowserRouter(
@@ -16,11 +18,14 @@ const router = createBrowserRouter(
     { path: '/forgot-password', element: <ForgotPassword /> },
     { path: '/reset-password', element: <ResetPassword /> },
     { path: '/confirmar-cuenta', element: <ConfirmarCuenta /> },
+    { path: '/aviso-privacidad', element: <AvisoPrivacidad /> },
     {
       path: '/',
       element: (
         <ProtectedRoute>
-          <MainLayout />
+          <PrivacyConsentGate>
+            <MainLayout />
+          </PrivacyConsentGate>
         </ProtectedRoute>
       ),
       children: [

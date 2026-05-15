@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { STORAGE_KEYS, AUTH_PERSIST_KEY, ROLES } from '../utils/constants';
+import { clearPrivacyConsent } from '../utils/privacyConsent';
 import { formatNombreCompleto } from '../utils/format';
 import * as authApi from '../api/auth';
 import { disconnect } from '../api/socket';
@@ -42,6 +43,7 @@ export const useAuthStore = create(
       logout: () => {
         disconnect();
         authApi.logout();
+        clearPrivacyConsent();
         set({ token: null, user: null });
       },
 

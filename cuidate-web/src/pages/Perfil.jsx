@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { changePasswordSchema } from '../lib/validations/changePasswordSchema';
@@ -306,6 +307,17 @@ export default function Perfil() {
             {isSubmitting ? 'Guardando…' : 'Cambiar contraseña'}
           </Button>
         </form>
+        <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--color-borde-claro)' }}>
+          <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem', color: 'var(--color-texto-primario)' }}>
+            Privacidad
+          </h3>
+          <p style={{ margin: '0 0 0.75rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
+            Consulta el aviso de privacidad y el tratamiento de tus datos personales y de salud.
+          </p>
+          <Link to="/aviso-privacidad" style={{ color: 'var(--color-primario)', fontWeight: 600 }}>
+            Ver Aviso de Privacidad
+          </Link>
+        </div>
         <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--color-borde-claro)' }}>
           <p style={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
             ¿Quieres repetir las guías de la aplicación?
