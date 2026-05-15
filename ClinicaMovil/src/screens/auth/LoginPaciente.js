@@ -17,6 +17,7 @@ import Logger from '../../services/logger';
 import { useAuth } from '../../context/AuthContext';
 import { sanitizePatientId } from '../../utils/patientIdValidator';
 import { COLORES, NOMBRE_APP } from '../../utils/constantes';
+import PrivacyFooterLink from '../../components/legal/PrivacyFooterLink';
 
 const { width, height } = Dimensions.get('window');
 
@@ -252,6 +253,7 @@ const LoginPaciente = ({ navigation, route }) => {
             <Text style={styles.loadingText}>🔐 Autenticando...</Text>
           </View>
         )}
+        <PrivacyFooterLink navigation={navigation} />
       </View>
     </SafeAreaView>
   );

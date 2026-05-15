@@ -26,7 +26,6 @@ import useGestion from '../../hooks/useGestion';
 import Logger from '../../services/logger';
 import { COLORES, NETWORK_STAGGER } from '../../utils/constantes';
 import { doctorAuthService } from '../../api/authService';
-import { generarDatosDoctor } from '../../services/testDataService';
 
 /**
  * Pantalla para agregar un nuevo doctor
@@ -427,35 +426,14 @@ const AgregarDoctor = () => {
             // PARTE 2: Datos del Doctor
             <View style={styles.formContainer}>
               <View style={styles.stepContainer}>
-                <View style={styles.stepHeaderWithButton}>
-                  <View style={styles.stepHeaderText}>
-                    <Text style={styles.stepTitle}>👨‍⚕️ Datos del Doctor</Text>
-                    <Text style={styles.stepDescription}>
-                      Completa la información profesional del doctor
-                    </Text>
-                    
-                    {/* Indicador de usuario creado */}
-                    <View style={styles.userCreatedIndicator}>
-                      <Text style={styles.userCreatedText}>✅ Usuario creado: {userData?.email}</Text>
-                    </View>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.fillDataButton}
-                    onPress={() => {
-                      const testData = generarDatosDoctor(modulos && modulos.length > 0 ? modulos[0].id_modulo : null);
-                      setFormData(prev => ({
-                        ...prev,
-                        ...testData
-                      }));
-                      Alert.alert(
-                        'Datos de Prueba Cargados',
-                        'El formulario ha sido llenado con datos aleatorios para testing.',
-                        [{ text: 'OK' }]
-                      );
-                    }}
-                  >
-                    <Text style={styles.fillDataButtonText}>🎲</Text>
-                  </TouchableOpacity>
+                <Text style={styles.stepTitle}>👨‍⚕️ Datos del Doctor</Text>
+                <Text style={styles.stepDescription}>
+                  Completa la información profesional del doctor
+                </Text>
+
+                {/* Indicador de usuario creado */}
+                <View style={styles.userCreatedIndicator}>
+                  <Text style={styles.userCreatedText}>✅ Usuario creado: {userData?.email}</Text>
                 </View>
               </View>
 
@@ -748,29 +726,6 @@ const styles = StyleSheet.create({
     color: COLORES.PRIMARIO,
     fontWeight: '500',
   },
-  stepHeaderWithButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  stepHeaderText: {
-    flex: 1,
-  },
-  fillDataButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORES.PRIMARIO,
-    marginLeft: 12,
-  },
-  fillDataButtonText: {
-    fontSize: 18,
-  },
-
   // Campos del formulario
   fieldContainer: {
     marginBottom: 16,

@@ -398,13 +398,6 @@ jest.mock('../services/logger', () => ({
   }
 }));
 
-// Mock de servicios de test data
-jest.mock('../services/testDataService', () => ({
-  generarDatosSignosVitales: jest.fn(() => ({})),
-  generarDatosDiagnostico: jest.fn(() => ({})),
-  generarDatosCita: jest.fn(() => ({})),
-}));
-
 // Mock de utilidades de validación - IMPORTANTE: debe estar antes de cualquier importación de DetallePaciente
 const mockValidateCita = jest.fn((data) => {
   // Validación real simplificada para tests

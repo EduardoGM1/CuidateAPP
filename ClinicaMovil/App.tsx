@@ -51,6 +51,7 @@ import NavegacionAuth from './src/navigation/NavegacionAuth';
 import NavegacionProfesional from './src/navigation/NavegacionProfesional';
 import NavegacionPaciente from './src/navigation/NavegacionPaciente';
 import NavOnboardingController from './src/components/onboarding/NavOnboardingController';
+import PrivacyConsentGate from './src/components/legal/PrivacyConsentGate';
 import Logger from './src/services/logger';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import firebaseInitService from './src/services/firebaseInitService';
@@ -88,10 +89,18 @@ const AppNavigator = () => {
   // Usuario autenticado - navegación según rol
   if (isPacienteRole(userRole)) {
     Logger.info('Usuario autenticado como paciente, mostrando NavegacionPaciente');
-    return <NavegacionPaciente />;
+    return (
+      <PrivacyConsentGate>
+        <NavegacionPaciente />
+      </PrivacyConsentGate>
+    );
   } else if (userRole === 'Doctor' || userRole === 'doctor' || userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador') {
     Logger.info('Usuario autenticado como doctor/admin, mostrando NavegacionProfesional');
-    return <NavegacionProfesional />;
+    return (
+      <PrivacyConsentGate>
+        <NavegacionProfesional />
+      </PrivacyConsentGate>
+    );
   }
 
   // Rol no reconocido

@@ -19,6 +19,7 @@ import { validationService } from '../../services/validationService';
 import Logger from '../../services/logger';
 import { useAuth } from '../../context/AuthContext';
 import { COLORES } from '../../utils/constantes';
+import PrivacyFooterLink from '../../components/legal/PrivacyFooterLink';
 
 const LoginDoctor = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -271,6 +272,7 @@ const LoginDoctor = ({ navigation }) => {
                 <Text style={styles.registerLink}>Registrarse</Text>
               </TouchableOpacity>
             </View>
+            <PrivacyFooterLink navigation={navigation} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import Logger from '../services/logger';
+import { clearPrivacyConsent } from '../utils/privacyConsent';
 import { storageService } from '../services/storageService';
 import sessionService from '../services/sessionService';
 
@@ -323,6 +324,7 @@ export const AuthProvider = ({ children }) => {
       
       // Limpiar almacenamiento
       await storageService.clearAuthData();
+      await clearPrivacyConsent();
       
       dispatch({ type: AuthActionTypes.LOGOUT });
       

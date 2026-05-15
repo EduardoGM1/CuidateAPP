@@ -58,6 +58,23 @@ const ListaPacientesDoctor = ({ navigation, onEmbeddedSectionBack }) => {
     }
   }, [userRole, navigation]);
 
+  // Manejo del botón "← Atrás" del header.
+  // Cuando la pantalla está embebida en la sección "Gestión" del menú profesional,
+  // recibimos `onEmbeddedSectionBack` para volver al Dashboard sin tocar el stack.
+  // En el resto de casos intentamos `goBack()` y, si no es posible, navegamos al
+  // Dashboard del doctor para evitar dejar al usuario sin salida.
+  const handleHeaderBack = useCallback(() => {
+    if (typeof onEmbeddedSectionBack === 'function') {
+      onEmbeddedSectionBack();
+      return;
+    }
+    if (navigation?.canGoBack?.()) {
+      navigation.goBack();
+      return;
+    }
+    navigation?.navigate?.('MainTabs', { screen: 'Dashboard' });
+  }, [navigation, onEmbeddedSectionBack]);
+
   // Cargar catálogo de comorbilidades desde BD (para dropdown de filtros)
   useEffect(() => {
     if (!showFiltersModal) return;

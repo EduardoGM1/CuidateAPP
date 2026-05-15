@@ -28,7 +28,6 @@ import DatePickerButton from '../../components/DatePickerButton';
 import TimePickerButton from '../../components/TimePickerButton';
 import DateTimePickerButton from '../../components/DateTimePickerButton';
 import { validateCita, validateSignosVitales } from '../../utils/citaValidator';
-import { generarDatosSignosVitales, generarDatosDiagnostico, generarDatosCita } from '../../services/testDataService';
 import { canExecute } from '../../utils/validation';
 import { ESTADOS_CITA, COLORES, NOMBRE_APP } from '../../utils/constantes';
 import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
@@ -5504,26 +5503,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
               <Title style={styles.modalTitle}>📊 Registrar Signos Vitales</Title>
               <View style={styles.modalHeaderButtons}>
                 <TouchableOpacity
-                  style={styles.fillDataButton}
-                  onPress={() => {
-                    const testData = generarDatosSignosVitales(formDataSignosVitales.id_cita || null);
-                    setFormDataSignosVitales(prev => ({ ...prev, ...testData }));
-                    Alert.alert(
-                      'Datos de Prueba Cargados',
-                      'El formulario ha sido llenado con datos aleatorios para testing.',
-                      [{ text: 'OK' }]
-                    );
-                  }}
+                  onPress={() => !savingSignosVitales && (setShowAddSignosVitales(false), resetFormSignosVitales())}
                   disabled={savingSignosVitales}
                 >
-                  <Text style={styles.fillDataButtonText}>🎲</Text>
+                  <Text style={styles.closeButtonX}>×</Text>
                 </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => !savingSignosVitales && (setShowAddSignosVitales(false), resetFormSignosVitales())}
-                disabled={savingSignosVitales}
-              >
-                <Text style={styles.closeButtonX}>×</Text>
-              </TouchableOpacity>
               </View>
             </View>
             
@@ -6432,24 +6416,6 @@ const DetallePacienteContent = ({ route, navigation }) => {
               <Title style={styles.modalTitle}>📅 Agregar Nueva Cita</Title>
               <View style={styles.modalHeaderButtons}>
                 <TouchableOpacity
-                  style={styles.fillDataButton}
-                  onPress={() => {
-                    const testData = generarDatosCita(
-                      formDataCita.id_doctor || (doctoresList && doctoresList.length > 0 ? doctoresList[0].id_doctor : null),
-                      paciente?.id_paciente || null
-                    );
-                    setFormDataCita(prev => ({ ...prev, ...testData }));
-                    Alert.alert(
-                      'Datos de Prueba Cargados',
-                      'El formulario ha sido llenado con datos aleatorios para testing.',
-                      [{ text: 'OK' }]
-                    );
-                  }}
-                  disabled={savingCita}
-                >
-                  <Text style={styles.fillDataButtonText}>🎲</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
                   onPress={() => !savingCita && (setShowAddCita(false), resetFormCita())}
                   disabled={savingCita}
                 >
@@ -6743,26 +6709,11 @@ const DetallePacienteContent = ({ route, navigation }) => {
               <Title style={styles.modalTitle}>🩺 Registrar Diagnóstico</Title>
               <View style={styles.modalHeaderButtons}>
                 <TouchableOpacity
-                  style={styles.fillDataButton}
-                  onPress={() => {
-                    const testData = generarDatosDiagnostico(formDataDiagnostico.id_cita || null);
-                    setFormDataDiagnostico(prev => ({ ...prev, ...testData }));
-                    Alert.alert(
-                      'Datos de Prueba Cargados',
-                      'El formulario ha sido llenado con datos aleatorios para testing.',
-                      [{ text: 'OK' }]
-                    );
-                  }}
+                  onPress={() => !savingDiagnostico && (setShowAddDiagnostico(false), resetFormDiagnostico())}
                   disabled={savingDiagnostico}
                 >
-                  <Text style={styles.fillDataButtonText}>🎲</Text>
+                  <Text style={styles.closeButtonX}>×</Text>
                 </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => !savingDiagnostico && (setShowAddDiagnostico(false), resetFormDiagnostico())}
-                disabled={savingDiagnostico}
-              >
-                <Text style={styles.closeButtonX}>×</Text>
-              </TouchableOpacity>
               </View>
             </View>
             
@@ -10216,19 +10167,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  fillDataButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORES.EXITO,
-  },
-  fillDataButtonText: {
-    fontSize: 16,
   },
   modalTitle: {
     fontSize: 18, // Reducir un poco para dar más espacio

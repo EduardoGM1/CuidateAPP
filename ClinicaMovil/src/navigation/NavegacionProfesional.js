@@ -48,6 +48,7 @@ import TicketsSoporte from '../screens/soporte/TicketsSoporte';
 import TicketNuevo from '../screens/soporte/TicketNuevo';
 import TicketDetalle from '../screens/soporte/TicketDetalle';
 import ChangePasswordScreen from '../screens/settings/ChangePasswordScreen';
+import AvisoPrivacidadScreen from '../screens/legal/AvisoPrivacidadScreen';
 import OnboardingShellModal from '../components/onboarding/OnboardingShellModal';
 import SectionTipModal from '../components/onboarding/SectionTipModal';
 import {
@@ -143,6 +144,25 @@ const PerfilScreen = ({ navigation }) => {
                 <View style={styles.securityButtonInfo}>
                   <Text style={styles.securityButtonLabel}>Cambiar Contraseña</Text>
                   <Text style={styles.securityButtonDescription}>Actualiza tu contraseña de acceso</Text>
+                </View>
+                <Text style={styles.securityButtonArrow}>→</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🔒 Privacidad</Text>
+            <TouchableOpacity
+              style={styles.securityButton}
+              onPress={() => navigation.navigate('AvisoPrivacidad')}
+            >
+              <View style={styles.securityButtonContent}>
+                <Text style={styles.securityButtonIcon}>📄</Text>
+                <View style={styles.securityButtonInfo}>
+                  <Text style={styles.securityButtonLabel}>Aviso de Privacidad</Text>
+                  <Text style={styles.securityButtonDescription}>
+                    Consulta el tratamiento de tus datos personales y de salud
+                  </Text>
                 </View>
                 <Text style={styles.securityButtonArrow}>→</Text>
               </View>
@@ -647,6 +667,7 @@ const NavegacionProfesional = () => {
           },
         }}
       />
+      <Stack.Screen name="AvisoPrivacidad" component={AvisoPrivacidadScreen} />
     </Stack.Navigator>
     </>
   );

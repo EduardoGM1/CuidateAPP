@@ -697,7 +697,17 @@ const DashboardDoctor = ({ navigation }) => {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Dashboard Doctor</Text>
-          <Text style={styles.headerSubtitle}>Bienvenido Dr. {userData?.email?.split('@')[0] || 'Usuario'}</Text>
+          <Text style={styles.headerSubtitle}>
+            {(() => {
+              const nombre = String(userData?.nombre ?? '').trim();
+              const apellidoPaterno = String(
+                userData?.apellido_paterno ?? userData?.apellido ?? ''
+              ).trim();
+              const partes = [nombre, apellidoPaterno].filter(Boolean);
+              const display = partes.length > 0 ? partes.join(' ') : 'Usuario';
+              return `Bienvenido Dr. ${display}`;
+            })()}
+          </Text>
           <Text style={styles.headerDate}>{formatDateWithWeekday(new Date())}</Text>
         </View>
 

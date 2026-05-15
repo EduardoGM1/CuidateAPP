@@ -24,7 +24,6 @@ import audioFeedbackService from '../../services/audioFeedbackService';
 import Logger from '../../services/logger';
 import { COLORES } from '../../utils/constantes';
 import ttsService from '../../services/ttsService';
-import OfflineDebugButton from '../../components/common/OfflineDebugButton';
 import BackHeader from '../../components/common/BackHeader';
 
 const Configuracion = () => {
@@ -406,15 +405,38 @@ const Configuracion = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Privacidad */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, tamanoFuenteStyles[tamanoFuente]]}>🔒 Privacidad</Text>
+          <TouchableOpacity
+            style={styles.securityButton}
+            onPress={() => {
+              hapticService.light();
+              navigation.navigate('AvisoPrivacidad');
+              speak('Aviso de privacidad');
+            }}
+          >
+            <View style={styles.securityButtonContent}>
+              <Text style={styles.securityButtonIcon}>📄</Text>
+              <View style={styles.securityButtonInfo}>
+                <Text style={[styles.securityButtonLabel, tamanoFuenteStyles[tamanoFuente]]}>
+                  Aviso de Privacidad
+                </Text>
+                <Text style={styles.securityButtonDescription}>
+                  Tratamiento de datos personales y de salud
+                </Text>
+              </View>
+              <Text style={styles.securityButtonArrow}>→</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
         {/* Información */}
         <View style={styles.infoSection}>
           <Text style={[styles.infoText, tamanoFuenteStyles[tamanoFuente]]}>
             💡 Los cambios se guardan automáticamente
           </Text>
         </View>
-
-        {/* Debug: Solo en desarrollo */}
-        <OfflineDebugButton />
       </ScrollView>
     </SafeAreaView>
   );

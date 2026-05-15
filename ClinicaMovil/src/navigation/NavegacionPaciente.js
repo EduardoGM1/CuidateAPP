@@ -14,6 +14,7 @@ import ChatDoctor from '../screens/paciente/ChatDoctor';
 import Configuracion from '../screens/paciente/Configuracion';
 import PerfilPaciente from '../screens/paciente/PerfilPaciente';
 import ChangePINScreen from '../screens/settings/ChangePINScreen';
+import AvisoPrivacidadScreen from '../screens/legal/AvisoPrivacidadScreen';
 
 // Stack Navigator
 const Stack = createStackNavigator();
@@ -47,6 +48,7 @@ const NavegacionPaciente = () => {
           headerTintColor: COLORES.TEXTO_EN_PRIMARIO,
         }}
       />
+      <Stack.Screen name="AvisoPrivacidad" component={AvisoPrivacidadScreen} />
     </Stack.Navigator>
   );
 };

@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import useTTS from '../../hooks/useTTS';
 import { COLORES, NOMBRE_APP } from '../../utils/constantes';
+import PrivacyFooterLink from '../../components/legal/PrivacyFooterLink';
 
 const TEXTO_INSTRUCCIONES = `Bienvenido a ${NOMBRE_APP}. Para continuar, selecciona si eres paciente o doctor o administrador. Si eres paciente, presiona el botón con el icono de persona. Si eres doctor o administrador, presiona el botón con el icono médico.`;
 
@@ -99,6 +100,7 @@ const PantallaInicioSesion = ({ navigation }) => {
                 </Button>
               )}
             </View>
+            <PrivacyFooterLink navigation={navigation} />
       </View>
     </SafeAreaView>
   );

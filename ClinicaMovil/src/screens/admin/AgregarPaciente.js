@@ -30,7 +30,6 @@ import MedicamentoSelector from '../../components/forms/MedicamentoSelector';
 // Hooks personalizados
 import usePacienteForm from '../../hooks/usePacienteForm';
 import useGestion from '../../hooks/useGestion';
-import useTestMode from '../../hooks/useTestMode';
 
 // Servicios
 import Logger from '../../services/logger';
@@ -84,14 +83,6 @@ const AgregarPaciente = () => {
     loading: doctoresLoading, 
     error: doctoresError 
   } = useGestion.useDoctores('activos');
-
-  // Hook para modo de prueba
-  const { 
-    isTestModeEnabled, 
-    isLoading: testModeLoading, 
-    toggleTestMode, 
-    fillFormWithTestData 
-  } = useTestMode();
 
   // Estados locales
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -271,29 +262,6 @@ const AgregarPaciente = () => {
       }
     }
   }, [formData.fechaNacimiento, formData.primeraConsulta.signos_vitales.edadEditable]);
-
-  // Función para llenar formulario con datos de prueba
-  const handleFillTestData = () => {
-    if (doctoresActivos && doctoresActivos.length > 0 && modulos && modulos.length > 0) {
-      const doctor = doctoresActivos[0]; // Usar el primer doctor disponible
-      const modulo = modulos[0]; // Usar el primer módulo disponible
-      
-      fillFormWithTestData(setFormData, doctor.id_doctor, modulo.id_modulo);
-      
-      // Mostrar mensaje de confirmación
-      Alert.alert(
-        'Datos de Prueba Cargados', 
-        'El formulario ha sido llenado con datos aleatorios para testing.',
-        [{ text: 'OK' }]
-      );
-    } else {
-      Alert.alert(
-        'Datos Requeridos', 
-        'Necesitas tener doctores y módulos disponibles para generar datos de prueba.',
-        [{ text: 'OK' }]
-      );
-    }
-  };
 
   /**
    * Validar datos de PIN (Parte 1)
@@ -1069,26 +1037,8 @@ const AgregarPaciente = () => {
         </TouchableOpacity>
         
         <Text style={styles.headerTitle}>{getPacienteRegistroHeaderTitle(currentStep)}</Text>
-        
-        <View style={styles.headerButtons}>
-          <TouchableOpacity 
-            style={[styles.testModeButton, isTestModeEnabled && styles.testModeButtonActive]} 
-            onPress={toggleTestMode}
-          >
-            <Text style={styles.testModeButtonText}>
-              {isTestModeEnabled ? '🧪' : '⚙️'}
-            </Text>
-          </TouchableOpacity>
-          
-          {isTestModeEnabled && (
-            <TouchableOpacity 
-              style={styles.fillDataButton} 
-              onPress={handleFillTestData}
-            >
-              <Text style={styles.fillDataButtonText}>🎲</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+
+        <View style={styles.placeholder} />
       </View>
 
       <WizardProgressStepper
@@ -2336,40 +2286,6 @@ const styles = StyleSheet.create({
     color: COLORES.TEXTO_PRIMARIO,
     flex: 1,
     textAlign: 'center',
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  testModeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORES.PRIMARIO,
-  },
-  testModeButtonActive: {
-    backgroundColor: COLORES.PRIMARIO,
-  },
-  testModeButtonText: {
-    fontSize: 18,
-  },
-  fillDataButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORES.FONDO_VERDE_SUAVE,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORES.EXITO,
-  },
-  fillDataButtonText: {
-    fontSize: 18,
   },
   placeholder: {
     width: 40,

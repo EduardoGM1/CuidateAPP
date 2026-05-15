@@ -10,6 +10,7 @@ import ForgotPINScreen from '../screens/auth/ForgotPINScreen';
 import DashboardPaciente from '../screens/DashboardPaciente';
 import DashboardDoctor from '../screens/doctor/DashboardDoctor';
 import DiagnosticScreen from '../screens/DiagnosticScreen';
+import AvisoPrivacidadScreen from '../screens/legal/AvisoPrivacidadScreen';
 
 const Stack = createStackNavigator();
 
@@ -43,6 +44,7 @@ const NavegacionAuth = () => {
         <Stack.Screen name="DashboardPaciente" component={DashboardPaciente} />
         <Stack.Screen name="DashboardDoctor" component={DashboardDoctor} />
         <Stack.Screen name="DiagnosticScreen" component={DiagnosticScreen} />
+        <Stack.Screen name="AvisoPrivacidad" component={AvisoPrivacidadScreen} />
     </Stack.Navigator>
   );
 };
