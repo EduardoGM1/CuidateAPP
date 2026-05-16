@@ -90,17 +90,13 @@ const AppNavigator = () => {
   if (isPacienteRole(userRole)) {
     Logger.info('Usuario autenticado como paciente, mostrando NavegacionPaciente');
     return (
-      <PrivacyConsentGate>
+      <PrivacyConsentGate enabled>
         <NavegacionPaciente />
       </PrivacyConsentGate>
     );
   } else if (userRole === 'Doctor' || userRole === 'doctor' || userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador') {
     Logger.info('Usuario autenticado como doctor/admin, mostrando NavegacionProfesional');
-    return (
-      <PrivacyConsentGate>
-        <NavegacionProfesional />
-      </PrivacyConsentGate>
-    );
+    return <NavegacionProfesional />;
   }
 
   // Rol no reconocido

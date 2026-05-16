@@ -2,7 +2,7 @@
  * Aviso de Privacidad — versión publicada en la app móvil.
  * Mantener sincronizado con cuidate-web/src/content/avisoPrivacidad.js
  */
-export const PRIVACY_NOTICE_VERSION = '1.0.0';
+export const PRIVACY_NOTICE_VERSION = '1.1.0';
 
 /** false = ocultar cuerpo del aviso (pantalla dedicada y modal); mantener consentimiento */
 export const PRIVACY_NOTICE_BODY_VISIBLE = false;
@@ -82,9 +82,18 @@ export const PRIVACY_NOTICE_SECTIONS = [
   },
 ];
 
+/** Textos del modal de consentimiento (primer acceso del paciente). */
+export const PRIVACY_CONSENT_UI = {
+  modalTitle: 'Aviso de Privacidad',
+  heading: 'Debes aceptar antes de continuar',
+  footer:
+    'Al continuar, acepto el tratamiento de mis datos conforme al Aviso de Privacidad de la aplicación.',
+  acceptButton: 'Aceptar y continuar',
+};
+
 export const PRIVACY_CONSENT_LABELS = {
   privacyNotice:
-    'He leído y acepto el Aviso de Privacidad, incluyendo el tratamiento de mis datos personales para las finalidades primarias descritas.',
+    'He leído y acepto el Aviso de Privacidad y los Términos y Condiciones de la aplicación.',
   healthData:
-    'Autorizo expresamente el tratamiento de mis datos de salud (sensibles) para la atención médica, expediente clínico y las finalidades descritas en el aviso.',
+    'Por medio de la presente, manifiesto mi consentimiento para que la información proporcionada en esta aplicación sea utilizada únicamente con fines de seguimiento médico, académicos y de investigación relacionados con el control de comorbilidades en hospitales comunitarios, garantizando en todo momento la confidencialidad y protección de mis datos personales.',
 };

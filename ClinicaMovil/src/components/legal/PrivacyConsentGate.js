@@ -9,21 +9,31 @@ import PrivacyConsentModal from './PrivacyConsentModal';
 /**
  * Muestra modal de consentimiento tras autenticación si no hay aceptación vigente.
  */
-export default function PrivacyConsentGate({ children }) {
+function isPacienteRole(userData) {
+  const rol = (userData?.rol ?? userData?.role ?? '').toString().toLowerCase();
+  return rol === 'paciente';
+}
+
+/** Solo pacientes deben aceptar el aviso antes del dashboard. */
+export default function PrivacyConsentGate({ children, enabled = true }) {
   const navigation = useNavigation();
   const { userData } = useAuth();
-  const userId =
-    userData?.id ?? userData?.id_usuario ?? userData?.id_doctor ?? userData?.id_paciente;
+  const userId = userData?.id_paciente ?? userData?.id ?? userData?.id_usuario;
 
   const [loading, setLoading] = useState(true);
   const [needsConsent, setNeedsConsent] = useState(false);
 
   const refresh = useCallback(async () => {
+    if (!enabled || !isPacienteRole(userData)) {
+      setNeedsConsent(false);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const valid = await hasValidPrivacyConsent(userId);
     setNeedsConsent(!valid);
     setLoading(false);
-  }, [userId]);
+  }, [userId, enabled, userData]);
 
   useEffect(() => {
     refresh();
