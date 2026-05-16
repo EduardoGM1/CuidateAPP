@@ -6,18 +6,30 @@ import PrivacyConsentModal from './PrivacyConsentModal';
 /**
  * Bloquea el uso de la app autenticada hasta aceptar el aviso vigente.
  */
+function isPacienteUser(user) {
+  const rol = (user?.rol ?? user?.role ?? '').toString().toLowerCase();
+  return rol === 'paciente';
+}
+
+/** Bloqueo de consentimiento solo para rol Paciente (primer inicio de sesión). */
 export default function PrivacyConsentGate({ children }) {
   const user = useAuthStore((s) => s.user);
-  const userId = user?.id ?? user?.id_usuario ?? user?.id_doctor ?? user?.id_paciente;
+  const userId = user?.id_paciente ?? user?.id ?? user?.id_usuario;
+  const isPaciente = isPacienteUser(user);
   const [checked, setChecked] = useState(false);
   const [needsConsent, setNeedsConsent] = useState(false);
 
   useEffect(() => {
+    if (!isPaciente) {
+      setNeedsConsent(false);
+      setChecked(true);
+      return;
+    }
     setChecked(false);
     const valid = hasValidPrivacyConsent(userId);
     setNeedsConsent(!valid);
     setChecked(true);
-  }, [userId]);
+  }, [userId, isPaciente]);
 
   if (!checked) {
     return (

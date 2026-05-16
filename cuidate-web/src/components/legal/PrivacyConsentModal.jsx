@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Modal, Button } from '../ui';
-import PrivacyNoticeContent from './PrivacyNoticeContent';
-import { PRIVACY_CONSENT_LABELS, PRIVACY_NOTICE_BODY_VISIBLE } from '../../content/avisoPrivacidad';
+import {
+  PRIVACY_CONSENT_LABELS,
+  PRIVACY_CONSENT_UI,
+} from '../../content/avisoPrivacidad';
 import { savePrivacyConsent } from '../../utils/privacyConsent';
 
 /**
- * Modal bloqueante para aceptar aviso de privacidad (LFPDPPP).
+ * Modal bloqueante para pacientes (primer inicio de sesión).
  * @param {{ open: boolean, userId?: string, onAccepted: () => void }} props
  */
 export default function PrivacyConsentModal({ open, userId, onAccepted }) {
@@ -30,58 +32,88 @@ export default function PrivacyConsentModal({ open, userId, onAccepted }) {
     <Modal
       open={open}
       onClose={() => {}}
-      title="Aviso de Privacidad y consentimiento"
+      title={PRIVACY_CONSENT_UI.modalTitle}
       footer={null}
       width={640}
       closable={false}
       maskClosable={false}
       keyboard={false}
     >
-      <div
+      <p
         style={{
-          maxHeight: '40vh',
-          overflowY: 'auto',
-          marginBottom: '1rem',
-          padding: '0.75rem',
-          border: '1px solid var(--color-borde-claro)',
-          borderRadius: 'var(--radius)',
-          background: 'var(--color-fondo-secundario)',
+          margin: '0 0 1rem',
+          fontWeight: 600,
+          color: 'var(--color-primario)',
+          fontSize: '1rem',
         }}
       >
-        <PrivacyNoticeContent compact showVersion />
-      </div>
-      {PRIVACY_NOTICE_BODY_VISIBLE ? (
-        <p style={{ fontSize: '0.9rem', marginBottom: '0.75rem' }}>
-          <Link to="/aviso-privacidad" target="_blank" rel="noopener noreferrer">
-            Ver aviso completo en pantalla dedicada
-          </Link>
-        </p>
-      ) : null}
-      <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: '0.75rem', cursor: 'pointer' }}>
+        {PRIVACY_CONSENT_UI.heading}
+      </p>
+
+      <label
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+          alignItems: 'flex-start',
+          marginBottom: '0.75rem',
+          cursor: 'pointer',
+        }}
+      >
         <input
           type="checkbox"
           checked={privacyNotice}
           onChange={(e) => setPrivacyNotice(e.target.checked)}
-          style={{ marginTop: 4 }}
+          style={{ marginTop: 4, flexShrink: 0 }}
         />
-        <span style={{ fontSize: '0.9rem' }}>{PRIVACY_CONSENT_LABELS.privacyNotice}</span>
+        <span style={{ fontSize: '0.9rem', lineHeight: 1.5 }}>
+          He leído y acepto el{' '}
+          <Link to="/aviso-privacidad" target="_blank" rel="noopener noreferrer">
+            Aviso de Privacidad
+          </Link>{' '}
+          y los{' '}
+          <Link to="/aviso-privacidad" target="_blank" rel="noopener noreferrer">
+            Términos y Condiciones de la aplicación
+          </Link>
+          .
+        </span>
       </label>
-      <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: '1rem', cursor: 'pointer' }}>
+
+      <label
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+          alignItems: 'flex-start',
+          marginBottom: '1rem',
+          cursor: 'pointer',
+        }}
+      >
         <input
           type="checkbox"
           checked={healthData}
           onChange={(e) => setHealthData(e.target.checked)}
-          style={{ marginTop: 4 }}
+          style={{ marginTop: 4, flexShrink: 0 }}
         />
-        <span style={{ fontSize: '0.9rem' }}>{PRIVACY_CONSENT_LABELS.healthData}</span>
+        <span style={{ fontSize: '0.9rem', lineHeight: 1.5 }}>{PRIVACY_CONSENT_LABELS.healthData}</span>
       </label>
+
+      <p
+        style={{
+          margin: '0 0 1rem',
+          fontSize: '0.85rem',
+          color: 'var(--color-texto-secundario)',
+          lineHeight: 1.5,
+        }}
+      >
+        {PRIVACY_CONSENT_UI.footer}
+      </p>
+
       {error && (
         <p role="alert" style={{ color: 'var(--color-error)', fontSize: '0.9rem', marginBottom: '0.75rem' }}>
           {error}
         </p>
       )}
       <Button variant="primary" onClick={handleAccept} disabled={!canSubmit} style={{ width: '100%' }}>
-        Aceptar y continuar
+        {PRIVACY_CONSENT_UI.acceptButton}
       </Button>
     </Modal>
   );
