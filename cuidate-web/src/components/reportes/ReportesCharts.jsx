@@ -10,6 +10,7 @@ import {
   Pie,
   Cell,
   Legend,
+  LabelList,
 } from 'recharts';
 import { Card } from '../ui';
 import { CHART_COLORS, PIE_COLORS } from './chartConfig';
@@ -93,13 +94,19 @@ export function ReportesHorizontalBarChart({
           <BarChart
             data={data}
             layout="vertical"
-            margin={{ top: 8, right: 8, left: 60, bottom: 0 }}
+            margin={{ top: 8, right: 36, left: 60, bottom: 0 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
             <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
             <YAxis type="category" dataKey={nameKey} width={55} tick={{ fontSize: 11 }} />
             <Tooltip />
-            <Bar dataKey={dataKey} name={barName} fill={color} radius={[0, 4, 4, 0]} />
+            <Bar dataKey={dataKey} name={barName} fill={color} radius={[0, 4, 4, 0]}>
+              <LabelList
+                dataKey={dataKey}
+                position="right"
+                style={{ fill: 'var(--color-texto-primario)', fontSize: 12, fontWeight: 600 }}
+              />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>

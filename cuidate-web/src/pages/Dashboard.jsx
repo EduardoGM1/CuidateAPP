@@ -31,6 +31,7 @@ import {
   Pie,
   Cell,
   Legend,
+  LabelList,
 } from 'recharts';
 
 /** Unifica alertas admin (valoresCriticos, citasPerdidas, alertasAuditoria) en una lista con tipo y fecha para ordenar. */
@@ -395,13 +396,19 @@ export default function Dashboard() {
                             <BarChart
                               data={summary.charts.doctoresActivos}
                               layout="vertical"
-                              margin={{ top: 8, right: 8, left: 60, bottom: 0 }}
+                              margin={{ top: 8, right: 36, left: 60, bottom: 0 }}
                             >
                               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
                               <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
                               <YAxis type="category" dataKey="nombre" width={55} tick={{ fontSize: 11 }} />
                               <Tooltip />
-                              <Bar dataKey="total_citas" name="Citas" fill={CHART_COLORS.primary} radius={[0, 4, 4, 0]} />
+                              <Bar dataKey="total_citas" name="Citas" fill={CHART_COLORS.primary} radius={[0, 4, 4, 0]}>
+                                <LabelList
+                                  dataKey="total_citas"
+                                  position="right"
+                                  style={{ fill: 'var(--color-texto-primario)', fontSize: 12, fontWeight: 600 }}
+                                />
+                              </Bar>
                             </BarChart>
                           </ResponsiveContainer>
                         </div>
