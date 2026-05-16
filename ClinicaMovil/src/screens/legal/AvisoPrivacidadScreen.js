@@ -28,7 +28,7 @@ export default function AvisoPrivacidadScreen({ navigation }) {
             </Text>
             <Text style={styles.paragraph}>
               <Text style={styles.bold}>Contacto: </Text>
-              {PRIVACY_NOTICE_META.contactEmail}
+              {PRIVACY_NOTICE_META.contactEmail || ''}
             </Text>
             {PRIVACY_NOTICE_SECTIONS.map((section) => (
               <View key={section.id} style={styles.section}>
