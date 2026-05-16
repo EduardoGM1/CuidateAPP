@@ -93,6 +93,10 @@ export const PRIVACY_CONSENT_UI = {
   footer:
     'Al continuar, acepto el tratamiento de mis datos conforme al Aviso de Privacidad de la aplicación.',
   acceptButton: 'Aceptar y continuar',
+  rejectButton: 'No acepto, cerrar sesión',
+  rejectConfirmTitle: '¿Rechazar el aviso de privacidad?',
+  rejectConfirmMessage:
+    'Si no aceptas el Aviso de Privacidad y los Términos y Condiciones, no podrás usar la aplicación. Se cerrará tu sesión y deberás aceptar en tu próximo inicio de sesión para continuar.',
 };
 
 export const PRIVACY_CONSENT_LABELS = {

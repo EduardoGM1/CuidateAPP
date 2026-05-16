@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthStore } from '../../stores/authStore';
-import { hasValidPrivacyConsent } from '../../utils/privacyConsent';
+import { PRIVACY_CONSENT_UI } from '../../content/avisoPrivacidad';
+import { clearPrivacyConsent, hasValidPrivacyConsent } from '../../utils/privacyConsent';
 import PrivacyConsentModal from './PrivacyConsentModal';
 
 /**
@@ -11,9 +12,10 @@ function requiresPrivacyConsent(user) {
   return rol === 'paciente' || rol === 'doctor';
 }
 
-/** Bloqueo de consentimiento para Paciente y Doctor (primer inicio de sesión). */
+/** Bloqueo de consentimiento para Paciente y Doctor tras cada inicio de sesión sin aceptación. */
 export default function PrivacyConsentGate({ children }) {
   const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
   const userId =
     user?.id_paciente ?? user?.id_doctor ?? user?.id ?? user?.id_usuario;
   const mustConsent = requiresPrivacyConsent(user);
@@ -32,6 +34,15 @@ export default function PrivacyConsentGate({ children }) {
     setChecked(true);
   }, [userId, mustConsent]);
 
+  const handleReject = useCallback(() => {
+    const confirmed = window.confirm(
+      `${PRIVACY_CONSENT_UI.rejectConfirmTitle}\n\n${PRIVACY_CONSENT_UI.rejectConfirmMessage}`
+    );
+    if (!confirmed) return;
+    clearPrivacyConsent();
+    logout();
+  }, [logout]);
+
   if (!checked) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-texto-secundario)' }}>
@@ -40,14 +51,17 @@ export default function PrivacyConsentGate({ children }) {
     );
   }
 
-  return (
-    <>
-      {children}
+  if (mustConsent && needsConsent) {
+    return (
       <PrivacyConsentModal
-        open={needsConsent}
+        open
         userId={userId}
         onAccepted={() => setNeedsConsent(false)}
+        onRejected={handleReject}
       />
-    </>
-  );
+    );
+  }
+
+  return children;
 }
+

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Modal, Button } from '../ui';
 import {
@@ -8,15 +8,23 @@ import {
 import { savePrivacyConsent } from '../../utils/privacyConsent';
 
 /**
- * Modal bloqueante para pacientes y doctores (primer inicio de sesión).
- * @param {{ open: boolean, userId?: string, onAccepted: () => void }} props
+ * Modal bloqueante tras inicio de sesión (paciente o doctor).
+ * @param {{ open: boolean, userId?: string, onAccepted: () => void, onRejected: () => void }} props
  */
-export default function PrivacyConsentModal({ open, userId, onAccepted }) {
+export default function PrivacyConsentModal({ open, userId, onAccepted, onRejected }) {
   const [privacyNotice, setPrivacyNotice] = useState(false);
   const [healthData, setHealthData] = useState(false);
   const [error, setError] = useState('');
 
   const canSubmit = privacyNotice && healthData;
+
+  useEffect(() => {
+    if (open) {
+      setPrivacyNotice(false);
+      setHealthData(false);
+      setError('');
+    }
+  }, [open]);
 
   function handleAccept() {
     if (!canSubmit) {
@@ -26,6 +34,10 @@ export default function PrivacyConsentModal({ open, userId, onAccepted }) {
     setError('');
     savePrivacyConsent({ privacyNotice, healthData, userId });
     onAccepted();
+  }
+
+  function handleReject() {
+    onRejected();
   }
 
   return (
@@ -112,8 +124,16 @@ export default function PrivacyConsentModal({ open, userId, onAccepted }) {
           {error}
         </p>
       )}
+
       <Button variant="primary" onClick={handleAccept} disabled={!canSubmit} style={{ width: '100%' }}>
         {PRIVACY_CONSENT_UI.acceptButton}
+      </Button>
+      <Button
+        variant="outline"
+        onClick={handleReject}
+        style={{ width: '100%', marginTop: '0.75rem' }}
+      >
+        {PRIVACY_CONSENT_UI.rejectButton}
       </Button>
     </Modal>
   );
