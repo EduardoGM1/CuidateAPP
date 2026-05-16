@@ -19,7 +19,7 @@ export const PRIVACY_NOTICE_META = {
   lastUpdated: '10 de mayo de 2026',
   responsibleLabel: 'Responsable del tratamiento',
   responsibleName: 'CuidaTeApp / institución de salud que opera la plataforma',
-  contactEmail: 'privacidad@cuidateapp.mx',
+  contactEmail: '',
 };
 
 export const PRIVACY_NOTICE_SECTIONS = [

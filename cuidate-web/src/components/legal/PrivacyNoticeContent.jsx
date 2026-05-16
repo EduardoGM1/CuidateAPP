@@ -37,7 +37,9 @@ export default function PrivacyNoticeContent({
         <strong>{PRIVACY_NOTICE_META.responsibleLabel}:</strong> {PRIVACY_NOTICE_META.responsibleName}
         <br />
         <strong>Contacto:</strong>{' '}
-        <a href={`mailto:${PRIVACY_NOTICE_META.contactEmail}`}>{PRIVACY_NOTICE_META.contactEmail}</a>
+        {PRIVACY_NOTICE_META.contactEmail ? (
+          <a href={`mailto:${PRIVACY_NOTICE_META.contactEmail}`}>{PRIVACY_NOTICE_META.contactEmail}</a>
+        ) : null}
       </p>
       {PRIVACY_NOTICE_SECTIONS.map((section) => (
         <section key={section.id} style={{ marginBottom: compact ? '0.75rem' : '1.25rem' }}>
