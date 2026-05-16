@@ -467,6 +467,341 @@ export class DashboardRepository {
     }
   }
 
+  _formatLocalDateKey(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  /**
+   * Valida filtros opcionales para reporte de estadísticas (PDF/HTML).
+   * @returns {{ modulo: number|null, dateRange: object|null, hasFilters: boolean }}
+   */
+  parseReportFilters({ modulo, fechaInicio, fechaFin } = {}) {
+    const mod = modulo != null && Number(modulo) > 0 ? Number(modulo) : null;
+    const fi = fechaInicio != null ? String(fechaInicio).trim() : '';
+    const ff = fechaFin != null ? String(fechaFin).trim() : '';
+    const iso = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+    if ((fi && !ff) || (!fi && ff)) {
+      const err = new Error('Debes indicar fecha de inicio y fecha de fin juntas (YYYY-MM-DD)');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    let dateRange = null;
+    if (fi && ff) {
+      if (!iso(fi) || !iso(ff)) {
+        const err = new Error('fechaInicio y fechaFin deben tener formato YYYY-MM-DD');
+        err.statusCode = 400;
+        throw err;
+      }
+      if (fi > ff) {
+        const err = new Error('fechaInicio no puede ser posterior a fechaFin');
+        err.statusCode = 400;
+        throw err;
+      }
+      const inicio = new Date(`${fi}T00:00:00`);
+      const fin = new Date(`${ff}T23:59:59.999`);
+      const maxMs = 370 * 24 * 60 * 60 * 1000;
+      if (fin - inicio > maxMs) {
+        const err = new Error('El rango máximo permitido es de 370 días');
+        err.statusCode = 400;
+        throw err;
+      }
+      dateRange = { inicio, fin, fi, ff, label: `${fi} al ${ff}` };
+    }
+
+    return { modulo: mod, dateRange, hasFilters: !!(mod || dateRange) };
+  }
+
+  async _pacienteIdsForModulo(modulo) {
+    if (!modulo) return null;
+    const rows = await Paciente.findAll({
+      where: { id_modulo: modulo, activo: true },
+      attributes: ['id_paciente'],
+      raw: true,
+    });
+    return rows.map((r) => r.id_paciente);
+  }
+
+  _applyPacienteIdsToWhere(where, pacienteIds) {
+    if (pacienteIds === null) return where;
+    if (pacienteIds.length === 0) {
+      return { ...where, id_paciente: { [Op.in]: [-1] } };
+    }
+    return { ...where, id_paciente: { [Op.in]: pacienteIds } };
+  }
+
+  async _fetchCitasForReport({ pacienteIds, dateRange, idDoctor } = {}) {
+    const where = {};
+    if (idDoctor) where.id_doctor = idDoctor;
+    if (dateRange) {
+      where.fecha_cita = { [Op.between]: [dateRange.inicio, dateRange.fin] };
+    }
+    return Cita.findAll({
+      where: this._applyPacienteIdsToWhere(where, pacienteIds),
+      attributes: ['id_cita', 'estado', 'asistencia', 'fecha_cita', 'id_doctor', 'id_paciente'],
+      raw: true,
+    });
+  }
+
+  _buildCitasPorDiaFromRows(citas, dateRange) {
+    const diasSemana = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    const citasPorFecha = new Map();
+    (citas || []).forEach((cita) => {
+      if (!cita.fecha_cita) return;
+      const fecha = new Date(cita.fecha_cita);
+      const key = this._formatLocalDateKey(fecha);
+      citasPorFecha.set(key, (citasPorFecha.get(key) || 0) + 1);
+    });
+
+    if (dateRange) {
+      const resultado = [];
+      const cur = new Date(dateRange.inicio);
+      cur.setHours(0, 0, 0, 0);
+      const end = new Date(dateRange.fin);
+      end.setHours(0, 0, 0, 0);
+      while (cur <= end) {
+        const fechaKey = this._formatLocalDateKey(cur);
+        const diaSemana = diasSemana[(cur.getDay() + 6) % 7];
+        resultado.push({
+          dia: diaSemana,
+          citas: citasPorFecha.get(fechaKey) || 0,
+          fecha: fechaKey,
+        });
+        cur.setDate(cur.getDate() + 1);
+      }
+      return resultado;
+    }
+
+    const hoy = new Date();
+    hoy.setHours(23, 59, 59, 999);
+    const sieteDiasAtras = new Date(hoy);
+    sieteDiasAtras.setDate(sieteDiasAtras.getDate() - 6);
+    sieteDiasAtras.setHours(0, 0, 0, 0);
+    const resultado = [];
+    for (let i = 0; i < 7; i++) {
+      const fecha = new Date(sieteDiasAtras);
+      fecha.setDate(fecha.getDate() + i);
+      const fechaKey = this._formatLocalDateKey(fecha);
+      resultado.push({
+        dia: diasSemana[(fecha.getDay() + 6) % 7],
+        citas: citasPorFecha.get(fechaKey) || 0,
+        fecha: fechaKey,
+      });
+    }
+    return resultado;
+  }
+
+  async _buildPacientesNuevosPorDia({ pacienteIds, dateRange, modulo }) {
+    const diasSemana = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    const pacWhere = { activo: true };
+    if (modulo) pacWhere.id_modulo = modulo;
+    else if (pacienteIds !== null) {
+      if (pacienteIds.length === 0) return [];
+      pacWhere.id_paciente = { [Op.in]: pacienteIds };
+    }
+
+    let range = dateRange;
+    if (!range) {
+      const hoy = new Date();
+      hoy.setHours(23, 59, 59, 999);
+      const sieteDiasAtras = new Date(hoy);
+      sieteDiasAtras.setDate(sieteDiasAtras.getDate() - 6);
+      sieteDiasAtras.setHours(0, 0, 0, 0);
+      range = { inicio: sieteDiasAtras, fin: hoy };
+    }
+    pacWhere.fecha_registro = { [Op.between]: [range.inicio, range.fin] };
+
+    const pacientes = await Paciente.findAll({
+      where: pacWhere,
+      attributes: [
+        [sequelize.fn('DATE', sequelize.col('fecha_registro')), 'fecha'],
+        [sequelize.fn('COUNT', sequelize.col('id_paciente')), 'total'],
+      ],
+      group: [sequelize.fn('DATE', sequelize.col('fecha_registro'))],
+      order: [[sequelize.fn('DATE', sequelize.col('fecha_registro')), 'ASC']],
+      raw: true,
+    });
+
+    const porFecha = new Map();
+    pacientes.forEach((item) => {
+      const fecha = new Date(item.fecha);
+      const key = this._formatLocalDateKey(fecha);
+      porFecha.set(key, parseInt(item.total, 10) || 0);
+    });
+
+    const resultado = [];
+    const cur = new Date(range.inicio);
+    cur.setHours(0, 0, 0, 0);
+    const end = new Date(range.fin);
+    end.setHours(0, 0, 0, 0);
+    while (cur <= end) {
+      const fechaKey = this._formatLocalDateKey(cur);
+      resultado.push({
+        dia: diasSemana[(cur.getDay() + 6) % 7],
+        pacientes: porFecha.get(fechaKey) || 0,
+        fecha: fechaKey,
+      });
+      cur.setDate(cur.getDate() + 1);
+    }
+    return resultado;
+  }
+
+  async getDoctoresMasActivosFiltered(limit = 5, { pacienteIds, dateRange } = {}) {
+    const where = {};
+    if (dateRange) {
+      where.fecha_cita = { [Op.between]: [dateRange.inicio, dateRange.fin] };
+    }
+    const doctores = await Cita.findAll({
+      where: this._applyPacienteIdsToWhere(where, pacienteIds),
+      attributes: [
+        'id_doctor',
+        [sequelize.fn('COUNT', sequelize.col('id_cita')), 'total_citas'],
+      ],
+      include: [
+        {
+          model: Doctor,
+          attributes: ['nombre', 'apellido_paterno', 'apellido_materno', 'grado_estudio'],
+          include: [{ model: Usuario, attributes: ['email'] }],
+        },
+      ],
+      group: ['id_doctor', 'Doctor.id_doctor'],
+      order: [[sequelize.fn('COUNT', sequelize.col('id_cita')), 'DESC']],
+      limit,
+      raw: false,
+    });
+
+    return doctores
+      .filter((cita) => cita.Doctor && cita.id_doctor)
+      .map((cita) => ({
+        id_doctor: cita.id_doctor,
+        nombre: [cita.Doctor.apellido_paterno, cita.Doctor.apellido_materno, cita.Doctor.nombre]
+          .filter(Boolean)
+          .join(' '),
+        especialidad: cita.Doctor.grado_estudio || 'No especificada',
+        total_citas: parseInt(cita.dataValues.total_citas, 10) || 0,
+        email: cita.Doctor.Usuario?.email || 'No disponible',
+      }));
+  }
+
+  async getComorbilidadesParaReporte(modulo = null) {
+    const replacements = {};
+    let pacienteFilter = 'WHERE activo = 1';
+    let joinPaciente = '';
+    if (modulo) {
+      joinPaciente = 'JOIN pacientes p ON pc.id_paciente = p.id_paciente AND p.activo = 1 AND p.id_modulo = :modulo';
+      pacienteFilter = 'WHERE activo = 1 AND id_modulo = :modulo';
+      replacements.modulo = modulo;
+    }
+
+    return sequelize.query(
+      `
+      SELECT
+        c.nombre_comorbilidad,
+        COUNT(DISTINCT pc.id_paciente) as pacientes_afectados,
+        ROUND((COUNT(DISTINCT pc.id_paciente) * 100.0 / NULLIF((SELECT COUNT(*) FROM pacientes ${pacienteFilter}), 0)), 2) as porcentaje
+      FROM comorbilidades c
+      JOIN paciente_comorbilidad pc ON c.id_comorbilidad = pc.id_comorbilidad
+      ${joinPaciente}
+      GROUP BY c.id_comorbilidad, c.nombre_comorbilidad
+      ORDER BY pacientes_afectados DESC
+      LIMIT 10
+      `,
+      { replacements, type: sequelize.QueryTypes.SELECT }
+    );
+  }
+
+  /**
+   * Datos del reporte de estadísticas admin con filtros opcionales (módulo, fechas).
+   */
+  async getAdminEstadisticasParaReporte(filters = {}) {
+    const parsed = this.parseReportFilters(filters);
+    const { modulo, dateRange } = parsed;
+    const pacienteIds = await this._pacienteIdsForModulo(modulo);
+
+    const pacWhere = { activo: true };
+    if (modulo) pacWhere.id_modulo = modulo;
+
+    const [totalPacientes, totalDoctores, moduloRow, citasRows] = await Promise.all([
+      Paciente.count({ where: pacWhere }),
+      modulo
+        ? Doctor.count({ where: { activo: true, id_modulo: modulo } })
+        : Doctor.count({ where: { activo: true } }),
+      modulo ? Modulo.findByPk(modulo, { attributes: ['nombre_modulo'], raw: true }) : null,
+      this._fetchCitasForReport({ pacienteIds, dateRange }),
+    ]);
+
+    const citasPorEstado = this._aggregateCitasPorEstadoRows(citasRows);
+    const citasUltimos7Dias = this._buildCitasPorDiaFromRows(citasRows, dateRange);
+    const pacientesNuevos = await this._buildPacientesNuevosPorDia({
+      pacienteIds,
+      dateRange,
+      modulo,
+    });
+    const doctoresActivos = await this.getDoctoresMasActivosFiltered(5, { pacienteIds, dateRange });
+    const comorbilidades = await this.getComorbilidadesParaReporte(modulo);
+
+    const citasCompletadas = citasRows.filter((cita) => {
+      if (cita.estado) return cita.estado === 'atendida';
+      return cita.asistencia === true;
+    }).length;
+    const totalCitasScope = citasRows.length;
+    const tasaAsistencia =
+      totalCitasScope > 0 ? Math.round((citasCompletadas / totalCitasScope) * 100) : 0;
+
+    const filterParts = [];
+    if (moduloRow?.nombre_modulo) filterParts.push(`Módulo: ${moduloRow.nombre_modulo}`);
+    if (dateRange?.label) filterParts.push(`Periodo: ${dateRange.label}`);
+    const filtersLabel = filterParts.length > 0 ? filterParts.join(' · ') : null;
+
+    return {
+      filtersLabel,
+      metrics: {
+        totalPacientes,
+        totalDoctores,
+        citasEnScope: totalCitasScope,
+        tasaAsistencia,
+      },
+      chartData: {
+        citasUltimos7Dias,
+        pacientesNuevos,
+      },
+      charts: {
+        citasPorEstado,
+        doctoresActivos,
+      },
+      comorbilidades,
+      citasChartTitle: dateRange ? 'Citas por día (periodo filtrado)' : 'Citas últimos 7 días',
+      pacientesChartTitle: dateRange
+        ? 'Pacientes nuevos por día (periodo filtrado)'
+        : 'Pacientes nuevos últimos 7 días',
+    };
+  }
+
+  /**
+   * Datos del reporte de estadísticas doctor con filtro opcional de fechas.
+   */
+  async getDoctorEstadisticasParaReporte(doctorId, filters = {}) {
+    const parsed = this.parseReportFilters(filters);
+    const { dateRange } = parsed;
+    const citasRows = await this._fetchCitasForReport({ idDoctor: doctorId, dateRange });
+
+    const citasPorDia = this._buildCitasPorDiaFromRows(citasRows, dateRange);
+    const filterParts = [];
+    if (dateRange?.label) filterParts.push(`Periodo: ${dateRange.label}`);
+    const filtersLabel = filterParts.length > 0 ? filterParts.join(' · ') : null;
+
+    return {
+      filtersLabel,
+      citasUltimos7Dias: citasPorDia,
+      citasChartTitle: dateRange ? 'Citas por día (periodo filtrado)' : 'Citas últimos 7 días',
+      totalCitasScope: citasRows.length,
+    };
+  }
+
   /** Agrupa citas por estado (misma lógica que getCitasPorEstado). */
   _aggregateCitasPorEstadoRows(citas) {
     const resultado = {

@@ -59,6 +59,7 @@ function decryptForReport(value) {
 
 const MESES_NOMBRE = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 import DashboardService from './dashboardService.js';
+import DashboardRepository from '../repositories/dashboardRepository.js';
 
 /** Máximo de pacientes por exportación FORMA masiva (evita timeouts). */
 const FORMA_LISTA_MAX_PACIENTES = 200;
@@ -115,10 +116,11 @@ function svgHorizontalBarChart(data, opts = {}) {
   const w = opts.width ?? CHART_WIDTH;
   const h = opts.height ?? CHART_HEIGHT;
   const maxBars = opts.maxBars ?? 8;
+  const showValues = opts.showValues !== false;
   const list = (Array.isArray(data) ? data : []).slice(0, maxBars);
   if (list.length === 0) return '';
   const maxVal = Math.max(1, ...list.map(d => Number(d.value) || 0));
-  const padding = { top: 10, right: 50, bottom: 10, left: 120 };
+  const padding = { top: 10, right: showValues ? 36 : 50, bottom: 10, left: 120 };
   const chartW = w - padding.left - padding.right;
   const barH = Math.max(14, (h - padding.top - padding.bottom) / list.length - 4);
   const bars = list.map((d, i) => {
@@ -126,7 +128,11 @@ function svgHorizontalBarChart(data, opts = {}) {
     const barW = maxVal > 0 ? (v / maxVal) * chartW : 0;
     const y = padding.top + i * (barH + 4);
     const label = escapeSvgText(String(d.label || '').slice(0, 18));
-    return `<text x="4" y="${y + barH / 2 + 4}" font-size="10" fill="#333">${label}</text><rect x="${padding.left}" y="${y}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" fill="${BAR_COLOR}" rx="2"/>`;
+    const valueX = padding.left + barW + 6;
+    const valueLabel = showValues
+      ? `<text x="${valueX.toFixed(1)}" y="${y + barH / 2 + 4}" font-size="10" font-weight="600" fill="#333">${v}</text>`
+      : '';
+    return `<text x="4" y="${y + barH / 2 + 4}" font-size="10" fill="#333">${label}</text><rect x="${padding.left}" y="${y}" width="${barW.toFixed(1)}" height="${barH.toFixed(1)}" fill="${BAR_COLOR}" rx="2"/>${valueLabel}`;
   }).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${bars}</svg>`;
 }
@@ -1026,17 +1032,33 @@ class ReportService {
     };
 
     const dashboardService = new DashboardService();
+    const dashboardRepository = new DashboardRepository();
     const fechaGen = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
 
     if (rol === 'doctor') {
       const doctorId = options.idDoctor;
       if (!doctorId) throw new Error('idDoctor es requerido para reporte de doctor');
+      const reportFilters = dashboardRepository.parseReportFilters({
+        fechaInicio: options.fechaInicio,
+        fechaFin: options.fechaFin,
+      });
+      const filteredDoctor = await dashboardRepository.getDoctorEstadisticasParaReporte(doctorId, {
+        fechaInicio: options.fechaInicio,
+        fechaFin: options.fechaFin,
+      });
       const summary = await dashboardService.getDoctorSummary(doctorId);
       const metrics = summary?.metrics || {};
       const chartData = summary?.chartData || {};
       const comorbilidades = chartData.comorbilidadesMasFrecuentes || chartData.comorbilidadesPorPeriodo?.datos || [];
 
-      const citas7 = (chartData.citasUltimos7Dias || []).map(d => ({ label: d.dia || d.fecha || '', value: d.citas ?? 0 }));
+      const citas7Source = reportFilters.dateRange
+        ? filteredDoctor.citasUltimos7Dias
+        : chartData.citasUltimos7Dias || [];
+      const citas7 = citas7Source.map((d) => ({ label: d.dia || d.fecha || '', value: d.citas ?? 0 }));
+      const filtrosHtml = filteredDoctor.filtersLabel
+        ? `<p><strong>Filtros aplicados:</strong> ${escapeHtml(filteredDoctor.filtersLabel)}</p>`
+        : '';
+      const citas7Title = filteredDoctor.citasChartTitle || 'Citas últimos 7 días';
       const comorbList = (Array.isArray(comorbilidades) ? comorbilidades : []).slice(0, 10).map(c => ({
         label: c.nombre || c.nombre_comorbilidad || '-',
         value: c.frecuencia ?? c.pacientes_afectados ?? 0
@@ -1057,11 +1079,13 @@ class ReportService {
 <body>
 <h1>Reporte de Estadísticas - Doctor</h1>
 <p>Fecha de generación: ${fechaGen}</p>
+${filtrosHtml}
 <h2>Resumen</h2>
 <p><span class="metric">Pacientes asignados: <strong>${metrics.pacientesAsignados ?? 0}</strong></span>
 <span class="metric">Citas hoy: <strong>${metrics.citasHoy ?? 0}</strong></span>
-<span class="metric">Próximas citas: <strong>${metrics.proximasCitas ?? 0}</strong></span></p>
-<h2>Citas últimos 7 días</h2>
+<span class="metric">Próximas citas: <strong>${metrics.proximasCitas ?? 0}</strong></span>
+${reportFilters.dateRange ? `<span class="metric">Citas en el periodo: <strong>${filteredDoctor.totalCitasScope ?? 0}</strong></span>` : ''}</p>
+<h2>${escapeHtml(citas7Title)}</h2>
 <div class="chart-wrap">${svgCitas7 || '<p>Sin datos para graficar</p>'}</div>
 <table><thead><tr><th>Día</th><th>Citas</th></tr></thead><tbody>${citas7Rows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
 <h2>Comorbilidades más frecuentes</h2>
@@ -1073,20 +1097,27 @@ class ReportService {
       return html;
     }
 
-    // Admin
-    const [summary, analytics] = await Promise.all([
-      dashboardService.getAdminSummary(),
-      dashboardService.getAdminAnalytics()
-    ]);
-    const metrics = summary?.metrics || {};
-    const chartData = summary?.chartData || {};
-    const charts = summary?.charts || {};
+    // Admin (respeta filtros modulo / fechaInicio / fechaFin)
+    const reportData = await dashboardRepository.getAdminEstadisticasParaReporte({
+      modulo: options.modulo,
+      fechaInicio: options.fechaInicio,
+      fechaFin: options.fechaFin,
+    });
+    const metrics = reportData.metrics || {};
+    const chartData = reportData.chartData || {};
+    const charts = reportData.charts || {};
     const citasPorEstado = charts.citasPorEstado || {};
     const doctoresActivos = charts.doctoresActivos || [];
-    const comorbilidades = analytics?.comorbilidades || [];
+    const comorbilidades = reportData.comorbilidades || [];
 
-    const citas7 = (chartData.citasUltimos7Dias || []).map(d => ({ label: d.dia || d.fecha || '', value: d.citas ?? 0 }));
-    const pacientes7 = (chartData.pacientesNuevos || []).map(d => ({ label: d.dia || d.fecha || '', value: d.pacientes ?? 0 }));
+    const filtrosHtml = reportData.filtersLabel
+      ? `<p><strong>Filtros aplicados:</strong> ${escapeHtml(reportData.filtersLabel)}</p>`
+      : '';
+    const citas7Title = reportData.citasChartTitle || 'Citas últimos 7 días';
+    const pacientes7Title = reportData.pacientesChartTitle || 'Pacientes nuevos últimos 7 días';
+
+    const citas7 = (chartData.citasUltimos7Dias || []).map((d) => ({ label: d.dia || d.fecha || '', value: d.citas ?? 0 }));
+    const pacientes7 = (chartData.pacientesNuevos || []).map((d) => ({ label: d.dia || d.fecha || '', value: d.pacientes ?? 0 }));
     const estadoPie = Object.entries(citasPorEstado).map(([name, value]) => ({ name, value: Number(value) || 0 })).filter(d => d.value > 0);
     const doctoresBars = doctoresActivos.map(d => ({ label: (d.nombre || '').slice(0, 18), value: d.total_citas ?? 0 }));
     const comorbList = (Array.isArray(comorbilidades) ? comorbilidades : []).slice(0, 10).map(c => ({
@@ -1115,15 +1146,16 @@ class ReportService {
 <body>
 <h1>Reporte de Estadísticas - Administrador</h1>
 <p>Fecha de generación: ${fechaGen}</p>
+${filtrosHtml}
 <h2>Resumen general</h2>
 <p><span class="metric">Pacientes totales: <strong>${metrics.totalPacientes ?? 0}</strong></span>
 <span class="metric">Doctores activos: <strong>${metrics.totalDoctores ?? 0}</strong></span>
-<span class="metric">Citas hoy: <strong>${metrics.citasHoy?.total ?? 0}</strong></span>
-<span class="metric">Tasa asistencia: <strong>${metrics.tasaAsistencia?.tasa_asistencia ?? 0}%</strong></span></p>
-<h2>Citas últimos 7 días</h2>
+<span class="metric">Citas en el alcance del reporte: <strong>${metrics.citasEnScope ?? 0}</strong></span>
+<span class="metric">Tasa asistencia: <strong>${metrics.tasaAsistencia ?? 0}%</strong></span></p>
+<h2>${escapeHtml(citas7Title)}</h2>
 <div class="chart-wrap">${svgCitas7 || '<p>Sin datos para graficar</p>'}</div>
 <table><thead><tr><th>Día</th><th>Citas</th></tr></thead><tbody>${citas7Rows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
-<h2>Pacientes nuevos últimos 7 días</h2>
+<h2>${escapeHtml(pacientes7Title)}</h2>
 <div class="chart-wrap">${svgPacientes7 || '<p>Sin datos para graficar</p>'}</div>
 <table><thead><tr><th>Día</th><th>Pacientes</th></tr></thead><tbody>${pacientes7Rows || '<tr><td colspan="2">Sin datos</td></tr>'}</tbody></table>
 <h2>Citas por estado</h2>

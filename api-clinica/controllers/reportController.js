@@ -188,10 +188,23 @@ export const getReporteEstadisticasHTML = async (req, res) => {
       options.idDoctor = idDoctor;
     }
 
+    if (isAdmin && req.query.modulo != null && String(req.query.modulo).trim() !== '') {
+      const modulo = parseInt(req.query.modulo, 10);
+      if (!Number.isInteger(modulo) || modulo <= 0) {
+        return res.status(400).json({ success: false, error: 'Parámetro modulo inválido' });
+      }
+      options.modulo = modulo;
+    }
+    if (req.query.fechaInicio) options.fechaInicio = String(req.query.fechaInicio).trim();
+    if (req.query.fechaFin) options.fechaFin = String(req.query.fechaFin).trim();
+
     logger.info('Solicitud de reporte estadísticas HTML', {
       rol: reportRol,
       userId: req.user?.id_usuario,
-      idDoctor: options.idDoctor
+      idDoctor: options.idDoctor,
+      modulo: options.modulo,
+      fechaInicio: options.fechaInicio,
+      fechaFin: options.fechaFin,
     });
 
     const html = await reportService.generateReporteEstadisticasHTML(reportRol, options);
@@ -204,7 +217,8 @@ export const getReporteEstadisticasHTML = async (req, res) => {
   } catch (error) {
     logger.error('Error generando reporte estadísticas HTML:', error);
     if (!res.headersSent) {
-      res.status(500).json({ success: false, error: error.message });
+      const status = error.statusCode && error.statusCode >= 400 && error.statusCode < 600 ? error.statusCode : 500;
+      res.status(status).json({ success: false, error: error.message });
     }
   }
 };
