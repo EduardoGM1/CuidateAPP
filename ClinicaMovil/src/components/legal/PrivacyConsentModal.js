@@ -44,8 +44,14 @@ export default function PrivacyConsentModal({
       return;
     }
     setError('');
-    await savePrivacyConsent({ privacyNotice, healthData, userId });
-    onAccepted();
+    try {
+      await savePrivacyConsent({ privacyNotice, healthData, userId });
+      onAccepted();
+    } catch (err) {
+      const message =
+        err.response?.data?.error || err.message || 'No se pudo registrar el consentimiento. Intenta de nuevo.';
+      setError(message);
+    }
   };
 
   const handleRejectPress = () => {
