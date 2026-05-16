@@ -17,7 +17,7 @@ export default function AvisoPrivacidadScreen({ navigation }) {
       <BackHeader navigation={navigation} title={PRIVACY_NOTICE_META.title} variant="professional" />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <Text style={styles.appName}>{NOMBRE_APP}</Text>
-        {PRIVACY_NOTICE_BODY_VISIBLE ? (
+        {PRIVACY_NOTICE_BODY_VISIBLE || PRIVACY_NOTICE_SECTIONS.length > 0 ? (
           <>
             <Text style={styles.meta}>
               Versión {PRIVACY_NOTICE_VERSION} · {PRIVACY_NOTICE_META.lastUpdated}
