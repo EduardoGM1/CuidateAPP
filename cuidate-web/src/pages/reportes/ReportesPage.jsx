@@ -67,6 +67,12 @@ function ReporteEstadisticasCard() {
   if (fechaFin) params.fechaFin = fechaFin;
 
   const handleDescargarPDF = useCallback(async () => {
+    if ((fechaInicio && !fechaFin) || (!fechaInicio && fechaFin)) {
+      const msg = 'Indica fecha de inicio y fecha de fin del rango';
+      setError(msg);
+      message.error(msg);
+      return;
+    }
     setPdfLoading(true);
     setError(null);
     try {
@@ -80,7 +86,7 @@ function ReporteEstadisticasCard() {
     } finally {
       setPdfLoading(false);
     }
-  }, [params.modulo, params.fechaInicio, params.fechaFin]);
+  }, [fechaInicio, fechaFin, params.modulo, params.fechaInicio, params.fechaFin]);
 
   const canFilterByModulo = isAdmin() && modulos.length > 0;
 
