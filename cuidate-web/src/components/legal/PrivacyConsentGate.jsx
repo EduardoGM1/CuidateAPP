@@ -23,15 +23,35 @@ export default function PrivacyConsentGate({ children }) {
   const [needsConsent, setNeedsConsent] = useState(false);
 
   useEffect(() => {
-    if (!mustConsent) {
-      setNeedsConsent(false);
-      setChecked(true);
-      return;
+    let cancelled = false;
+
+    async function check() {
+      if (!mustConsent) {
+        if (!cancelled) {
+          setNeedsConsent(false);
+          setChecked(true);
+        }
+        return;
+      }
+      setChecked(false);
+      try {
+        const valid = await hasValidPrivacyConsent(userId);
+        if (!cancelled) {
+          setNeedsConsent(!valid);
+          setChecked(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setNeedsConsent(true);
+          setChecked(true);
+        }
+      }
     }
-    setChecked(false);
-    const valid = hasValidPrivacyConsent(userId);
-    setNeedsConsent(!valid);
-    setChecked(true);
+
+    check();
+    return () => {
+      cancelled = true;
+    };
   }, [userId, mustConsent]);
 
   const handleReject = useCallback(() => {

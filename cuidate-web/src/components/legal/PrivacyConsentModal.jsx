@@ -26,14 +26,20 @@ export default function PrivacyConsentModal({ open, userId, onAccepted, onReject
     }
   }, [open]);
 
-  function handleAccept() {
+  async function handleAccept() {
     if (!canSubmit) {
       setError('Debes aceptar ambas declaraciones para continuar.');
       return;
     }
     setError('');
-    savePrivacyConsent({ privacyNotice, healthData, userId });
-    onAccepted();
+    try {
+      await savePrivacyConsent({ privacyNotice, healthData, userId });
+      onAccepted();
+    } catch (err) {
+      const message =
+        err.response?.data?.error || err.message || 'No se pudo registrar el consentimiento. Intenta de nuevo.';
+      setError(message);
+    }
   }
 
   function handleReject() {
