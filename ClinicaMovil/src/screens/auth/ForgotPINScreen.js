@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Button } from 'react-native-paper';
 import { COLORES } from '../../utils/constantes';
+import PrivacyFooterLink from '../../components/legal/PrivacyFooterLink';
 
 const ForgotPINScreen = ({ navigation }) => {
   const handleContactDoctor = () => {
@@ -88,6 +89,8 @@ const ForgotPINScreen = ({ navigation }) => {
               >
                 Entendido
               </Button>
+
+              <PrivacyFooterLink navigation={navigation} />
 
               <TouchableOpacity
                 style={styles.backContainer}

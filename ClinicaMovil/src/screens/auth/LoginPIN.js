@@ -18,6 +18,7 @@ import { useAuth } from '../../context/AuthContext';
 import { sanitizePatientId } from '../../utils/patientIdValidator';
 import { COLORES } from '../../utils/constantes';
 import { formatNombreCompleto } from '../../utils/formatNombreCompleto';
+import PrivacyFooterLink from '../../components/legal/PrivacyFooterLink';
 
 const { width, height } = Dimensions.get('window');
 
@@ -362,6 +363,8 @@ const LoginPIN = ({ navigation, route }) => {
             Intentos: {attempts}/3
           </Text>
         )}
+
+        <PrivacyFooterLink navigation={navigation} />
       </View>
     </SafeAreaView>
   );

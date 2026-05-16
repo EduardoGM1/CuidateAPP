@@ -15,6 +15,7 @@ import { Button, Card } from 'react-native-paper';
 import { doctorAuthService } from '../../api/authService';
 import Logger from '../../services/logger';
 import { COLORES } from '../../utils/constantes';
+import PrivacyFooterLink from '../../components/legal/PrivacyFooterLink';
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -113,6 +114,8 @@ const ForgotPasswordScreen = ({ navigation }) => {
                 >
                   {loading ? 'Enviando...' : 'Enviar Solicitud'}
                 </Button>
+
+                <PrivacyFooterLink navigation={navigation} />
 
                 {/* Back to Login */}
                 <TouchableOpacity

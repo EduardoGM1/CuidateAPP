@@ -15,6 +15,7 @@ import { Button, Card } from 'react-native-paper';
 import { doctorAuthService } from '../../api/authService';
 import Logger from '../../services/logger';
 import { COLORES } from '../../utils/constantes';
+import PrivacyFooterLink from '../../components/legal/PrivacyFooterLink';
 
 const ResetPasswordScreen = ({ route, navigation }) => {
   const token = route.params?.token;
@@ -203,6 +204,8 @@ const ResetPasswordScreen = ({ route, navigation }) => {
                 >
                   {loading ? 'Restableciendo...' : 'Restablecer Contraseña'}
                 </Button>
+
+                <PrivacyFooterLink navigation={navigation} />
 
                 {/* Back to Login */}
                 <TouchableOpacity

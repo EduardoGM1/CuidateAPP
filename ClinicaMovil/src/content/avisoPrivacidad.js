@@ -4,8 +4,11 @@
  */
 export const PRIVACY_NOTICE_VERSION = '1.1.0';
 
-/** false = ocultar cuerpo del aviso (pantalla dedicada y modal); mantener consentimiento */
-export const PRIVACY_NOTICE_BODY_VISIBLE = false;
+/**
+ * Texto completo en AvisoPrivacidadScreen (móvil).
+ * Mantener sincronizado con web y en true para login/perfil/configuración.
+ */
+export const PRIVACY_NOTICE_BODY_VISIBLE = true;
 
 export const PRIVACY_NOTICE_BODY_PLACEHOLDER =
   'El texto detallado del aviso de privacidad estará disponible próximamente.';
