@@ -14,7 +14,7 @@ import {
 import { savePrivacyConsent } from '../../utils/privacyConsent';
 
 /**
- * Modal bloqueante de consentimiento para pacientes (primer inicio de sesión).
+ * Modal bloqueante de consentimiento para pacientes y doctores (primer inicio de sesión).
  */
 export default function PrivacyConsentModal({
   visible,

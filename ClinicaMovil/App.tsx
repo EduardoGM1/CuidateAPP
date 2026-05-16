@@ -94,8 +94,15 @@ const AppNavigator = () => {
         <NavegacionPaciente />
       </PrivacyConsentGate>
     );
-  } else if (userRole === 'Doctor' || userRole === 'doctor' || userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador') {
-    Logger.info('Usuario autenticado como doctor/admin, mostrando NavegacionProfesional');
+  } else if (userRole === 'Doctor' || userRole === 'doctor') {
+    Logger.info('Usuario autenticado como doctor, mostrando NavegacionProfesional');
+    return (
+      <PrivacyConsentGate enabled>
+        <NavegacionProfesional />
+      </PrivacyConsentGate>
+    );
+  } else if (userRole === 'Admin' || userRole === 'admin' || userRole === 'administrador') {
+    Logger.info('Usuario autenticado como admin, mostrando NavegacionProfesional');
     return <NavegacionProfesional />;
   }
 

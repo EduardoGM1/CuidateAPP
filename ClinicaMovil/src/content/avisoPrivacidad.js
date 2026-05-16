@@ -82,7 +82,7 @@ export const PRIVACY_NOTICE_SECTIONS = [
   },
 ];
 
-/** Textos del modal de consentimiento (primer acceso del paciente). */
+/** Textos del modal de consentimiento (primer acceso de paciente o doctor). */
 export const PRIVACY_CONSENT_UI = {
   modalTitle: 'Aviso de Privacidad',
   heading: 'Debes aceptar antes de continuar',
