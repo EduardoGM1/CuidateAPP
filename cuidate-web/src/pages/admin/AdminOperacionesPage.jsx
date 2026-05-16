@@ -2,7 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { Tabs } from 'antd';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, LoadingSpinner, Select } from '../../components/ui';
-import { getAdminSystemStatus, downloadPacientesAnonimosCsv, getDataAccessLogs } from '../../api/adminOperations';
+import {
+  getAdminSystemStatus,
+  downloadPacientesAnonimosCsv,
+  getDataAccessLogs,
+  getBackupStatus,
+  runBackupNow,
+  downloadBackupFile,
+} from '../../api/adminOperations';
 import { getModulos } from '../../api/modulos';
 import { Table } from '../../components/ui';
 import { downloadBlob } from '../../utils/reportUtils';
@@ -24,6 +31,11 @@ export default function AdminOperacionesPage() {
   const [logsTotal, setLogsTotal] = useState(0);
   const [logsLoading, setLogsLoading] = useState(false);
 
+  const [backupInfo, setBackupInfo] = useState(null);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupRunning, setBackupRunning] = useState(false);
+  const [backupDownloading, setBackupDownloading] = useState(false);
+
   const loadStatus = useCallback(async () => {
     setLoadingStatus(true);
     setStatusErr(null);
@@ -34,6 +46,18 @@ export default function AdminOperacionesPage() {
       setStatusErr(e?.response?.data?.error || e?.message || 'Error');
     } finally {
       setLoadingStatus(false);
+    }
+  }, []);
+
+  const loadBackup = useCallback(async () => {
+    setBackupLoading(true);
+    try {
+      const res = await getBackupStatus();
+      setBackupInfo(res);
+    } catch (e) {
+      setBackupInfo({ manifest: { success: false, error: e?.response?.data?.error || e?.message } });
+    } finally {
+      setBackupLoading(false);
     }
   }, []);
 
@@ -60,9 +84,43 @@ export default function AdminOperacionesPage() {
       getModulos().then((m) => setModulos(Array.isArray(m) ? m : [])).catch(() => setModulos([]));
     }
     if (tab === 'accesos') loadLogs();
-  }, [tab, loadLogs]);
+    if (tab === 'respaldo') loadBackup();
+  }, [tab, loadLogs, loadBackup]);
 
   useOnboardingPageReady(!loadingStatus);
+
+  const formatBytes = (n) => {
+    if (n == null || Number.isNaN(n)) return '—';
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+    return `${(n / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  const handleRunBackup = async () => {
+    setBackupRunning(true);
+    try {
+      await runBackupNow('daily');
+      window.alert('Respaldo iniciado en el servidor. Actualice el estado en unos minutos.');
+      setTimeout(() => loadBackup(), 3000);
+    } catch (e) {
+      window.alert(e?.response?.data?.error || e?.message || 'No se pudo iniciar el respaldo');
+    } finally {
+      setBackupRunning(false);
+    }
+  };
+
+  const handleDownloadBackup = async (file) => {
+    setBackupDownloading(true);
+    try {
+      const blob = await downloadBackupFile(file);
+      const name = file ? file.split('/').pop() : `respaldo-${new Date().toISOString().slice(0, 10)}.sql.gz`;
+      downloadBlob(blob, name);
+    } catch (e) {
+      window.alert(e?.response?.data?.error || e?.message || 'No se pudo descargar el respaldo');
+    } finally {
+      setBackupDownloading(false);
+    }
+  };
 
   const handlePacientesAnon = async () => {
     setExporting(true);
@@ -138,6 +196,75 @@ export default function AdminOperacionesPage() {
               <Button type="button" variant="primary" onClick={handlePacientesAnon} disabled={exporting}>
                 {exporting ? 'Generando…' : 'Descargar CSV pacientes (anonimizado)'}
               </Button>
+            </Card>
+          ),
+        },
+        {
+          key: 'respaldo',
+          label: 'Respaldo BD',
+          children: (
+            <Card>
+              <p style={{ color: 'var(--color-texto-secundario)', marginTop: 0 }}>
+                Respaldos automáticos en el VPS (cron). El correo solo avisa del resultado; el archivo no se envía por email.
+                Configure el servidor según <code>deploy/backup/README.md</code>.
+              </p>
+              {backupLoading && <LoadingSpinner />}
+              {!backupLoading && backupInfo && (
+                <>
+                  <ul style={{ margin: '0 0 1rem', paddingLeft: '1.25rem', lineHeight: 1.7 }}>
+                    <li>Directorio: <code>{sanitizeForDisplay(backupInfo.backupRoot)}</code></li>
+                    <li>Último respaldo: {backupInfo.manifest?.lastRun ? formatDateTime(backupInfo.manifest.lastRun) : 'Sin registros'}</li>
+                    <li>Estado: <strong>{backupInfo.manifest?.success === true ? 'OK' : backupInfo.manifest?.success === false ? 'Error' : '—'}</strong></li>
+                    {backupInfo.manifest?.file && (
+                      <li>Archivo: {sanitizeForDisplay(backupInfo.manifest.file)} ({formatBytes(backupInfo.manifest.sizeBytes)})</li>
+                    )}
+                    {backupInfo.manifest?.error && (
+                      <li style={{ color: 'var(--color-error)' }}>{sanitizeForDisplay(backupInfo.manifest.error)}</li>
+                    )}
+                  </ul>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+                    <Button type="button" variant="outline" onClick={loadBackup}>
+                      Actualizar estado
+                    </Button>
+                    {backupInfo.allowApiTrigger && (
+                      <Button type="button" variant="primary" onClick={handleRunBackup} disabled={backupRunning}>
+                        {backupRunning ? 'Iniciando…' : 'Ejecutar respaldo ahora'}
+                      </Button>
+                    )}
+                    {backupInfo.manifest?.file && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => handleDownloadBackup(backupInfo.manifest.file)}
+                        disabled={backupDownloading}
+                      >
+                        {backupDownloading ? 'Descargando…' : 'Descargar último respaldo'}
+                      </Button>
+                    )}
+                  </div>
+                  {Array.isArray(backupInfo.recentBackups) && backupInfo.recentBackups.length > 0 && (
+                    <>
+                      <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Respaldos recientes</p>
+                      <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.9rem' }}>
+                        {backupInfo.recentBackups.map((b) => (
+                          <li key={b.file} style={{ marginBottom: '0.35rem' }}>
+                            {sanitizeForDisplay(b.file)} — {formatBytes(b.sizeBytes)} — {formatDateTime(b.mtime)}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              style={{ marginLeft: '0.5rem', padding: '2px 8px', fontSize: '0.8rem' }}
+                              disabled={backupDownloading}
+                              onClick={() => handleDownloadBackup(b.file)}
+                            >
+                              Descargar
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </>
+              )}
             </Card>
           ),
         },

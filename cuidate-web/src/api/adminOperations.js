@@ -32,3 +32,19 @@ export async function revokeUserSessions(idUsuario) {
   const { data } = await client.post(`${BASE}/users/${idUsuario}/revoke-sessions`);
   return data?.data ?? data;
 }
+
+export async function getBackupStatus() {
+  const { data } = await client.get(`${BASE}/backup/status`);
+  return data?.data ?? data;
+}
+
+export async function runBackupNow(type = 'daily') {
+  const { data } = await client.post(`${BASE}/backup/run`, { type });
+  return data?.data ?? data;
+}
+
+export async function downloadBackupFile(file) {
+  const q = file ? `?file=${encodeURIComponent(file)}` : '';
+  const { data } = await client.get(`${BASE}/backup/download${q}`, { responseType: 'blob' });
+  return data;
+}

@@ -1389,6 +1389,11 @@ select:focus-visible {
 .saas-chart-inner {
   min-height: 220px;
 }
+.saas-chart-inner--horizontal-bar {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
 .saas-alert-card { border-left: 4px solid var(--color-error); }
 .saas-alert-card .section-title { color: var(--color-error); }
 .section-title { font-size: var(--text-lg); font-weight: var(--font-semibold); margin: 0 0 var(--space-3); color: var(--color-primario); }
