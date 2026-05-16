@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { resetPassword } from '../api/auth';
 import { Button, Input, Card } from '../components/ui';
+import AuthPrivacyFooter from '../components/legal/AuthPrivacyFooter';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -53,6 +54,7 @@ export default function ResetPassword() {
         <Card style={{ width: '100%', maxWidth: '400px' }}>
           <p style={{ color: 'var(--color-primario)', marginBottom: '1rem' }}>Contraseña restablecida correctamente. Redirigiendo al inicio de sesión…</p>
           <Link to="/login">Ir al login</Link>
+          <AuthPrivacyFooter />
         </Card>
       </div>
     );
@@ -101,6 +103,7 @@ export default function ResetPassword() {
         <p style={{ marginTop: '1.5rem', fontSize: '0.9rem' }}>
           <Link to="/login" style={{ color: 'var(--color-primario)' }}>Volver al inicio de sesión</Link>
         </p>
+        <AuthPrivacyFooter />
       </Card>
     </div>
   );

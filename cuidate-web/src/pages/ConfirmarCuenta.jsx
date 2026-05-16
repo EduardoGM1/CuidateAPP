@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { resetPassword } from '../api/auth';
 import { Button, Input, Card } from '../components/ui';
+import AuthPrivacyFooter from '../components/legal/AuthPrivacyFooter';
 
 /**
  * Página pública para confirmar cuenta y crear contraseña (invitación Doctor/Admin).
@@ -81,6 +82,7 @@ export default function ConfirmarCuenta() {
             Redirigiendo al inicio de sesión…
           </p>
           <Link to="/login">Ir al inicio de sesión</Link>
+          <AuthPrivacyFooter />
         </Card>
       </div>
     );
@@ -146,6 +148,7 @@ export default function ConfirmarCuenta() {
             Volver al inicio de sesión
           </Link>
         </p>
+        <AuthPrivacyFooter />
       </Card>
     </div>
   );

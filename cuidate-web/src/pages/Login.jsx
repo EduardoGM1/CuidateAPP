@@ -7,7 +7,7 @@ import { useAuthStore } from '../stores/authStore';
 import { Button, Input, Card } from '../components/ui';
 import Logo from '../components/common/Logo';
 import { LOGIN_REASON_SESSION_EXPIRED } from '../utils/constants';
-import { PrivacyNoticeInlineLink } from '../components/legal/PrivacyNoticeContent';
+import AuthPrivacyFooter from '../components/legal/AuthPrivacyFooter';
 
 const SESSION_EXPIRED_MESSAGE = 'Tu sesión ha caducado, inicia sesión nuevamente.';
 
@@ -109,9 +109,7 @@ export default function Login() {
           <p className="login-footer">
             <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
           </p>
-          <p className="login-footer" style={{ marginTop: '0.75rem', fontSize: '0.85rem' }}>
-            <PrivacyNoticeInlineLink />
-          </p>
+          <AuthPrivacyFooter />
         </form>
       </Card>
     </div>

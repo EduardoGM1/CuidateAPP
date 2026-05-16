@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { forgotPassword } from '../api/auth';
 import { Button, Input, Card } from '../components/ui';
+import AuthPrivacyFooter from '../components/legal/AuthPrivacyFooter';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -70,6 +71,7 @@ export default function ForgotPassword() {
         <p style={{ marginTop: '1.5rem', fontSize: '0.9rem' }}>
           <Link to="/login" style={{ color: 'var(--color-primario)' }}>Volver al inicio de sesión</Link>
         </p>
+        <AuthPrivacyFooter />
       </Card>
     </div>
   );

@@ -4,8 +4,12 @@
  */
 export const PRIVACY_NOTICE_VERSION = '1.1.0';
 
-/** false = ocultar cuerpo del aviso (pantalla dedicada y modal); mantener consentimiento */
-export const PRIVACY_NOTICE_BODY_VISIBLE = false;
+/**
+ * Texto completo en pantalla /aviso-privacidad (web y móvil).
+ * Debe permanecer true: login, perfil y configuración enlazan ahí.
+ * El modal de consentimiento solo usa checkboxes, no este cuerpo.
+ */
+export const PRIVACY_NOTICE_BODY_VISIBLE = true;
 
 export const PRIVACY_NOTICE_BODY_PLACEHOLDER =
   'El texto detallado del aviso de privacidad estará disponible próximamente.';
