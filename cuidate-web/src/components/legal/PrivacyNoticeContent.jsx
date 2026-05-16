@@ -9,10 +9,16 @@ import {
 
 /**
  * Contenido del aviso de privacidad (lectura).
- * @param {{ compact?: boolean, showVersion?: boolean }} props
+ * @param {{ compact?: boolean, showVersion?: boolean, showFullBody?: boolean }} props
  */
-export default function PrivacyNoticeContent({ compact = false, showVersion = true }) {
-  if (!PRIVACY_NOTICE_BODY_VISIBLE) {
+export default function PrivacyNoticeContent({
+  compact = false,
+  showVersion = true,
+  showFullBody = false,
+}) {
+  const showBody = PRIVACY_NOTICE_BODY_VISIBLE || showFullBody;
+
+  if (!showBody) {
     return (
       <article className="privacy-notice-content" style={{ fontSize: compact ? '0.9rem' : '0.95rem', lineHeight: 1.6 }}>
         <p style={{ margin: 0, color: 'var(--color-texto-secundario)' }}>{PRIVACY_NOTICE_BODY_PLACEHOLDER}</p>

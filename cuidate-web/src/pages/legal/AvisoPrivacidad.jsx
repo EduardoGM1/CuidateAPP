@@ -17,7 +17,7 @@ export default function AvisoPrivacidad() {
         <h2 style={{ textAlign: 'center', margin: '0 0 1.5rem', fontSize: '1.35rem' }}>
           {PRIVACY_NOTICE_META.title}
         </h2>
-        <PrivacyNoticeContent />
+        <PrivacyNoticeContent showFullBody />
         <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <Link to="/login">
             <Button variant="outline" type="button">
