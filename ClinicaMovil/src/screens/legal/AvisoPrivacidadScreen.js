@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import BackHeader from '../../components/common/BackHeader';
 import { COLORES, NOMBRE_APP } from '../../utils/constantes';
 import {
+  PRIVACY_NOTICE_BODY_PLACEHOLDER,
+  PRIVACY_NOTICE_BODY_VISIBLE,
   PRIVACY_NOTICE_META,
   PRIVACY_NOTICE_SECTIONS,
   PRIVACY_NOTICE_VERSION,
@@ -15,27 +17,33 @@ export default function AvisoPrivacidadScreen({ navigation }) {
       <BackHeader navigation={navigation} title={PRIVACY_NOTICE_META.title} variant="professional" />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <Text style={styles.appName}>{NOMBRE_APP}</Text>
-        <Text style={styles.meta}>
-          Versión {PRIVACY_NOTICE_VERSION} · {PRIVACY_NOTICE_META.lastUpdated}
-        </Text>
-        <Text style={styles.paragraph}>
-          <Text style={styles.bold}>{PRIVACY_NOTICE_META.responsibleLabel}: </Text>
-          {PRIVACY_NOTICE_META.responsibleName}
-        </Text>
-        <Text style={styles.paragraph}>
-          <Text style={styles.bold}>Contacto: </Text>
-          {PRIVACY_NOTICE_META.contactEmail}
-        </Text>
-        {PRIVACY_NOTICE_SECTIONS.map((section) => (
-          <View key={section.id} style={styles.section}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            {section.paragraphs.map((p, i) => (
-              <Text key={i} style={styles.paragraph}>
-                {p}
-              </Text>
+        {PRIVACY_NOTICE_BODY_VISIBLE ? (
+          <>
+            <Text style={styles.meta}>
+              Versión {PRIVACY_NOTICE_VERSION} · {PRIVACY_NOTICE_META.lastUpdated}
+            </Text>
+            <Text style={styles.paragraph}>
+              <Text style={styles.bold}>{PRIVACY_NOTICE_META.responsibleLabel}: </Text>
+              {PRIVACY_NOTICE_META.responsibleName}
+            </Text>
+            <Text style={styles.paragraph}>
+              <Text style={styles.bold}>Contacto: </Text>
+              {PRIVACY_NOTICE_META.contactEmail}
+            </Text>
+            {PRIVACY_NOTICE_SECTIONS.map((section) => (
+              <View key={section.id} style={styles.section}>
+                <Text style={styles.sectionTitle}>{section.title}</Text>
+                {section.paragraphs.map((p, i) => (
+                  <Text key={i} style={styles.paragraph}>
+                    {p}
+                  </Text>
+                ))}
+              </View>
             ))}
-          </View>
-        ))}
+          </>
+        ) : (
+          <Text style={styles.paragraph}>{PRIVACY_NOTICE_BODY_PLACEHOLDER}</Text>
+        )}
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Text style={styles.backBtnText}>← Volver</Text>
         </TouchableOpacity>

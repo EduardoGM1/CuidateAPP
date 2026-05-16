@@ -10,6 +10,8 @@ import {
 import { COLORES } from '../../utils/constantes';
 import {
   PRIVACY_CONSENT_LABELS,
+  PRIVACY_NOTICE_BODY_PLACEHOLDER,
+  PRIVACY_NOTICE_BODY_VISIBLE,
   PRIVACY_NOTICE_META,
   PRIVACY_NOTICE_SECTIONS,
   PRIVACY_NOTICE_VERSION,
@@ -17,6 +19,14 @@ import {
 import { savePrivacyConsent } from '../../utils/privacyConsent';
 
 function NoticeBody({ compact }) {
+  if (!PRIVACY_NOTICE_BODY_VISIBLE) {
+    return (
+      <View>
+        <Text style={styles.paragraph}>{PRIVACY_NOTICE_BODY_PLACEHOLDER}</Text>
+      </View>
+    );
+  }
+
   return (
     <View>
       <Text style={styles.meta}>
@@ -76,7 +86,7 @@ export default function PrivacyConsentModal({
           <ScrollView style={styles.scroll} showsVerticalScrollIndicator>
             <NoticeBody compact />
           </ScrollView>
-          {onOpenFullNotice ? (
+          {PRIVACY_NOTICE_BODY_VISIBLE && onOpenFullNotice ? (
             <TouchableOpacity onPress={onOpenFullNotice} style={styles.linkWrap}>
               <Text style={styles.link}>Ver aviso completo</Text>
             </TouchableOpacity>
