@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import {
+  PRIVACY_NOTICE_BODY_PLACEHOLDER,
+  PRIVACY_NOTICE_BODY_VISIBLE,
   PRIVACY_NOTICE_META,
   PRIVACY_NOTICE_SECTIONS,
   PRIVACY_NOTICE_VERSION,
@@ -10,6 +12,14 @@ import {
  * @param {{ compact?: boolean, showVersion?: boolean }} props
  */
 export default function PrivacyNoticeContent({ compact = false, showVersion = true }) {
+  if (!PRIVACY_NOTICE_BODY_VISIBLE) {
+    return (
+      <article className="privacy-notice-content" style={{ fontSize: compact ? '0.9rem' : '0.95rem', lineHeight: 1.6 }}>
+        <p style={{ margin: 0, color: 'var(--color-texto-secundario)' }}>{PRIVACY_NOTICE_BODY_PLACEHOLDER}</p>
+      </article>
+    );
+  }
+
   return (
     <article className="privacy-notice-content" style={{ fontSize: compact ? '0.9rem' : '0.95rem', lineHeight: 1.6 }}>
       {showVersion && (

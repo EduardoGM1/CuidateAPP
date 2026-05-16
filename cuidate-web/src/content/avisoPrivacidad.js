@@ -4,6 +4,12 @@
  */
 export const PRIVACY_NOTICE_VERSION = '1.0.0';
 
+/** false = ocultar cuerpo del aviso (pantalla dedicada y modal); mantener consentimiento */
+export const PRIVACY_NOTICE_BODY_VISIBLE = false;
+
+export const PRIVACY_NOTICE_BODY_PLACEHOLDER =
+  'El texto detallado del aviso de privacidad estará disponible próximamente.';
+
 export const PRIVACY_NOTICE_META = {
   title: 'Aviso de Privacidad',
   lastUpdated: '10 de mayo de 2026',

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Modal, Button } from '../ui';
 import PrivacyNoticeContent from './PrivacyNoticeContent';
-import { PRIVACY_CONSENT_LABELS } from '../../content/avisoPrivacidad';
+import { PRIVACY_CONSENT_LABELS, PRIVACY_NOTICE_BODY_VISIBLE } from '../../content/avisoPrivacidad';
 import { savePrivacyConsent } from '../../utils/privacyConsent';
 
 /**
@@ -50,11 +50,13 @@ export default function PrivacyConsentModal({ open, userId, onAccepted }) {
       >
         <PrivacyNoticeContent compact showVersion />
       </div>
-      <p style={{ fontSize: '0.9rem', marginBottom: '0.75rem' }}>
-        <Link to="/aviso-privacidad" target="_blank" rel="noopener noreferrer">
-          Ver aviso completo en pantalla dedicada
-        </Link>
-      </p>
+      {PRIVACY_NOTICE_BODY_VISIBLE ? (
+        <p style={{ fontSize: '0.9rem', marginBottom: '0.75rem' }}>
+          <Link to="/aviso-privacidad" target="_blank" rel="noopener noreferrer">
+            Ver aviso completo en pantalla dedicada
+          </Link>
+        </p>
+      ) : null}
       <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: '0.75rem', cursor: 'pointer' }}>
         <input
           type="checkbox"
