@@ -3,7 +3,7 @@ import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { COLORES } from '../../utils/constantes';
-import { hasValidPrivacyConsent } from '../../utils/privacyConsent';
+import { clearPrivacyConsent, hasValidPrivacyConsent } from '../../utils/privacyConsent';
 import PrivacyConsentModal from './PrivacyConsentModal';
 
 /**
@@ -17,7 +17,7 @@ function requiresPrivacyConsent(userData) {
 /** Pacientes y doctores deben aceptar el aviso antes del dashboard. */
 export default function PrivacyConsentGate({ children, enabled = true }) {
   const navigation = useNavigation();
-  const { userData } = useAuth();
+  const { userData, logout } = useAuth();
   const userId =
     userData?.id_paciente ?? userData?.id_doctor ?? userData?.id ?? userData?.id_usuario;
 
@@ -44,6 +44,11 @@ export default function PrivacyConsentGate({ children, enabled = true }) {
     navigation.navigate('AvisoPrivacidad');
   };
 
+  const handleReject = useCallback(async () => {
+    await clearPrivacyConsent();
+    await logout();
+  }, [logout]);
+
   if (loading) {
     return (
       <View style={styles.loading}>
@@ -53,17 +58,19 @@ export default function PrivacyConsentGate({ children, enabled = true }) {
     );
   }
 
-  return (
-    <>
-      {children}
+  if (needsConsent && requiresPrivacyConsent(userData)) {
+    return (
       <PrivacyConsentModal
-        visible={needsConsent}
+        visible
         userId={userId}
         onAccepted={() => setNeedsConsent(false)}
+        onRejected={handleReject}
         onOpenFullNotice={openFullNotice}
       />
-    </>
-  );
+    );
+  }
+
+  return children;
 }
 
 const styles = StyleSheet.create({

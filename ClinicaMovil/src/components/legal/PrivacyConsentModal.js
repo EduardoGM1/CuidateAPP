@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   Modal,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import { COLORES } from '../../utils/constantes';
 import {
@@ -20,6 +21,7 @@ export default function PrivacyConsentModal({
   visible,
   userId,
   onAccepted,
+  onRejected,
   onOpenFullNotice,
 }) {
   const [privacyNotice, setPrivacyNotice] = useState(false);
@@ -27,6 +29,14 @@ export default function PrivacyConsentModal({
   const [error, setError] = useState('');
 
   const canSubmit = privacyNotice && healthData;
+
+  useEffect(() => {
+    if (visible) {
+      setPrivacyNotice(false);
+      setHealthData(false);
+      setError('');
+    }
+  }, [visible]);
 
   const handleAccept = async () => {
     if (!canSubmit) {
@@ -38,8 +48,24 @@ export default function PrivacyConsentModal({
     onAccepted();
   };
 
+  const handleRejectPress = () => {
+    Alert.alert(
+      PRIVACY_CONSENT_UI.rejectConfirmTitle,
+      PRIVACY_CONSENT_UI.rejectConfirmMessage,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Cerrar sesión', style: 'destructive', onPress: onRejected },
+      ]
+    );
+  };
+
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={() => {}}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={handleRejectPress}
+    >
       <View style={styles.overlay}>
         <View style={styles.card}>
           <Text style={styles.title}>{PRIVACY_CONSENT_UI.modalTitle}</Text>
@@ -98,6 +124,9 @@ export default function PrivacyConsentModal({
             disabled={!canSubmit}
           >
             <Text style={styles.buttonText}>{PRIVACY_CONSENT_UI.acceptButton}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.rejectButton} onPress={handleRejectPress}>
+            <Text style={styles.rejectButtonText}>{PRIVACY_CONSENT_UI.rejectButton}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -165,4 +194,17 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.5 },
   buttonText: { color: COLORES.TEXTO_EN_PRIMARIO || '#fff', fontWeight: '600', fontSize: 16 },
+  rejectButton: {
+    marginTop: 10,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORES.ERROR || '#dc3545',
+  },
+  rejectButtonText: {
+    color: COLORES.ERROR || '#dc3545',
+    fontWeight: '600',
+    fontSize: 15,
+  },
 });
