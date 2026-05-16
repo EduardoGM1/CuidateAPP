@@ -14,7 +14,7 @@ import { getModulos } from '../../api/modulos';
 import { Table } from '../../components/ui';
 import { downloadBlob } from '../../utils/reportUtils';
 import { formatDateTime } from '../../utils/format';
-import { sanitizeForDisplay } from '../../utils/sanitize';
+import { sanitizeForDisplay, displayText } from '../../utils/sanitize';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 export default function AdminOperacionesPage() {
@@ -212,14 +212,14 @@ export default function AdminOperacionesPage() {
               {!backupLoading && backupInfo && (
                 <>
                   <ul style={{ margin: '0 0 1rem', paddingLeft: '1.25rem', lineHeight: 1.7 }}>
-                    <li>Directorio: <code>{sanitizeForDisplay(backupInfo.backupRoot)}</code></li>
+                    <li>Directorio: <code>{displayText(backupInfo.backupRoot)}</code></li>
                     <li>Último respaldo: {backupInfo.manifest?.lastRun ? formatDateTime(backupInfo.manifest.lastRun) : 'Sin registros'}</li>
                     <li>Estado: <strong>{backupInfo.manifest?.success === true ? 'OK' : backupInfo.manifest?.success === false ? 'Error' : '—'}</strong></li>
                     {backupInfo.manifest?.file && (
-                      <li>Archivo: {sanitizeForDisplay(backupInfo.manifest.file)} ({formatBytes(backupInfo.manifest.sizeBytes)})</li>
+                      <li>Archivo: {displayText(backupInfo.manifest.file)} ({formatBytes(backupInfo.manifest.sizeBytes)})</li>
                     )}
                     {backupInfo.manifest?.error && (
-                      <li style={{ color: 'var(--color-error)' }}>{sanitizeForDisplay(backupInfo.manifest.error)}</li>
+                      <li style={{ color: 'var(--color-error)' }}>{displayText(backupInfo.manifest.error)}</li>
                     )}
                   </ul>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
@@ -248,7 +248,7 @@ export default function AdminOperacionesPage() {
                       <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.9rem' }}>
                         {backupInfo.recentBackups.map((b) => (
                           <li key={b.file} style={{ marginBottom: '0.35rem' }}>
-                            {sanitizeForDisplay(b.file)} — {formatBytes(b.sizeBytes)} — {formatDateTime(b.mtime)}
+                            {displayText(b.file)} — {formatBytes(b.sizeBytes)} — {formatDateTime(b.mtime)}
                             <Button
                               type="button"
                               variant="outline"
