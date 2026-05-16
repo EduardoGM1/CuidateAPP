@@ -17,6 +17,7 @@ import StatCard, { IconUsers, IconUser, IconCalendar, IconTrendingUp, IconMessag
 import { Card, Button } from '../components/ui';
 import { LoadingSpinner } from '../components/ui';
 import { CHART_COLORS } from '../components/reportes/chartConfig';
+import { ReportesHorizontalBarChart } from '../components/reportes/ReportesCharts';
 import { useOnboardingPageReady } from '../onboarding/useOnboardingPageReady';
 import { useDoctorNavBadgesRefresh } from '../contexts/DoctorNavBadgesContext';
 import {
@@ -31,7 +32,6 @@ import {
   Pie,
   Cell,
   Legend,
-  LabelList,
 } from 'recharts';
 
 /** Unifica alertas admin (valoresCriticos, citasPerdidas, alertasAuditoria) en una lista con tipo y fecha para ordenar. */
@@ -389,30 +389,13 @@ export default function Dashboard() {
                       );
                     })()}
                     {Array.isArray(summary.charts?.doctoresActivos) && summary.charts.doctoresActivos.length > 0 && (
-                      <Card className="saas-chart-card">
-                        <h3 className="saas-chart-title">Doctores más activos (por citas)</h3>
-                        <div className="saas-chart-inner">
-                          <ResponsiveContainer width="100%" height={220}>
-                            <BarChart
-                              data={summary.charts.doctoresActivos}
-                              layout="vertical"
-                              margin={{ top: 8, right: 36, left: 60, bottom: 0 }}
-                            >
-                              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
-                              <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
-                              <YAxis type="category" dataKey="nombre" width={55} tick={{ fontSize: 11 }} />
-                              <Tooltip />
-                              <Bar dataKey="total_citas" name="Citas" fill={CHART_COLORS.primary} radius={[0, 4, 4, 0]}>
-                                <LabelList
-                                  dataKey="total_citas"
-                                  position="right"
-                                  style={{ fill: 'var(--color-texto-primario)', fontSize: 12, fontWeight: 600 }}
-                                />
-                              </Bar>
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </Card>
+                      <ReportesHorizontalBarChart
+                        title="Doctores más activos (por citas)"
+                        data={summary.charts.doctoresActivos}
+                        dataKey="total_citas"
+                        nameKey="nombre"
+                        barName="Citas"
+                      />
                     )}
                   </>
                 )}

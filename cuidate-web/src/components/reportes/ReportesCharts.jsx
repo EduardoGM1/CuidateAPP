@@ -16,6 +16,35 @@ import { Card } from '../ui';
 import { CHART_COLORS, PIE_COLORS } from './chartConfig';
 
 const CHART_HEIGHT = 220;
+const HORIZONTAL_BAR_ROW_HEIGHT = 44;
+
+/** Recorta etiqueta larga (eje Y) manteniendo el nombre completo en el tooltip. */
+function shortenCategoryLabel(value, maxLen = 34) {
+  const text = String(value ?? '').trim();
+  if (text.length <= maxLen) return text;
+  return `${text.slice(0, maxLen - 1)}…`;
+}
+
+/** Ancho del eje Y según el nombre más largo. */
+function yAxisWidthForNames(data, nameKey, min = 120, max = 220) {
+  if (!Array.isArray(data) || data.length === 0) return min;
+  const longest = data.reduce(
+    (maxChars, row) => Math.max(maxChars, String(row[nameKey] ?? '').trim().length),
+    0
+  );
+  return Math.min(max, Math.max(min, Math.ceil(longest * 6.5) + 20));
+}
+
+function horizontalBarChartMetrics(data, nameKey = 'nombre') {
+  const count = Array.isArray(data) ? data.length : 0;
+  const height = Math.max(CHART_HEIGHT, count * HORIZONTAL_BAR_ROW_HEIGHT + 20);
+  const yAxisWidth = yAxisWidthForNames(data, nameKey);
+  return {
+    height,
+    yAxisWidth,
+    margin: { top: 8, right: 40, left: yAxisWidth + 8, bottom: 8 },
+  };
+}
 
 /**
  * Gráfico de barras verticales (ej: citas por día, pacientes nuevos).
@@ -86,20 +115,30 @@ export function ReportesHorizontalBarChart({
   color = CHART_COLORS.primary,
 }) {
   if (!Array.isArray(data) || data.length === 0) return null;
+  const { height, yAxisWidth, margin } = horizontalBarChartMetrics(data, nameKey);
+
   return (
     <Card className="saas-chart-card">
       <h3 className="saas-chart-title">{title}</h3>
-      <div className="saas-chart-inner">
-        <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-          <BarChart
-            data={data}
-            layout="vertical"
-            margin={{ top: 8, right: 36, left: 60, bottom: 0 }}
-          >
+      <div className="saas-chart-inner" style={{ minHeight: height }}>
+        <ResponsiveContainer width="100%" height={height}>
+          <BarChart data={data} layout="vertical" margin={margin}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
             <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
-            <YAxis type="category" dataKey={nameKey} width={55} tick={{ fontSize: 11 }} />
-            <Tooltip />
+            <YAxis
+              type="category"
+              dataKey={nameKey}
+              width={yAxisWidth}
+              interval={0}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 11, fill: 'var(--color-texto-secundario)' }}
+              tickFormatter={(value) => shortenCategoryLabel(value)}
+            />
+            <Tooltip
+              formatter={(value) => [value, barName]}
+              labelFormatter={(label) => String(label ?? '')}
+            />
             <Bar dataKey={dataKey} name={barName} fill={color} radius={[0, 4, 4, 0]}>
               <LabelList
                 dataKey={dataKey}
