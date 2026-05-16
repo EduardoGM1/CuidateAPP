@@ -28,6 +28,7 @@ import { requestMonitoring, healthCheck as monitoringHealthCheck, memoryMonitori
 // import { scheduleBackups } from "./scripts/backup-system.js"; // Archivo eliminado en limpieza
 import scheduledTasksService from "./services/scheduledTasksService.js";
 import { ensureTicketResueltoAtColumn } from "./utils/ensureTicketResueltoAt.js";
+import { ensureConsentimientosPrivacidadTable } from "./utils/ensureConsentimientosPrivacidadTable.js";
 import { ensureEsquemaVacunacionLugarColumn } from "./utils/ensureEsquemaVacunacionLugar.js";
 import { cerrarTicketsResueltoVencidos } from "./services/ticketAutoCloseService.js";
 
@@ -74,6 +75,7 @@ import ticketRoutes from "./routes/ticketRoutes.js";
 import notificacionRoutes from "./routes/notificacionRoutes.js"; // ✅ Rutas de notificaciones (doctores)
 import reportRoutes from "./routes/reportRoutes.js"; // ✅ Rutas de reportes (PDF/CSV)
 import medicamentoTomaRoutes from "./routes/medicamentoToma.js"; // ✅ Rutas de toma de medicamentos
+import privacyConsentRoutes from "./routes/privacyConsent.js";
 import { getCsrfToken } from "./middlewares/csrfProtection.js";
 
 // Import mobile services
@@ -289,6 +291,7 @@ app.use("/api/tickets", ticketRoutes); // Alias; la web usa /api/doctores/soport
 app.use("/api/doctores", notificacionRoutes); // ✅ Notificaciones de doctores
 app.use("/api/reportes", reportRoutes); // ✅ Reportes PDF/CSV
 app.use("/api/medicamentos-toma", medicamentoTomaRoutes); // ✅ Toma de medicamentos
+app.use("/api/privacy-consent", privacyConsentRoutes);
 
 // Health check endpoint for monitoring
 app.get('/health', monitoringHealthCheck);
@@ -313,6 +316,11 @@ sequelize
       await ensureEsquemaVacunacionLugarColumn();
     } catch (e) {
       logger.warn("[vacunación] Arranque: columna lugar_aplicacion", { error: e.message });
+    }
+    try {
+      await ensureConsentimientosPrivacidadTable();
+    } catch (e) {
+      logger.warn("[privacy-consent] Arranque: tabla consentimientos_privacidad", { error: e.message });
     }
     // Iniciar servidor según entorno
     if (NODE_ENV === 'production') {
