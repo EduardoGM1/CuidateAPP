@@ -8,7 +8,7 @@ import {
 import { savePrivacyConsent } from '../../utils/privacyConsent';
 
 /**
- * Modal bloqueante para pacientes (primer inicio de sesión).
+ * Modal bloqueante para pacientes y doctores (primer inicio de sesión).
  * @param {{ open: boolean, userId?: string, onAccepted: () => void }} props
  */
 export default function PrivacyConsentModal({ open, userId, onAccepted }) {
