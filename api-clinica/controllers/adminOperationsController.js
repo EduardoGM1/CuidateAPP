@@ -6,6 +6,8 @@ import { sendSuccess, sendError, sendServerError } from '../utils/responseHelper
 import logger from '../utils/logger.js';
 import RefreshTokenService from '../services/refreshTokenService.js';
 import { buildPacientesAnonimizadoCsv } from '../services/pacienteAnonExportService.js';
+import backupService from '../services/backupService.js';
+import path from 'path';
 
 export async function getSystemStatus(req, res) {
   try {
@@ -91,6 +93,50 @@ export async function listDataAccessLogs(req, res) {
     return sendSuccess(res, { items, total: count, limit, offset });
   } catch (error) {
     logger.error('[adminOperations] list data access', { error: error.message });
+    return sendServerError(res, error);
+  }
+}
+
+export async function getBackupStatus(req, res) {
+  try {
+    return sendSuccess(res, backupService.getStatus());
+  } catch (error) {
+    logger.error('[adminOperations] backup status', { error: error.message });
+    return sendServerError(res, error);
+  }
+}
+
+export async function runBackup(req, res) {
+  try {
+    const type = req.body?.type === 'weekly' ? 'weekly' : 'daily';
+    const result = await backupService.runBackupNow(type);
+    logger.info('[adminOperations] Respaldo solicitado por admin', {
+      adminId: req.user?.id_usuario,
+      type,
+    });
+    return sendSuccess(res, result);
+  } catch (error) {
+    logger.error('[adminOperations] backup run', { error: error.message });
+    const status = error.statusCode || 500;
+    if (status >= 400 && status < 500) return sendError(res, error.message, status);
+    return sendServerError(res, error);
+  }
+}
+
+export async function downloadBackup(req, res) {
+  try {
+    const rel = req.query.file ? String(req.query.file) : null;
+    const fullPath = backupService.getDownloadablePath(rel);
+    if (!fullPath) {
+      return sendError(res, 'Respaldo no disponible o ruta inválida', 404);
+    }
+    logger.info('[adminOperations] Descarga de respaldo', {
+      adminId: req.user?.id_usuario,
+      file: path.basename(fullPath),
+    });
+    return res.download(fullPath, path.basename(fullPath));
+  } catch (error) {
+    logger.error('[adminOperations] backup download', { error: error.message });
     return sendServerError(res, error);
   }
 }

@@ -1,0 +1,8 @@
+# CuidaTeApp — respaldos MySQL (editar rutas y usuario)
+# crontab -e
+
+# Diario 2:15 AM
+15 2 * * * BACKUP_ENV_FILE=/etc/cuidateapp/backup.env BACKUP_TYPE=daily /var/www/cuidateapp/deploy/backup/backup-db.sh >> /var/backups/cuidateapp/logs/cron-daily.log 2>&1
+
+# Semanal domingo 3:00 AM
+0 3 * * 0 BACKUP_ENV_FILE=/etc/cuidateapp/backup.env BACKUP_TYPE=weekly /var/www/cuidateapp/deploy/backup/backup-db.sh >> /var/backups/cuidateapp/logs/cron-weekly.log 2>&1

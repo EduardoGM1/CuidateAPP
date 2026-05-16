@@ -491,6 +491,24 @@ Si no esperabas este mensaje, contacta al administrador de la clínica.`;
     return this._sendGeneric(subject, text, to, 'ticket_respuesta_doctor', datos);
   }
 
+  /**
+   * Aviso de respaldo de BD (sin adjuntar el archivo).
+   * @param {string} to
+   * @param {{ success?: boolean, lastRun?: string, type?: string, file?: string, sizeBytes?: number, durationSec?: number, error?: string }} manifest
+   */
+  async sendBackupNotificationEmail(to, manifest = {}) {
+    const ok = manifest.success === true;
+    const subject = ok
+      ? `Respaldo CuidaTeApp OK (${manifest.type || 'daily'})`
+      : 'Respaldo CuidaTeApp FALLÓ';
+    const sizeMb =
+      manifest.sizeBytes != null ? `${(manifest.sizeBytes / (1024 * 1024)).toFixed(2)} MB` : '—';
+    const text = ok
+      ? `El respaldo programado se completó correctamente.\n\nFecha: ${manifest.lastRun || '—'}\nTipo: ${manifest.type || 'daily'}\nArchivo: ${manifest.file || '—'}\nTamaño: ${sizeMb}\nDuración: ${manifest.durationSec ?? '—'} s\n\nEl archivo NO se envía por correo por seguridad. Descárgalo desde Operaciones → Respaldo si lo necesitas.`
+      : `El respaldo no se completó.\n\nFecha: ${manifest.lastRun || '—'}\nError: ${manifest.error || 'Desconocido'}\n\nRevisa los logs en el VPS (${process.env.BACKUP_ROOT || '/var/backups/cuidateapp'}/logs).`;
+    return this._sendGeneric(subject, text, to, 'backup_notificacion', manifest);
+  }
+
   async _sendGeneric(subject, text, to, tipo, datos = {}) {
     if (!to || typeof to !== 'string' || !to.includes('@')) {
       logger.warn(`[EMAIL] _sendGeneric: destino inválido (${tipo})`, { to: to ? '***' : null });
