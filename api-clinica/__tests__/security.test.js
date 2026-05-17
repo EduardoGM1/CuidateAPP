@@ -3,7 +3,6 @@ import request from 'supertest';
 import express from 'express';
 import { sanitizeStrings } from '../middlewares/sanitization.js';
 import XSSProtection from '../middlewares/xssProtection.js';
-import dompurify from 'isomorphic-dompurify';
 
 // Mock de la aplicación para pruebas de seguridad
 const createSecurityTestApp = () => {
@@ -30,12 +29,7 @@ const createSecurityTestApp = () => {
       if (allowedFields.includes(key)) {
         if (typeof value === 'string') {
           // Sanitizar manualmente para tests
-          let clean = dompurify.sanitize(value, { ALLOWED_TAGS: [] });
-          // Remover patrones peligrosos
-          clean = clean.replace(/<script[^>]*>/gi, '');
-          clean = clean.replace(/javascript:/gi, '');
-          clean = clean.replace(/on\w+\s*=/gi, '');
-          sanitized[key] = clean;
+          sanitized[key] = XSSProtection.sanitizeString(value);
         } else {
           sanitized[key] = value;
         }

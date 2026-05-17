@@ -49,11 +49,8 @@ fi
 echo ""
 echo "--- API (api-clinica) ---"
 cd "$APP_ROOT/api-clinica"
-if [ -f package-lock.json ]; then
-  npm ci
-else
-  npm install
-fi
+rm -rf node_modules
+npm install --omit=dev
 pm2 restart api-clinica || pm2 start ecosystem.config.cjs --cwd "$APP_ROOT/api-clinica" 2>/dev/null || pm2 restart all
 
 echo ""

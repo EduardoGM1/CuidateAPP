@@ -1,4 +1,3 @@
-import DOMPurify from 'isomorphic-dompurify';
 import validator from 'validator';
 
 /**
@@ -6,26 +5,6 @@ import validator from 'validator';
  * Sanitiza todos los inputs para prevenir Cross-Site Scripting
  */
 class XSSProtection {
-  
-  /**
-   * Configuración de DOMPurify para sanitización estricta
-   */
-  static getPurifyConfig() {
-    return {
-      ALLOWED_TAGS: [], // No permitir ningún tag HTML
-      ALLOWED_ATTR: [], // No permitir ningún atributo
-      KEEP_CONTENT: true, // Mantener contenido de texto
-      ALLOW_DATA_ATTR: false, // No permitir data attributes
-      ALLOW_UNKNOWN_PROTOCOLS: false, // No permitir protocolos desconocidos
-      SANITIZE_DOM: true, // Sanitizar DOM
-      SANITIZE_NAMED_PROPS: true, // Sanitizar propiedades nombradas
-      RETURN_DOM: false, // No retornar DOM
-      RETURN_DOM_FRAGMENT: false, // No retornar fragmentos DOM
-      RETURN_DOM_IMPORT: false, // No retornar imports DOM
-      FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea', 'select', 'button'],
-      FORBID_ATTR: ['onload', 'onerror', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onchange', 'onsubmit']
-    };
-  }
 
   /**
    * Sanitiza un string contra XSS
@@ -35,11 +14,7 @@ class XSSProtection {
       return input;
     }
 
-    // Primero usar DOMPurify para sanitización HTML
-    let sanitized = DOMPurify.sanitize(input, this.getPurifyConfig());
-    
-    // Luego usar validator para sanitización adicional
-    sanitized = validator.escape(sanitized);
+    let sanitized = validator.escape(input);
     
     // Remover patrones peligrosos adicionales
     sanitized = sanitized
