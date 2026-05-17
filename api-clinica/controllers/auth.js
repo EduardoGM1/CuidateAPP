@@ -334,10 +334,10 @@ export const createUsuario = async (req, res) => {
           error: 'La contraseña es requerida cuando no se usa invitación',
         });
       }
-      if (password.length < 5) {
+      if (password.length < 8) {
         return res.status(400).json({
           success: false,
-          error: 'La contraseña debe tener al menos 5 caracteres',
+          error: 'La contraseña debe tener al menos 8 caracteres',
         });
       }
       if (password.length > PASSWORD_MAX_LENGTH) {
@@ -530,10 +530,10 @@ export const updateUsuario = async (req, res) => {
 
     // Actualizar contraseña si se proporciona
     if (password) {
-      if (password.length < 5) {
+      if (password.length < 8) {
         return res.status(400).json({ 
           success: false,
-          error: 'La contraseña debe tener al menos 5 caracteres' 
+          error: 'La contraseña debe tener al menos 8 caracteres' 
         });
       }
       if (password.length > PASSWORD_MAX_LENGTH) {

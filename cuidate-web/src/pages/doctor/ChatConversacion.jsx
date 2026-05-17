@@ -1,23 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCurrentDoctorId } from '../../hooks/useCurrentDoctorId';
-import { useAuthStore } from '../../stores/authStore';
 import { getPacienteById } from '../../api/pacientes';
 import { getConversacion, createMensaje, marcarConversacionLeida, marcarMensajeComoLeido } from '../../api/mensajesChat';
-import { connect, on, off } from '../../api/socket';
+import { useSocketEvent } from '../../contexts/SocketContext';
 import { PageHeader } from '../../components/shared';
 import { Button, Input, LoadingSpinner, EmptyState } from '../../components/ui';
 import { formatDateTime, formatNombreCompleto } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { parsePositiveInt } from '../../utils/params';
-import { STORAGE_KEYS } from '../../utils/constants';
 import VoiceMessagePlayer from '../../components/chat/VoiceMessagePlayer';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 export default function ChatConversacion() {
   const { id: pacienteIdParam } = useParams();
   const pacienteId = parsePositiveInt(pacienteIdParam, 0);
-  const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
   const { idDoctor, loading: loadingDoctor, error: errorDoctor } = useCurrentDoctorId();
 
   const [paciente, setPaciente] = useState(null);
@@ -69,32 +66,31 @@ export default function ChatConversacion() {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [mensajes]);
 
-  // Tiempo real: escuchar nuevo_mensaje para esta conversación
-  useEffect(() => {
-    if (!token || !idDoctor || pacienteId === 0) return;
-    connect(token);
-    const handler = (data) => {
+  const matchesConversacion = useCallback(
+    (data) => {
       const pid = Number(data?.id_paciente);
       const did = Number(data?.id_doctor);
-      if (pid !== pacienteId || did !== idDoctor || !data?.mensaje) return;
+      return pid === pacienteId && did === idDoctor;
+    },
+    [pacienteId, idDoctor]
+  );
+
+  const onNuevoMensaje = useCallback(
+    (data) => {
+      if (!matchesConversacion(data) || !data?.mensaje) return;
       const msg = data.mensaje;
       setMensajes((prev) => {
         const exists = prev.some((m) => (m.id_mensaje ?? m.id) === (msg.id_mensaje ?? msg.id));
         if (exists) return prev;
         return [...prev, msg].sort((a, b) => new Date(a.fecha_envio || 0) - new Date(b.fecha_envio || 0));
       });
-    };
-    on('nuevo_mensaje', handler);
-    return () => off('nuevo_mensaje', handler);
-  }, [token, idDoctor, pacienteId]);
+    },
+    [matchesConversacion]
+  );
 
-  // Tiempo real: vistos — mensaje marcado como leído (actualizar estado en nuestros mensajes enviados)
-  useEffect(() => {
-    if (!idDoctor || pacienteId === 0) return;
-    const handler = (data) => {
-      const pid = Number(data?.id_paciente);
-      const did = Number(data?.id_doctor);
-      if (pid !== pacienteId || did !== idDoctor) return;
+  const onMensajeActualizado = useCallback(
+    (data) => {
+      if (!matchesConversacion(data)) return;
       const msg = data?.mensaje;
       if (msg && (msg.id_mensaje ?? msg.id)) {
         setMensajes((prev) =>
@@ -105,27 +101,25 @@ export default function ChatConversacion() {
           )
         );
       }
-    };
-    on('mensaje_actualizado', handler);
-    return () => off('mensaje_actualizado', handler);
-  }, [idDoctor, pacienteId]);
+    },
+    [matchesConversacion]
+  );
 
-  // Tiempo real: vistos — todos los mensajes de la conversación marcados como leídos (p. ej. paciente abrió el chat)
-  useEffect(() => {
-    if (!idDoctor || pacienteId === 0) return;
-    const handler = (data) => {
-      const pid = Number(data?.id_paciente);
-      const did = Number(data?.id_doctor);
-      if (pid !== pacienteId || did !== idDoctor) return;
+  const onMensajesMarcadosLeidos = useCallback(
+    (data) => {
+      if (!matchesConversacion(data)) return;
       setMensajes((prev) =>
         prev.map((m) =>
           (m.remitente || '').toLowerCase() === 'doctor' ? { ...m, leido: true } : m
         )
       );
-    };
-    on('mensajes_marcados_leidos', handler);
-    return () => off('mensajes_marcados_leidos', handler);
-  }, [idDoctor, pacienteId]);
+    },
+    [matchesConversacion]
+  );
+
+  useSocketEvent('nuevo_mensaje', onNuevoMensaje, Boolean(idDoctor) && pacienteId > 0);
+  useSocketEvent('mensaje_actualizado', onMensajeActualizado, Boolean(idDoctor) && pacienteId > 0);
+  useSocketEvent('mensajes_marcados_leidos', onMensajesMarcadosLeidos, Boolean(idDoctor) && pacienteId > 0);
 
   const sortMensajes = useCallback((list) => {
     return [...list].sort((a, b) => new Date(a.fecha_envio || 0) - new Date(b.fecha_envio || 0));

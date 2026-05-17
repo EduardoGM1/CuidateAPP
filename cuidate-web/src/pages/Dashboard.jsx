@@ -4,8 +4,7 @@ import { useAuthStore } from '../stores/authStore';
 import { getAdminSummary, getDoctorSummary } from '../api/dashboard';
 import { getNotificacionesDoctor, marcarNotificacionLeida } from '../api/notificaciones';
 import { getCitaById } from '../api/citas';
-import { connect, on, off } from '../api/socket';
-import { STORAGE_KEYS } from '../utils/constants';
+import { useSocketEvent, useSocketEvents } from '../contexts/SocketContext';
 import { useCurrentDoctorId } from '../hooks/useCurrentDoctorId';
 import { formatDateWithWeekday, formatTime } from '../utils/format';
 import { sanitizeForDisplay, displayText } from '../utils/sanitize';
@@ -167,28 +166,11 @@ export default function Dashboard() {
     setCitaDetalle(null);
   }, []);
 
-  // Tiempo real: actualizar resumen al crear/actualizar pacientes, citas o doctores
-  const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
-  useEffect(() => {
-    if (!token) return;
-    connect(token);
-    on('patient_created', load);
-    on('patient_assigned', load);
-    on('cita_creada', load);
-    on('cita_actualizada', load);
-    on('cita_reprogramada', load);
-    on('doctor_created', load);
-    if (idDoctor) on('notificacion_doctor', loadNotificaciones);
-    return () => {
-      off('patient_created', load);
-      off('patient_assigned', load);
-      off('cita_creada', load);
-      off('cita_actualizada', load);
-      off('cita_reprogramada', load);
-      off('doctor_created', load);
-      if (idDoctor) off('notificacion_doctor', loadNotificaciones);
-    };
-  }, [token, load, idDoctor, loadNotificaciones]);
+  useSocketEvents(
+    ['patient_created', 'patient_assigned', 'cita_creada', 'cita_actualizada', 'cita_reprogramada', 'doctor_created'],
+    load
+  );
+  useSocketEvent('notificacion_doctor', loadNotificaciones, Boolean(idDoctor));
 
   if (loading) {
     return (

@@ -2,8 +2,7 @@ import { useState, useEffect, Fragment } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Layout, Menu, Drawer, Button } from 'antd';
 import { useAuthStore } from '../../stores/authStore';
-import { connect } from '../../api/socket';
-import { STORAGE_KEYS } from '../../utils/constants';
+import { SocketProvider } from '../../contexts/SocketContext';
 import ButtonUI from '../ui/Button';
 import Logo from '../common/Logo';
 import OnboardingHost from '../../onboarding/OnboardingHost';
@@ -169,22 +168,16 @@ function MenuIcon() {
   );
 }
 
-export default function MainLayout() {
+function MainLayoutShell() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobile, setMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 992);
   const location = useLocation();
   const navigate = useNavigate();
   const pageTitle = getPageTitle(location.pathname);
-  const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const getDisplayName = useAuthStore((s) => s.getDisplayName);
   const logout = useAuthStore((s) => s.logout);
   const { notifCount, chatCount, refresh: refreshDoctorNavBadges } = useDoctorNavBadges();
-
-  // Conexión WebSocket para tiempo real (chat, notificaciones, citas, pacientes, etc.)
-  useEffect(() => {
-    if (token && typeof connect === 'function') connect(token);
-  }, [token]);
 
   const isAdminFn = typeof isAdmin === 'function' ? isAdmin : () => false;
   const getDisplayNameSafe = typeof getDisplayName === 'function' ? getDisplayName : () => '';
@@ -402,5 +395,13 @@ export default function MainLayout() {
     </Layout>
     <OnboardingHost isMobile={mobile} />
     </Fragment>
+  );
+}
+
+export default function MainLayout() {
+  return (
+    <SocketProvider>
+      <MainLayoutShell />
+    </SocketProvider>
   );
 }

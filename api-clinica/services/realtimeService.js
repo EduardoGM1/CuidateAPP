@@ -25,7 +25,8 @@ class RealtimeService {
             const allowedOrigins = [
               'http://localhost:3000',
               'http://localhost:3001',
-              'http://localhost:5173', // Vite (cuidate-web dev)
+              'http://localhost:5173', // Vite
+              'http://localhost:5174', // cuidate-web dev
               'http://localhost:8081', // React Native Metro
               'http://10.0.2.2:3000',  // Android emulator
               'http://localhost:19006', // Expo

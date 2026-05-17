@@ -133,6 +133,7 @@ const allowedOrigins = [
   'http://localhost:19006', // Expo
   'http://localhost:19000', // Expo web
   'http://localhost:5173',  // Vite dev server
+  'http://localhost:5174',  // cuidate-web (vite.config.js)
   'http://localhost:8080'   // Vue/React dev server
 ];
 

@@ -2,14 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCitaById, updateCitaEstado, updateCita, completarCitaWizard } from '../../api/citas';
 import { message } from 'antd';
-import { connect, on, off } from '../../api/socket';
+import { useSocketEvents } from '../../contexts/SocketContext';
 import { PageHeader, DataCard } from '../../components/shared';
 import { LoadingSpinner, Button, Card, Badge, Input, Select, Modal } from '../../components/ui';
 import CompletarCitaModal from '../../components/citas/CompletarCitaModal';
 import CitaConsultaResumen from '../../components/citas/CitaConsultaResumen';
 import SignosVitalesForm, { INITIAL_SIGNOS_VITALES, signosVitalesToPayload } from '../../components/signos/SignosVitalesForm';
 import { useAuthStore } from '../../stores/authStore';
-import { STORAGE_KEYS } from '../../utils/constants';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { formatDateTime, formatNombreCompleto } from '../../utils/format';
@@ -76,24 +75,19 @@ export default function CitaDetail() {
     load();
   }, [load]);
 
-  // Tiempo real: actualizar detalle si esta cita fue actualizada o reprogramada
-  const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
-  useEffect(() => {
-    if (!token || parsedId === 0) return;
-    connect(token);
-    const refreshIfThisCita = (data) => {
+  const refreshIfThisCita = useCallback(
+    (data) => {
       const idCita = data?.id_cita ?? data?.cita?.id_cita ?? data?.cita?.id;
       if (idCita == null || Number(idCita) === parsedId) load();
-    };
-    on('cita_actualizada', refreshIfThisCita);
-    on('cita_reprogramada', refreshIfThisCita);
-    on('solicitud_reprogramacion_procesada', refreshIfThisCita);
-    return () => {
-      off('cita_actualizada', refreshIfThisCita);
-      off('cita_reprogramada', refreshIfThisCita);
-      off('solicitud_reprogramacion_procesada', refreshIfThisCita);
-    };
-  }, [token, parsedId, load]);
+    },
+    [parsedId, load]
+  );
+
+  useSocketEvents(
+    ['cita_actualizada', 'cita_reprogramada', 'solicitud_reprogramacion_procesada'],
+    refreshIfThisCita,
+    parsedId > 0
+  );
 
   const handleCambiarEstado = async () => {
     if (!estadoSelected || estadoSelected === (cita?.estado ?? '')) return;

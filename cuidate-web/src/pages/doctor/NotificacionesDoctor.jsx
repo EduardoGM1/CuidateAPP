@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useCurrentDoctorId } from '../../hooks/useCurrentDoctorId';
 import { getNotificacionesDoctor, marcarNotificacionLeida, archivarNotificacion } from '../../api/notificaciones';
-import { connect, on, off } from '../../api/socket';
-import { useAuthStore } from '../../stores/authStore';
-import { STORAGE_KEYS } from '../../utils/constants';
+import { useSocketEvent } from '../../contexts/SocketContext';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, LoadingSpinner, EmptyState, Badge, Input, Select } from '../../components/ui';
 import DetalleNotificacionModal from '../../components/doctor/DetalleNotificacionModal';
@@ -87,14 +85,7 @@ export default function NotificacionesDoctor() {
     void refreshDoctorNavBadges();
   }, [idDoctor, refreshDoctorNavBadges]);
 
-  // Tiempo real: actualizar notificaciones cuando llega una nueva
-  const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
-  useEffect(() => {
-    if (!token || !idDoctor) return;
-    connect(token);
-    on('notificacion_doctor', load);
-    return () => off('notificacion_doctor', load);
-  }, [token, idDoctor, load]);
+  useSocketEvent('notificacion_doctor', load, Boolean(idDoctor));
 
   const handleMarcarLeida = async (notif) => {
     const id = notif.id_notificacion ?? notif.id;

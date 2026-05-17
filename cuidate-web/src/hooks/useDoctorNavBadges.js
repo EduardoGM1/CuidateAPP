@@ -3,8 +3,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useCurrentDoctorId } from './useCurrentDoctorId';
 import { getContadorNotificaciones } from '../api/notificaciones';
 import { getConversacionesDoctor } from '../api/mensajesChat';
-import { connect, on, off } from '../api/socket';
-import { STORAGE_KEYS } from '../utils/constants';
+import { useSocketEvents } from '../contexts/SocketContext';
 
 const POLL_MS = 45000;
 
@@ -17,9 +16,6 @@ export function useDoctorNavBadges() {
   const [notifCount, setNotifCount] = useState(0);
   const [chatCount, setChatCount] = useState(0);
   const isAdmin = useAuthStore((s) => s.isAdmin);
-  const token = useAuthStore((s) =>
-    s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null)
-  );
   const { idDoctor } = useCurrentDoctorId();
   const enabled = useMemo(() => Boolean(idDoctor) && !isAdmin(), [idDoctor, isAdmin]);
 
@@ -47,23 +43,15 @@ export function useDoctorNavBadges() {
     refresh();
   }, [refresh]);
 
+  useSocketEvents(['notificacion_doctor', 'nuevo_mensaje'], refresh, enabled);
+
   useEffect(() => {
-    if (!enabled || !token) return undefined;
-    connect(token);
-    const handleRealtime = () => {
-      refresh();
-    };
-    on('notificacion_doctor', handleRealtime);
-    on('nuevo_mensaje', handleRealtime);
+    if (!enabled) return undefined;
     const pollId = setInterval(() => {
       refresh();
     }, POLL_MS);
-    return () => {
-      off('notificacion_doctor', handleRealtime);
-      off('nuevo_mensaje', handleRealtime);
-      clearInterval(pollId);
-    };
-  }, [enabled, token, refresh]);
+    return () => clearInterval(pollId);
+  }, [enabled, refresh]);
 
   return { notifCount, chatCount, refresh };
 }

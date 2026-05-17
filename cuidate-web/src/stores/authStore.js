@@ -4,6 +4,7 @@ import { STORAGE_KEYS, AUTH_PERSIST_KEY, ROLES } from '../utils/constants';
 import { formatNombreCompleto } from '../utils/format';
 import * as authApi from '../api/auth';
 import { disconnect } from '../api/socket';
+import { clearAllPatientDrafts } from '../utils/patientDraftStorage';
 
 function getStoredUser() {
   try {
@@ -42,6 +43,8 @@ export const useAuthStore = create(
       logout: () => {
         disconnect();
         authApi.logout();
+        clearAllPatientDrafts();
+        localStorage.removeItem(AUTH_PERSIST_KEY);
         set({ token: null, user: null });
       },
 

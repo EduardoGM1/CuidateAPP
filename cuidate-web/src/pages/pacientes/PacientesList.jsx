@@ -4,9 +4,9 @@ import { message } from 'antd';
 import { getPacientes, updatePaciente } from '../../api/pacientes';
 import { getComorbilidades } from '../../api/comorbilidades';
 import { getModulos } from '../../api/modulos';
-import { connect, on, off } from '../../api/socket';
 import { useAuthStore } from '../../stores/authStore';
-import { STORAGE_KEYS, PAGE_SIZE_DEFAULT } from '../../utils/constants';
+import { PAGE_SIZE_DEFAULT } from '../../utils/constants';
+import { useSocketEvents } from '../../contexts/SocketContext';
 import { Table, Button } from '../../components/ui';
 import { PageHeader, SearchFilterBar, Pagination } from '../../components/shared';
 import { Badge } from '../../components/ui';
@@ -92,23 +92,10 @@ export default function PacientesList() {
     load();
   }, [load]);
 
-  // Tiempo real: actualizar lista al crear/asignar/desasignar pacientes
-  const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
-  useEffect(() => {
-    if (!token) return;
-    connect(token);
-    const refresh = () => load();
-    on('patient_created', refresh);
-    on('patient_assigned', refresh);
-    on('patient_unassigned', refresh);
-    on('doctor_replaced', refresh);
-    return () => {
-      off('patient_created', refresh);
-      off('patient_assigned', refresh);
-      off('patient_unassigned', refresh);
-      off('doctor_replaced', refresh);
-    };
-  }, [token, load]);
+  useSocketEvents(
+    ['patient_created', 'patient_assigned', 'patient_unassigned', 'doctor_replaced'],
+    load
+  );
 
   const handleSearch = (searchParams) => {
     setParams((prev) => ({

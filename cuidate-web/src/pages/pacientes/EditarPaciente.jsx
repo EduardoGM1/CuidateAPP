@@ -23,6 +23,7 @@ import {
 } from '../../constants/enfermedadesCronicas';
 import { buildComorbilidadIdsFromCatalog } from '../../utils/comorbilidadesCatalogMap';
 import { buildComorbilidadesInicialesPayload } from '../../utils/enfermedadesCronicasPayload';
+import { savePatientDraft } from '../../utils/patientDraftStorage';
 import { hydrateEnfermedadesCronicasFromPacienteRows } from '../../utils/hydrateEnfermedadesCronicasForm';
 import { createEmptyRedApoyoItem } from '../../constants/redApoyo';
 import RedApoyoFormFields from '../../components/pacientes/RedApoyoFormFields';
@@ -409,7 +410,7 @@ export default function EditarPaciente() {
     setSectionStatusValue(SECTION_KEYS.PRIMERA_CONSULTA, 'pending');
     const t = setTimeout(() => {
       try {
-        localStorage.setItem(`paciente:${parsedId}:primera-consulta-draft`, primeraConsultaSnapshot);
+        savePatientDraft(parsedId, 'primera-consulta-draft', primeraConsultaSnapshot);
         primeraConsultaLastSavedRef.current = primeraConsultaSnapshot;
         setSectionStatusValue(SECTION_KEYS.PRIMERA_CONSULTA, 'saved');
       } catch {
@@ -429,7 +430,7 @@ export default function EditarPaciente() {
     setSectionStatusValue(SECTION_KEYS.CRONICAS, 'pending');
     const t = setTimeout(() => {
       try {
-        localStorage.setItem(`paciente:${parsedId}:cronicas-draft`, cronicasSnapshot);
+        savePatientDraft(parsedId, 'cronicas-draft', cronicasSnapshot);
         cronicasLastSavedRef.current = cronicasSnapshot;
         setSectionStatusValue(SECTION_KEYS.CRONICAS, 'saved');
       } catch {

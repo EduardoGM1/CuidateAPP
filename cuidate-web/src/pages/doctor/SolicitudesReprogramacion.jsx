@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSolicitudesReprogramacion, responderSolicitudReprogramacion } from '../../api/solicitudesReprogramacion';
-import { connect, on, off } from '../../api/socket';
-import { useAuthStore } from '../../stores/authStore';
-import { STORAGE_KEYS } from '../../utils/constants';
+import { useSocketEvent } from '../../contexts/SocketContext';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, LoadingSpinner, EmptyState, Badge, Modal, Input } from '../../components/ui';
 import { formatDateTime, formatDate } from '../../utils/format';
@@ -66,14 +64,7 @@ export default function SolicitudesReprogramacion() {
     load();
   }, [load]);
 
-  // Tiempo real: actualizar lista cuando llega una nueva solicitud de reprogramación
-  const token = useAuthStore((s) => s.token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null));
-  useEffect(() => {
-    if (!token) return;
-    connect(token);
-    on('solicitud_reprogramacion', load);
-    return () => off('solicitud_reprogramacion', load);
-  }, [token, load]);
+  useSocketEvent('solicitud_reprogramacion', load);
 
   const handleResponder = async (solicitud, accion, extra = {}) => {
     const idCita = solicitud.id_cita;
