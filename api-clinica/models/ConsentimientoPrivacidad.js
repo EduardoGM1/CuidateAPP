@@ -71,8 +71,18 @@ const ConsentimientoPrivacidad = sequelize.define(
     tableName: 'consentimientos_privacidad',
     timestamps: false,
     indexes: [
-      { fields: ['id_paciente', 'version_aviso', 'revocado', 'created_at'] },
-      { fields: ['id_doctor', 'version_aviso', 'revocado', 'created_at'] },
+      {
+        name: 'idx_consent_paciente',
+        fields: ['id_paciente', 'version_aviso', 'revocado', 'created_at'],
+      },
+      {
+        name: 'idx_consent_doctor',
+        fields: ['id_doctor', 'version_aviso', 'revocado', 'created_at'],
+      },
+      {
+        name: 'idx_consent_usuario',
+        fields: ['id_usuario', 'rol', 'created_at'],
+      },
     ],
   }
 );
