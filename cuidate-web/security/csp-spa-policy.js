@@ -2,9 +2,8 @@
  * Política CSP única para la SPA (Vite dev/preview y Nginx en producción).
  * Mantener alineada con `deploy/nginx-security-headers.inc`.
  *
- * style-src-elem: CSS externo + 'unsafe-inline' en <style> (Ant Design 5 / @ant-design/cssinjs
- *   genera estilos en runtime; sin unsafe-inline en elem la UI queda sin tema).
- * style-src-attr: atributos style="" de React.
+ * style-src (no solo style-src-elem): Ant Design 6 / @ant-design/cssinjs inyecta estilos
+ * en runtime (<style> y CSSStyleSheet); sin 'unsafe-inline' en style-src la UI queda rota.
  */
 
 const PERMISSIONS_POLICY =
@@ -23,8 +22,7 @@ export function buildSpaContentSecurityPolicy(dev, opts = {}) {
     dev
       ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
       : "script-src 'self'",
-    "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "style-src-attr 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: blob: https:",
     "base-uri 'self'",

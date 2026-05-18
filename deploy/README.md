@@ -87,7 +87,7 @@ El script crea `/var/www`, clona **git@github.com:EduardoGM1/CuidateAPP.git** en
 | Control | Estado en repo | Notas |
 |---------|----------------|-------|
 | HTTPS + HSTS | Plantilla `nginx-security-headers-https.inc` | Incluir solo en `443 ssl` tras Certbot |
-| CSP / XSS | `style-src-elem` + `style-src-attr` | Ant Design 5 requiere `'unsafe-inline'` en `style-src-elem` (CSS-in-JS) |
+| CSP / XSS | `style-src` con `'unsafe-inline'` | Requerido por Ant Design 6 (CSS-in-JS en runtime) |
 | Clickjacking | `X-Frame-Options` + `frame-ancestors` | Web SAMEORIGIN, API DENY |
 | MIME sniffing | `nosniff` | Web y API |
 | Referer | `Referrer-Policy` | |
@@ -102,8 +102,7 @@ El script crea `/var/www`, clona **git@github.com:EduardoGM1/CuidateAPP.git** en
 La política vive en **`cuidate-web/security/csp-spa-policy.js`** y se replica en **`nginx-security-headers.inc`**:
 
 - **`style-src-elem`**: hojas de estilo externas (`'self'`, Google Fonts).
-- **`style-src-elem 'unsafe-inline'`**: necesario para Ant Design 5 (`@ant-design/cssinjs` inyecta `<style>` en runtime).
-- **`style-src-attr 'unsafe-inline'`**: atributos `style={{}}` de React.
+- **`style-src 'unsafe-inline'`**: necesario para Ant Design 6 (`@ant-design/cssinjs`). No usar solo `style-src-elem` sin `style-src` (rompe tablas y botones).
 - **`script-src 'self'`** en producción (sin `unsafe-eval`).
 
 ### HSTS
