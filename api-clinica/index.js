@@ -202,7 +202,7 @@ const helmetConfig = {
   hsts: NODE_ENV === 'production' ? {
     maxAge: 31536000,
     includeSubDomains: true,
-    preload: false // activar tras validar subdominios en https://hstspreload.org
+    preload: true
   } : false,
   contentSecurityPolicy: NODE_ENV === 'production' ? {
     directives: {

@@ -95,7 +95,7 @@ El script crea `/var/www`, clona **git@github.com:EduardoGM1/CuidateAPP.git** en
 | COOP / CORP | SPA y API | `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy` |
 | COEP `require-corp` | No implementado | Rompería Google Fonts y recursos cross-origin |
 | Ocultar versión Nginx | `nginx-hardening.conf` | `server_tokens off`; cabecera `Server` completa requiere `headers-more` |
-| HSTS preload | Opcional | Descomentar `preload` en `nginx-security-headers-https.inc` y registrar en [hstspreload.org](https://hstspreload.org) |
+| HSTS preload | Activo en plantilla | Cabecera con `preload`; registrar dominio en [hstspreload.org](https://hstspreload.org) |
 
 ### CSP (SPA)
 
@@ -113,7 +113,7 @@ No enviar HSTS en **HTTP:80**. Tras Certbot, en cada `server` con **`listen 443 
 include /var/www/CuidateAPP/deploy/nginx-security-headers-https.inc;
 ```
 
-Para **precarga HSTS**: verificar que todos los subdominios usan HTTPS de forma permanente, descomentar la línea con `preload` en ese archivo y enviar el dominio a [hstspreload.org](https://hstspreload.org).
+Para **precarga HSTS**: la plantilla ya envía `preload`. Tras desplegar, envía el dominio en [hstspreload.org](https://hstspreload.org) (lista global de Chrome, Firefox, Edge, Safari). La inclusión puede tardar semanas.
 
 ### Endurecimiento Nginx
 
