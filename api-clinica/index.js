@@ -195,19 +195,21 @@ const helmetConfig = {
   noSniff: true, // Prevenir MIME type sniffing
   frameguard: { action: 'deny' }, // Prevenir clickjacking
   xssFilter: true, // Filtro XSS básico
-  crossOriginEmbedderPolicy: false, // Deshabilitado para compatibilidad con WebSockets
-  // HSTS solo en producción
+  crossOriginEmbedderPolicy: false, // require-corp rompe integraciones externas y WebSockets
+  crossOriginOpenerPolicy: { policy: 'same-origin' },
+  crossOriginResourcePolicy: { policy: 'same-site' },
+  // HSTS solo en producción (Nginx también puede enviarlo; evitar duplicar en proxy)
   hsts: NODE_ENV === 'production' ? {
-    maxAge: 31536000, // 1 año
+    maxAge: 31536000,
     includeSubDomains: true,
-    preload: true
+    preload: false // activar tras validar subdominios en https://hstspreload.org
   } : false,
-  // CSP configurado según entorno
   contentSecurityPolicy: NODE_ENV === 'production' ? {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"], // 'unsafe-inline' necesario para algunas librerías
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      styleSrcElem: ["'self'"],
+      styleSrcAttr: ["'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: [
         "'self'",
@@ -219,7 +221,7 @@ const helmetConfig = {
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"]
     },
-  } : false // CSP deshabilitado en desarrollo para facilitar debugging
+  } : false
 };
 
 app.use(helmet(helmetConfig));

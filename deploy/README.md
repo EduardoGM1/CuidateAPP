@@ -13,8 +13,11 @@ Repositorio: **git@github.com:EduardoGM1/CuidateAPP.git**
 | `nginx-cuidateapp.conf` | Plantilla Nginx por defecto (solo IP) |
 | `nginx-cuidateapp-ip.conf` | Nginx: modo solo IP (web + `/api` en la misma IP) |
 | `nginx-cuidateapp-domain.conf` | Nginx: modo dominio (web en tudominio.com, API en api.tudominio.com) |
-| `nginx-security-headers.inc` | Cabeceras HTTP de seguridad (CSP, X-Frame-Options, etc.) para la SPA — incluir desde el `server` de la web |
+| `nginx-security-headers.inc` | Cabeceras HTTP de seguridad (CSP, X-Frame-Options, COOP, etc.) para la SPA — incluir desde el `server` de la web |
+| `nginx-security-headers-https.inc` | HSTS (solo en `listen 443 ssl`) — precarga opcional documentada |
 | `nginx-security-headers-api.inc` | Cabeceras mínimas para el `server` que hace proxy solo a la API (modo dominio) |
+| `nginx-hardening.conf` | `server_tokens off` y notas para ocultar la cabecera `Server` |
+| `scripts/verificar-cabeceras-seguridad.sh` | Comprueba cabeceras con `curl` tras el deploy |
 | `rebuild-cuidate-web.sh` | Reinstala deps y ejecuta `vite build` con `.env.production` (servidor ya desplegado) |
 | `ecosystem.config.cjs` | PM2: arranque de api-clinica |
 
@@ -79,23 +82,56 @@ El script crea `/var/www`, clona **git@github.com:EduardoGM1/CuidateAPP.git** en
 
 ## Cabeceras de seguridad y HSTS
 
-Las plantillas Nginx incluyen **`nginx-security-headers.inc`** (y **`nginx-security-headers-api.inc`** en el subdominio de API) con:
+### Checklist post-auditoría
 
-- **Content-Security-Policy (CSP)** alineada con la SPA (fuentes Google, `/api` o APIs HTTPS, sin `unsafe-eval` en producción).
-- **X-Frame-Options: SAMEORIGIN** (web) / **DENY** (API en subdominio).
-- **X-Content-Type-Options: nosniff**
-- **Referrer-Policy**
-- **Permissions-Policy** (cámara, micrófono, geolocalización, etc. deshabilitados por defecto).
+| Control | Estado en repo | Notas |
+|---------|----------------|-------|
+| HTTPS + HSTS | Plantilla `nginx-security-headers-https.inc` | Incluir solo en `443 ssl` tras Certbot |
+| CSP / XSS | `style-src-elem` + `style-src-attr` | Bloquea `<style>` inyectados; React usa solo atributos `style=""` |
+| Clickjacking | `X-Frame-Options` + `frame-ancestors` | Web SAMEORIGIN, API DENY |
+| MIME sniffing | `nosniff` | Web y API |
+| Referer | `Referrer-Policy` | |
+| Permissions-Policy | SPA | APIs del navegador restringidas |
+| COOP / CORP | SPA y API | `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy` |
+| COEP `require-corp` | No implementado | Rompería Google Fonts y recursos cross-origin |
+| Ocultar versión Nginx | `nginx-hardening.conf` | `server_tokens off`; cabecera `Server` completa requiere `headers-more` |
+| HSTS preload | Opcional | Descomentar `preload` en `nginx-security-headers-https.inc` y registrar en [hstspreload.org](https://hstspreload.org) |
 
-**Strict-Transport-Security (HSTS)** no se envía en plantillas que solo escuchan en **HTTP (puerto 80)**; los navegadores deben recibir HSTS solo sobre **HTTPS**. Después de **Certbot** (o certificado TLS), añade en cada `server { ... }` que escuche en **443 ssl**:
+### CSP (SPA)
+
+La política vive en **`cuidate-web/security/csp-spa-policy.js`** y se replica en **`nginx-security-headers.inc`**:
+
+- **`style-src-elem`**: hojas de estilo externas (`'self'`, Google Fonts).
+- **`style-src-attr 'unsafe-inline'`**: necesario para `style={{}}` de React/Ant Design; más restrictivo que `style-src 'unsafe-inline'` global.
+- **`script-src 'self'`** en producción (sin `unsafe-eval`).
+
+### HSTS
+
+No enviar HSTS en **HTTP:80**. Tras Certbot, en cada `server` con **`listen 443 ssl`**:
 
 ```nginx
-add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+include /var/www/CuidateAPP/deploy/nginx-security-headers-https.inc;
 ```
 
-Opcional sobre HTTPS: si todo el sitio es HTTPS, puedes añadir `upgrade-insecure-requests` al final del valor de `Content-Security-Policy` en `nginx-security-headers.inc` (y mantener la misma cadena en `cuidate-web/vite.security-headers.js` para `vite preview`).
+Para **precarga HSTS**: verificar que todos los subdominios usan HTTPS de forma permanente, descomentar la línea con `preload` en ese archivo y enviar el dominio a [hstspreload.org](https://hstspreload.org).
 
-La app en desarrollo (`npm run dev`) envía cabeceras equivalentes vía **`vite.config.js`** y `vite.security-headers.js`.
+### Endurecimiento Nginx
+
+En **`/etc/nginx/nginx.conf`**, dentro de `http { }`:
+
+```nginx
+include /var/www/CuidateAPP/deploy/nginx-hardening.conf;
+```
+
+### Verificación
+
+```bash
+bash deploy/scripts/verificar-cabeceras-seguridad.sh https://tudominio.com
+```
+
+Escaneos activos recomendados (fuera del repo): **OWASP ZAP** (XSS/SQLi), **nmap** (puertos expuestos; MySQL 3306 y SSH 22 no deben estar abiertos al mundo salvo política explícita).
+
+La app en desarrollo (`npm run dev`) envía cabeceras equivalentes vía **`vite.security-headers.js`** (con `unsafe-eval` solo en dev por Vite HMR).
 
 ## Actualizar solo la web en un servidor que ya corre
 
