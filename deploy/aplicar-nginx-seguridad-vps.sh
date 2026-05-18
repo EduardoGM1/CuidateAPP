@@ -37,6 +37,7 @@ echo "=== HSTS en bloques SSL (sites-enabled) ==="
 shopt -s nullglob
 for f in /etc/nginx/sites-enabled/*; do
   [[ -f "$f" ]] || continue
+  [[ "$f" == *".bak-"* ]] && continue
   if grep -qE 'listen[[:space:]]+443' "$f" && ! grep -qF 'nginx-security-headers-https.inc' "$f"; then
     cp -a "$f" "${f}.bak-$(date +%Y%m%d%H%M%S)"
     # Tras cada include de nginx-security-headers.inc (SPA o API)
