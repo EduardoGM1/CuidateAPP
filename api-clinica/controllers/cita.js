@@ -561,8 +561,7 @@ export const getCita = async (req, res) => {
             'apellido_materno',
             'fecha_nacimiento',
             'sexo',
-            'numero_expediente',
-            'codigo_paciente'
+            'numero_expediente'
           ]
         },
         { model: Doctor, attributes: ['nombre', 'apellido_paterno'] },
