@@ -1,0 +1,24 @@
+import { signUploadPublicUrl, verifyUploadSignature, normalizeUploadPath } from '../utils/uploadSignedUrl.js';
+
+describe('uploadSignedUrl', () => {
+  beforeAll(() => {
+    process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-upload-signing-min-32-chars!!';
+  });
+
+  it('normaliza rutas bajo /uploads/', () => {
+    expect(normalizeUploadPath('/uploads/audio/x.m4a')).toBe('/uploads/audio/x.m4a');
+    expect(normalizeUploadPath('/uploads/../etc/passwd')).toBeNull();
+  });
+
+  it('firma y verifica URL de upload', () => {
+    const signed = signUploadPublicUrl('/uploads/audio/test.m4a', 120);
+    const u = new URL(signed, 'https://example.com');
+    const path = u.pathname;
+    const ok = verifyUploadSignature(path, u.searchParams.get('exp'), u.searchParams.get('sig'));
+    expect(ok).toBe(true);
+  });
+
+  it('rechaza firma expirada o inválida', () => {
+    expect(verifyUploadSignature('/uploads/audio/a.m4a', '1', 'deadbeef')).toBe(false);
+  });
+});

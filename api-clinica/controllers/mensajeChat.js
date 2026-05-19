@@ -8,6 +8,7 @@ import emailService from '../services/emailService.js';
 import realtimeService from '../services/realtimeService.js';
 import { crearNotificacionDoctor } from './cita.js';
 import multer from 'multer';
+import { serializeWithSignedUploads, signUploadPublicUrl } from '../utils/uploadSignedUrl.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -114,7 +115,7 @@ export const getConversacion = async (req, res) => {
     
     logger.info('Mensajes encontrados', { count: mensajes.length, doctorId, idPaciente });
     
-    res.json({ success: true, data: mensajes });
+    res.json({ success: true, data: serializeWithSignedUploads(mensajes) });
   } catch (error) {
     logger.error('Error obteniendo conversación:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -150,7 +151,7 @@ export const getMensajesPaciente = async (req, res) => {
       limit,
     });
 
-    res.json({ success: true, data: mensajes });
+    res.json({ success: true, data: serializeWithSignedUploads(mensajes) });
   } catch (error) {
     logger.error('Error obteniendo mensajes de paciente:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -178,7 +179,7 @@ export const getMensajesNoLeidos = async (req, res) => {
         },
         order: [['fecha_envio', 'DESC']],
       });
-      return res.json({ success: true, data: mensajes, count: mensajes.length });
+      return res.json({ success: true, data: serializeWithSignedUploads(mensajes), count: mensajes.length });
     } else if (userRole === 'Doctor' || userRole === 'Admin') {
       // Para doctores, contar mensajes no leídos del paciente hacia el doctor
       const mensajes = await MensajeChat.findAll({
@@ -189,7 +190,7 @@ export const getMensajesNoLeidos = async (req, res) => {
         },
         order: [['fecha_envio', 'DESC']],
       });
-      return res.json({ success: true, data: mensajes, count: mensajes.length });
+      return res.json({ success: true, data: serializeWithSignedUploads(mensajes), count: mensajes.length });
     }
     
     return res.status(403).json({ success: false, error: 'No autorizado' });
@@ -543,7 +544,7 @@ export const createMensaje = async (req, res) => {
       }
     });
     
-    res.status(201).json({ success: true, data: mensaje });
+    res.status(201).json({ success: true, data: serializeWithSignedUploads(mensaje) });
   } catch (error) {
     logger.error('Error creando mensaje:', {
       error: error.message,
@@ -601,7 +602,7 @@ export const marcarComoLeido = async (req, res) => {
       });
     }
     
-    res.json({ success: true, message: 'Mensaje marcado como leído', data: mensaje });
+    res.json({ success: true, message: 'Mensaje marcado como leído', data: serializeWithSignedUploads(mensaje) });
   } catch (error) {
     logger.error('Error marcando mensaje como leído:', error);
     res.status(400).json({ success: false, error: error.message });
@@ -1037,7 +1038,7 @@ export const updateMensaje = async (req, res) => {
       });
     }
     
-    res.json({ success: true, data: mensaje });
+    res.json({ success: true, data: serializeWithSignedUploads(mensaje) });
   } catch (error) {
     logger.error('Error actualizando mensaje:', error);
     res.status(400).json({ success: false, error: error.message });
@@ -1187,7 +1188,7 @@ export const uploadAudio = async (req, res) => {
     res.json({
       success: true,
       data: {
-        url: audioUrl,
+        url: signUploadPublicUrl(audioUrl),
         filename: file.filename,
         size: file.size,
         mimetype: file.mimetype

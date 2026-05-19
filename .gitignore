@@ -86,3 +86,7 @@ pnpm-lock.yaml
 *.backup
 *.old
 
+# Binarios móviles (no versionar)
+*.apk
+*.aab
+

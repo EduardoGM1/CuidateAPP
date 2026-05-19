@@ -44,6 +44,7 @@ import { securityEventLogger } from './middlewares/securityLogging.js';
 import XSSProtection from './middlewares/xssProtection.js';
 import AdvancedRateLimiting from './middlewares/advancedRateLimiting.js';
 import ReDoSProtection from './middlewares/reDoSProtection.js';
+import protectedUploads from './middlewares/protectedUploads.js';
 
 // Import associations
 import "./models/associations.js";
@@ -262,8 +263,8 @@ app.get('/', (req, res) => {
 // CSRF token endpoint
 app.get('/api/csrf-token', getCsrfToken);
 
-// Servir archivos estáticos (uploads)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Uploads: solo con JWT o URL firmada (ver middlewares/protectedUploads.js)
+app.use('/uploads', protectedUploads);
 
 // Routes
 app.use("/api/auth", authRoutes);
