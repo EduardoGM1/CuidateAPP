@@ -19,10 +19,16 @@ export async function loginAsTestUser(page) {
   await page.getByLabel(/contraseña/i).fill(PASSWORD);
   await page.getByRole('button', { name: /iniciar sesión/i }).click();
 
-  const rateLimit = page.getByText(/demasiados intentos de autenticación/i);
-  if (await rateLimit.isVisible({ timeout: 8000 }).catch(() => false)) {
+  const rateLimitAuth = page.getByText(/demasiados intentos de autenticación/i);
+  const rateLimitIp = page.getByText(/demasiadas solicitudes desde esta ip/i);
+  if (await rateLimitAuth.isVisible({ timeout: 3000 }).catch(() => false)) {
     throw new Error(
       'Rate limit de login (15 min). Espera antes de repetir pruebas E2E o API contra producción.'
+    );
+  }
+  if (await rateLimitIp.isVisible({ timeout: 3000 }).catch(() => false)) {
+    throw new Error(
+      'Rate limit general por IP (429). Ejecuta desde el VPS, espera 15 min o aumenta RATE_LIMIT_MAX en api-clinica.'
     );
   }
 
