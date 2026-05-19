@@ -52,7 +52,13 @@ async function request(method, path, body = null, token = null) {
 async function login(email, password) {
   const { ok, status, data } = await request('POST', '/api/auth/login', { email, password });
   const token = data?.token ?? data?.data?.token ?? null;
-  return { ok, status, data, token };
+  const user = data?.usuario ?? data?.user ?? null;
+  const rol = user?.rol ?? data?.rol ?? '';
+  return { ok, status, data, token, user, rol };
+}
+
+function isAdminRol(rol) {
+  return (rol || '').toString().toLowerCase() === 'admin';
 }
 
 async function runTests() {
@@ -62,13 +68,15 @@ async function runTests() {
   // —— Login Admin ——
   console.log('1. Login Administrador');
   const adminLogin = await login(ADMIN_EMAIL, ADMIN_PASS);
-  log('POST /api/auth/login (Admin)', adminLogin.ok && !!adminLogin.token, adminLogin.ok ? `rol: ${adminLogin.data?.user?.rol ?? adminLogin.data?.rol ?? '—'}` : (adminLogin.data?.error || `status ${adminLogin.status}`));
+  const adminRol = adminLogin.rol;
+  log('POST /api/auth/login (cuenta principal)', adminLogin.ok && !!adminLogin.token, adminLogin.ok ? `rol: ${adminRol || '—'}` : (adminLogin.data?.error || `status ${adminLogin.status}`));
   if (!adminLogin.token) {
-    console.log('   No se pudo obtener token de Admin. Revisa API_BASE_URL y credenciales.\n');
+    console.log('   No se pudo obtener token. Revisa API_BASE_URL y credenciales.\n');
   } else {
     const adminToken = adminLogin.token;
-    const rDashboard = await request('GET', '/api/dashboard/admin/summary', null, adminToken);
-    log('GET /api/dashboard/admin/summary', rDashboard.ok, rDashboard.ok ? '' : (rDashboard.data?.error || `status ${rDashboard.status}`));
+    const dashPath = isAdminRol(adminRol) ? '/api/dashboard/admin/summary' : '/api/dashboard/doctor/summary';
+    const rDashboard = await request('GET', dashPath, null, adminToken);
+    log(`GET ${dashPath}`, rDashboard.ok, rDashboard.ok ? '' : (rDashboard.data?.error || `status ${rDashboard.status}`));
 
     const rPacientes = await request('GET', '/api/pacientes?limit=5&offset=0', null, adminToken);
     log('GET /api/pacientes', rPacientes.ok, rPacientes.ok ? `total: ${rPacientes.data?.total ?? rPacientes.data?.pacientes?.length ?? '—'}` : (rPacientes.data?.error || `status ${rPacientes.status}`));
@@ -79,8 +87,12 @@ async function runTests() {
     const rDoctores = await request('GET', '/api/doctores?limit=5', null, adminToken);
     log('GET /api/doctores', rDoctores.ok, rDoctores.ok ? '' : (rDoctores.data?.error || `status ${rDoctores.status}`));
 
-    const rAuditoria = await request('GET', '/api/admin/auditoria?limit=3', null, adminToken);
-    log('GET /api/admin/auditoria', rAuditoria.ok, rAuditoria.ok ? '' : (rAuditoria.data?.error || `status ${rAuditoria.status}`));
+    if (isAdminRol(adminRol)) {
+      const rAuditoria = await request('GET', '/api/admin/auditoria?limit=3', null, adminToken);
+      log('GET /api/admin/auditoria', rAuditoria.ok, rAuditoria.ok ? '' : (rAuditoria.data?.error || `status ${rAuditoria.status}`));
+    } else {
+      log('GET /api/admin/auditoria (skip doctor)', true, 'no aplica');
+    }
 
     // Plan de medicación (campos completos: fecha_fin, horarios, vía, observaciones)
     const rPacientesForPlan = await request('GET', '/api/pacientes?limit=1&offset=0', null, adminToken);

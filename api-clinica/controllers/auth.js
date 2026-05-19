@@ -9,6 +9,7 @@ import MassAssignmentProtection from '../middlewares/massAssignmentProtection.js
 import logger from '../utils/logger.js';
 import emailService from '../services/emailService.js';
 import { AUTH_ACCOUNT_DISABLED_MESSAGE } from '../utils/constants.js';
+import { isValidEmailFormat } from '../utils/emailValidation.js';
 
 const PASSWORD_MAX_LENGTH = 20;
 
@@ -319,8 +320,7 @@ export const createUsuario = async (req, res) => {
       });
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!isValidEmailFormat(email)) {
       return res.status(400).json({
         success: false,
         error: 'Formato de email inválido',
@@ -490,8 +490,7 @@ export const updateUsuario = async (req, res) => {
     
     // Validar email si se proporciona
     if (email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
+      if (!isValidEmailFormat(email)) {
         return res.status(400).json({ 
           success: false,
           error: 'Formato de email inválido' 

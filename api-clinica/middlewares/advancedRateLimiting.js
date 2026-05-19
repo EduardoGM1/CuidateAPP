@@ -1,5 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import { createHash } from 'crypto';
+import { shouldSkipAuthRateLimit } from '../utils/rateLimitConfig.js';
 
 /**
  * Sistema de Rate Limiting avanzado con protección contra ataques
@@ -61,11 +62,7 @@ class AdvancedRateLimiting {
           userAgent: req.get('User-Agent')
         });
       },
-      // Skip para tests y desarrollo
-      skip: (req) => {
-        return process.env.NODE_ENV === 'test' || 
-               (process.env.NODE_ENV === 'development' && req.get('X-Test-Mode') === 'true');
-      },
+      skip: (req) => shouldSkipAuthRateLimit(req),
       skipSuccessfulRequests: false,
       skipFailedRequests: false
     });
@@ -335,11 +332,7 @@ class AdvancedRateLimiting {
           endpoint: req.path
         });
       },
-      // Skip para tests y desarrollo
-      skip: (req) => {
-        return process.env.NODE_ENV === 'test' || 
-               (process.env.NODE_ENV === 'development' && req.get('X-Test-Mode') === 'true');
-      },
+      skip: (req) => shouldSkipAuthRateLimit(req),
       skipSuccessfulRequests: true, // Solo contar requests fallidos
       skipFailedRequests: false
     });

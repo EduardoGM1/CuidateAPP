@@ -26,19 +26,68 @@ function loadModels() {
   }
 }
 
+function extractModelIncludeBodies(text) {
+  const out = [];
+  const re = /model:\s*(\w+)/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const modelName = m[1];
+    const braceStart = text.lastIndexOf('{', m.index);
+    if (braceStart < 0) continue;
+    let depth = 0;
+    let end = braceStart;
+    for (let i = braceStart; i < text.length; i++) {
+      if (text[i] === '{') depth += 1;
+      else if (text[i] === '}') {
+        depth -= 1;
+        if (depth === 0) {
+          end = i + 1;
+          break;
+        }
+      }
+    }
+    out.push({ modelName, body: text.slice(m.index, end) });
+  }
+  return out;
+}
+
 function scanFile(filePath) {
   const text = fs.readFileSync(filePath, 'utf8');
   const issues = [];
-  const modelRe = /model:\s*(\w+)/g;
-  const attrBlockRe = /attributes:\s*\[([\s\S]*?)\]/g;
-  let block;
-  while ((block = attrBlockRe.exec(text)) !== null) {
-    const before = text.slice(Math.max(0, block.index - 400), block.index);
-    const modelMatch = [...before.matchAll(/model:\s*(\w+)/g)].pop();
-    const modelName = modelMatch?.[1];
+  for (const block of extractModelIncludeBodies(text)) {
+    const modelName = block.modelName;
+    const body = block.body;
+    const throughMatch = body.match(/through:\s*\{([\s\S]*?)\}/);
+    if (throughMatch) {
+      const throughBody = throughMatch[1];
+      const throughAttrsMatch = throughBody.match(/attributes:\s*\[([\s\S]*?)\]/);
+      if (throughAttrsMatch) {
+        const throughModel =
+          throughBody.match(/model:\s*(\w+)/)?.[1] ||
+          (modelName === 'Comorbilidad' ? 'PacienteComorbilidad' : null) ||
+          (modelName === 'Doctor' ? 'DoctorPaciente' : null);
+        if (throughModel && MODEL_ATTRS[throughModel]) {
+          const validThrough = MODEL_ATTRS[throughModel];
+          const tAttrs = throughAttrsMatch[1]
+            .split(',')
+            .map((s) => s.replace(/['"`\s]/g, '').trim())
+            .filter((s) => s && !s.startsWith('['));
+          for (const attr of tAttrs) {
+            if (attr.includes('.')) continue;
+            if (!validThrough.has(attr)) {
+              issues.push({ model: throughModel, attr, file: path.relative(ROOT, filePath) });
+            }
+          }
+        }
+      }
+    }
+    const beforeThrough = throughMatch ? body.slice(0, body.indexOf('through:')) : body;
+    const attrMatch = beforeThrough.match(/attributes:\s*\[([\s\S]*?)\]/);
+    if (!attrMatch) continue;
+    if (beforeThrough.includes('include:') && attrMatch.index > beforeThrough.indexOf('include:')) continue;
     if (!modelName || !MODEL_ATTRS[modelName]) continue;
     const valid = MODEL_ATTRS[modelName];
-    const attrs = block[1]
+    const attrs = attrMatch[1]
       .split(',')
       .map((s) => s.replace(/['"`\s]/g, '').trim())
       .filter((s) => s && !s.startsWith('[') && !s.includes('Sequelize'));
@@ -51,6 +100,7 @@ function scanFile(filePath) {
   }
   return issues;
 }
+
 
 function walk(dir, out = []) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {

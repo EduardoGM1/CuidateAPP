@@ -3,6 +3,7 @@ import request from 'supertest';
 import express from 'express';
 import { sanitizeStrings } from '../middlewares/sanitization.js';
 import XSSProtection from '../middlewares/xssProtection.js';
+import { isValidEmailFormat } from '../utils/emailValidation.js';
 
 // Mock de la aplicación para pruebas de seguridad
 const createSecurityTestApp = () => {
@@ -221,8 +222,6 @@ describe('🛡️ PRUEBAS DE SEGURIDAD', () => {
   
   describe('📝 INPUT VALIDATION TESTS', () => {
     test('should validate email format', () => {
-      // Regex más estricto
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       
       const invalidEmails = [
         'invalid-email',
@@ -243,12 +242,11 @@ describe('🛡️ PRUEBAS DE SEGURIDAD', () => {
       ];
       
       invalidEmails.forEach(email => {
-        const isValid = emailRegex.test(email);
-        expect(isValid).toBe(false);
+        expect(isValidEmailFormat(email)).toBe(false);
       });
       
       validEmails.forEach(email => {
-        expect(emailRegex.test(email)).toBe(true);
+        expect(isValidEmailFormat(email)).toBe(true);
       });
     });
     

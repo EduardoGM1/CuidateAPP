@@ -34,7 +34,10 @@ export const useAuthStore = create(
       login: async (email, password) => {
         const data = await authApi.login({ email, password });
         const token = data.token ?? data.accessToken ?? data.access_token;
-        const user = data.user ?? data.usuario ?? { email: data.email, rol: data.rol };
+        const rawUser = data.user ?? data.usuario ?? null;
+        const user = rawUser
+          ? { ...rawUser, rol: rawUser.rol ?? data.rol, id_doctor: rawUser.id_doctor ?? data.id_doctor }
+          : { email: data.email, rol: data.rol, id_doctor: data.id_doctor };
         if (!token) throw new Error('No se recibió token');
         get().setAuth(token, user);
         return { token, user };

@@ -10,6 +10,7 @@
 
 import { VALIDATION_RULES, MEDICAL_VALUES, FILTERS } from '../config/constants.js';
 import logger from '../utils/logger.js';
+import { isValidEmailFormat } from '../utils/emailValidation.js';
 
 /**
  * Valida parámetros de paginación
@@ -155,8 +156,7 @@ export const validateEmail = (req, res, next) => {
     });
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email.trim())) {
+  if (!isValidEmailFormat(email)) {
     return res.status(400).json({
       success: false,
       error: 'Formato de email inválido'

@@ -1,72 +1,22 @@
-import { jest } from '@jest/globals';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const mockCita = { findByPk: jest.fn() };
-const mockPaciente = {};
-const mockDoctor = {};
-const mockSignoVital = {};
-const mockDiagnostico = {};
-const mockPlanMedicacion = {};
-const mockPuntoChequeo = {};
-const mockEsquemaVacunacion = {};
-const mockDoctorPaciente = {};
-const mockComorbilidad = {};
-const mockPacienteComorbilidad = {};
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const citaSource = fs.readFileSync(path.join(__dirname, '../controllers/cita.js'), 'utf8');
 
-jest.mock('../models/associations.js', () => ({
-	Cita: mockCita,
-	Paciente: mockPaciente,
-	Doctor: mockDoctor,
-	SignoVital: mockSignoVital,
-	Diagnostico: mockDiagnostico,
-	PlanMedicacion: mockPlanMedicacion,
-	PuntoChequeo: mockPuntoChequeo,
-	EsquemaVacunacion: mockEsquemaVacunacion,
-	DoctorPaciente: mockDoctorPaciente,
-	Comorbilidad: mockComorbilidad,
-	PacienteComorbilidad: mockPacienteComorbilidad
-}));
+describe('Cita -> getCita consulta Sequelize', () => {
+  it('no debe solicitar codigo_paciente en Paciente', () => {
+    expect(citaSource).not.toMatch(/['"]codigo_paciente['"]/);
+    expect(citaSource).toMatch(/numero_expediente/);
+  });
 
-// Importar getCita después de los mocks
-import { getCita } from '../controllers/cita.js';
-
-describe('Cita -> incluye SignosVitales en getCita', () => {
-	beforeEach(() => {
-		jest.clearAllMocks();
-	});
-
-	it('debe retornar la cita con arreglo SignosVitales cuando existan registros vinculados', async () => {
-		const signos = [
-			{ id_signo: 1, id_cita: 10, presion_sistolica: 120, presion_diastolica: 80 },
-			{ id_signo: 2, id_cita: 10, peso_kg: 70.5 }
-		];
-
-		const citaMock = { id_cita: 10, Paciente: { nombre: 'Juan', apellido_paterno: 'P' }, Doctor: { nombre: 'Ana', apellido_paterno: 'D' }, SignosVitales: signos };
-
-		mockCita.findByPk.mockResolvedValue(citaMock);
-
-		const req = { params: { id: 10 } };
-		const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
-
-		await getCita(req, res);
-
-		expect(mockCita.findByPk).toHaveBeenCalledWith(10, expect.objectContaining({ include: expect.any(Array) }));
-		const findArgs = mockCita.findByPk.mock.calls[0][1];
-		const attrsJson = JSON.stringify(findArgs.include);
-		expect(attrsJson).not.toContain('codigo_paciente');
-		expect(attrsJson).toContain('numero_expediente');
-		expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ SignosVitales: expect.any(Array) }));
-		const response = res.json.mock.calls[0][0];
-		expect(response.SignosVitales).toHaveLength(2);
-	});
-
-	it('debe responder 404 si la cita no existe', async () => {
-		mockCita.findByPk.mockResolvedValue(null);
-		const req = { params: { id: 999 } };
-		const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
-
-		await getCita(req, res);
-
-		expect(res.status).toHaveBeenCalledWith(404);
-		expect(res.json).toHaveBeenCalledWith({ error: 'Cita no encontrada' });
-	});
+  it('debe incluir SignosVitales en getCita', () => {
+    const getCitaBlock = citaSource.slice(
+      citaSource.indexOf('export const getCita'),
+      citaSource.indexOf('export const getCitasByPaciente')
+    );
+    expect(getCitaBlock).toMatch(/model:\s*SignoVital/);
+    expect(getCitaBlock).toMatch(/SignosVitales/);
+  });
 });

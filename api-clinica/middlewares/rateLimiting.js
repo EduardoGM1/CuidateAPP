@@ -1,4 +1,5 @@
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import { shouldSkipAuthRateLimit } from '../utils/rateLimitConfig.js';
 
 // Rate limiting general para API - MEJORADO PARA DESARROLLO
 export const generalRateLimit = rateLimit({
@@ -30,7 +31,7 @@ export const generalRateLimit = rateLimit({
 // Rate limiting estricto para autenticación - MEJORADO PARA DESARROLLO
 export const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: process.env.NODE_ENV === 'test' ? 100 : 5, // Más permisivo en tests
+  max: process.env.NODE_ENV === 'test' ? 100 : Number(process.env.AUTH_RATE_LIMIT_MAX || 5),
   message: {
     error: 'Demasiados intentos de autenticación, cuenta bloqueada temporalmente',
     retryAfter: '15 minutos',
@@ -45,10 +46,7 @@ export const authRateLimit = rateLimit({
     return `auth:${ip}:${Buffer.from(email).toString('base64').substring(0, 10)}`;
   },
   // Skip para tests y desarrollo
-  skip: (req) => {
-    return process.env.NODE_ENV === 'test' || 
-           (process.env.NODE_ENV === 'development' && req.get('X-Test-Mode') === 'true');
-  },
+  skip: (req) => shouldSkipAuthRateLimit(req),
   // Handler personalizado para logging (v7 compatible)
   handler: (req, res, next, options) => {
     console.warn('Auth rate limit reached:', {
