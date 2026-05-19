@@ -89,7 +89,6 @@ export default function CitaConsultaResumen({ cita }) {
   const nombreDoctor = d ? `Dr. ${formatNombreCompleto(d)}` : fmtText(cita.doctor_nombre);
   const expedienteRaw =
     p?.numero_expediente ||
-    p?.codigo_paciente ||
     (p?.id_paciente != null ? String(p.id_paciente) : '') ||
     (cita.id_paciente != null ? String(cita.id_paciente) : '');
   const expediente = sanitizeForDisplay(String(expedienteRaw).trim()) || '—';

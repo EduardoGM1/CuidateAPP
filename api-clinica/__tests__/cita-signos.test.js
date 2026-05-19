@@ -50,6 +50,10 @@ describe('Cita -> incluye SignosVitales en getCita', () => {
 		await getCita(req, res);
 
 		expect(mockCita.findByPk).toHaveBeenCalledWith(10, expect.objectContaining({ include: expect.any(Array) }));
+		const findArgs = mockCita.findByPk.mock.calls[0][1];
+		const attrsJson = JSON.stringify(findArgs.include);
+		expect(attrsJson).not.toContain('codigo_paciente');
+		expect(attrsJson).toContain('numero_expediente');
 		expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ SignosVitales: expect.any(Array) }));
 		const response = res.json.mock.calls[0][0];
 		expect(response.SignosVitales).toHaveLength(2);

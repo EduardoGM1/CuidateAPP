@@ -1,12 +1,19 @@
-import { PlanMedicacion, Diagnostico, Medicamento } from '../models/associations.js';
+import { PlanMedicacion, PlanDetalle, Medicamento } from '../models/associations.js';
+
+const planDetalleInclude = {
+  model: PlanDetalle,
+  include: [
+    {
+      model: Medicamento,
+      attributes: ['id_medicamento', 'nombre_medicamento', 'descripcion'],
+    },
+  ],
+};
 
 export const getPlanesMedicacion = async (req, res) => {
   try {
     const planes = await PlanMedicacion.findAll({
-      include: [
-        { model: Diagnostico, attributes: ['diagnostico_principal'] },
-        { model: Medicamento, attributes: ['nombre', 'dosis_recomendada'] }
-      ]
+      include: [planDetalleInclude],
     });
     res.json(planes);
   } catch (error) {
@@ -17,10 +24,7 @@ export const getPlanesMedicacion = async (req, res) => {
 export const getPlanMedicacion = async (req, res) => {
   try {
     const plan = await PlanMedicacion.findByPk(req.params.id, {
-      include: [
-        { model: Diagnostico, attributes: ['diagnostico_principal'] },
-        { model: Medicamento, attributes: ['nombre', 'dosis_recomendada', 'contraindicaciones'] }
-      ]
+      include: [planDetalleInclude],
     });
     if (!plan) {
       return res.status(404).json({ error: 'Plan de medicación no encontrado' });
@@ -34,8 +38,8 @@ export const getPlanMedicacion = async (req, res) => {
 export const getPlanesByDiagnostico = async (req, res) => {
   try {
     const planes = await PlanMedicacion.findAll({
-      where: { id_diagnostico: req.params.diagnosticoId },
-      include: [{ model: Medicamento, attributes: ['nombre', 'dosis_recomendada'] }]
+      where: { id_cita: req.params.diagnosticoId },
+      include: [planDetalleInclude],
     });
     res.json(planes);
   } catch (error) {
@@ -55,7 +59,7 @@ export const createPlanMedicacion = async (req, res) => {
 export const updatePlanMedicacion = async (req, res) => {
   try {
     const [updated] = await PlanMedicacion.update(req.body, {
-      where: { id_plan: req.params.id }
+      where: { id_plan: req.params.id },
     });
     if (!updated) {
       return res.status(404).json({ error: 'Plan de medicación no encontrado' });
@@ -70,7 +74,7 @@ export const updatePlanMedicacion = async (req, res) => {
 export const deletePlanMedicacion = async (req, res) => {
   try {
     const deleted = await PlanMedicacion.destroy({
-      where: { id_plan: req.params.id }
+      where: { id_plan: req.params.id },
     });
     if (!deleted) {
       return res.status(404).json({ error: 'Plan de medicación no encontrado' });
