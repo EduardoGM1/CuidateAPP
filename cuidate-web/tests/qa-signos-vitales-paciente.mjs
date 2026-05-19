@@ -46,14 +46,29 @@ async function request(method, path, body = null, token = null) {
   return { ok: res.ok, status: res.status, data };
 }
 
+function normalize(str) {
+  return String(str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+}
+
 function nombreCompleto(p) {
   const parts = [p.nombre, p.apellido_paterno, p.apellido_materno, p.nombre_completo].filter(Boolean);
-  return (p.nombre_completo || parts.join(' ')).toLowerCase();
+  return p.nombre_completo || parts.join(' ');
 }
 
 function matchesPatient(p) {
-  const n = nombreCompleto(p);
-  return PATIENT_NAME.split(/\s+/).every((w) => n.includes(w));
+  const n = normalize(nombreCompleto(p));
+  return PATIENT_NAME.split(/\s+/).every((w) => n.includes(normalize(w)));
+}
+
+function pickPacientes(data) {
+  if (Array.isArray(data?.pacientes)) return data.pacientes;
+  if (Array.isArray(data?.data?.pacientes)) return data.data.pacientes;
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.rows)) return data.rows;
+  return [];
 }
 
 async function main() {
@@ -69,13 +84,18 @@ async function main() {
   const token = login.data?.token;
   console.log('✓ Login OK');
 
-  const search = await request('GET', `/api/pacientes?search=${encodeURIComponent(PATIENT_NAME)}&limit=20`, null, token);
+  const term = PATIENT_NAME.split(/\s+/)[0] || PATIENT_NAME;
+  const search = await request(
+    'GET',
+    `/api/pacientes?search=${encodeURIComponent(term)}&limit=20&estado=todos`,
+    null,
+    token
+  );
   if (!search.ok) {
     console.error('Búsqueda pacientes falló:', search.status, search.data?.error);
     process.exit(1);
   }
-  const list = search.data?.pacientes ?? search.data?.data ?? search.data ?? [];
-  const rows = Array.isArray(list) ? list : list.rows || [];
+  const rows = pickPacientes(search.data);
   const paciente = rows.find(matchesPatient);
   if (!paciente) {
     console.error('Paciente no encontrado:', PATIENT_NAME);

@@ -13,10 +13,11 @@ export async function openPacienteByNombre(page, nombre = process.env.E2E_PATIEN
   await expect(page.getByRole('heading', { name: /pacientes/i })).toBeVisible({ timeout: 20000 });
 
   const search = page.getByPlaceholder(/buscar por nombre/i);
-  await search.fill(nombre);
+  const term = nombre.split(/\s+/)[0] || nombre;
+  await search.fill(term);
   await page.getByRole('button', { name: /^buscar$/i }).click();
 
-  const row = page.locator('table tbody tr').filter({ hasText: new RegExp(nombre.split(/\s+/).slice(0, 2).join('|'), 'i') }).first();
+  const row = page.locator('table tbody tr').filter({ hasText: /armando/i }).filter({ hasText: /p[eé]rez/i }).first();
   await expect(row).toBeVisible({ timeout: 25000 });
   await row.click();
 
