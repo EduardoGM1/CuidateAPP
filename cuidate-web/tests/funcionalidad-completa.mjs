@@ -135,8 +135,8 @@ async function run() {
 
   const idDoctor = auth.user?.id_doctor;
   if (idDoctor) {
-    const rNotif = await request('GET', `/api/notificaciones/doctor/${idDoctor}?limit=5&estado=enviada`, null, token);
-    log('GET /api/notificaciones/doctor/:id', rNotif.ok, rNotif.ok ? '' : (rNotif.data?.error || `status ${rNotif.status}`));
+    const rNotif = await request('GET', `/api/doctores/${idDoctor}/notificaciones?limit=5&estado=enviada`, null, token);
+    log('GET /api/doctores/:id/notificaciones', rNotif.ok, rNotif.ok ? '' : (rNotif.data?.error || `status ${rNotif.status}`));
 
     const rChat = await request('GET', `/api/mensajes-chat/doctor/${idDoctor}/conversaciones`, null, token);
     log('GET /api/mensajes-chat/doctor/:id/conversaciones', rChat.ok, rChat.ok ? '' : (rChat.data?.error || `status ${rChat.status}`));
