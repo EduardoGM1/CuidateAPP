@@ -7,6 +7,7 @@ import ButtonUI from '../ui/Button';
 import Logo from '../common/Logo';
 import OnboardingHost from '../../onboarding/OnboardingHost';
 import { useDoctorNavBadges } from '../../hooks/useDoctorNavBadges';
+import { useBuildVersionCheck } from '../../hooks/useBuildVersionCheck';
 import { DoctorNavBadgesProvider } from '../../contexts/DoctorNavBadgesContext';
 
 function IconDashboard() {
@@ -169,6 +170,7 @@ function MenuIcon() {
 }
 
 function MainLayoutShell() {
+  useBuildVersionCheck();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobile, setMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 992);
   const location = useLocation();

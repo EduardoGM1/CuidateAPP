@@ -4,6 +4,7 @@ import MainLayout from '../components/layout/MainLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import AdminRoute from '../components/auth/AdminRoute';
 import PageLoadingFallback from '../components/common/PageLoadingFallback';
+import StaleAssetsFallback from '../components/common/StaleAssetsFallback';
 import Login from '../pages/Login';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
@@ -21,6 +22,7 @@ const router = createBrowserRouter(
     { path: '/aviso-privacidad', element: <AvisoPrivacidad /> },
     {
       path: '/',
+      errorElement: <StaleAssetsFallback autoReload />,
       element: (
         <ProtectedRoute>
           <PrivacyConsentGate>

@@ -1,4 +1,5 @@
 import path from 'path';
+import { writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -6,8 +7,26 @@ import { securityHeadersDev, securityHeadersProd } from './vite.security-headers
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+/** Escribe version.json en dist para detectar nuevos deploys en el cliente. */
+function buildVersionPlugin() {
+  let buildId = '';
+  return {
+    name: 'cuidate-build-version',
+    buildStart() {
+      buildId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    },
+    closeBundle() {
+      writeFileSync(
+        path.resolve(__dirname, 'dist/version.json'),
+        JSON.stringify({ buildId, builtAt: new Date().toISOString() }),
+        'utf8'
+      );
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => ({
-  plugins: [react()],
+  plugins: [react(), mode === 'production' ? buildVersionPlugin() : null].filter(Boolean),
   server: {
     port: 5174,
     headers: securityHeadersDev,
