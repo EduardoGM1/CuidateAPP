@@ -157,8 +157,8 @@ async function run() {
     const rUsu = await request('GET', '/api/auth/usuarios?limit=5', null, token);
     log('GET /api/auth/usuarios', rUsu.ok, rUsu.ok ? '' : (rUsu.data?.error || `status ${rUsu.status}`));
 
-    const rOps = await request('GET', '/api/admin/operations/status', null, token);
-    log('GET /api/admin/operations/status', rOps.ok || rOps.status === 404, rOps.ok ? '' : (rOps.data?.error || `status ${rOps.status}`));
+    const rOps = await request('GET', '/api/admin/operations/system/status', null, token);
+    log('GET /api/admin/operations/system/status', rOps.ok, rOps.ok ? '' : (rOps.data?.error || `status ${rOps.status}`));
   } else {
     const rDoc403 = await request('GET', '/api/admin/auditoria?limit=1', null, token);
     log('GET /api/admin/auditoria (esperado 403 doctor)', rDoc403.status === 403, rDoc403.status === 403 ? 'OK' : `inesperado ${rDoc403.status}`);
