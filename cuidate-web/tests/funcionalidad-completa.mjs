@@ -115,7 +115,10 @@ async function run() {
     log('GET /api/pacientes/:id (skip)', true, 'sin pacientes');
   }
 
-  const rRep = await request('GET', '/api/reportes/forma-lista', null, token);
+  const now = new Date();
+  const mes = now.getMonth() + 1;
+  const anio = now.getFullYear();
+  const rRep = await request('GET', `/api/reportes/forma-lista?mes=${mes}&anio=${anio}`, null, token);
   log('GET /api/reportes/forma-lista', rRep.ok, rRep.ok ? '' : (rRep.data?.error || `status ${rRep.status}`));
 
   const rMed = await request('GET', '/api/medicamentos?limit=5', null, token);
