@@ -7,6 +7,7 @@
 import Input from '../ui/Input';
 import TextArea from '../ui/TextArea';
 import { getVitalSignValueStyle, getPresionValueStyle, getIMCValueStyle } from '../../utils/vitalSignsRanges';
+import { normalizeTallaInput } from '../../utils/signosVitalesFormUtils';
 
 export const INITIAL_SIGNOS_VITALES = {
   peso_kg: '',
@@ -143,6 +144,13 @@ export function calcularEdad(fechaNacimiento) {
 export default function SignosVitalesForm({ value, onChange, showImc = true, fechaNacimientoPaciente, showEdadEditableCheckbox = true }) {
   const update = (key, val) => onChange({ ...value, [key]: val });
 
+  const handleTallaBlur = () => {
+    const { value: normalized, convertedFromCm } = normalizeTallaInput(value.talla_m);
+    if (convertedFromCm && normalized !== value.talla_m) {
+      onChange({ ...value, talla_m: normalized, _tallaConvertida: true });
+    }
+  };
+
   const peso = value.peso_kg?.trim() ? parseFloat(value.peso_kg) : null;
   const talla = value.talla_m?.trim() ? parseFloat(value.talla_m) : null;
   const imc = showImc && peso != null && talla != null && talla > 0 ? (peso / (talla * talla)).toFixed(2) : null;
@@ -168,7 +176,18 @@ export default function SignosVitalesForm({ value, onChange, showImc = true, fec
     <div>
       <div style={GRID_STYLE}>
         <Input type="number" placeholder="Peso (kg)" value={value.peso_kg} onChange={(e) => update('peso_kg', e.target.value)} style={INPUT_STYLE} {...DECIMAL_INPUT_PROPS} />
-        <Input type="number" placeholder="Talla (m)" value={value.talla_m} onChange={(e) => update('talla_m', e.target.value)} style={INPUT_STYLE} {...DECIMAL_INPUT_PROPS} />
+        <Input
+          type="number"
+          placeholder="Talla (m)"
+          value={value.talla_m}
+          onChange={(e) => update('talla_m', e.target.value)}
+          onBlur={handleTallaBlur}
+          min={0.5}
+          max={2.5}
+          title="Metros (ej. 1.70). Si ingresas centímetros (155), se convertirán al salir del campo."
+          style={INPUT_STYLE}
+          {...DECIMAL_INPUT_PROPS}
+        />
         <Input type="number" placeholder="Cintura (cm)" value={value.medida_cintura_cm} onChange={(e) => update('medida_cintura_cm', e.target.value)} style={inputStyle('medida_cintura_cm', value.medida_cintura_cm)} {...DECIMAL_INPUT_PROPS} />
         <Input type="number" placeholder="PA sist." value={value.presion_sistolica} onChange={(e) => update('presion_sistolica', e.target.value)} style={{ ...INPUT_STYLE, ...paSistStyle }} step={1} />
         <Input type="number" placeholder="PA diast." value={value.presion_diastolica} onChange={(e) => update('presion_diastolica', e.target.value)} style={{ ...INPUT_STYLE, ...paSistStyle }} step={1} />
@@ -197,6 +216,11 @@ export default function SignosVitalesForm({ value, onChange, showImc = true, fec
           )}
         </div>
       </div>
+      {value._tallaConvertida && (
+        <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--color-advertencia, #b45309)' }}>
+          La talla se interpretó en centímetros y se guardará en metros.
+        </p>
+      )}
       {imc != null && (
         <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', fontWeight: 600, ...getIMCValueStyle(parseFloat(imc)) }}>
           IMC: {imc}

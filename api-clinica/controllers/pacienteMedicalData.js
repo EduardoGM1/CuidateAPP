@@ -24,6 +24,10 @@ import alertService from '../services/alertService.js';
 import realtimeService from '../services/realtimeService.js';
 import emailService from '../services/emailService.js';
 import { crearNotificacionDoctor } from './cita.js';
+import {
+  validateAndNormalizeSignosVitalesBody,
+  mapSignosVitalesDbError,
+} from '../utils/signosVitalesValidation.js';
 
 /**
  * Helper function para desencriptar un campo si está encriptado
@@ -1375,6 +1379,26 @@ export const createPacienteSignosVitales = async (req, res) => {
       }
     }
 
+    // Validar rangos numéricos (evita 500 por DECIMAL overflow, ej. talla 155 cm en campo metros)
+    const numericValidation = validateAndNormalizeSignosVitalesBody({
+      peso_kg,
+      talla_m,
+      medida_cintura_cm,
+      presion_sistolica,
+      presion_diastolica,
+      glucosa_mg_dl,
+      colesterol_mg_dl,
+      trigliceridos_mg_dl,
+    });
+    if (!numericValidation.ok) {
+      return res.status(400).json({
+        success: false,
+        error: numericValidation.error,
+      });
+    }
+    const norm = numericValidation.values;
+    const validationWarnings = numericValidation.warnings || [];
+
     // Todos los signos vitales son opcionales: se permite crear un registro aunque solo vengan observaciones o un subconjunto de campos.
 
     // Convertir y validar id_cita si se proporciona
@@ -1389,26 +1413,24 @@ export const createPacienteSignosVitales = async (req, res) => {
       }
     }
 
-    // Calcular IMC si se proporcionan peso y talla
+    // Calcular IMC si se proporcionan peso y talla (valores ya normalizados)
     let imc = null;
-    if (peso_kg && talla_m && talla_m > 0) {
-      imc = parseFloat((peso_kg / (talla_m * talla_m)).toFixed(2));
+    if (norm.peso_kg != null && norm.talla_m != null && norm.talla_m > 0) {
+      imc = parseFloat((norm.peso_kg / (norm.talla_m * norm.talla_m)).toFixed(2));
     }
 
     // Crear registro de signos vitales (convertir todos los valores numéricos)
     const signoVitalData = {
       id_paciente: pacienteId,
       id_cita: citaId,
-      peso_kg: peso_kg ? parseFloat(peso_kg) : null,
-      talla_m: talla_m ? parseFloat(talla_m) : null,
+      peso_kg: norm.peso_kg,
+      talla_m: norm.talla_m,
       imc: imc,
-      medida_cintura_cm: medida_cintura_cm ? parseFloat(medida_cintura_cm) : null,
-      presion_sistolica: presion_sistolica ? parseInt(presion_sistolica, 10) : null,
-      presion_diastolica: presion_diastolica ? parseInt(presion_diastolica, 10) : null,
-      glucosa_mg_dl: glucosa_mg_dl !== undefined && glucosa_mg_dl !== null && glucosa_mg_dl !== ''
-        ? parseFloat(glucosa_mg_dl)
-        : null,
-      colesterol_mg_dl: colesterol_mg_dl ? parseFloat(colesterol_mg_dl) : null,
+      medida_cintura_cm: norm.medida_cintura_cm,
+      presion_sistolica: norm.presion_sistolica,
+      presion_diastolica: norm.presion_diastolica,
+      glucosa_mg_dl: norm.glucosa_mg_dl,
+      colesterol_mg_dl: norm.colesterol_mg_dl,
       colesterol_ldl: colesterol_ldl !== undefined && colesterol_ldl !== null && colesterol_ldl !== '' 
         ? parseFloat(colesterol_ldl) 
         : null,  // ✅ Colesterol LDL
@@ -1656,12 +1678,16 @@ export const createPacienteSignosVitales = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Signos vitales registrados exitosamente',
+      message: validationWarnings.length
+        ? `Signos vitales registrados exitosamente. ${validationWarnings.join(' ')}`
+        : 'Signos vitales registrados exitosamente',
       data: signoFormateado,
-      alertas: alertasGeneradas || null // Incluir alertas en la respuesta
+      alertas: alertasGeneradas || null,
+      warnings: validationWarnings.length ? validationWarnings : undefined,
     });
 
   } catch (error) {
+    const friendly = mapSignosVitalesDbError(error);
     logger.error('Error creando signos vitales:', {
       error: error.message,
       stack: error.stack,
@@ -1669,6 +1695,9 @@ export const createPacienteSignosVitales = async (req, res) => {
       datos: req.body,
       userRole: req.user?.rol
     });
+    if (friendly) {
+      return res.status(400).json({ success: false, error: friendly });
+    }
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor',
@@ -2766,18 +2795,32 @@ export const updatePacienteSignosVitales = async (req, res) => {
       }
     }
 
-    // Actualizar campos permitidos
-    if (peso_kg !== undefined) signoVital.peso_kg = peso_kg ? parseFloat(peso_kg) : null;
-    if (talla_m !== undefined) signoVital.talla_m = talla_m ? parseFloat(talla_m) : null;
-    if (medida_cintura_cm !== undefined) signoVital.medida_cintura_cm = medida_cintura_cm ? parseFloat(medida_cintura_cm) : null;
-    if (presion_sistolica !== undefined) signoVital.presion_sistolica = presion_sistolica ? parseInt(presion_sistolica) : null;
-    if (presion_diastolica !== undefined) signoVital.presion_diastolica = presion_diastolica ? parseInt(presion_diastolica) : null;
-    if (glucosa_mg_dl !== undefined) {
-      signoVital.glucosa_mg_dl = glucosa_mg_dl !== null && glucosa_mg_dl !== ''
-        ? parseFloat(glucosa_mg_dl)
-        : null;
+    const numericUpd = validateAndNormalizeSignosVitalesBody(
+      {
+        peso_kg,
+        talla_m,
+        medida_cintura_cm,
+        presion_sistolica,
+        presion_diastolica,
+        glucosa_mg_dl,
+        colesterol_mg_dl,
+        trigliceridos_mg_dl,
+      },
+      { partial: true }
+    );
+    if (!numericUpd.ok) {
+      return res.status(400).json({ success: false, error: numericUpd.error });
     }
-    if (colesterol_mg_dl !== undefined) signoVital.colesterol_mg_dl = colesterol_mg_dl ? parseFloat(colesterol_mg_dl) : null;
+    const normUpd = numericUpd.values;
+
+    // Actualizar campos permitidos
+    if (peso_kg !== undefined) signoVital.peso_kg = normUpd.peso_kg;
+    if (talla_m !== undefined) signoVital.talla_m = normUpd.talla_m;
+    if (medida_cintura_cm !== undefined) signoVital.medida_cintura_cm = normUpd.medida_cintura_cm;
+    if (presion_sistolica !== undefined) signoVital.presion_sistolica = normUpd.presion_sistolica;
+    if (presion_diastolica !== undefined) signoVital.presion_diastolica = normUpd.presion_diastolica;
+    if (glucosa_mg_dl !== undefined) signoVital.glucosa_mg_dl = normUpd.glucosa_mg_dl;
+    if (colesterol_mg_dl !== undefined) signoVital.colesterol_mg_dl = normUpd.colesterol_mg_dl;
     if (colesterol_ldl !== undefined) {
       signoVital.colesterol_ldl = colesterol_ldl !== null && colesterol_ldl !== '' 
         ? parseFloat(colesterol_ldl) 
@@ -2788,11 +2831,7 @@ export const updatePacienteSignosVitales = async (req, res) => {
         ? parseFloat(colesterol_hdl) 
         : null;
     }
-    if (trigliceridos_mg_dl !== undefined) {
-      signoVital.trigliceridos_mg_dl = trigliceridos_mg_dl !== null && trigliceridos_mg_dl !== ''
-        ? parseFloat(trigliceridos_mg_dl)
-        : null;
-    }
+    if (trigliceridos_mg_dl !== undefined) signoVital.trigliceridos_mg_dl = normUpd.trigliceridos_mg_dl;
     if (hba1c_porcentaje !== undefined) {
       signoVital.hba1c_porcentaje = hba1c_porcentaje !== null && hba1c_porcentaje !== '' 
         ? parseFloat(hba1c_porcentaje) 
@@ -2826,6 +2865,7 @@ export const updatePacienteSignosVitales = async (req, res) => {
     });
 
   } catch (error) {
+    const friendly = mapSignosVitalesDbError(error);
     logger.error('Error actualizando signos vitales:', {
       error: error.message,
       stack: error.stack,
@@ -2833,6 +2873,9 @@ export const updatePacienteSignosVitales = async (req, res) => {
       signoId: req.params.signoId,
       userRole: req.user?.rol
     });
+    if (friendly) {
+      return res.status(400).json({ success: false, error: friendly });
+    }
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor',
