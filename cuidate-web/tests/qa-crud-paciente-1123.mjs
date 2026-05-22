@@ -33,22 +33,30 @@ function log(step, ok, detail = '') {
   }
 }
 
-async function req(method, path, body = null, token = null) {
+async function req(method, path, body = null, token = null, retries = 4) {
   const url = path.startsWith('http') ? path : `${API}${path}`;
   const headers = { 'Content-Type': 'application/json', 'X-Client-Type': 'web' };
   if (token) headers.Authorization = `Bearer ${token}`;
-  const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
-  const text = await res.text();
-  let data = null;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = { _raw: text?.slice(0, 280) };
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    const text = await res.text();
+    let data = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = { _raw: text?.slice(0, 280) };
+    }
+    const rateLimited = res.status === 429 || data?.error?.includes?.('Demasiadas operaciones');
+    if (!rateLimited || attempt === retries) {
+      return { ok: res.ok, status: res.status, data };
+    }
+    await sleep(1500 * (attempt + 1));
   }
-  return { ok: res.ok, status: res.status, data };
+  return { ok: false, status: 429, data: { error: 'rate limit' } };
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const WRITE_DELAY = Number(process.env.WRITE_DELAY_MS || '450');
 
 function pickId(data, ...keys) {
   const row = data?.data ?? data;
@@ -142,7 +150,7 @@ async function run() {
   log('Catálogos', !!(cat.idMedicamento && cat.idComorbilidad), `med=${cat.idMedicamento} com=${cat.idComorbilidad} vac=${cat.idVacuna}`);
 
   // —— Cita base (historial / vínculos) ——
-  await sleep(120);
+  await sleep(WRITE_DELAY);
   const fechaCita = new Date();
   fechaCita.setDate(fechaCita.getDate() + 14);
   const citaPost = await req(
@@ -164,7 +172,7 @@ async function run() {
   if (idCita) created.ids.cita = idCita;
 
   if (idCita) {
-    await sleep(120);
+    await sleep(WRITE_DELAY);
     const citaPut = await req(
       'PUT',
       `/api/citas/${idCita}`,
@@ -175,7 +183,7 @@ async function run() {
   }
 
   // —— Consulta completa (historial) ——
-  await sleep(120);
+  await sleep(WRITE_DELAY);
   const consulta = await req(
     'POST',
     '/api/citas/consulta-completa',
@@ -213,20 +221,20 @@ async function run() {
   log('POST /api/citas/consulta-completa', consulta.ok, consulta.ok ? 'OK' : (consulta.data?.error || consulta.status));
 
   // —— Signos vitales (cita + monitoreo sin cita) ——
-  await sleep(120);
+  await sleep(WRITE_DELAY);
   const svPost = await req('POST', `/api/pacientes/${PACIENTE_ID}/signos-vitales`, signosFull('signos-cita', idCita), doctorToken);
   const idSigno = pickId(svPost.data, 'id_signo', 'id_signo_vital', 'id');
   log('POST signos-vitales (con cita)', svPost.ok, idSigno ? `id=${idSigno}` : (svPost.data?.error || svPost.status));
   if (idSigno) created.ids.signo = idSigno;
 
-  await sleep(120);
+  await sleep(WRITE_DELAY);
   const monPost = await req('POST', `/api/pacientes/${PACIENTE_ID}/signos-vitales`, signosFull('monitoreo-continuo', null), doctorToken);
   const idMon = pickId(monPost.data, 'id_signo', 'id_signo_vital', 'id');
   log('POST signos-vitales (monitoreo continuo)', monPost.ok, idMon ? `id=${idMon}` : (monPost.data?.error || monPost.status));
   if (idMon) created.ids.monitoreo = idMon;
 
   if (idSigno) {
-    await sleep(120);
+    await sleep(WRITE_DELAY);
     const svPut = await req(
       'PUT',
       `/api/pacientes/${PACIENTE_ID}/signos-vitales/${idSigno}`,
@@ -237,7 +245,7 @@ async function run() {
   }
 
   // —— Diagnóstico ——
-  await sleep(120);
+  await sleep(WRITE_DELAY);
   const dxPost = await req(
     'POST',
     `/api/pacientes/${PACIENTE_ID}/diagnosticos`,
@@ -249,7 +257,7 @@ async function run() {
   if (idDx) created.ids.diagnostico = idDx;
 
   if (idDx) {
-    await sleep(120);
+    await sleep(WRITE_DELAY);
     const dxPut = await req(
       'PUT',
       `/api/pacientes/${PACIENTE_ID}/diagnosticos/${idDx}`,
@@ -261,7 +269,7 @@ async function run() {
 
   // —— Plan medicación ——
   if (cat.idMedicamento) {
-    await sleep(120);
+    await sleep(WRITE_DELAY);
     const planPost = await req(
       'POST',
       `/api/pacientes/${PACIENTE_ID}/planes-medicacion`,
@@ -288,7 +296,7 @@ async function run() {
     log('POST planes-medicacion', planPost.ok, idPlan ? `id=${idPlan}` : (planPost.data?.error || planPost.status));
     if (idPlan) {
       created.ids.plan = idPlan;
-      await sleep(120);
+      await sleep(WRITE_DELAY);
       const planPut = await req(
         'PUT',
         `/api/pacientes/${PACIENTE_ID}/planes-medicacion/${idPlan}`,
@@ -300,7 +308,7 @@ async function run() {
   }
 
   // —— Red de apoyo ——
-  await sleep(120);
+  await sleep(WRITE_DELAY);
   const raPost = await req(
     'POST',
     `/api/pacientes/${PACIENTE_ID}/red-apoyo`,
@@ -318,7 +326,7 @@ async function run() {
   log('POST red-apoyo', raPost.ok, idRa ? `id=${idRa}` : (raPost.data?.error || raPost.status));
   if (idRa) {
     created.ids.redApoyo = idRa;
-    await sleep(120);
+    await sleep(WRITE_DELAY);
     const raPut = await req(
       'PUT',
       `/api/pacientes/${PACIENTE_ID}/red-apoyo/${idRa}`,
@@ -329,7 +337,7 @@ async function run() {
   }
 
   // —— Vacunación ——
-  await sleep(120);
+  await sleep(WRITE_DELAY);
   const vacPost = await req(
     'POST',
     `/api/pacientes/${PACIENTE_ID}/esquema-vacunacion`,
@@ -347,7 +355,7 @@ async function run() {
   log('POST esquema-vacunacion', vacPost.ok, idVac ? `id=${idVac}` : (vacPost.data?.error || vacPost.status));
   if (idVac) {
     created.ids.vacuna = idVac;
-    await sleep(120);
+    await sleep(WRITE_DELAY);
     const vacPut = await req(
       'PUT',
       `/api/pacientes/${PACIENTE_ID}/esquema-vacunacion/${idVac}`,
@@ -359,7 +367,7 @@ async function run() {
 
   // —— Comorbilidades ——
   if (cat.idComorbilidad) {
-    await sleep(120);
+    await sleep(WRITE_DELAY);
     const comPost = await req(
       'POST',
       `/api/pacientes/${PACIENTE_ID}/comorbilidades`,
@@ -379,7 +387,7 @@ async function run() {
     log('POST comorbilidades', comPost.ok, comPost.ok ? 'OK' : (comPost.data?.error || comPost.status));
     if (comPost.ok) {
       created.ids.comorbilidad = cat.idComorbilidad;
-      await sleep(120);
+      await sleep(WRITE_DELAY);
       const comPut = await req(
         'PUT',
         `/api/pacientes/${PACIENTE_ID}/comorbilidades/${cat.idComorbilidad}`,
@@ -391,7 +399,7 @@ async function run() {
   }
 
   // —— Detecciones complicaciones ——
-  await sleep(120);
+  await sleep(WRITE_DELAY);
   const detPost = await req(
     'POST',
     `/api/pacientes/${PACIENTE_ID}/detecciones-complicaciones`,
@@ -419,7 +427,7 @@ async function run() {
   log('POST detecciones-complicaciones', detPost.ok, idDet ? `id=${idDet}` : (detPost.data?.error || detPost.status));
   if (idDet) {
     created.ids.deteccion = idDet;
-    await sleep(120);
+    await sleep(WRITE_DELAY);
     const detPut = await req(
       'PUT',
       `/api/pacientes/${PACIENTE_ID}/detecciones-complicaciones/${idDet}`,
@@ -430,7 +438,7 @@ async function run() {
   }
 
   // —— Sesiones educativas ——
-  await sleep(120);
+  await sleep(WRITE_DELAY);
   const sesPost = await req(
     'POST',
     `/api/pacientes/${PACIENTE_ID}/sesiones-educativas`,
@@ -448,7 +456,7 @@ async function run() {
   log('POST sesiones-educativas', sesPost.ok, idSes ? `id=${idSes}` : (sesPost.data?.error || sesPost.status));
   if (idSes) {
     created.ids.sesion = idSes;
-    await sleep(120);
+    await sleep(WRITE_DELAY);
     const sesPut = await req(
       'PUT',
       `/api/pacientes/${PACIENTE_ID}/sesiones-educativas/${idSes}`,
@@ -459,7 +467,7 @@ async function run() {
   }
 
   // —— Salud bucal ——
-  await sleep(120);
+  await sleep(WRITE_DELAY);
   const sbPost = await req(
     'POST',
     `/api/pacientes/${PACIENTE_ID}/salud-bucal`,
@@ -476,7 +484,7 @@ async function run() {
   log('POST salud-bucal', sbPost.ok, idSb ? `id=${idSb}` : (sbPost.data?.error || sbPost.status));
   if (idSb) {
     created.ids.saludBucal = idSb;
-    await sleep(120);
+    await sleep(WRITE_DELAY);
     const sbPut = await req(
       'PUT',
       `/api/pacientes/${PACIENTE_ID}/salud-bucal/${idSb}`,
@@ -487,7 +495,7 @@ async function run() {
   }
 
   // —— Tuberculosis ——
-  await sleep(120);
+  await sleep(WRITE_DELAY);
   const tbPost = await req(
     'POST',
     `/api/pacientes/${PACIENTE_ID}/detecciones-tuberculosis`,
@@ -506,7 +514,7 @@ async function run() {
   log('POST detecciones-tuberculosis', tbPost.ok || tbPost.status === 201, idTb ? `id=${idTb}` : (tbPost.data?.error || tbPost.status));
   if (idTb) {
     created.ids.tuberculosis = idTb;
-    await sleep(120);
+    await sleep(WRITE_DELAY);
     const tbPut = await req(
       'PUT',
       `/api/pacientes/${PACIENTE_ID}/detecciones-tuberculosis/${idTb}`,
@@ -517,17 +525,17 @@ async function run() {
   }
 
   // —— Gráficos / resumen (solo lectura) ——
-  await sleep(120);
+  await sleep(WRITE_DELAY);
   const resumen = await req('GET', `/api/pacientes/${PACIENTE_ID}/resumen-medico`, null, doctorToken);
   log('GET resumen-medico (gráficos)', resumen.ok, resumen.ok ? 'OK' : (resumen.data?.error || resumen.status));
 
   // —— Doctores asignados ——
-  await sleep(120);
+  await sleep(WRITE_DELAY);
   const docs = await req('GET', `/api/pacientes/${PACIENTE_ID}/doctores`, null, doctorToken);
   log('GET doctores asignados', docs.ok, docs.ok ? `HTTP ${docs.status}` : (docs.data?.error || docs.status));
 
   // —— Actualizar ficha paciente ——
-  await sleep(120);
+  await sleep(WRITE_DELAY);
   const pacPut = await req(
     'PUT',
     `/api/pacientes/${PACIENTE_ID}`,
