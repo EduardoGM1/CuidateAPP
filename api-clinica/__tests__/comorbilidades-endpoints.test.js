@@ -522,5 +522,35 @@ describe('🔍 Tests de Endpoints de Comorbilidades (GET, POST, PUT)', () => {
       await Comorbilidad.destroy({ where: { id_comorbilidad: nuevaComorb.id_comorbilidad } });
     });
   });
+
+  describe('DELETE /api/pacientes/:id/comorbilidades/:comorbilidadId', () => {
+    test('✅ Debe eliminar comorbilidad del paciente sin error 500', async () => {
+      const nuevaComorb = await Comorbilidad.create({
+        nombre_comorbilidad: `Test Delete ${Date.now()}`,
+        descripcion: 'Test'
+      });
+
+      await PacienteComorbilidad.create({
+        id_paciente: pacienteId,
+        id_comorbilidad: nuevaComorb.id_comorbilidad,
+        fecha_deteccion: '2020-01-01',
+        observaciones: 'Para eliminar'
+      });
+
+      const response = await request(app)
+        .delete(`/api/pacientes/${pacienteId}/comorbilidades/${nuevaComorb.id_comorbilidad}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('success', true);
+
+      const stillThere = await PacienteComorbilidad.findOne({
+        where: { id_paciente: pacienteId, id_comorbilidad: nuevaComorb.id_comorbilidad }
+      });
+      expect(stillThere).toBeNull();
+
+      await Comorbilidad.destroy({ where: { id_comorbilidad: nuevaComorb.id_comorbilidad } });
+    });
+  });
 });
 

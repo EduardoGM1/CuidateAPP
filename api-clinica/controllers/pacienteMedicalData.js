@@ -3993,7 +3993,7 @@ export const deletePacienteComorbilidad = async (req, res) => {
       });
     }
 
-    // Buscar relación existente
+    // Buscar relación existente (alias 'Comorbilidad' requerido por Sequelize)
     const relacion = await PacienteComorbilidad.findOne({
       where: {
         id_paciente: pacienteId,
@@ -4002,7 +4002,8 @@ export const deletePacienteComorbilidad = async (req, res) => {
       include: [
         {
           model: Comorbilidad,
-          attributes: ['nombre_comorbilidad']
+          as: 'Comorbilidad',
+          attributes: ['id_comorbilidad', 'nombre_comorbilidad']
         }
       ]
     });
@@ -4016,8 +4017,20 @@ export const deletePacienteComorbilidad = async (req, res) => {
 
     const nombreComorbilidad = relacion.Comorbilidad?.nombre_comorbilidad;
 
-    // Eliminar relación
+    // Eliminar relación paciente–comorbilidad
     await relacion.destroy();
+
+    // Re-sincronizar flag de tratamiento farmacológico según planes activos
+    try {
+      const { sincronizarTratamientoFarmacologico } = await import('../services/sincronizar-tratamiento-farmacologico.js');
+      await sincronizarTratamientoFarmacologico(pacienteId);
+    } catch (syncError) {
+      logger.warn('Error sincronizando tratamiento tras eliminar comorbilidad (no crítico):', {
+        pacienteId,
+        comorbilidadId: idComorbilidad,
+        error: syncError.message
+      });
+    }
 
     logger.info('Comorbilidad eliminada del paciente', {
       pacienteId,
