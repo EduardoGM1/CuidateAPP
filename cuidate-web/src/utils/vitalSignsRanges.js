@@ -27,7 +27,7 @@ export const RANGOS = {
   colesterol_ldl: { min: 0, max: 130 },
   colesterol_hdl: { min: 40, max: 999 },        // HDL bajo es malo (<40)
   trigliceridos_mg_dl: { min: 0, max: 150 },
-  hba1c_porcentaje: { min: 0, max: 6.4 },       // ≥6.5 elevado
+  hba1c_porcentaje: { min: 0, max: 999 },        // sin tope en captura; color solo referencial
   imc: { min: 18.5, max: 29.9 },                // <18.5 o ≥30 fuera de rango
   medida_cintura_cm: { min: 0, max: 102 },      // >102 riesgo abdominal
 };

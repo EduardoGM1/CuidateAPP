@@ -142,11 +142,12 @@ const validarHbA1c = (hba1c, edad) => {
   }
 
   const hba1cNum = parseFloat(hba1c);
-  
-  // Validar rango general (3.0% - 15.0%)
-  if (isNaN(hba1cNum) || hba1cNum < 3.0 || hba1cNum > 15.0) {
-    return 'HbA1c debe estar entre 3.0% y 15.0%';
+
+  if (isNaN(hba1cNum)) {
+    return 'HbA1c debe ser un número válido';
   }
+
+  // Sin límite mínimo/máximo: se acepta cualquier valor numérico (p. ej. laboratorio o captura libre).
 
   // Si se proporciona edad, validar según rangos objetivo del formato GAM
   if (edad !== undefined && edad !== null && edad !== '') {

@@ -506,8 +506,8 @@ const AgregarPaciente = () => {
       accumulatedErrors.hba1c_porcentaje = 'La HbA1c (%) es requerida para criterios de acreditación';
     } else {
       const hba1c = parseFloat(formData.primeraConsulta.signos_vitales.hba1c_porcentaje);
-      if (isNaN(hba1c) || hba1c < 4.0 || hba1c > 15.0) {
-        accumulatedErrors.hba1c_porcentaje = 'La HbA1c debe estar entre 4.0% y 15.0%';
+      if (isNaN(hba1c)) {
+        accumulatedErrors.hba1c_porcentaje = 'La HbA1c debe ser un número válido';
       }
     }
 

@@ -4130,7 +4130,7 @@ const DetallePacienteContent = ({ route, navigation }) => {
       // ✅ HbA1c (%) - Campo obligatorio para criterios de acreditación
       if (formDataSignosVitales.hba1c_porcentaje) {
         const hba1c = parseFloat(formDataSignosVitales.hba1c_porcentaje);
-        if (!isNaN(hba1c) && hba1c >= 4.0 && hba1c <= 15.0) {
+        if (!isNaN(hba1c)) {
           dataToSend.hba1c_porcentaje = hba1c;
         }
       }

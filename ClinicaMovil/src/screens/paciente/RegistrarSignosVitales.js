@@ -285,9 +285,7 @@ const RegistrarSignosVitales = () => {
       validate: (valor) => {
         if (valor === undefined || valor === null || String(valor).trim() === '') return null;
         const num = parseFloat(valor);
-        if (isNaN(num) || num < 3.0 || num > 15.0) {
-          return 'HbA1c debe estar entre 3.0 y 15.0%';
-        }
+        if (isNaN(num)) return 'HbA1c debe ser un número válido';
         return null;
       },
     },
@@ -419,7 +417,7 @@ const RegistrarSignosVitales = () => {
 
       if (trim(formValues.hba1c_porcentaje)) {
         const hba1c = parseFloat(formValues.hba1c_porcentaje);
-        if (!Number.isNaN(hba1c) && hba1c >= 3.0 && hba1c <= 15.0) {
+        if (!Number.isNaN(hba1c)) {
           signosVitalesData.hba1c_porcentaje = hba1c;
         }
       }
