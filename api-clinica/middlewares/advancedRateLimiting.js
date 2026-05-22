@@ -11,9 +11,10 @@ class AdvancedRateLimiting {
    * Rate limiter general para endpoints públicos
    */
   static generalLimiter() {
+    const max = Number(process.env.RATE_LIMIT_MAX || 300);
     return rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutos
-      max: 100, // máximo 100 requests por IP por ventana
+      max: process.env.NODE_ENV === 'test' ? 1000 : max,
       message: {
         error: 'Demasiadas solicitudes desde esta IP',
         retryAfter: '15 minutos',
@@ -42,9 +43,10 @@ class AdvancedRateLimiting {
    * Rate limiter estricto para autenticación - MEJORADO PARA DESARROLLO
    */
   static authLimiter() {
+    const authMax = Number(process.env.AUTH_RATE_LIMIT_MAX || 15);
     return rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutos
-      max: process.env.NODE_ENV === 'test' ? 100 : 5, // Más permisivo en tests
+      max: process.env.NODE_ENV === 'test' ? 100 : authMax,
       message: {
         error: 'Demasiados intentos de autenticación',
         retryAfter: '15 minutos',
@@ -342,9 +344,10 @@ class AdvancedRateLimiting {
    * Rate limiter para prevenir ataques DDoS
    */
   static ddosLimiter() {
+    const ddosMax = Number(process.env.RATE_LIMIT_DDOS_MAX || 400);
     return rateLimit({
       windowMs: 1 * 60 * 1000, // 1 minuto
-      max: 200, // máximo 200 requests por IP por minuto
+      max: process.env.NODE_ENV === 'test' ? 2000 : ddosMax,
       message: {
         error: 'Actividad sospechosa detectada',
         retryAfter: '1 minuto',

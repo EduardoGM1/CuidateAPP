@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { isChunkLoadError, reloadForStaleAssets, clearChunkReloadFlag } from './chunkLoadRecovery';
+import { isChunkLoadError, reloadOnceForStaleChunk, clearChunkReloadFlag } from './chunkLoadRecovery';
 
 /**
  * React.lazy con reintento: si el chunk no existe (deploy nuevo), recarga la app una vez.
@@ -13,7 +13,7 @@ export function lazyWithRetry(factory) {
       return mod;
     } catch (err) {
       if (!isChunkLoadError(err)) throw err;
-      if (reloadForStaleAssets()) {
+      if (reloadOnceForStaleChunk()) {
         return new Promise(() => {});
       }
       throw err;

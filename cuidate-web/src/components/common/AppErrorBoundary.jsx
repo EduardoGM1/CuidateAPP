@@ -1,6 +1,6 @@
 import { Component } from 'react';
 import { Button } from '../ui';
-import { isChunkLoadError, reloadForStaleAssets } from '../../utils/chunkLoadRecovery';
+import { isChunkLoadError, reloadOnceForStaleChunk } from '../../utils/chunkLoadRecovery';
 
 export default class AppErrorBoundary extends Component {
   constructor(props) {
@@ -14,7 +14,7 @@ export default class AppErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     if (this.state.staleAssets) {
-      reloadForStaleAssets();
+      reloadOnceForStaleChunk();
       return;
     }
     if (import.meta.env.DEV) {

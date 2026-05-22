@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouteError } from 'react-router-dom';
 import { Button } from '../ui';
-import { isChunkLoadError, reloadForStaleAssets } from '../../utils/chunkLoadRecovery';
+import { isChunkLoadError, reloadOnceForStaleChunk } from '../../utils/chunkLoadRecovery';
 
 /**
  * Sustituye el error genérico de React Router cuando falla un import dinámico.
@@ -13,7 +13,7 @@ export default function StaleAssetsFallback({ autoReload = false }) {
 
   useEffect(() => {
     if (!autoReload || !stale) return;
-    const didReload = reloadForStaleAssets();
+    const didReload = reloadOnceForStaleChunk();
     if (!didReload) setReloadFailed(true);
   }, [autoReload, stale]);
 

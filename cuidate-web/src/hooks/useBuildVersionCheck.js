@@ -1,11 +1,15 @@
 import { useEffect } from 'react';
-import { reloadForStaleAssets } from '../utils/chunkLoadRecovery';
+import {
+  BUILD_STORAGE_KEY,
+  fetchCurrentBuildId,
+  reloadOnceForNewBuild,
+} from '../utils/chunkLoadRecovery';
 
-const STORAGE_KEY = 'cuidate-build-id';
-const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
+const DEFAULT_INTERVAL_MS = 10 * 60 * 1000;
 
 /**
  * Detecta nuevo deploy comparando /version.json (sin caché).
+ * Una sola recarga por buildId; no entra en loop.
  */
 export function useBuildVersionCheck(intervalMs = DEFAULT_INTERVAL_MS) {
   useEffect(() => {
@@ -14,23 +18,20 @@ export function useBuildVersionCheck(intervalMs = DEFAULT_INTERVAL_MS) {
     let cancelled = false;
 
     async function check() {
-      try {
-        const res = await fetch(`/version.json?_=${Date.now()}`, { cache: 'no-store' });
-        if (!res.ok || cancelled) return;
-        const data = await res.json();
-        const buildId = data?.buildId;
-        if (!buildId) return;
+      const buildId = await fetchCurrentBuildId();
+      if (!buildId || cancelled) return;
 
-        const stored = sessionStorage.getItem(STORAGE_KEY);
+      try {
+        const stored = sessionStorage.getItem(BUILD_STORAGE_KEY);
         if (!stored) {
-          sessionStorage.setItem(STORAGE_KEY, buildId);
+          sessionStorage.setItem(BUILD_STORAGE_KEY, buildId);
           return;
         }
         if (stored !== buildId) {
-          reloadForStaleAssets();
+          reloadOnceForNewBuild(buildId);
         }
       } catch {
-        /* red o archivo ausente */
+        /* ignore */
       }
     }
 

@@ -4,7 +4,7 @@ import { shouldSkipAuthRateLimit } from '../utils/rateLimitConfig.js';
 // Rate limiting general para API - MEJORADO PARA DESARROLLO
 export const generalRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: process.env.NODE_ENV === 'test' ? 1000 : 100, // Más permisivo en tests
+  max: process.env.NODE_ENV === 'test' ? 1000 : Number(process.env.RATE_LIMIT_MAX || 300),
   message: {
     error: 'Demasiadas solicitudes, intenta de nuevo más tarde',
     retryAfter: '15 minutos',
@@ -117,7 +117,7 @@ export const searchRateLimit = rateLimit({
 // Rate limiting para operaciones de escritura - MEJORADO PARA DESARROLLO
 export const writeRateLimit = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutos
-  max: process.env.NODE_ENV === 'development' ? 200 : 30, // Más permisivo en desarrollo
+  max: process.env.NODE_ENV === 'development' ? 200 : Number(process.env.RATE_LIMIT_WRITE_MAX || 60),
   message: {
     error: 'Demasiadas operaciones de escritura, espera un momento',
     retryAfter: '5 minutos'

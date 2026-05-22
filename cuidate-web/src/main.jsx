@@ -6,9 +6,10 @@ import 'antd/dist/reset.css';
 import './theme/globals.css';
 import App from './App';
 import { COLORES } from './theme/colors';
-import { setupChunkLoadRecovery } from './utils/chunkLoadRecovery';
+import { setupChunkLoadRecovery, syncBuildVersionOnStartup } from './utils/chunkLoadRecovery';
 
 setupChunkLoadRecovery();
+syncBuildVersionOnStartup();
 
 const queryClient = new QueryClient({
   defaultOptions: {
