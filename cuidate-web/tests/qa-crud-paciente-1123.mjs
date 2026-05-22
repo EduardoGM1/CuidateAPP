@@ -98,15 +98,23 @@ async function del(path, doctorToken, adminToken, label) {
   return r.ok || r.status === 404;
 }
 
+function pickArray(payload, key) {
+  const d = payload?.data;
+  if (Array.isArray(d?.[key])) return d[key];
+  if (Array.isArray(d)) return d;
+  if (Array.isArray(payload?.[key])) return payload[key];
+  return [];
+}
+
 async function fetchCatalogs(token) {
   const [meds, com, vac] = await Promise.all([
     req('GET', '/api/medicamentos?limit=5', null, token),
     req('GET', '/api/comorbilidades?limit=5', null, token),
     req('GET', '/api/vacunas?limit=5', null, token),
   ]);
-  const medicamentos = Array.isArray(meds.data?.data) ? meds.data.data : meds.data?.medicamentos || [];
-  const comorbilidades = Array.isArray(com.data?.data) ? com.data.data : com.data?.comorbilidades || [];
-  const vacunas = Array.isArray(vac.data?.data) ? vac.data.data : vac.data?.vacunas || [];
+  const medicamentos = pickArray(meds.data, 'medicamentos');
+  const comorbilidades = pickArray(com.data, 'comorbilidades');
+  const vacunas = pickArray(vac.data, 'vacunas');
   return {
     idMedicamento: medicamentos[0]?.id_medicamento ?? medicamentos[0]?.id,
     idComorbilidad: comorbilidades[0]?.id_comorbilidad ?? comorbilidades[0]?.id,
@@ -314,7 +322,7 @@ async function run() {
     const raPut = await req(
       'PUT',
       `/api/pacientes/${PACIENTE_ID}/red-apoyo/${idRa}`,
-      { nombre_contacto: 'Contacto QA Actualizado', parentesco: 'Esposo', observaciones: 'PUT red apoyo' },
+      { nombre_contacto: 'Contacto QA Actualizado', parentesco: 'Esposo', email: 'apoyo.updated@test.local' },
       doctorToken
     );
     log('PUT red-apoyo/:id', raPut.ok, raPut.ok ? 'OK' : (raPut.data?.error || raPut.status));
@@ -494,8 +502,8 @@ async function run() {
     },
     doctorToken
   );
-  const idTb = pickId(tbPost.data, 'id_deteccion_tuberculosis', 'id');
-  log('POST detecciones-tuberculosis', tbPost.ok, idTb ? `id=${idTb}` : (tbPost.data?.error || tbPost.status));
+  const idTb = pickId(tbPost.data, 'id_deteccion_tb', 'id_deteccion_tuberculosis', 'id_tb', 'id');
+  log('POST detecciones-tuberculosis', tbPost.ok || tbPost.status === 201, idTb ? `id=${idTb}` : (tbPost.data?.error || tbPost.status));
   if (idTb) {
     created.ids.tuberculosis = idTb;
     await sleep(120);
