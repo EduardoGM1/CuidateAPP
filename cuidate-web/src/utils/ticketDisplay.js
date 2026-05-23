@@ -60,6 +60,18 @@ export function getTicketEstadoDisplay(estado) {
   };
 }
 
+/**
+ * Nombre visible del doctor que abrió el ticket (nunca el id_usuario).
+ * @param {{ creador_nombre?: string, creador_email?: string } | null | undefined} ticket
+ */
+export function getTicketSolicitanteNombre(ticket) {
+  const nombre = String(ticket?.creador_nombre ?? '').trim();
+  if (nombre) return sanitizeForDisplay(nombre);
+  const email = String(ticket?.creador_email ?? '').trim();
+  if (email) return sanitizeForDisplay(email);
+  return '—';
+}
+
 export function getTicketPrioridadDisplay(prioridad) {
   const key = String(prioridad ?? '').toLowerCase();
   const cfg = PRIORIDAD_MAP[key];

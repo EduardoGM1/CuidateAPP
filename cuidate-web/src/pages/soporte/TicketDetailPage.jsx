@@ -8,7 +8,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { TicketEstadoBadge, TicketPrioridadBadge } from '../../components/tickets/TicketFieldBadge';
-import { getTicketCategoriaLabel } from '../../utils/ticketDisplay';
+import { getTicketCategoriaLabel, getTicketSolicitanteNombre } from '../../utils/ticketDisplay';
 
 export default function TicketDetailPage() {
   const { id } = useParams();
@@ -126,9 +126,9 @@ export default function TicketDetailPage() {
             Categoría: {getTicketCategoriaLabel(ticket.categoria)}
           </span>
         </div>
-        {(ticket.creador_nombre || ticket.creador_email) && (
+        {adminPath && getTicketSolicitanteNombre(ticket) !== '—' && (
           <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
-            Doctor: {sanitizeForDisplay(ticket.creador_nombre || ticket.creador_email)}
+            Solicitante: {getTicketSolicitanteNombre(ticket)}
             {ticket.creador_nombre && ticket.creador_email ? (
               <span style={{ marginLeft: 8, opacity: 0.85 }}>({sanitizeForDisplay(ticket.creador_email)})</span>
             ) : null}

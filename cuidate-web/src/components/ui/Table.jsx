@@ -38,7 +38,9 @@ export default function Table({
     <AntTable
       columns={antColumns}
       dataSource={data}
-      rowKey={(row) => row.id ?? row.id_paciente ?? row.id_cita ?? row.key}
+      rowKey={(row) =>
+        String(row.id_ticket ?? row.id ?? row.id_paciente ?? row.id_cita ?? row.key ?? '')
+      }
       rowClassName={typeof rowClassName === 'function' ? rowClassName : undefined}
       rowStyle={typeof rowStyle === 'function' ? rowStyle : undefined}
       onRow={

@@ -49,7 +49,7 @@ export default function DoctorTicketsPage() {
   }
 
   const columns = [
-    { key: 'id_ticket', label: 'ID', render: (r) => r.id_ticket },
+    { key: 'id_ticket', label: 'Ticket', render: (r) => `#${r.id_ticket}` },
     { key: 'asunto', label: 'Asunto', render: (r) => sanitizeForDisplay(r.asunto) },
     { key: 'estado', label: 'Estado', render: (r) => <TicketEstadoBadge estado={r.estado} /> },
     { key: 'prioridad', label: 'Prioridad', render: (r) => <TicketPrioridadBadge prioridad={r.prioridad} /> },

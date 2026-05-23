@@ -7,6 +7,7 @@ import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 import { TicketEstadoBadge, TicketPrioridadBadge } from '../../components/tickets/TicketFieldBadge';
+import { getTicketSolicitanteNombre } from '../../utils/ticketDisplay';
 
 export default function AdminTicketsPage() {
   const [estado, setEstado] = useState('');
@@ -32,12 +33,12 @@ export default function AdminTicketsPage() {
   useOnboardingPageReady(!loading);
 
   const columns = [
-    { key: 'id_ticket', label: 'ID', render: (r) => r.id_ticket },
+    { key: 'id_ticket', label: 'Ticket', render: (r) => `#${r.id_ticket}` },
     { key: 'asunto', label: 'Asunto', render: (r) => sanitizeForDisplay(r.asunto) },
     {
-      key: 'creador_nombre',
-      label: 'Doctor',
-      render: (r) => sanitizeForDisplay(r.creador_nombre || r.creador_email) || '—',
+      key: 'solicitante',
+      label: 'Solicitante',
+      render: (r) => getTicketSolicitanteNombre(r),
     },
     { key: 'estado', label: 'Estado', render: (r) => <TicketEstadoBadge estado={r.estado} /> },
     { key: 'prioridad', label: 'Prioridad', render: (r) => <TicketPrioridadBadge prioridad={r.prioridad} /> },

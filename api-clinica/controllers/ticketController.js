@@ -28,20 +28,44 @@ function formatoDoctorApellidosNombre(doctor) {
   return parts.join(' ');
 }
 
-/** Carga nombres formateados por id_usuario (evita fallos del include Usuario→Doctor en Sequelize). */
-async function nombresDoctorPorIdsUsuario(idsUsuario) {
+function formatoNombrePersona(row) {
+  if (!row) return '';
+  const ap = String(row.apellido_paterno ?? '').trim();
+  const am = String(row.apellido_materno ?? '').trim();
+  const n = String(row.nombre ?? '').trim();
+  const parts = [ap, am, n].filter(Boolean);
+  return parts.join(' ');
+}
+
+/** Carga nombres del solicitante por id_usuario (perfil doctor y, si falta, usuario). */
+async function nombresSolicitantePorIdsUsuario(idsUsuario) {
   const uniq = [...new Set((idsUsuario || []).filter(Boolean))];
   if (!uniq.length) return new Map();
+  const map = new Map();
+
   const doctors = await Doctor.findAll({
     where: { id_usuario: { [Op.in]: uniq } },
     attributes: ['id_usuario', 'nombre', 'apellido_paterno', 'apellido_materno'],
   });
-  const map = new Map();
   for (const d of doctors) {
     const dj = d.toJSON();
     const nom = formatoDoctorApellidosNombre(dj);
     if (nom) map.set(dj.id_usuario, nom);
   }
+
+  const faltantes = uniq.filter((id) => !map.has(id));
+  if (faltantes.length) {
+    const usuarios = await Usuario.findAll({
+      where: { id_usuario: { [Op.in]: faltantes } },
+      attributes: ['id_usuario', 'nombre', 'apellido_paterno', 'apellido_materno', 'email'],
+    });
+    for (const u of usuarios) {
+      const uj = u.toJSON();
+      const nom = formatoNombrePersona(uj) || String(uj.email ?? '').trim();
+      if (nom) map.set(uj.id_usuario, nom);
+    }
+  }
+
   return map;
 }
 
@@ -153,7 +177,7 @@ export async function listAdminTickets(req, res) {
       ],
     });
 
-    const nombresPorUsuario = await nombresDoctorPorIdsUsuario(rows.map((r) => r.id_usuario_creador));
+    const nombresPorUsuario = await nombresSolicitantePorIdsUsuario(rows.map((r) => r.id_usuario_creador));
 
     return sendSuccess(res, {
       tickets: rows.map((r) => {
@@ -207,7 +231,7 @@ export async function getTicket(req, res) {
     });
 
     const j = ticket.toJSON();
-    const nombresPorUsuario = await nombresDoctorPorIdsUsuario([j.id_usuario_creador]);
+    const nombresPorUsuario = await nombresSolicitantePorIdsUsuario([j.id_usuario_creador]);
     const creadorNombre = nombresPorUsuario.get(j.id_usuario_creador) || null;
 
     return sendSuccess(res, {
