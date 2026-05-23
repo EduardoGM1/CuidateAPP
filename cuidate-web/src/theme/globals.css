@@ -1472,9 +1472,26 @@ select:focus-visible {
   width: 320px;
   max-width: 320px;
   min-width: 320px;
+  align-self: stretch;
 }
-.saas-charts-grid--single-line .saas-chart-card.ant-card {
+.saas-charts-rows,
+.saas-charts-grid--single-line {
+  --saas-chart-plot-height: 200px;
+  --saas-chart-card-height: 276px;
+}
+.saas-charts-grid--single-line > .saas-chart-card.ant-card {
+  height: var(--saas-chart-card-height);
+  max-height: var(--saas-chart-card-height);
+  display: flex;
+  flex-direction: column;
+}
+.saas-charts-grid--single-line .saas-chart-card.ant-card > .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   height: 100%;
+  box-sizing: border-box;
 }
 .saas-chart-card.ant-card {
   background: var(--color-fondo-card);
@@ -1482,10 +1499,19 @@ select:focus-visible {
   border: 1px solid rgba(0,0,0,0.06);
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   min-width: 0;
-  height: 100%;
 }
 .saas-chart-card.ant-card > .ant-card-body {
   padding: var(--space-3) var(--space-4);
+}
+.saas-charts-grid--single-line .saas-chart-title {
+  flex-shrink: 0;
+}
+.saas-charts-grid--single-line .saas-chart-inner {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: var(--saas-chart-plot-height);
+  max-height: var(--saas-chart-plot-height);
+  overflow: hidden;
 }
 .saas-chart-card:not(.ant-card) {
   padding: var(--space-3) var(--space-4);
@@ -1502,13 +1528,17 @@ select:focus-visible {
   line-height: 1.35;
 }
 .saas-chart-inner {
-  min-height: 200px;
+  min-height: var(--saas-chart-plot-height, 200px);
   width: 100%;
 }
 .saas-chart-inner--horizontal-bar {
   width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.saas-chart-scroll-content {
+  min-width: 100%;
 }
 .saas-alert-card { border-left: 4px solid var(--color-error); }
 .saas-alert-card .section-title { color: var(--color-error); }

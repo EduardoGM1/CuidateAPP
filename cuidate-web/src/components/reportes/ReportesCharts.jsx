@@ -37,11 +37,10 @@ function yAxisWidthForNames(data, nameKey, min = 120, max = 220) {
 
 function horizontalBarChartMetrics(data, nameKey = 'nombre') {
   const count = Array.isArray(data) ? data.length : 0;
-  const height = Math.max(CHART_HEIGHT, count * HORIZONTAL_BAR_ROW_HEIGHT + 24);
-  // Ancho del eje Y (no duplicar en margin.left: eso vaciaba el área del gráfico en cards estrechas)
+  const scrollHeight = Math.max(CHART_HEIGHT, count * HORIZONTAL_BAR_ROW_HEIGHT + 24);
   const yAxisWidth = yAxisWidthForNames(data, nameKey, 96, 150);
   return {
-    height,
+    scrollHeight,
     yAxisWidth,
     margin: { top: 8, right: 44, left: 4, bottom: 8 },
   };
@@ -116,13 +115,14 @@ export function ReportesHorizontalBarChart({
   color = CHART_COLORS.primary,
 }) {
   if (!Array.isArray(data) || data.length === 0) return null;
-  const { height, yAxisWidth, margin } = horizontalBarChartMetrics(data, nameKey);
+  const { scrollHeight, yAxisWidth, margin } = horizontalBarChartMetrics(data, nameKey);
 
   return (
     <Card className="saas-chart-card">
       <h3 className="saas-chart-title">{title}</h3>
-      <div className="saas-chart-inner saas-chart-inner--horizontal-bar" style={{ minHeight: height }}>
-        <ResponsiveContainer width="100%" height={height} minWidth={200}>
+      <div className="saas-chart-inner saas-chart-inner--horizontal-bar">
+        <div className="saas-chart-scroll-content" style={{ height: scrollHeight }}>
+        <ResponsiveContainer width="100%" height={scrollHeight} minWidth={200}>
           <BarChart data={data} layout="vertical" margin={margin}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde-claro)" />
             <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
@@ -149,6 +149,7 @@ export function ReportesHorizontalBarChart({
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        </div>
       </div>
     </Card>
   );
