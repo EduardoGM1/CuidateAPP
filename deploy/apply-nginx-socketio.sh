@@ -16,9 +16,13 @@ fi
 patch_file() {
   local f="$1"
   [[ -f "$f" ]] || return 0
-  if grep -qF "$MARKER" "$f" 2>/dev/null; then
+  if grep -qF "$MARKER" "$f" 2>/dev/null && nginx -t 2>/dev/null; then
     echo "[OK] Ya tiene socket.io: $f"
     return 0
+  fi
+  if grep -qF "$MARKER" "$f" 2>/dev/null; then
+    echo "[WARN] Marcador presente pero Nginx inválido; reparando $f"
+    bash "$APP_ROOT/deploy/repair-nginx-socketio.sh" "$f"
   fi
   cp -a "$f" "${f}.bak-$(date +%Y%m%d%H%M%S)"
   python3 - "$f" "$INC" "$MARKER" <<'PY'
