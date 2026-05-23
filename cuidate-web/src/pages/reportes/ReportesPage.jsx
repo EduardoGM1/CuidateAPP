@@ -26,20 +26,12 @@ import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady'
 
 function ReporteCardWrapper({ title, description, children }) {
   return (
-    <Card>
-      <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.15rem', color: 'var(--color-primario)' }}>
-        {title}
-      </h2>
-      <p
-        style={{
-          margin: '0 0 1rem',
-          color: 'var(--color-texto-secundario)',
-          fontSize: '0.95rem',
-        }}
-      >
-        {description}
-      </p>
-      {children}
+    <Card className="saas-reporte-card">
+      <div className="saas-reporte-card__inner">
+        <h2 className="saas-reporte-card__title">{title}</h2>
+        <p className="saas-reporte-card__desc">{description}</p>
+        <div className="saas-reporte-card__body">{children}</div>
+      </div>
     </Card>
   );
 }
@@ -145,14 +137,7 @@ function ReporteEstadisticasCard() {
           {error}
         </p>
       )}
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '0.75rem',
-          alignItems: 'center',
-        }}
-      >
+      <div className="saas-reporte-card__actions">
         <Button
           variant="outline"
           type="button"
@@ -161,10 +146,10 @@ function ReporteEstadisticasCard() {
         >
           {pdfLoading ? 'Cargando…' : 'Descargar PDF'}
         </Button>
+        <p className="saas-reporte-card__hint">
+          Para guardar como PDF: al abrirse el reporte, usa Imprimir → Guardar como PDF.
+        </p>
       </div>
-      <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--color-texto-secundario)' }}>
-        Para guardar como PDF: al abrirse el reporte, usa Imprimir → Guardar como PDF.
-      </p>
     </ReporteCardWrapper>
   );
 }
@@ -356,9 +341,11 @@ function ReporteFormaExcelCard() {
           </>
         )}
       </div>
-      <Button variant="outline" type="button" disabled={loading} onClick={handleDescargar}>
-        {loading ? 'Generando…' : 'Descargar Excel'}
-      </Button>
+      <div className="saas-reporte-card__actions">
+        <Button variant="outline" type="button" disabled={loading} onClick={handleDescargar}>
+          {loading ? 'Generando…' : 'Descargar Excel'}
+        </Button>
+      </div>
     </ReporteCardWrapper>
   );
 }
@@ -561,13 +548,15 @@ function ReporteComorbilidadesHeatmapCard({ summaryFromParent }) {
           {error}
         </p>
       )}
-      {loading ? (
-        <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'center' }}>
-          <LoadingSpinner />
-        </div>
-      ) : (
-        <ComorbilidadesHeatmap datos={datos} />
-      )}
+      <div className="saas-reporte-card__content">
+        {loading ? (
+          <div className="saas-reporte-card__loading">
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <ComorbilidadesHeatmap datos={datos} />
+        )}
+      </div>
     </ReporteCardWrapper>
   );
 }
@@ -817,16 +806,8 @@ export default function ReportesPage() {
         </section>
       )}
 
-      {/* Tarjetas: Comorbilidades y Estadísticas generales */}
-      <div
-        data-tour="section-reportes-detail"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '1rem',
-          alignItems: 'flex-start',
-        }}
-      >
+      {/* Tarjetas: Comorbilidades, Estadísticas y Excel — misma altura */}
+      <div data-tour="section-reportes-detail" className="saas-reportes-tools-grid">
         {(admin || isDoctor()) && <ReporteComorbilidadesHeatmapCard summaryFromParent={summary} />}
         {(admin || isDoctor()) && <ReporteEstadisticasCard />}
         {(admin || isDoctor()) && <ReporteFormaExcelCard />}

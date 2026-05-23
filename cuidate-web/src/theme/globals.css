@@ -1518,6 +1518,93 @@ select:focus-visible {
   --saas-chart-plot-height: 240px;
   --saas-chart-card-height: 316px;
 }
+
+/* Reportes: herramientas (comorbilidades, estadísticas, excel) — misma altura */
+.saas-reportes-tools-grid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: stretch;
+  margin-bottom: var(--space-6);
+}
+.saas-reportes-tools-grid > * {
+  min-width: 0;
+  height: 100%;
+}
+.saas-reporte-card.ant-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.saas-reporte-card.ant-card > .ant-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  padding: var(--space-4) var(--space-5);
+  box-sizing: border-box;
+}
+.saas-reporte-card__inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+.saas-reporte-card__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--color-primario);
+  line-height: 1.35;
+}
+.saas-reporte-card__desc {
+  margin: 0 0 var(--space-4);
+  color: var(--color-texto-secundario);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  flex-shrink: 0;
+}
+.saas-reporte-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.saas-reporte-card__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+}
+.saas-reporte-card__loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+}
+.saas-reporte-card__actions {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+.saas-reporte-card__hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-texto-secundario);
+  line-height: 1.4;
+}
+@media (max-width: 1200px) {
+  .saas-reportes-tools-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .saas-charts-grid--single-line > .saas-chart-card--wide.ant-card {
   flex: 0 0 440px;
   width: 440px;
