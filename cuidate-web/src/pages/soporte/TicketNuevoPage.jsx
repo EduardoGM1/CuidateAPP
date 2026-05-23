@@ -5,6 +5,10 @@ import { PageHeader } from '../../components/shared';
 import { Card, Button, Select } from '../../components/ui';
 import { createTicket } from '../../api/tickets';
 import { useAuthStore } from '../../stores/authStore';
+import {
+  TICKET_CATEGORIA_OPTIONS,
+  getTicketDescripcionPlaceholder,
+} from '../../utils/ticketDisplay';
 
 function useStrictDoctor() {
   const user = useAuthStore((s) => s.user);
@@ -30,6 +34,8 @@ export default function TicketNuevoPage() {
   if (!strictDoctor) {
     return <Navigate to="/" replace />;
   }
+
+  const descripcionPlaceholder = getTicketDescripcionPlaceholder(categoria);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -71,12 +77,7 @@ export default function TicketNuevoPage() {
                 label="Categoría"
                 value={categoria}
                 onChange={(v) => setCategoria(v || 'otro')}
-                options={[
-                  { value: 'tecnico', label: 'Técnico' },
-                  { value: 'cita_paciente', label: 'Cita / paciente' },
-                  { value: 'acceso', label: 'Acceso' },
-                  { value: 'otro', label: 'Otro' },
-                ]}
+                options={TICKET_CATEGORIA_OPTIONS}
               />
             </div>
             <div style={{ minWidth: 160 }}>
@@ -94,7 +95,13 @@ export default function TicketNuevoPage() {
           </div>
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>Descripción</label>
-            <Input.TextArea value={cuerpo} onChange={(e) => setCuerpo(e.target.value)} rows={6} maxLength={8000} placeholder="Describe el problema o la solicitud" />
+            <Input.TextArea
+              value={cuerpo}
+              onChange={(e) => setCuerpo(e.target.value)}
+              rows={6}
+              maxLength={8000}
+              placeholder={descripcionPlaceholder}
+            />
           </div>
           <Button type="submit" variant="primary" disabled={saving}>
             {saving ? 'Enviando…' : 'Enviar ticket'}

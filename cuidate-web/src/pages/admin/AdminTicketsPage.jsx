@@ -6,6 +6,7 @@ import { getAdminTickets } from '../../api/tickets';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
+import { TicketEstadoBadge, TicketPrioridadBadge } from '../../components/tickets/TicketFieldBadge';
 
 export default function AdminTicketsPage() {
   const [estado, setEstado] = useState('');
@@ -38,8 +39,8 @@ export default function AdminTicketsPage() {
       label: 'Doctor',
       render: (r) => sanitizeForDisplay(r.creador_nombre || r.creador_email) || '—',
     },
-    { key: 'estado', label: 'Estado', render: (r) => sanitizeForDisplay(r.estado) },
-    { key: 'prioridad', label: 'Prioridad', render: (r) => sanitizeForDisplay(r.prioridad) },
+    { key: 'estado', label: 'Estado', render: (r) => <TicketEstadoBadge estado={r.estado} /> },
+    { key: 'prioridad', label: 'Prioridad', render: (r) => <TicketPrioridadBadge prioridad={r.prioridad} /> },
     { key: 'updated_at', label: 'Actualizado', render: (r) => formatDateTime(r.updated_at) },
     {
       key: '_a',

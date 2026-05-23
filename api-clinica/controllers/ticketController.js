@@ -6,7 +6,7 @@ import logger from '../utils/logger.js';
 import emailService from '../services/emailService.js';
 import { cerrarTicketsResueltoVencidos } from '../services/ticketAutoCloseService.js';
 
-const CATEGORIAS = new Set(['tecnico', 'cita_paciente', 'acceso', 'otro']);
+const CATEGORIAS = new Set(['tecnico', 'cita_paciente', 'acceso', 'catalogo_medicamentos', 'otro']);
 const PRIORIDADES = new Set(['baja', 'media', 'alta']);
 const ESTADOS = new Set(['abierto', 'en_curso', 'resuelto', 'cerrado']);
 

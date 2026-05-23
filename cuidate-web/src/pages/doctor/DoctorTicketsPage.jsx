@@ -7,6 +7,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
+import { TicketEstadoBadge, TicketPrioridadBadge } from '../../components/tickets/TicketFieldBadge';
 
 function useStrictDoctor() {
   const user = useAuthStore((s) => s.user);
@@ -50,7 +51,8 @@ export default function DoctorTicketsPage() {
   const columns = [
     { key: 'id_ticket', label: 'ID', render: (r) => r.id_ticket },
     { key: 'asunto', label: 'Asunto', render: (r) => sanitizeForDisplay(r.asunto) },
-    { key: 'estado', label: 'Estado', render: (r) => sanitizeForDisplay(r.estado) },
+    { key: 'estado', label: 'Estado', render: (r) => <TicketEstadoBadge estado={r.estado} /> },
+    { key: 'prioridad', label: 'Prioridad', render: (r) => <TicketPrioridadBadge prioridad={r.prioridad} /> },
     { key: 'updated_at', label: 'Actualizado', render: (r) => formatDateTime(r.updated_at) },
     {
       key: '_a',

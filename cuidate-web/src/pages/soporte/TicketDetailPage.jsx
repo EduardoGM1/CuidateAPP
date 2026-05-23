@@ -7,6 +7,8 @@ import { getTicket, postTicketMessage, patchTicket } from '../../api/tickets';
 import { useAuthStore } from '../../stores/authStore';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
+import { TicketEstadoBadge, TicketPrioridadBadge } from '../../components/tickets/TicketFieldBadge';
+import { getTicketCategoriaLabel } from '../../utils/ticketDisplay';
 
 export default function TicketDetailPage() {
   const { id } = useParams();
@@ -117,9 +119,13 @@ export default function TicketDetailPage() {
       />
       <Card style={{ marginBottom: '1rem' }}>
         <p style={{ margin: '0 0 0.5rem' }}><strong>Asunto:</strong> {sanitizeForDisplay(ticket.asunto)}</p>
-        <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
-          Estado: {ticket.estado} · Prioridad: {ticket.prioridad} · Categoría: {ticket.categoria}
-        </p>
+        <div className="ticket-meta-badges" style={{ marginBottom: '0.5rem' }}>
+          <TicketEstadoBadge estado={ticket.estado} />
+          <TicketPrioridadBadge prioridad={ticket.prioridad} />
+          <span style={{ fontSize: '0.875rem', color: 'var(--color-texto-secundario)' }}>
+            Categoría: {getTicketCategoriaLabel(ticket.categoria)}
+          </span>
+        </div>
         {(ticket.creador_nombre || ticket.creador_email) && (
           <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
             Doctor: {sanitizeForDisplay(ticket.creador_nombre || ticket.creador_email)}
