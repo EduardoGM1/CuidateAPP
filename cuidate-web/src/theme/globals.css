@@ -1442,6 +1442,26 @@ select:focus-visible {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: var(--space-4);
 }
+/* Una sola fila por tipo; cards con ancho fijo (scroll horizontal si no caben) */
+.saas-charts-grid--single-line {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: var(--space-4);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: var(--space-1);
+  scrollbar-width: thin;
+}
+.saas-charts-grid--single-line > * {
+  flex: 0 0 320px;
+  width: 320px;
+  max-width: 320px;
+  min-width: 320px;
+}
+.saas-charts-grid--single-line .saas-chart-card.ant-card {
+  height: 100%;
+}
 .saas-chart-card.ant-card {
   background: var(--color-fondo-card);
   border-radius: var(--radius-xl);

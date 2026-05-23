@@ -9,12 +9,20 @@ export default function ChartsByTypeRows({ bars = [], pies = [] }) {
   return (
     <div className="saas-charts-rows">
       {barItems.length > 0 && (
-        <div className="saas-charts-grid" data-chart-type="bar" aria-label="Gráficos de barras">
+        <div
+          className="saas-charts-grid saas-charts-grid--single-line"
+          data-chart-type="bar"
+          aria-label="Gráficos de barras"
+        >
           {barItems}
         </div>
       )}
       {pieItems.length > 0 && (
-        <div className="saas-charts-grid" data-chart-type="pie" aria-label="Gráficos de pastel">
+        <div
+          className="saas-charts-grid saas-charts-grid--single-line"
+          data-chart-type="pie"
+          aria-label="Gráficos de pastel"
+        >
           {pieItems}
         </div>
       )}
