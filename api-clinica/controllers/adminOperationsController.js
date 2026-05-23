@@ -8,6 +8,10 @@ import RefreshTokenService from '../services/refreshTokenService.js';
 import { buildPacientesAnonimizadoCsv } from '../services/pacienteAnonExportService.js';
 import backupService from '../services/backupService.js';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
+
+const __adminDir = path.dirname(fileURLToPath(import.meta.url));
 
 export async function getSystemStatus(req, res) {
   try {
@@ -164,4 +168,50 @@ export async function revokeUserSessions(req, res) {
     logger.error('[adminOperations] revoke sessions', { error: error.message });
     return sendServerError(res, error);
   }
+}
+
+/** POST /api/admin/operations/seed/qa-paciente — requiere ALLOW_ADMIN_SEED_QA=true en el servidor */
+export async function runSeedQaPaciente(req, res) {
+  if (process.env.ALLOW_ADMIN_SEED_QA !== 'true') {
+    return sendError(res, 'Seed QA deshabilitado (ALLOW_ADMIN_SEED_QA≠true)', 403);
+  }
+
+  const pacienteId = String(req.body?.paciente_id || req.query?.paciente_id || '1123');
+  const scriptPath = path.join(__adminDir, '../scripts/seed-qa-paciente-datos-evolucion.js');
+  const apiRoot = path.join(__adminDir, '..');
+
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [scriptPath], {
+      cwd: apiRoot,
+      env: { ...process.env, PACIENTE_ID: pacienteId },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk) => { stdout += chunk; });
+    child.stderr.on('data', (chunk) => { stderr += chunk; });
+
+    child.on('close', (code) => {
+      logger.info('[adminOperations] seed QA paciente', { pacienteId, code });
+      if (code === 0) {
+        resolve(sendSuccess(res, {
+          message: 'Seed QA Paciente ejecutado',
+          paciente_id: Number(pacienteId),
+          log: stdout.slice(-4000),
+        }));
+      } else {
+        resolve(sendError(res, 'Seed falló', 500, {
+          code,
+          stderr: stderr.slice(-2000),
+          stdout: stdout.slice(-2000),
+        }));
+      }
+    });
+
+    child.on('error', (err) => {
+      logger.error('[adminOperations] seed QA spawn', { error: err.message });
+      resolve(sendServerError(res, err));
+    });
+  });
 }

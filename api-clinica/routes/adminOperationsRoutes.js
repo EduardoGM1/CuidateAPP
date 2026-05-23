@@ -8,6 +8,7 @@ import {
   getBackupStatus,
   runBackup,
   downloadBackup,
+  runSeedQaPaciente,
 } from '../controllers/adminOperationsController.js';
 
 const router = Router();
@@ -23,5 +24,7 @@ router.post('/users/:id_usuario/revoke-sessions', revokeUserSessions);
 router.get('/backup/status', getBackupStatus);
 router.post('/backup/run', runBackup);
 router.get('/backup/download', downloadBackup);
+
+router.post('/seed/qa-paciente', runSeedQaPaciente);
 
 export default router;
