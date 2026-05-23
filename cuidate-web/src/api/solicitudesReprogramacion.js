@@ -11,13 +11,16 @@ function norm(res) {
 
 /**
  * Listar solicitudes de reprogramación (Admin o Doctor; Doctor solo ve las de sus pacientes).
- * @param {{ estado?: string, paciente?: number, doctor?: number }} [params]
+ * @param {{ estado?: string, paciente?: number, doctor?: number, search?: string, fecha_desde?: string, fecha_hasta?: string }} [params]
  */
 export async function getSolicitudesReprogramacion(params = {}) {
   const q = new URLSearchParams();
   if (params.estado) q.set('estado', params.estado);
   if (params.paciente != null) q.set('paciente', String(params.paciente));
   if (params.doctor != null) q.set('doctor', String(params.doctor));
+  if (params.search && String(params.search).trim()) q.set('search', String(params.search).trim());
+  if (params.fecha_desde) q.set('fecha_desde', params.fecha_desde);
+  if (params.fecha_hasta) q.set('fecha_hasta', params.fecha_hasta);
   const url = `${BASE}/solicitudes-reprogramacion${q.toString() ? `?${q.toString()}` : ''}`;
   const { data } = await client.get(url);
   const body = norm(data) ?? data;

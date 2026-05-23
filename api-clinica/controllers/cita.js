@@ -2332,7 +2332,8 @@ export const getSolicitudesReprogramacion = async (req, res) => {
  */
 export const getAllSolicitudesReprogramacion = async (req, res) => {
   try {
-    const { estado, paciente, doctor } = req.query;
+    const { estado, paciente, doctor, search, fecha_desde, fecha_hasta } = req.query;
+    const searchTerm = search && String(search).trim() ? String(search).trim() : '';
 
     const whereCondition = {};
     
@@ -2346,16 +2347,18 @@ export const getAllSolicitudesReprogramacion = async (req, res) => {
       whereCondition.id_paciente = parseInt(paciente);
     }
 
+    let doctorAutenticado = null;
+    let idDoctorSearchScope = null;
+
     // Si es doctor, solo mostrar solicitudes de sus pacientes
     if (req.user.rol === 'Doctor') {
-      // Buscar el doctor por id_usuario (patrón reutilizado de otros controladores)
-      const doctorAutenticado = await Doctor.findOne({ where: { id_usuario: req.user.id } });
+      doctorAutenticado = await Doctor.findOne({ where: { id_usuario: req.user.id } });
       if (!doctorAutenticado) {
         logger.warn('Doctor no encontrado para usuario', { userId: req.user.id });
         return sendSuccess(res, { solicitudes: [], total: 0 });
       }
-      
-      // Obtener IDs de pacientes asignados al doctor
+      idDoctorSearchScope = doctorAutenticado.id_doctor;
+
       const pacientesAsignados = await DoctorPaciente.findAll({
         where: { id_doctor: doctorAutenticado.id_doctor },
         attributes: ['id_paciente']
@@ -2367,6 +2370,18 @@ export const getAllSolicitudesReprogramacion = async (req, res) => {
       }
       
       whereCondition.id_paciente = { [Op.in]: idsPacientes };
+    } else if (doctor && !isNaN(doctor)) {
+      idDoctorSearchScope = parseInt(doctor, 10);
+    }
+
+    if (fecha_desde || fecha_hasta) {
+      whereCondition.fecha_creacion = {};
+      if (fecha_desde) {
+        whereCondition.fecha_creacion[Op.gte] = new Date(`${fecha_desde}T00:00:00`);
+      }
+      if (fecha_hasta) {
+        whereCondition.fecha_creacion[Op.lte] = new Date(`${fecha_hasta}T23:59:59.999`);
+      }
     }
 
     const solicitudes = await SolicitudReprogramacion.findAll({
@@ -2399,7 +2414,6 @@ export const getAllSolicitudesReprogramacion = async (req, res) => {
       );
     }
 
-    // Helper para desencriptar campos
     const decryptFieldIfNeeded = (value) => {
       if (!value || value === null || value === undefined || value === '') {
         return value;
@@ -2418,6 +2432,26 @@ export const getAllSolicitudesReprogramacion = async (req, res) => {
       }
       return value;
     };
+
+    if (searchTerm) {
+      const pacienteIds = await findPacienteIdsByNameSearch({
+        search: searchTerm,
+        idDoctor: idDoctorSearchScope,
+      });
+      const termLower = searchTerm.toLowerCase();
+      solicitudesFiltradas = solicitudesFiltradas.filter((solicitud) => {
+        const data = solicitud.toJSON ? solicitud.toJSON() : solicitud;
+        if (pacienteIds.includes(data.id_paciente)) return true;
+        const motivoSol = String(data.motivo || '').toLowerCase();
+        const motivoCita = String(decryptFieldIfNeeded(data.Cita?.motivo) ?? '').toLowerCase();
+        const respuesta = String(data.respuesta_doctor || '').toLowerCase();
+        return (
+          motivoSol.includes(termLower) ||
+          motivoCita.includes(termLower) ||
+          respuesta.includes(termLower)
+        );
+      });
+    }
     
     // Formatear datos para el frontend
     const solicitudesFormateadas = solicitudesFiltradas.map(solicitud => {

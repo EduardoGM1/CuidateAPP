@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSolicitudesReprogramacion, responderSolicitudReprogramacion } from '../../api/solicitudesReprogramacion';
+import { getDoctores } from '../../api/doctores';
 import { useSocketEvent } from '../../contexts/SocketContext';
-import { PageHeader } from '../../components/shared';
+import { PageHeader, SearchFilterBar } from '../../components/shared';
 import { Card, Button, LoadingSpinner, EmptyState, Badge, Modal, Input } from '../../components/ui';
-import { formatDateTime, formatDate } from '../../utils/format';
+import { useAuthStore } from '../../stores/authStore';
+import { formatDateTime, formatDate, formatNombreCompleto } from '../../utils/format';
 import { fechaCitaApiToDatetimeLocalInput, fechaCitaDatetimeLocalToApi } from '../../utils/fechaCita';
+import { sanitizeForDisplay } from '../../utils/sanitize';
+import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 function textoCitaSolicitud(s) {
   const estado = (s.estado || '').toLowerCase();
@@ -23,8 +27,6 @@ function textoCitaSolicitud(s) {
   }
   return linea || '—';
 }
-import { sanitizeForDisplay } from '../../utils/sanitize';
-import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 const ESTADO_LABELS = {
   pendiente: 'Pendiente',
@@ -33,11 +35,47 @@ const ESTADO_LABELS = {
   cancelada: 'Cancelada',
 };
 
+const FILTER_ESTADO = {
+  key: 'estado',
+  label: 'Estado',
+  options: [
+    { value: '', label: 'Todos' },
+    { value: 'pendiente', label: 'Pendientes' },
+    { value: 'aprobada', label: 'Aprobadas' },
+    { value: 'rechazada', label: 'Rechazadas' },
+    { value: 'cancelada', label: 'Canceladas' },
+  ],
+};
+
+function buildDefaultParams() {
+  return {
+    estado: '',
+    search: '',
+    fecha_desde: '',
+    fecha_hasta: '',
+    doctor: undefined,
+  };
+}
+
+const dateInputStyle = {
+  width: '100%',
+  minHeight: 40,
+  padding: 'var(--space-2) var(--space-3)',
+  borderRadius: 'var(--radius)',
+  border: '1px solid var(--color-borde-claro)',
+  background: 'var(--color-fondo-card)',
+  color: 'var(--color-texto-primario)',
+  fontSize: 'var(--text-base)',
+};
+
 export default function SolicitudesReprogramacion() {
+  const isAdminFn = useAuthStore((s) => s.isAdmin);
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filtroEstado, setFiltroEstado] = useState('');
+  const [params, setParams] = useState(buildDefaultParams);
+  const [filterBarKey, setFilterBarKey] = useState(0);
+  const [doctores, setDoctores] = useState([]);
   const [acting, setActing] = useState(null);
   const [submitError, setSubmitError] = useState('');
   const [aprobarModal, setAprobarModal] = useState(null);
@@ -45,12 +83,31 @@ export default function SolicitudesReprogramacion() {
 
   useOnboardingPageReady(!loading);
 
+  const loadDoctores = useCallback(async () => {
+    if (!isAdminFn()) return;
+    try {
+      const data = await getDoctores({ limit: 200, estado: 'activos' });
+      setDoctores(Array.isArray(data) ? data : []);
+    } catch {
+      setDoctores([]);
+    }
+  }, [isAdminFn]);
+
+  useEffect(() => {
+    loadDoctores();
+  }, [loadDoctores]);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const params = filtroEstado ? { estado: filtroEstado } : {};
-      const res = await getSolicitudesReprogramacion(params);
+      const res = await getSolicitudesReprogramacion({
+        estado: params.estado || undefined,
+        search: params.search || undefined,
+        fecha_desde: params.fecha_desde || undefined,
+        fecha_hasta: params.fecha_hasta || undefined,
+        doctor: params.doctor,
+      });
       setList(res.solicitudes ?? []);
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || 'Error al cargar solicitudes');
@@ -58,13 +115,62 @@ export default function SolicitudesReprogramacion() {
     } finally {
       setLoading(false);
     }
-  }, [filtroEstado]);
+  }, [params.estado, params.search, params.fecha_desde, params.fecha_hasta, params.doctor]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   useSocketEvent('solicitud_reprogramacion', load);
+
+  const handleSearch = (searchParams) => {
+    setParams((prev) => ({
+      ...prev,
+      estado: searchParams.estado !== undefined ? searchParams.estado : prev.estado,
+      search: searchParams.search !== undefined ? searchParams.search : prev.search,
+      doctor: searchParams.doctor ? Number(searchParams.doctor) : undefined,
+    }));
+  };
+
+  const handleResetFilters = () => {
+    setParams(buildDefaultParams());
+    setFilterBarKey((k) => k + 1);
+  };
+
+  const handleDateChange = (field, value) => {
+    setParams((prev) => ({
+      ...prev,
+      [field]: value && value.trim ? value.trim() : '',
+    }));
+  };
+
+  const hasActiveFilters =
+    Boolean(params.search?.trim()) ||
+    Boolean(params.estado) ||
+    Boolean(params.fecha_desde) ||
+    Boolean(params.fecha_hasta) ||
+    params.doctor != null;
+
+  const doctoresList = Array.isArray(doctores) ? doctores : [];
+  const showDoctorFilter = Boolean(isAdminFn() && doctoresList.length > 0);
+  const filterOptions = [
+    FILTER_ESTADO,
+    ...(showDoctorFilter
+      ? [
+          {
+            key: 'doctor',
+            label: 'Doctor',
+            options: [
+              { value: '', label: 'Todos' },
+              ...doctoresList.map((d) => ({
+                value: String(d.id_doctor ?? d.id ?? ''),
+                label: sanitizeForDisplay(formatNombreCompleto(d)) || '—',
+              })),
+            ],
+          },
+        ]
+      : []),
+  ];
 
   const handleResponder = async (solicitud, accion, extra = {}) => {
     const idCita = solicitud.id_cita;
@@ -90,24 +196,47 @@ export default function SolicitudesReprogramacion() {
   return (
     <div data-tour="section-solicitudes-root">
       <PageHeader title="Solicitudes de reprogramación" showBack backTo="/" />
-      <div data-tour="section-solicitudes-filter" style={{ marginBottom: '1rem' }}>
-        <label style={{ marginRight: '0.5rem', fontWeight: 600, color: 'var(--color-texto-primario)' }}>Estado:</label>
-        <select
-          value={filtroEstado}
-          onChange={(e) => setFiltroEstado(e.target.value)}
-          style={{
-            padding: '0.5rem',
-            borderRadius: 'var(--radius)',
-            border: '1px solid var(--color-borde-claro)',
-            background: 'var(--color-fondo-card)',
-            color: 'var(--color-texto-primario)',
+      <div data-tour="section-solicitudes-filter">
+        <SearchFilterBar
+          key={filterBarKey}
+          placeholder="Buscar por paciente o motivo..."
+          filterOptions={filterOptions}
+          initialSearch={params.search || ''}
+          initialFilters={{
+            estado: params.estado || '',
+            doctor: params.doctor ? String(params.doctor) : '',
           }}
-        >
-          <option value="">Todos</option>
-          <option value="pendiente">Pendientes</option>
-          <option value="aprobada">Aprobadas</option>
-          <option value="rechazada">Rechazadas</option>
-        </select>
+          onSearch={handleSearch}
+          onReset={handleResetFilters}
+        />
+        <div className="search-filter-bar" style={{ marginBottom: 'var(--space-4)' }}>
+          <div className="filter-cell" style={{ minWidth: 160 }}>
+            <label className="filter-label" htmlFor="solicitudes-fecha-desde">
+              Fecha desde
+            </label>
+            <input
+              id="solicitudes-fecha-desde"
+              type="date"
+              value={params.fecha_desde || ''}
+              onChange={(e) => handleDateChange('fecha_desde', e.target.value)}
+              max={params.fecha_hasta || undefined}
+              style={dateInputStyle}
+            />
+          </div>
+          <div className="filter-cell" style={{ minWidth: 160 }}>
+            <label className="filter-label" htmlFor="solicitudes-fecha-hasta">
+              Fecha hasta
+            </label>
+            <input
+              id="solicitudes-fecha-hasta"
+              type="date"
+              value={params.fecha_hasta || ''}
+              onChange={(e) => handleDateChange('fecha_hasta', e.target.value)}
+              min={params.fecha_desde || undefined}
+              style={dateInputStyle}
+            />
+          </div>
+        </div>
       </div>
       {submitError && <p style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>{submitError}</p>}
       {error && (
@@ -118,7 +247,13 @@ export default function SolicitudesReprogramacion() {
       {loading ? (
         <LoadingSpinner />
       ) : list.length === 0 ? (
-        <EmptyState message="No hay solicitudes de reprogramación" />
+        <EmptyState
+          message={
+            hasActiveFilters
+              ? 'No hay solicitudes que coincidan con los filtros'
+              : 'No hay solicitudes de reprogramación'
+          }
+        />
       ) : (
         <div data-tour="section-solicitudes-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {list.map((s) => {
