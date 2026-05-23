@@ -278,6 +278,7 @@ export default function PacientesList() {
       />
       <div data-tour="section-pacientes-filters">
       <SearchFilterBar
+        singleRow
         placeholder="Buscar por nombre..."
         filterOptions={filterOptions}
         initialSearch={params.search || ''}

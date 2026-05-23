@@ -1163,6 +1163,34 @@ select:focus-visible {
   align-items: flex-end;
   margin-bottom: var(--space-4);
 }
+.search-filter-bar--single-row {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: var(--space-1);
+  scrollbar-width: thin;
+}
+.search-filter-bar--single-row .search-cell {
+  flex: 1 1 180px;
+  min-width: 140px;
+  max-width: 200px;
+}
+.search-filter-bar--single-row .filter-cell {
+  flex: 0 0 auto;
+  min-width: 120px;
+}
+.search-filter-bar--single-row .filter-cell--date {
+  min-width: 130px;
+}
+.search-filter-bar--single-row .search-filter-bar-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
+.search-filter-bar--single-row .search-filter-bar-actions .btn {
+  white-space: nowrap;
+}
 .search-filter-bar .search-cell { flex: 0 1 220px; min-width: 160px; max-width: 220px; }
 /* Alinear input con selects: quitar margen del wrapper y misma altura que los select */
 .search-filter-bar .search-filter-bar-input-wrap { margin-bottom: 0 !important; }
@@ -1195,14 +1223,43 @@ select:focus-visible {
   box-sizing: border-box;
 }
 .search-filter-bar select:hover { border-color: var(--color-secundario-light); }
+.search-filter-bar-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
 .search-filter-bar .btn { padding: var(--space-3) var(--space-5); min-height: unset; align-self: flex-end; }
+.search-filter-bar-actions .btn { align-self: flex-end; }
 .search-filter-bar select:focus-visible {
   outline: none;
   border-color: var(--color-primario);
   box-shadow: var(--shadow-focus);
 }
+.search-filter-bar input[type="date"].search-filter-bar-date {
+  width: 100%;
+  min-width: 130px;
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-borde-claro);
+  background: var(--color-fondo-card);
+  color: var(--color-texto-primario);
+  font-size: var(--text-base);
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.search-filter-bar input[type="date"].search-filter-bar-date:hover {
+  border-color: var(--color-secundario-light);
+}
+.search-filter-bar input[type="date"].search-filter-bar-date:focus-visible {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: var(--shadow-focus);
+}
 @media (max-width: 640px) {
-  .search-filter-bar {
+  .search-filter-bar:not(.search-filter-bar--single-row) {
     flex-direction: column;
     align-items: stretch;
   }

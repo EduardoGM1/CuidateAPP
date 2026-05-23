@@ -4,7 +4,7 @@ import { normalizeString } from '../../utils/sanitize';
 
 /**
  * Barra de búsqueda y filtros. Emite onSearch con params normalizados.
- * @param {{ onSearch: (params: Record<string, string|number>) => void, placeholder?: string, filterOptions?: { key: string, label: string, options: { value: string, label: string }[] }[] }} props
+ * @param {{ onSearch: (params: Record<string, string|number>) => void, placeholder?: string, filterOptions?: { key: string, label: string, options: { value: string, label: string }[] }[], singleRow?: boolean, dateRange?: { fechaDesde?: string, fechaHasta?: string, onChange: (field: 'fecha_desde'|'fecha_hasta', value: string) => void, idPrefix?: string } }} props
  */
 export default function SearchFilterBar({
   onSearch,
@@ -14,6 +14,8 @@ export default function SearchFilterBar({
   initialSearch = '',
   initialFilters = {},
   resetLabel = 'Restaurar filtros',
+  singleRow = false,
+  dateRange = null,
 }) {
   const [search, setSearch] = useState(initialSearch);
   const [filters, setFilters] = useState(initialFilters);
@@ -78,8 +80,11 @@ export default function SearchFilterBar({
     });
   };
 
+  const barClass = singleRow ? 'search-filter-bar search-filter-bar--single-row' : 'search-filter-bar';
+  const dateIdPrefix = dateRange?.idPrefix || 'filter';
+
   return (
-    <div className="search-filter-bar">
+    <div className={barClass}>
       <div className="search-cell">
         <Input
           className="search-filter-bar-input-wrap"
@@ -107,6 +112,37 @@ export default function SearchFilterBar({
           </select>
         </div>
       ))}
+      {dateRange && (
+        <>
+          <div className="filter-cell filter-cell--date">
+            <label className="filter-label" htmlFor={`${dateIdPrefix}-fecha-desde`}>
+              Fecha desde
+            </label>
+            <input
+              id={`${dateIdPrefix}-fecha-desde`}
+              type="date"
+              className="search-filter-bar-date"
+              value={dateRange.fechaDesde || ''}
+              max={dateRange.fechaHasta || undefined}
+              onChange={(e) => dateRange.onChange('fecha_desde', e.target.value)}
+            />
+          </div>
+          <div className="filter-cell filter-cell--date">
+            <label className="filter-label" htmlFor={`${dateIdPrefix}-fecha-hasta`}>
+              Fecha hasta
+            </label>
+            <input
+              id={`${dateIdPrefix}-fecha-hasta`}
+              type="date"
+              className="search-filter-bar-date"
+              value={dateRange.fechaHasta || ''}
+              min={dateRange.fechaDesde || undefined}
+              onChange={(e) => dateRange.onChange('fecha_hasta', e.target.value)}
+            />
+          </div>
+        </>
+      )}
+      <div className="search-filter-bar-actions">
       <Button type="button" variant="primary" onClick={emitSearch}>
         Buscar
       </Button>
@@ -115,6 +151,7 @@ export default function SearchFilterBar({
           {resetLabel}
         </Button>
       )}
+      </div>
     </div>
   );
 }
