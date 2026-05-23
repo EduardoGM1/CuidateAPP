@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import Button from '../ui/Button';
 import Logo from '../common/Logo';
+import { getActiveNavPath } from '../../utils/navigation';
 
 const navLinksBase = [
   { path: '/', label: 'Inicio' },
@@ -171,7 +172,7 @@ export default function Sidebar({ isOpen, onClose }) {
           </div>
           <nav className="sidebar-nav" aria-label="Navegación principal">
             {navLinks.map(({ path, label }) => {
-              const isActive = path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+              const isActive = getActiveNavPath(location.pathname, navLinks) === path;
               return (
                 <button
                   key={path}

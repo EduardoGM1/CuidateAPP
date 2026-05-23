@@ -8,6 +8,7 @@ import Logo from '../common/Logo';
 import OnboardingHost from '../../onboarding/OnboardingHost';
 import { useDoctorNavBadges } from '../../hooks/useDoctorNavBadges';
 import { useBuildVersionCheck } from '../../hooks/useBuildVersionCheck';
+import { getActiveNavPath } from '../../utils/navigation';
 import { DoctorNavBadgesProvider } from '../../contexts/DoctorNavBadgesContext';
 
 function IconDashboard() {
@@ -253,9 +254,7 @@ function MainLayoutShell() {
     },
   }));
 
-  const selectedKey = navLinks.find(({ path }) =>
-    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
-  )?.key ?? '/';
+  const selectedKey = getActiveNavPath(location.pathname, navLinks);
 
   const handleLogout = () => {
     logout();
