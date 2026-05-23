@@ -385,8 +385,8 @@ function MainLayoutShell() {
         </Layout.Header>
         <Layout.Content
           data-tour="onboarding-main-content"
+          className="main-layout-content"
           style={{
-            padding: 'clamp(1rem, 4vw, 2rem)',
             overflow: 'auto',
             minHeight: 'calc(100vh - 64px)',
             background: 'var(--color-fondo)',

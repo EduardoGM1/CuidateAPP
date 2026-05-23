@@ -1474,10 +1474,55 @@ select:focus-visible {
   min-width: 320px;
   align-self: stretch;
 }
+/* Contenido principal: separación del menú lateral */
+.main-layout-content {
+  padding: clamp(1.25rem, 3vw, 2rem) clamp(1.25rem, 3vw, 2.5rem) clamp(1.25rem, 3vw, 2rem)
+    clamp(1.75rem, 4vw, 2.75rem) !important;
+}
 .saas-charts-rows,
 .saas-charts-grid--single-line {
   --saas-chart-plot-height: 200px;
   --saas-chart-card-height: 276px;
+}
+.saas-charts-grid--dashboard {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-4);
+  --saas-chart-plot-height: 220px;
+  --saas-chart-card-height: 296px;
+}
+.saas-charts-grid--dashboard .saas-chart-card.ant-card {
+  display: flex;
+  flex-direction: column;
+  height: var(--saas-chart-card-height);
+  max-height: var(--saas-chart-card-height);
+}
+.saas-charts-grid--dashboard .saas-chart-card.ant-card > .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+}
+.saas-charts-grid--dashboard .saas-chart-inner {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: var(--saas-chart-plot-height);
+  max-height: var(--saas-chart-plot-height);
+  overflow: hidden;
+}
+.saas-charts-grid--dashboard .saas-chart-card--wide {
+  grid-column: 1 / -1;
+  --saas-chart-plot-height: 240px;
+  --saas-chart-card-height: 316px;
+}
+.saas-charts-grid--single-line > .saas-chart-card--wide.ant-card {
+  flex: 0 0 440px;
+  width: 440px;
+  max-width: 440px;
+  min-width: 440px;
 }
 .saas-charts-grid--single-line > .saas-chart-card.ant-card {
   height: var(--saas-chart-card-height);

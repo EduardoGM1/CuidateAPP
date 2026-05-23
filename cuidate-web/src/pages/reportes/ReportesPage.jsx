@@ -635,6 +635,7 @@ export default function ReportesPage() {
       Array.isArray(charts.doctoresActivos) &&
       charts.doctoresActivos.length > 0 && (
         <ReportesHorizontalBarChart
+          wide
           key="doctores-activos"
           title="Doctores más activos (por citas)"
           data={charts.doctoresActivos}
@@ -646,6 +647,7 @@ export default function ReportesPage() {
     showDetalle &&
       detalle.pacientesPorDoctor.length > 0 && (
         <ReportesHorizontalBarChart
+          wide
           key="pacientes-doctor"
           title={admin ? 'Distribución de pacientes por doctor' : 'Pacientes por doctor (tu cartera)'}
           data={detalle.pacientesPorDoctor}

@@ -19,14 +19,14 @@ const CHART_HEIGHT = 200;
 const HORIZONTAL_BAR_ROW_HEIGHT = 44;
 
 /** Recorta etiqueta larga (eje Y) manteniendo el nombre completo en el tooltip. */
-function shortenCategoryLabel(value, maxLen = 34) {
+function shortenCategoryLabel(value, maxLen = 40) {
   const text = String(value ?? '').trim();
   if (text.length <= maxLen) return text;
   return `${text.slice(0, maxLen - 1)}…`;
 }
 
 /** Ancho del eje Y según el nombre más largo. */
-function yAxisWidthForNames(data, nameKey, min = 120, max = 220) {
+function yAxisWidthForNames(data, nameKey, min = 120, max = 200) {
   if (!Array.isArray(data) || data.length === 0) return min;
   const longest = data.reduce(
     (maxChars, row) => Math.max(maxChars, String(row[nameKey] ?? '').trim().length),
@@ -35,14 +35,14 @@ function yAxisWidthForNames(data, nameKey, min = 120, max = 220) {
   return Math.min(max, Math.max(min, Math.ceil(longest * 6.5) + 20));
 }
 
-function horizontalBarChartMetrics(data, nameKey = 'nombre') {
+function horizontalBarChartMetrics(data, nameKey = 'nombre', wide = false) {
   const count = Array.isArray(data) ? data.length : 0;
   const scrollHeight = Math.max(CHART_HEIGHT, count * HORIZONTAL_BAR_ROW_HEIGHT + 24);
-  const yAxisWidth = yAxisWidthForNames(data, nameKey, 96, 150);
+  const yAxisWidth = yAxisWidthForNames(data, nameKey, wide ? 140 : 96, wide ? 200 : 150);
   return {
     scrollHeight,
     yAxisWidth,
-    margin: { top: 8, right: 44, left: 4, bottom: 8 },
+    margin: { top: 8, right: 48, left: 4, bottom: 8 },
   };
 }
 
@@ -113,12 +113,13 @@ export function ReportesHorizontalBarChart({
   nameKey = 'nombre',
   barName = 'Citas',
   color = CHART_COLORS.primary,
+  wide = false,
 }) {
   if (!Array.isArray(data) || data.length === 0) return null;
-  const { scrollHeight, yAxisWidth, margin } = horizontalBarChartMetrics(data, nameKey);
+  const { scrollHeight, yAxisWidth, margin } = horizontalBarChartMetrics(data, nameKey, wide);
 
   return (
-    <Card className="saas-chart-card">
+    <Card className={`saas-chart-card${wide ? ' saas-chart-card--wide' : ''}`}>
       <h3 className="saas-chart-title">{title}</h3>
       <div className="saas-chart-inner saas-chart-inner--horizontal-bar">
         <div className="saas-chart-scroll-content" style={{ height: scrollHeight }}>
@@ -134,7 +135,7 @@ export function ReportesHorizontalBarChart({
               tickLine={false}
               axisLine={false}
               tick={{ fontSize: 11, fill: 'var(--color-texto-secundario)' }}
-              tickFormatter={(value) => shortenCategoryLabel(value)}
+              tickFormatter={(value) => shortenCategoryLabel(value, wide ? 48 : 34)}
             />
             <Tooltip
               formatter={(value) => [value, barName]}

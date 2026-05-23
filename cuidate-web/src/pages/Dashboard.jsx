@@ -317,7 +317,7 @@ export default function Dashboard() {
           {!error && summary && isAdmin() && (
             <section className="saas-section" aria-labelledby="graficos-title">
               <h2 id="graficos-title" className="saas-section-title">Gráficos y métricas</h2>
-              <div className="saas-charts-grid">
+              <div className="saas-charts-grid saas-charts-grid--dashboard">
                 {(
                   <>
                     <ChartCitasUltimos7Dias data={summary.chartData?.citasUltimos7Dias} title="Citas últimos 7 días" />
@@ -372,6 +372,7 @@ export default function Dashboard() {
                     })()}
                     {Array.isArray(summary.charts?.doctoresActivos) && summary.charts.doctoresActivos.length > 0 && (
                       <ReportesHorizontalBarChart
+                        wide
                         title="Doctores más activos (por citas)"
                         data={summary.charts.doctoresActivos}
                         dataKey="total_citas"
@@ -413,7 +414,7 @@ export default function Dashboard() {
               {Array.isArray(summary.chartData?.citasUltimos7Dias) && summary.chartData.citasUltimos7Dias.length > 0 && (
                 <section className="saas-section" aria-labelledby="graficos-doctor-title">
                   <h2 id="graficos-doctor-title" className="saas-section-title">Gráficos y métricas</h2>
-                  <div className="saas-charts-grid">
+                  <div className="saas-charts-grid saas-charts-grid--dashboard">
                     <ChartCitasUltimos7Dias data={summary.chartData.citasUltimos7Dias} title="Mis citas últimos 7 días" />
                   </div>
                 </section>
