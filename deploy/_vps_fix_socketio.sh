@@ -13,14 +13,14 @@ fi
 # Corregir línea duplicada accidental WEB_APP_ORIGIN=WEB_APP_ORIGIN=
 sed -i 's|^WEB_APP_ORIGIN=WEB_APP_ORIGIN=|WEB_APP_ORIGIN=|' "$ENV_FILE"
 grep '^WEB_APP_ORIGIN=' "$ENV_FILE" || true
-# Restaurar Nginx si quedó inválido por un parche anterior
-for bak in /etc/nginx/sites-enabled/cuidateapp.bak-*; do
-  if [[ -f "$bak" ]] && ! nginx -t 2>/dev/null; then
-    cp -a "$bak" /etc/nginx/sites-enabled/cuidateapp
-    echo "[INFO] Restaurado Nginx desde $bak"
-    break
+# Restaurar Nginx si el parche anterior dejó location anidada inválida
+if grep -q 'location "/socket.io"' /etc/nginx/sites-enabled/cuidateapp 2>/dev/null; then
+  latest_bak="$(ls -t /etc/nginx/sites-enabled/cuidateapp.bak-* 2>/dev/null | head -1)"
+  if [[ -n "$latest_bak" ]]; then
+    cp -a "$latest_bak" /etc/nginx/sites-enabled/cuidateapp
+    echo "[INFO] Restaurado Nginx desde $latest_bak (config inválida previa)"
   fi
-done
+fi
 bash "$APP_ROOT/deploy/apply-nginx-socketio.sh"
 cd "$APP_ROOT/api-clinica"
 rm -rf node_modules
