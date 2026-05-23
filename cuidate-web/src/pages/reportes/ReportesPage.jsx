@@ -10,6 +10,7 @@ import { Card, Button, Input, Select } from '../../components/ui';
 import { LoadingSpinner } from '../../components/ui';
 import ComorbilidadesHeatmap from '../../components/reportes/ComorbilidadesHeatmap';
 import { ReportesBarChart, ReportesPieChart, ReportesHorizontalBarChart } from '../../components/reportes/ReportesCharts';
+import ChartsByTypeRows from '../../components/reportes/ChartsByTypeRows';
 import {
   downloadFormaExcel,
   EXCEL_FORMATO_REGISTRO_MENSUAL_FILE_PREFIX,
@@ -681,39 +682,60 @@ export default function ReportesPage() {
             </Card>
           )}
           {!loadingSummary && !errorSummary && summary && (
-          <div className="saas-charts-grid">
-            {Array.isArray(chartData.citasUltimos7Dias) && chartData.citasUltimos7Dias.length > 0 && (
-              <ReportesBarChart
-                title={admin ? 'Citas últimos 7 días' : 'Mis citas últimos 7 días'}
-                data={chartData.citasUltimos7Dias}
-                dataKey="citas"
-                nameKey="dia"
-                barName="Citas"
-              />
-            )}
-            {puedeVerDetalle && Array.isArray(chartData.pacientesNuevos) && chartData.pacientesNuevos.length > 0 && (
-              <ReportesBarChart
-                title={admin ? 'Pacientes nuevos (últimos 7 días)' : 'Pacientes nuevos asignados a ti (últimos 7 días)'}
-                data={chartData.pacientesNuevos}
-                dataKey="pacientes"
-                nameKey="dia"
-                barName="Pacientes"
-                color="#94a3b8"
-              />
-            )}
-            {citasPorEstadoPie.length > 0 && (
-              <ReportesPieChart title="Citas por estado" data={citasPorEstadoPie} nameKey="name" valueKey="value" />
-            )}
-            {admin && Array.isArray(charts.doctoresActivos) && charts.doctoresActivos.length > 0 && (
-              <ReportesHorizontalBarChart
-                title="Doctores más activos (por citas)"
-                data={charts.doctoresActivos}
-                dataKey="total_citas"
-                nameKey="nombre"
-                barName="Citas"
-              />
-            )}
-          </div>
+          <ChartsByTypeRows
+            bars={[
+              Array.isArray(chartData.citasUltimos7Dias) && chartData.citasUltimos7Dias.length > 0 && (
+                <ReportesBarChart
+                  key="citas-7d"
+                  title={admin ? 'Citas últimos 7 días' : 'Mis citas últimos 7 días'}
+                  data={chartData.citasUltimos7Dias}
+                  dataKey="citas"
+                  nameKey="dia"
+                  barName="Citas"
+                />
+              ),
+              puedeVerDetalle &&
+                Array.isArray(chartData.pacientesNuevos) &&
+                chartData.pacientesNuevos.length > 0 && (
+                  <ReportesBarChart
+                    key="pacientes-nuevos-7d"
+                    title={
+                      admin
+                        ? 'Pacientes nuevos (últimos 7 días)'
+                        : 'Pacientes nuevos asignados a ti (últimos 7 días)'
+                    }
+                    data={chartData.pacientesNuevos}
+                    dataKey="pacientes"
+                    nameKey="dia"
+                    barName="Pacientes"
+                    color="#94a3b8"
+                  />
+                ),
+              admin &&
+                Array.isArray(charts.doctoresActivos) &&
+                charts.doctoresActivos.length > 0 && (
+                  <ReportesHorizontalBarChart
+                    key="doctores-activos"
+                    title="Doctores más activos (por citas)"
+                    data={charts.doctoresActivos}
+                    dataKey="total_citas"
+                    nameKey="nombre"
+                    barName="Citas"
+                  />
+                ),
+            ]}
+            pies={[
+              citasPorEstadoPie.length > 0 && (
+                <ReportesPieChart
+                  key="citas-estado"
+                  title="Citas por estado"
+                  data={citasPorEstadoPie}
+                  nameKey="name"
+                  valueKey="value"
+                />
+              ),
+            ]}
+          />
           )}
         </section>
       )}
@@ -738,42 +760,50 @@ export default function ReportesPage() {
             </Card>
           )}
           {showDetalle && !detalle.error && (
-            <div className="saas-charts-grid">
-              {detalle.pacientesPorDoctor.length > 0 && (
-                <ReportesHorizontalBarChart
-                  title={admin ? 'Distribución de pacientes por doctor' : 'Pacientes por doctor (tu cartera)'}
-                  data={detalle.pacientesPorDoctor}
-                  dataKey="total"
-                  nameKey="nombre"
-                  barName="Pacientes"
-                />
-              )}
-              {detalle.citasPorDiaSemana.some((d) => d.citas > 0) && (
-                <ReportesBarChart
-                  title="Citas por día de la semana"
-                  data={detalle.citasPorDiaSemana}
-                  dataKey="citas"
-                  nameKey="dia"
-                  barName="Citas"
-                />
-              )}
-              {detalle.distribucionEdad.length > 0 && (
-                <ReportesPieChart
-                  title="Distribución por edad"
-                  data={detalle.distribucionEdad}
-                  nameKey="name"
-                  valueKey="value"
-                />
-              )}
-              {detalle.distribucionGenero.length > 0 && (
-                <ReportesPieChart
-                  title="Distribución por género"
-                  data={detalle.distribucionGenero}
-                  nameKey="name"
-                  valueKey="value"
-                />
-              )}
-            </div>
+            <ChartsByTypeRows
+              bars={[
+                detalle.pacientesPorDoctor.length > 0 && (
+                  <ReportesHorizontalBarChart
+                    key="pacientes-doctor"
+                    title={admin ? 'Distribución de pacientes por doctor' : 'Pacientes por doctor (tu cartera)'}
+                    data={detalle.pacientesPorDoctor}
+                    dataKey="total"
+                    nameKey="nombre"
+                    barName="Pacientes"
+                  />
+                ),
+                detalle.citasPorDiaSemana.some((d) => d.citas > 0) && (
+                  <ReportesBarChart
+                    key="citas-dia-semana"
+                    title="Citas por día de la semana"
+                    data={detalle.citasPorDiaSemana}
+                    dataKey="citas"
+                    nameKey="dia"
+                    barName="Citas"
+                  />
+                ),
+              ]}
+              pies={[
+                detalle.distribucionEdad.length > 0 && (
+                  <ReportesPieChart
+                    key="dist-edad"
+                    title="Distribución por edad"
+                    data={detalle.distribucionEdad}
+                    nameKey="name"
+                    valueKey="value"
+                  />
+                ),
+                detalle.distribucionGenero.length > 0 && (
+                  <ReportesPieChart
+                    key="dist-genero"
+                    title="Distribución por género"
+                    data={detalle.distribucionGenero}
+                    nameKey="name"
+                    valueKey="value"
+                  />
+                ),
+              ]}
+            />
           )}
         </section>
       )}

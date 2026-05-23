@@ -1427,6 +1427,15 @@ select:focus-visible {
   font-weight: var(--font-semibold);
   color: var(--color-texto-primario);
 }
+.saas-charts-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+}
+.saas-charts-rows .saas-charts-grid {
+  margin-bottom: 0;
+}
 .saas-charts-grid {
   display: grid;
   width: 100%;
