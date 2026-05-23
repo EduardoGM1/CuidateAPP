@@ -58,35 +58,7 @@ function normalizeNumeroExpediente(value) {
   return normalized;
 }
 
-/** Escapa %, _ y \ para uso seguro en LIKE */
-function escapeLikePattern(str) {
-  return String(str).replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
-}
-
-/**
- * Filtro por nombre o apellidos: cada palabra debe aparecer en al menos uno de los campos (AND entre palabras).
- * @param {string|null|undefined} searchRaw
- * @returns {object|null}
- */
-function buildNameSearchWhere(searchRaw) {
-  if (searchRaw == null || searchRaw === '') return null;
-  const s = String(searchRaw).trim().slice(0, 100);
-  if (!s) return null;
-  const words = s.split(/\s+/).filter(Boolean);
-  if (words.length === 0) return null;
-  return {
-    [Op.and]: words.map((word) => {
-      const pattern = `%${escapeLikePattern(word)}%`;
-      return {
-        [Op.or]: [
-          { nombre: { [Op.like]: pattern } },
-          { apellido_paterno: { [Op.like]: pattern } },
-          { apellido_materno: { [Op.like]: pattern } },
-        ],
-      };
-    }),
-  };
-}
+import { buildNameSearchWhere } from '../utils/patientSearch.js';
 
 export const getPacientes = async (req, res) => {
   try {

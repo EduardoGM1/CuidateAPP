@@ -8,10 +8,12 @@ import { normalizeString } from '../../utils/sanitize';
  */
 export default function SearchFilterBar({
   onSearch,
+  onReset,
   placeholder = 'Buscar…',
   filterOptions = [],
   initialSearch = '',
   initialFilters = {},
+  resetLabel = 'Restaurar filtros',
 }) {
   const [search, setSearch] = useState(initialSearch);
   const [filters, setFilters] = useState(initialFilters);
@@ -43,6 +45,27 @@ export default function SearchFilterBar({
     latestSearchRef.current = value;
   };
 
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      emitSearch();
+    }
+  };
+
+  const handleReset = () => {
+    setSearch('');
+    setAppliedSearch('');
+    latestSearchRef.current = '';
+    const cleared = { ...initialFilters };
+    setFilters(cleared);
+    latestFiltersRef.current = cleared;
+    if (typeof onReset === 'function') {
+      onReset();
+    } else {
+      onSearch({ ...cleared, search: '' });
+    }
+  };
+
   const handleFilterChange = (key, value) => {
     const next = { ...filters };
     if (value === '' || value == null) delete next[key];
@@ -65,6 +88,7 @@ export default function SearchFilterBar({
           placeholder={placeholder}
           value={search}
           onChange={handleSearchChange}
+          onKeyDown={handleSearchKeyDown}
           maxLength={100}
         />
       </div>
@@ -83,13 +107,14 @@ export default function SearchFilterBar({
           </select>
         </div>
       ))}
-      <Button
-        type="button"
-        variant="primary"
-        onClick={emitSearch}
-      >
+      <Button type="button" variant="primary" onClick={emitSearch}>
         Buscar
       </Button>
+      {typeof onReset === 'function' && (
+        <Button type="button" variant="outline" onClick={handleReset}>
+          {resetLabel}
+        </Button>
+      )}
     </div>
   );
 }

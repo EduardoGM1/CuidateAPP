@@ -52,6 +52,19 @@ const COLUMNS = [
   },
 ];
 
+function buildDefaultCitasParams(pacienteFromUrl) {
+  return {
+    page: 1,
+    limit: PAGE_SIZE_DEFAULT,
+    estado: 'todas',
+    paciente: pacienteFromUrl ? parseInt(pacienteFromUrl, 10) : undefined,
+    doctor: undefined,
+    fecha_desde: '',
+    fecha_hasta: '',
+    search: '',
+  };
+}
+
 const FILTER_ESTADO = {
   key: 'estado',
   label: 'Estado',
@@ -83,15 +96,8 @@ export default function CitasList() {
   const [doctores, setDoctores] = useState([]);
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'agenda'
   const [agendaSpan, setAgendaSpan] = useState('day'); // 'day' | 'week'
-  const [params, setParams] = useState({
-    page: 1,
-    limit: PAGE_SIZE_DEFAULT,
-    estado: 'todas',
-    paciente: pacienteFromUrl ? parseInt(pacienteFromUrl, 10) : undefined,
-    doctor: undefined,
-    fecha_desde: '',
-    fecha_hasta: '',
-  });
+  const [params, setParams] = useState(() => buildDefaultCitasParams(pacienteFromUrl));
+  const [filterBarKey, setFilterBarKey] = useState(0);
 
   useOnboardingPageReady(!loading);
 
@@ -178,9 +184,14 @@ export default function CitasList() {
       ...prev,
       page: 1,
       estado: searchParams.estado ?? prev.estado,
-      search: searchParams.search ?? prev.search,
+      search: searchParams.search !== undefined ? searchParams.search : prev.search,
       doctor: searchParams.doctor ? Number(searchParams.doctor) : undefined,
     }));
+  };
+
+  const handleResetFilters = () => {
+    setParams(buildDefaultCitasParams(pacienteFromUrl));
+    setFilterBarKey((k) => k + 1);
   };
 
   const handleDateChange = (field, value) => {
@@ -372,13 +383,16 @@ export default function CitasList() {
       </div>
       <div data-tour="section-citas-filters">
       <SearchFilterBar
-        placeholder="Buscar por motivo..."
+        key={filterBarKey}
+        placeholder="Buscar por paciente o motivo..."
         filterOptions={filterOptions}
+        initialSearch={params.search || ''}
         initialFilters={{
           estado: params.estado,
           doctor: params.doctor ? String(params.doctor) : '',
         }}
         onSearch={handleSearch}
+        onReset={handleResetFilters}
       />
       <div className="search-filter-bar" style={{ marginBottom: 'var(--space-4)' }}>
         <div className="filter-cell" style={{ minWidth: 160 }}>

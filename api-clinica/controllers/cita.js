@@ -9,6 +9,10 @@ import pushNotificationService from '../services/pushNotificationService.js';
 import emailService from '../services/emailService.js';
 import EncryptionService from '../services/encryptionService.js';
 import { decrypt as decryptUtils } from '../utils/encryption.js';
+import { findPacienteIdsByNameSearch } from '../utils/patientSearch.js';
+
+/** Máximo de citas a evaluar en búsqueda en memoria (motivo encriptado + nombre paciente) */
+const CITAS_SEARCH_MAX_ROWS = 2500;
 
 /**
  * Formatear fecha para notificaciones en español
@@ -319,7 +323,7 @@ const enviarNotificacionPushDoctor = async (doctorId, tipo, data) => {
  * - fecha_desde: Fecha inicial (YYYY-MM-DD)
  * - fecha_hasta: Fecha final (YYYY-MM-DD)
  * - estado: 'todas' | 'pendiente' | 'completada' | 'cancelada'
- * - search: Búsqueda por motivo
+ * - search: Búsqueda por motivo (desencriptado) o nombre del paciente (solo asignados al doctor)
  */
 export const getCitas = async (req, res) => {
   try {
@@ -380,45 +384,79 @@ export const getCitas = async (req, res) => {
       if (fecha_hasta) whereCondition.fecha_cita[Op.lte] = new Date(fecha_hasta);
     }
     
-    // Filtro por búsqueda en motivo
-    if (search && search.trim()) {
-      whereCondition.motivo = {
-        [Op.like]: `%${search.trim()}%`
-      };
-    }
-    
     // Filtro por estado (si no es 'todas')
     if (estado && estado !== 'todas') {
       whereCondition.estado = estado;
     }
-    
+
+    const searchTerm = search && String(search).trim() ? String(search).trim().slice(0, 100) : '';
+    const doctorIdForSearch = whereCondition.id_doctor ?? null;
+
+    const citaIncludes = [
+      {
+        model: Paciente,
+        attributes: ['id_paciente', 'nombre', 'apellido_paterno', 'apellido_materno'],
+        required: false,
+      },
+      {
+        model: Doctor,
+        attributes: ['id_doctor', 'nombre', 'apellido_paterno', 'apellido_materno'],
+        required: false,
+      },
+    ];
+
     // Obtener total y citas
     let count = 0;
     let citas = [];
-    
+
     try {
-      const result = await Cita.findAndCountAll({
-        where: whereCondition,
-        include: [
-          { 
-            model: Paciente, 
-            attributes: ['id_paciente', 'nombre', 'apellido_paterno', 'apellido_materno'],
-            required: false
-          },
-          { 
-            model: Doctor, 
-            attributes: ['id_doctor', 'nombre', 'apellido_paterno', 'apellido_materno'],
-            required: false
-          }
-        ],
-        order: [['fecha_cita', 'DESC']],
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        raw: false // Asegurar que retorne instancias de Sequelize para que los hooks funcionen
-      });
-      
-      count = result.count;
-      citas = result.rows;
+      if (searchTerm) {
+        const doctorScope =
+          req.user.rol === 'Doctor'
+            ? doctorIdForSearch
+            : doctor && !Number.isNaN(parseInt(doctor, 10))
+              ? parseInt(doctor, 10)
+              : null;
+
+        const pacienteIds = await findPacienteIdsByNameSearch({
+          search: searchTerm,
+          idDoctor: doctorScope,
+        });
+
+        const allRows = await Cita.findAll({
+          where: whereCondition,
+          include: citaIncludes,
+          order: [['fecha_cita', 'DESC']],
+          limit: CITAS_SEARCH_MAX_ROWS,
+          raw: false,
+        });
+
+        const termLower = searchTerm.toLowerCase();
+        const filtered = allRows.filter((cita) => {
+          const data = cita.toJSON ? cita.toJSON() : cita;
+          if (pacienteIds.includes(data.id_paciente)) return true;
+          const motivo = String(decryptCitaField(data.motivo) ?? '').toLowerCase();
+          const observaciones = String(decryptCitaField(data.observaciones) ?? '').toLowerCase();
+          return motivo.includes(termLower) || observaciones.includes(termLower);
+        });
+
+        const offsetNum = parseInt(offset, 10) || 0;
+        const limitNum = parseInt(limit, 10) || 50;
+        count = filtered.length;
+        citas = filtered.slice(offsetNum, offsetNum + limitNum);
+      } else {
+        const result = await Cita.findAndCountAll({
+          where: whereCondition,
+          include: citaIncludes,
+          order: [['fecha_cita', 'DESC']],
+          limit: parseInt(limit, 10),
+          offset: parseInt(offset, 10),
+          raw: false,
+        });
+
+        count = result.count;
+        citas = result.rows;
+      }
       
       logger.debug('Citas obtenidas de BD', {
         count,
