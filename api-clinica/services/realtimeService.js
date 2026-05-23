@@ -2,6 +2,7 @@
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { Usuario, Paciente } from '../models/associations.js';
+import { isSocketOriginAllowed } from '../utils/socketCorsOrigins.js';
 
 class RealtimeService {
   constructor() {
@@ -15,28 +16,13 @@ class RealtimeService {
     try {
       this.io = new Server(httpServer, {
         cors: {
-          origin: function (origin, callback) {
-            // Permitir todos los origins en desarrollo
+          origin(origin, callback) {
             if (process.env.NODE_ENV === 'development') {
               return callback(null, true);
             }
-            
-            // En producción, validar origins específicos
-            const allowedOrigins = [
-              'http://localhost:3000',
-              'http://localhost:3001',
-              'http://localhost:5173', // Vite
-              'http://localhost:5174', // cuidate-web dev
-              'http://localhost:8081', // React Native Metro
-              'http://10.0.2.2:3000',  // Android emulator
-              'http://localhost:19006', // Expo
-              ...(process.env.WEB_APP_ORIGIN ? [process.env.WEB_APP_ORIGIN] : []),
-            ];
-            
-            if (allowedOrigins.includes(origin)) {
+            if (isSocketOriginAllowed(origin)) {
               return callback(null, true);
             }
-            
             callback(new Error('No permitido por CORS'));
           },
           credentials: true,
@@ -75,14 +61,15 @@ class RealtimeService {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await Usuario.findByPk(decoded.id);
-        
+        const userId = decoded.id ?? decoded.id_usuario;
+        const user = await Usuario.findByPk(userId);
+
         if (!user || !user.activo) {
           return next(new Error('Usuario inválido'));
         }
 
-        socket.userId = decoded.id;
-        socket.userRole = decoded.rol;
+        socket.userId = userId;
+        socket.userRole = decoded.rol ?? user.rol;
         socket.deviceId = deviceId;
         socket.platform = decoded.platform || 'unknown';
         

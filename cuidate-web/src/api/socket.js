@@ -9,10 +9,10 @@ const baseURL = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '')}`
   : (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : '');
 
-/** Convierte URL HTTP(S) a WS(S) para Socket.IO */
+/** URL del servidor Socket.IO (http/https; el cliente negocia WebSocket). */
 function getSocketURL() {
   if (!baseURL) return undefined;
-  return baseURL.replace(/^http/, 'ws');
+  return baseURL;
 }
 
 let socket = null;
