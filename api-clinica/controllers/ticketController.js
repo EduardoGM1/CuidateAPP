@@ -231,7 +231,11 @@ export async function getTicket(req, res) {
     });
 
     const j = ticket.toJSON();
-    const nombresPorUsuario = await nombresSolicitantePorIdsUsuario([j.id_usuario_creador]);
+    const idsAutores = [
+      j.id_usuario_creador,
+      ...mensajes.map((m) => m.id_usuario_autor),
+    ];
+    const nombresPorUsuario = await nombresSolicitantePorIdsUsuario(idsAutores);
     const creadorNombre = nombresPorUsuario.get(j.id_usuario_creador) || null;
 
     return sendSuccess(res, {
@@ -247,12 +251,15 @@ export async function getTicket(req, res) {
         creador_email: j.Creador?.email,
         mensajes: mensajes.map((m) => {
           const mj = m.toJSON();
+          const idAutor = mj.id_usuario_autor;
           return {
             id_mensaje: mj.id_mensaje,
             cuerpo: mj.cuerpo,
             created_at: mj.created_at,
+            autor_nombre: nombresPorUsuario.get(idAutor) || null,
             autor_email: mj.Autor?.email,
-            id_usuario_autor: mj.id_usuario_autor,
+            autor_rol: mj.Autor?.rol,
+            id_usuario_autor: idAutor,
           };
         }),
       },

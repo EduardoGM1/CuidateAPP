@@ -8,7 +8,11 @@ import { useAuthStore } from '../../stores/authStore';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { TicketEstadoBadge, TicketPrioridadBadge } from '../../components/tickets/TicketFieldBadge';
-import { getTicketCategoriaLabel, getTicketSolicitanteNombre } from '../../utils/ticketDisplay';
+import {
+  getTicketCategoriaLabel,
+  getTicketMensajeAutorNombre,
+  getTicketSolicitanteNombre,
+} from '../../utils/ticketDisplay';
 
 export default function TicketDetailPage() {
   const { id } = useParams();
@@ -129,9 +133,6 @@ export default function TicketDetailPage() {
         {adminPath && getTicketSolicitanteNombre(ticket) !== '—' && (
           <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-texto-secundario)' }}>
             Solicitante: {getTicketSolicitanteNombre(ticket)}
-            {ticket.creador_nombre && ticket.creador_email ? (
-              <span style={{ marginLeft: 8, opacity: 0.85 }}>({sanitizeForDisplay(ticket.creador_email)})</span>
-            ) : null}
           </p>
         )}
       </Card>
@@ -174,7 +175,7 @@ export default function TicketDetailPage() {
         {(ticket.mensajes || []).map((m) => (
           <Card key={m.id_mensaje}>
             <div style={{ fontSize: '0.8rem', color: 'var(--color-texto-secundario)', marginBottom: '0.35rem' }}>
-              {sanitizeForDisplay(m.autor_email)} · {formatDateTime(m.created_at)}
+              {getTicketMensajeAutorNombre(m)} · {formatDateTime(m.created_at)}
             </div>
             <div style={{ whiteSpace: 'pre-wrap' }}>{sanitizeForDisplay(m.cuerpo)}</div>
           </Card>

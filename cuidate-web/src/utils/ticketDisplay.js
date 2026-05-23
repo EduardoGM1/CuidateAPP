@@ -72,6 +72,18 @@ export function getTicketSolicitanteNombre(ticket) {
   return '—';
 }
 
+/**
+ * Nombre visible del autor de un mensaje de ticket (prioriza nombre, no correo).
+ * @param {{ autor_nombre?: string, autor_email?: string, autor_rol?: string } | null | undefined} mensaje
+ */
+export function getTicketMensajeAutorNombre(mensaje) {
+  const nombre = String(mensaje?.autor_nombre ?? '').trim();
+  if (nombre) return sanitizeForDisplay(nombre);
+  const rol = String(mensaje?.autor_rol ?? '').toLowerCase();
+  if (rol === 'admin') return 'Administración';
+  return 'Usuario';
+}
+
 export function getTicketPrioridadDisplay(prioridad) {
   const key = String(prioridad ?? '').toLowerCase();
   const cfg = PRIORIDAD_MAP[key];
