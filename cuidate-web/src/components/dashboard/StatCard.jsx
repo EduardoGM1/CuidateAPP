@@ -8,11 +8,13 @@ function StatCard({ icon: Icon, label, value, sublabel }) {
       <div className="saas-stat-icon" aria-hidden="true">
         {typeof Icon === 'function' ? <Icon /> : null}
       </div>
-      <div className="saas-stat-value">{value ?? '—'}</div>
-      <div className="saas-stat-label">{label}</div>
-      {sublabel != null && sublabel !== '' && (
-        <div className="saas-stat-sublabel">{sublabel}</div>
-      )}
+      <div className="saas-stat-body">
+        <div className="saas-stat-value">{value ?? '—'}</div>
+        <div className="saas-stat-label">{label}</div>
+        {sublabel != null && sublabel !== '' && (
+          <div className="saas-stat-sublabel">{sublabel}</div>
+        )}
+      </div>
     </div>
   );
 }
