@@ -1,10 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useCurrentDoctorId } from '../../hooks/useCurrentDoctorId';
 import { getNotificacionesDoctor, marcarNotificacionLeida, archivarNotificacion } from '../../api/notificaciones';
 import { useSocketEvent } from '../../contexts/SocketContext';
 import { PageHeader } from '../../components/shared';
 import { Card, Button, LoadingSpinner, EmptyState, Badge, Input, Select } from '../../components/ui';
 import DetalleNotificacionModal from '../../components/doctor/DetalleNotificacionModal';
+import NotificacionEstadoBadge from '../../components/doctor/NotificacionEstadoBadge';
+import {
+  countNotificacionesNoLeidas,
+  isNotificacionNoLeida,
+  sortNotificacionesConNoLeidasPrimero,
+} from '../../utils/notificacionDisplay';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
@@ -127,6 +133,9 @@ export default function NotificacionesDoctor() {
     setDetalleNotificacion(null);
   };
 
+  const listOrdenada = useMemo(() => sortNotificacionesConNoLeidasPrimero(list), [list]);
+  const cantidadNoLeidas = useMemo(() => countNotificacionesNoLeidas(list), [list]);
+
   if (loadingDoctor || errorDoctor) {
     return (
       <div>
@@ -168,33 +177,48 @@ export default function NotificacionesDoctor() {
           {error} <button type="button" onClick={load} style={{ marginLeft: '0.5rem', textDecoration: 'underline' }}>Reintentar</button>
         </p>
       )}
+      {!loading && list.length > 0 && (
+        <div className="notificaciones-leyenda" role="note">
+          <span className="notificaciones-leyenda__item">
+            <span className="notificacion-card__unread-dot" aria-hidden />
+            Sin leer ({cantidadNoLeidas})
+          </span>
+          <span className="notificaciones-leyenda__item">
+            <Badge variant="success">Leída</Badge>
+          </span>
+          <span className="notificaciones-leyenda__item">
+            <Badge variant="neutral">Archivada</Badge>
+          </span>
+        </div>
+      )}
       {loading ? (
         <LoadingSpinner />
       ) : list.length === 0 ? (
         <EmptyState message="No hay notificaciones" />
       ) : (
         <div data-tour="section-notificaciones-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {list.map((n) => {
+          {listOrdenada.map((n) => {
             const id = n.id_notificacion ?? n.id;
-            const isLeida = (n.estado || '').toLowerCase() === 'leida';
+            const noLeida = isNotificacionNoLeida(n);
             return (
               <Card
                 key={id}
-                style={{ opacity: isLeida ? 0.9 : 1, cursor: 'pointer' }}
+                className={`notificacion-card ${noLeida ? 'notificacion-card--unread' : 'notificacion-card--read'}`}
                 onClick={() => setDetalleNotificacion(n)}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                    <div className="notificacion-card__header">
+                      {noLeida && <span className="notificacion-card__unread-dot" title="Sin leer" aria-hidden />}
                       <Badge variant="neutral">{TIPO_LABELS[n.tipo] || n.tipo || '—'}</Badge>
-                      {!isLeida && <Badge variant="primary">Nueva</Badge>}
-                      <span style={{ fontSize: '0.85rem', color: 'var(--color-texto-secundario)' }}>{formatDateTime(n.fecha_envio)}</span>
+                      <NotificacionEstadoBadge notificacion={n} />
+                      <span className="notificacion-card__fecha">{formatDateTime(n.fecha_envio)}</span>
                     </div>
-                    <strong style={{ display: 'block', marginBottom: '0.25rem' }}>{sanitizeForDisplay(n.titulo) || 'Sin título'}</strong>
-                    <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-texto-secundario)', whiteSpace: 'pre-wrap' }}>{sanitizeForDisplay(n.mensaje) || '—'}</p>
+                    <strong className="notificacion-card__title">{sanitizeForDisplay(n.titulo) || 'Sin título'}</strong>
+                    <p className="notificacion-card__mensaje">{sanitizeForDisplay(n.mensaje) || '—'}</p>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
-                    {!isLeida && (
+                    {noLeida && (
                       <Button variant="outline" disabled={actingId === id} onClick={() => handleMarcarLeida(n)}>
                         Marcar leída
                       </Button>

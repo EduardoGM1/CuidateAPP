@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
+import NotificacionEstadoBadge from './NotificacionEstadoBadge';
+import { isNotificacionNoLeida } from '../../utils/notificacionDisplay';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 
@@ -67,7 +69,7 @@ export default function DetalleNotificacionModal({
   }
 
   const id = notificacion.id_notificacion ?? notificacion.id;
-  const isLeida = (notificacion.estado || '').toLowerCase() === 'leida';
+  const noLeida = isNotificacionNoLeida(notificacion);
   const tipoLabel = TIPO_LABELS[notificacion.tipo] || notificacion.tipo || '—';
   const datos = notificacion.datos_adicionales || {};
   const hasDatos = Object.keys(datos).length > 0;
@@ -98,7 +100,7 @@ export default function DetalleNotificacionModal({
           Ir a solicitudes
         </Button>
       )}
-      {!isLeida && typeof onMarcarLeida === 'function' && (
+      {noLeida && typeof onMarcarLeida === 'function' && (
         <Button
           variant="outline"
           size="small"
@@ -129,10 +131,7 @@ export default function DetalleNotificacionModal({
           <div style={sectionTitleStyle}>Tipo y estado</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <Badge variant="neutral">{tipoLabel}</Badge>
-            <Badge variant={isLeida ? 'neutral' : 'primary'}>{isLeida ? 'Leída' : 'Nueva'}</Badge>
-            {notificacion.estado === 'archivada' && (
-              <Badge variant="neutral">Archivada</Badge>
-            )}
+            <NotificacionEstadoBadge notificacion={notificacion} />
           </div>
         </div>
 

@@ -11,6 +11,7 @@ import { sanitizeForDisplay, displayText } from '../utils/sanitize';
 import AlertDetailModal from '../components/dashboard/AlertDetailModal';
 import AdminAlertDetailModal from '../components/dashboard/AdminAlertDetailModal';
 import DetalleNotificacionModal from '../components/doctor/DetalleNotificacionModal';
+import { isNotificacionNoLeida, sortNotificacionesConNoLeidasPrimero } from '../utils/notificacionDisplay';
 import DetalleCitaModal from '../components/pacientes/DetalleCitaModal';
 import StatCard, { IconUsers, IconUser, IconCalendar, IconTrendingUp, IconMessageCircle, IconAlertTriangle } from '../components/dashboard/StatCard';
 import { Card, Button } from '../components/ui';
@@ -434,18 +435,43 @@ export default function Dashboard() {
                   ) : notificaciones.length === 0 ? (
                     <p style={{ margin: 0, color: 'var(--color-texto-secundario)' }}>No hay notificaciones nuevas.</p>
                   ) : (
-                    <ul style={{ margin: 0, paddingLeft: 'var(--space-5)' }}>
-                      {notificaciones.map((n) => (
-                        <li key={n.id_notificacion ?? n.id} style={{ marginBottom: '0.35rem' }}>
-                          <button
-                            type="button"
-                            onClick={() => setNotifSeleccionada(n)}
-                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', color: 'inherit', textDecoration: 'underline' }}
+                    <ul style={{ margin: 0, paddingLeft: 'var(--space-5)', listStyle: 'none' }}>
+                      {sortNotificacionesConNoLeidasPrimero(notificaciones).map((n) => {
+                        const noLeida = isNotificacionNoLeida(n);
+                        return (
+                          <li
+                            key={n.id_notificacion ?? n.id}
+                            style={{
+                              marginBottom: '0.5rem',
+                              padding: '0.35rem 0.5rem',
+                              borderLeft: noLeida ? '3px solid var(--color-primario)' : '3px solid transparent',
+                              background: noLeida ? 'var(--color-fondo-verde-suave)' : 'transparent',
+                              borderRadius: 'var(--radius-sm)',
+                            }}
                           >
-                            {sanitizeForDisplay(n.titulo ?? n.mensaje ?? 'Notificación')}
-                          </button>
-                        </li>
-                      ))}
+                            <button
+                              type="button"
+                              onClick={() => setNotifSeleccionada(n)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: 0,
+                                cursor: 'pointer',
+                                textAlign: 'left',
+                                color: 'inherit',
+                                textDecoration: noLeida ? 'none' : 'underline',
+                                fontWeight: noLeida ? 700 : 400,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                              }}
+                            >
+                              {noLeida && <span className="notificacion-card__unread-dot" title="Sin leer" aria-hidden />}
+                              {sanitizeForDisplay(n.titulo ?? n.mensaje ?? 'Notificación')}
+                            </button>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </Card>
