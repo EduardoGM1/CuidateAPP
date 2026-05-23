@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Añade proxy /socket.io/ a los sitios Nginx de CuidateAPP (si falta).
+# Añade proxy /socket.io al sitio Nginx de CuidateAPP (después del bloque location /api).
 # Uso en VPS: sudo bash deploy/apply-nginx-socketio.sh
 
 set -euo pipefail
@@ -21,20 +21,43 @@ patch_file() {
     return 0
   fi
   cp -a "$f" "${f}.bak-$(date +%Y%m%d%H%M%S)"
-  awk -v marker="$MARKER" -v incfile="$INC" '
-    BEGIN { while ((getline line < incfile) > 0) block = block line "\n" }
-    /^[[:space:]]*location \/api[[:space:]]*\{/ && !done {
-      print
-      print ""
-      print "    " marker
-      n = split(block, lines, "\n")
-      for (i = 1; i <= n; i++) if (lines[i] != "") print "    " lines[i]
-      print ""
-      done = 1
-      next
-    }
-    { print }
-  ' "$f" > "${f}.tmp" && mv "${f}.tmp" "$f"
+  python3 - "$f" "$INC" "$MARKER" <<'PY'
+import sys
+from pathlib import Path
+
+path, inc_path, marker = sys.argv[1:4]
+text = Path(path).read_text(encoding="utf-8")
+inc = Path(inc_path).read_text(encoding="utf-8")
+block = f"\n    {marker}\n"
+for line in inc.splitlines():
+    if line.strip():
+        block += f"    {line}\n"
+
+lines = text.splitlines(keepends=True)
+out = []
+i = 0
+patched = False
+while i < len(lines):
+    line = lines[i]
+    out.append(line)
+    if not patched and "location /api" in line and "{" in line:
+        depth = line.count("{") - line.count("}")
+        j = i + 1
+        while j < len(lines) and depth > 0:
+            depth += lines[j].count("{") - lines[j].count("}")
+            out.append(lines[j])
+            j += 1
+        out.append(block)
+        i = j
+        patched = True
+        continue
+    i += 1
+
+if not patched:
+    print(f"[WARN] No se encontró location /api en {path}", file=sys.stderr)
+    sys.exit(1)
+Path(path).write_text("".join(out), encoding="utf-8")
+PY
   echo "[OK] Parcheado: $f"
 }
 
@@ -43,7 +66,7 @@ shopt -s nullglob
 for f in /etc/nginx/sites-enabled/*; do
   [[ -f "$f" ]] || continue
   [[ "$f" == *".bak-"* ]] && continue
-  if grep -qE 'cuidate|CuidateAPP|/var/www/CuidateAPP' "$f" 2>/dev/null || grep -q 'location /api' "$f" 2>/dev/null; then
+  if grep -qE 'cuidate|CuidateAPP|/var/www/CuidateAPP|location /api' "$f" 2>/dev/null; then
     patch_file "$f"
   fi
 done
