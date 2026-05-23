@@ -18,6 +18,33 @@ export function formatNombreCompleto(obj) {
   return parts.join(' ') || '';
 }
 
+/**
+ * Nombre para bienvenida y cabecera (identidad clínica, sin email).
+ * Doctor: "Dr. Eduardo Lalito" (nombre + apellido paterno).
+ * Admin: nombre completo o "Administrador".
+ */
+export function formatWelcomeDisplayName(user) {
+  if (user == null || typeof user !== 'object') return '';
+  const rol = String(user.rol ?? user.role ?? '').trim();
+  const nombre = String(user.nombre ?? '').trim();
+  const apellido = String(user.apellido_paterno ?? user.apellido ?? '').trim();
+
+  if (rol === 'Doctor') {
+    const parts = [nombre, apellido].filter(Boolean);
+    if (parts.length > 0) return `Dr. ${parts.join(' ')}`;
+  }
+
+  if (rol === 'Admin') {
+    const full = formatNombreCompleto(user);
+    if (full) return full;
+    return 'Administrador';
+  }
+
+  const full = formatNombreCompleto(user);
+  if (full) return full;
+  return '';
+}
+
 const MESES_ABREV = [
   'ene', 'feb', 'mar', 'abr', 'may', 'jun',
   'jul', 'ago', 'sep', 'oct', 'nov', 'dic',

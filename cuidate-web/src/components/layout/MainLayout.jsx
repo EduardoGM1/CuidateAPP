@@ -171,6 +171,7 @@ function MenuIcon() {
 
 function MainLayoutShell() {
   useBuildVersionCheck();
+  const refreshUserProfile = useAuthStore((s) => s.refreshUserProfile);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobile, setMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 992);
   const location = useLocation();
@@ -183,6 +184,12 @@ function MainLayoutShell() {
 
   const isAdminFn = typeof isAdmin === 'function' ? isAdmin : () => false;
   const getDisplayNameSafe = typeof getDisplayName === 'function' ? getDisplayName : () => '';
+
+  useEffect(() => {
+    if (typeof refreshUserProfile === 'function') {
+      refreshUserProfile();
+    }
+  }, [refreshUserProfile]);
 
   const navLinks = [
     ...navLinksBase,

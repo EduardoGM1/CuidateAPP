@@ -755,16 +755,23 @@ export const login = async (req, res) => {
       // Actualizar último login
       await usuario.update({ ultimo_login: new Date() });
 
-      // Si es Doctor, obtener id_doctor
+      // Si es Doctor, obtener perfil (id + nombre para UI de bienvenida)
       let id_doctor = null;
+      let doctorProfile = {};
       if (usuario.rol === 'Doctor') {
         const { Doctor } = await import('../models/associations.js');
         const doctor = await Doctor.findOne({
           where: { id_usuario: usuario.id_usuario },
-          attributes: ['id_doctor']
+          attributes: ['id_doctor', 'nombre', 'apellido_paterno', 'apellido_materno']
         });
         if (doctor) {
           id_doctor = doctor.id_doctor;
+          const d = doctor.toJSON ? doctor.toJSON() : doctor;
+          doctorProfile = {
+            nombre: d.nombre ?? null,
+            apellido_paterno: d.apellido_paterno ?? null,
+            apellido_materno: d.apellido_materno ?? null,
+          };
         }
       }
 
@@ -788,7 +795,8 @@ export const login = async (req, res) => {
           id_usuario: usuario.id_usuario,
           email: usuario.email,
           rol: usuario.rol,
-          ...(id_doctor && { id_doctor })
+          ...(id_doctor && { id_doctor }),
+          ...doctorProfile
         }
       });
     } catch (err) {

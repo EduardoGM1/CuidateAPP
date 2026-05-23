@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { STORAGE_KEYS, AUTH_PERSIST_KEY, ROLES } from '../utils/constants';
-import { formatNombreCompleto } from '../utils/format';
+import { formatWelcomeDisplayName } from '../utils/format';
 import * as authApi from '../api/auth';
+import { getDoctorById } from '../api/doctores';
 import { disconnect } from '../api/socket';
 import { clearAllPatientDrafts } from '../utils/patientDraftStorage';
 
@@ -73,9 +74,36 @@ export const useAuthStore = create(
       getDisplayName: () => {
         const user = get().user ?? getStoredUser();
         if (!user) return '';
-        const full = formatNombreCompleto(user);
-        if (full) return full;
-        return user.email ?? user.nombre ?? 'Usuario';
+        const welcome = formatWelcomeDisplayName(user);
+        if (welcome) return welcome;
+        return user.nombre?.trim() || 'Usuario';
+      },
+
+      /** Completa nombre/apellidos en sesiones antiguas (localStorage sin perfil). */
+      refreshUserProfile: async () => {
+        const token = get().token ?? getStoredToken();
+        const user = get().user ?? getStoredUser();
+        if (!token || !user) return;
+        const hasName = Boolean(user.nombre?.trim() && user.apellido_paterno?.trim());
+        if (hasName) return;
+
+        const rol = String(user.rol ?? '').trim();
+        if (rol === 'Doctor' && user.id_doctor) {
+          try {
+            const doc = await getDoctorById(user.id_doctor);
+            const d = doc && typeof doc === 'object' ? doc : {};
+            if (d.nombre || d.apellido_paterno) {
+              get().setAuth(token, {
+                ...user,
+                nombre: d.nombre ?? user.nombre,
+                apellido_paterno: d.apellido_paterno ?? user.apellido_paterno,
+                apellido_materno: d.apellido_materno ?? user.apellido_materno,
+              });
+            }
+          } catch {
+            /* no bloquear UI */
+          }
+        }
       },
     }),
     {

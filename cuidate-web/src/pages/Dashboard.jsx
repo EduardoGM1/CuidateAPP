@@ -192,8 +192,8 @@ export default function Dashboard() {
   return (
     <div className="saas-page" data-tour="section-dashboard-root">
       <section className="saas-welcome" aria-label="Bienvenida" data-tour="section-dashboard-welcome">
-        <h1>Bienvenido, {sanitizeForDisplay(getDisplayName())}</h1>
-        <p>Rol: {rolLabel} · {formatDateWithWeekday(new Date())}</p>
+        <h1>Bienvenido, {sanitizeForDisplay(getDisplayName()) || rolLabel}</h1>
+        <p>{formatDateWithWeekday(new Date())}</p>
       </section>
 
       {error && (
