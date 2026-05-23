@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { message } from 'antd';
 import { useCurrentDoctorId } from '../../hooks/useCurrentDoctorId';
 import { getNotificacionesDoctor, marcarNotificacionLeida, archivarNotificacion } from '../../api/notificaciones';
 import { useSocketEvent } from '../../contexts/SocketContext';
 import { PageHeader } from '../../components/shared';
-import { Card, Button, LoadingSpinner, EmptyState, Badge, Input, Select } from '../../components/ui';
+import { Card, Button, LoadingSpinner, EmptyState, Badge, Input, Select, Modal } from '../../components/ui';
 import DetalleNotificacionModal from '../../components/doctor/DetalleNotificacionModal';
 import NotificacionEstadoBadge from '../../components/doctor/NotificacionEstadoBadge';
 import {
-  countNotificacionesNoLeidas,
+  isNotificacionArchivada,
   isNotificacionNoLeida,
   sortNotificacionesConNoLeidasPrimero,
 } from '../../utils/notificacionDisplay';
@@ -51,9 +52,12 @@ export default function NotificacionesDoctor() {
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
   const [filtroSearch, setFiltroSearch] = useState('');
-  const [incluirTodos, setIncluirTodos] = useState(false);
+  const [incluirTodosTipos, setIncluirTodosTipos] = useState(false);
+  const [incluirArchivadas, setIncluirArchivadas] = useState(false);
+  const [noLeidasApi, setNoLeidasApi] = useState(0);
   const [actingId, setActingId] = useState(null);
   const [detalleNotificacion, setDetalleNotificacion] = useState(null);
+  const [confirmArchivar, setConfirmArchivar] = useState(null);
 
   const notificacionesListas = !loadingDoctor && (!idDoctor ? true : !loading);
   useOnboardingPageReady(notificacionesListas);
@@ -65,7 +69,8 @@ export default function NotificacionesDoctor() {
     try {
       const res = await getNotificacionesDoctor(idDoctor, {
         limit: 50,
-        incluir_todos: incluirTodos,
+        incluir_todos: incluirTodosTipos,
+        incluir_archivadas: incluirArchivadas,
         tipo: filtroTipo || undefined,
         estado: filtroEstado || undefined,
         fecha_desde: filtroFechaDesde || undefined,
@@ -74,13 +79,14 @@ export default function NotificacionesDoctor() {
       });
       setList(res.notificaciones ?? []);
       setTotal(res.total ?? 0);
+      setNoLeidasApi(res.no_leidas ?? 0);
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || 'Error al cargar notificaciones');
       setList([]);
     } finally {
       setLoading(false);
     }
-  }, [idDoctor, incluirTodos, filtroTipo, filtroEstado, filtroFechaDesde, filtroFechaHasta, filtroSearch]);
+  }, [idDoctor, incluirTodosTipos, incluirArchivadas, filtroTipo, filtroEstado, filtroFechaDesde, filtroFechaHasta, filtroSearch]);
 
   useEffect(() => {
     load();
@@ -101,23 +107,36 @@ export default function NotificacionesDoctor() {
       await marcarNotificacionLeida(idDoctor, id);
       await load();
       await refreshDoctorNavBadges();
-    } catch {
+      message.success('Notificación marcada como leída');
+    } catch (err) {
+      message.error(err?.response?.data?.error || err?.message || 'No se pudo marcar como leída');
       setActingId(null);
     } finally {
       setActingId(null);
     }
   };
 
-  const handleArchivar = async (notif) => {
-    const id = notif.id_notificacion ?? notif.id;
+  const solicitarArchivar = (notif) => {
+    if (!notif || isNotificacionArchivada(notif)) return;
+    setConfirmArchivar(notif);
+  };
+
+  const handleArchivarConfirmado = async () => {
+    const notif = confirmArchivar;
+    const id = notif?.id_notificacion ?? notif?.id;
     if (!id || !idDoctor) return;
     setActingId(id);
     try {
       await archivarNotificacion(idDoctor, id);
+      setConfirmArchivar(null);
+      if (detalleNotificacion && (detalleNotificacion.id_notificacion ?? detalleNotificacion.id) === id) {
+        setDetalleNotificacion(null);
+      }
       await load();
       await refreshDoctorNavBadges();
-    } catch {
-      setActingId(null);
+      message.success('Notificación archivada');
+    } catch (err) {
+      message.error(err?.response?.data?.error || err?.message || 'No se pudo archivar la notificación');
     } finally {
       setActingId(null);
     }
@@ -128,13 +147,8 @@ export default function NotificacionesDoctor() {
     setDetalleNotificacion(null);
   };
 
-  const handleArchivarYCerrarDetalle = async (notif) => {
-    await handleArchivar(notif);
-    setDetalleNotificacion(null);
-  };
-
   const listOrdenada = useMemo(() => sortNotificacionesConNoLeidasPrimero(list), [list]);
-  const cantidadNoLeidas = useMemo(() => countNotificacionesNoLeidas(list), [list]);
+  const cantidadNoLeidas = noLeidasApi;
 
   if (loadingDoctor || errorDoctor) {
     return (
@@ -168,7 +182,11 @@ export default function NotificacionesDoctor() {
         <Input label="Hasta" type="date" value={filtroFechaHasta} onChange={(e) => setFiltroFechaHasta(e.target.value)} style={{ marginBottom: 0, minWidth: 140 }} />
         <Input label="Buscar" value={filtroSearch} onChange={(e) => setFiltroSearch(e.target.value)} placeholder="Texto en título o mensaje" style={{ marginBottom: 0, minWidth: 200 }} />
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '0.75rem' }}>
-          <input type="checkbox" checked={incluirTodos} onChange={(e) => setIncluirTodos(e.target.checked)} />
+          <input type="checkbox" checked={incluirTodosTipos} onChange={(e) => setIncluirTodosTipos(e.target.checked)} />
+          Todos los tipos
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '0.75rem' }}>
+          <input type="checkbox" checked={incluirArchivadas} onChange={(e) => setIncluirArchivadas(e.target.checked)} />
           Incluir archivadas
         </label>
       </div>
@@ -200,6 +218,7 @@ export default function NotificacionesDoctor() {
           {listOrdenada.map((n) => {
             const id = n.id_notificacion ?? n.id;
             const noLeida = isNotificacionNoLeida(n);
+            const archivada = isNotificacionArchivada(n);
             return (
               <Card
                 key={id}
@@ -242,9 +261,30 @@ export default function NotificacionesDoctor() {
         onClose={() => setDetalleNotificacion(null)}
         notificacion={detalleNotificacion}
         onMarcarLeida={handleMarcarLeidaYCerrarDetalle}
-        onArchivar={handleArchivarYCerrarDetalle}
+        onArchivar={solicitarArchivar}
         actingId={actingId}
       />
+
+      <Modal
+        open={confirmArchivar != null}
+        onClose={() => setConfirmArchivar(null)}
+        title="Archivar notificación"
+        okText="Sí, archivar"
+        cancelText="Cancelar"
+        onOk={handleArchivarConfirmado}
+        confirmLoading={actingId != null}
+        width={440}
+      >
+        <p style={{ margin: 0, color: 'var(--color-texto-secundario)' }}>
+          ¿Deseas archivar esta notificación? Dejará de mostrarse en la lista principal (puedes verla activando
+          &quot;Incluir archivadas&quot;).
+        </p>
+        {confirmArchivar && (
+          <p style={{ margin: '0.75rem 0 0', fontWeight: 600 }}>
+            {sanitizeForDisplay(confirmArchivar.titulo) || 'Sin título'}
+          </p>
+        )}
+      </Modal>
     </div>
   );
 }

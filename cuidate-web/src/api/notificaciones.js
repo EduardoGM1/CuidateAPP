@@ -13,7 +13,7 @@ function norm(res) {
 /**
  * Notificaciones de un doctor (Doctor propio o Admin).
  * @param {number|string} doctorId
- * @param {{ page?: number, limit?: number, offset?: number, tipo?: string, estado?: string, incluir_todos?: boolean, fecha_desde?: string, fecha_hasta?: string, search?: string }} [params]
+ * @param {{ page?: number, limit?: number, offset?: number, tipo?: string, estado?: string, incluir_todos?: boolean, incluir_archivadas?: boolean, fecha_desde?: string, fecha_hasta?: string, search?: string }} [params]
  */
 export async function getNotificacionesDoctor(doctorId, params = {}) {
   const id = parsePositiveInt(doctorId, 0);
@@ -25,6 +25,7 @@ export async function getNotificacionesDoctor(doctorId, params = {}) {
   if (params.tipo) q.set('tipo', params.tipo);
   if (params.estado) q.set('estado', params.estado);
   if (params.incluir_todos === true) q.set('incluir_todos', 'true');
+  if (params.incluir_archivadas === true) q.set('incluir_archivadas', 'true');
   if (params.fecha_desde) q.set('fecha_desde', String(params.fecha_desde).slice(0, 10));
   if (params.fecha_hasta) q.set('fecha_hasta', String(params.fecha_hasta).slice(0, 10));
   if (params.search && String(params.search).trim()) q.set('search', String(params.search).trim().slice(0, 100));

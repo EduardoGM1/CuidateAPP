@@ -3,7 +3,7 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import NotificacionEstadoBadge from './NotificacionEstadoBadge';
-import { isNotificacionNoLeida } from '../../utils/notificacionDisplay';
+import { isNotificacionArchivada, isNotificacionNoLeida } from '../../utils/notificacionDisplay';
 import { formatDateTime } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 
@@ -70,6 +70,7 @@ export default function DetalleNotificacionModal({
 
   const id = notificacion.id_notificacion ?? notificacion.id;
   const noLeida = isNotificacionNoLeida(notificacion);
+  const archivada = isNotificacionArchivada(notificacion);
   const tipoLabel = TIPO_LABELS[notificacion.tipo] || notificacion.tipo || '—';
   const datos = notificacion.datos_adicionales || {};
   const hasDatos = Object.keys(datos).length > 0;
@@ -110,7 +111,7 @@ export default function DetalleNotificacionModal({
           Marcar leída
         </Button>
       )}
-      {typeof onArchivar === 'function' && (
+      {!archivada && typeof onArchivar === 'function' && (
         <Button
           variant="outline"
           size="small"

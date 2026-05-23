@@ -5,8 +5,18 @@
 
 import { Op } from 'sequelize';
 import { NotificacionDoctor, Doctor, Paciente, Cita, MensajeChat } from '../models/associations.js';
+import { NOTIF_DOCTOR_TIPOS_CRITICOS } from '../constants/notificacionesDoctor.js';
 import { sendSuccess, sendError, sendServerError } from '../utils/responseHelpers.js';
 import logger from '../utils/logger.js';
+
+/** Mismo criterio que la lista por defecto: críticas y pendientes (`enviada`). */
+function whereNoLeidasPendientes(doctorId) {
+  return {
+    id_doctor: doctorId,
+    estado: 'enviada',
+    tipo: { [Op.in]: NOTIF_DOCTOR_TIPOS_CRITICOS },
+  };
+}
 
 /**
  * Obtener notificaciones de un doctor
@@ -45,7 +55,8 @@ export const getNotificacionesDoctor = async (req, res) => {
       fecha_desde,
       fecha_hasta,
       search,
-      incluir_todos = false // Nuevo parámetro para incluir todos los tipos (por defecto false)
+      incluir_todos = false,
+      incluir_archivadas = false,
     } = req.query;
 
     // Calcular offset: si viene 'page', calcularlo; si viene 'offset', usarlo directamente
@@ -73,8 +84,12 @@ export const getNotificacionesDoctor = async (req, res) => {
       };
     }
     
-    if (estado) where.estado = estado;
-    
+    if (estado) {
+      where.estado = estado;
+    } else if (incluir_archivadas !== 'true' && incluir_archivadas !== true) {
+      where.estado = { [Op.ne]: 'archivada' };
+    }
+
     if (fecha_desde || fecha_hasta) {
       where.fecha_envio = {};
       if (fecha_desde) where.fecha_envio[Op.gte] = new Date(fecha_desde);
@@ -151,7 +166,7 @@ export const getNotificacionesDoctor = async (req, res) => {
     }));
 
     const no_leidas = await NotificacionDoctor.count({
-      where: { id_doctor: doctorId, estado: 'enviada' }
+      where: whereNoLeidasPendientes(doctorId),
     });
 
     return sendSuccess(res, {
@@ -385,10 +400,7 @@ export const getContadorNotificaciones = async (req, res) => {
     }
 
     const no_leidas = await NotificacionDoctor.count({
-      where: {
-        id_doctor: doctorId,
-        estado: 'enviada'
-      }
+      where: whereNoLeidasPendientes(doctorId),
     });
 
     return sendSuccess(res, {
