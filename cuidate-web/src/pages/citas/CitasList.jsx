@@ -384,6 +384,7 @@ export default function CitasList() {
       <div data-tour="section-citas-filters">
       <SearchFilterBar
         key={filterBarKey}
+        singleRow
         placeholder="Buscar por paciente o motivo..."
         filterOptions={filterOptions}
         initialSearch={params.search || ''}
@@ -391,55 +392,15 @@ export default function CitasList() {
           estado: params.estado,
           doctor: params.doctor ? String(params.doctor) : '',
         }}
+        dateRange={{
+          fechaDesde: params.fecha_desde || '',
+          fechaHasta: params.fecha_hasta || '',
+          onChange: handleDateChange,
+          idPrefix: 'citas',
+        }}
         onSearch={handleSearch}
         onReset={handleResetFilters}
       />
-      <div className="search-filter-bar" style={{ marginBottom: 'var(--space-4)' }}>
-        <div className="filter-cell" style={{ minWidth: 160 }}>
-          <label className="filter-label" htmlFor="citas-fecha-desde">
-            Fecha desde
-          </label>
-          <input
-            id="citas-fecha-desde"
-            type="date"
-            value={params.fecha_desde || ''}
-            onChange={(e) => handleDateChange('fecha_desde', e.target.value)}
-            max={params.fecha_hasta || undefined}
-            style={{
-              width: '100%',
-              minHeight: 40,
-              padding: 'var(--space-2) var(--space-3)',
-              borderRadius: 'var(--radius)',
-              border: '1px solid var(--color-borde-claro)',
-              background: 'var(--color-fondo-card)',
-              color: 'var(--color-texto-primario)',
-              fontSize: 'var(--text-base)',
-            }}
-          />
-        </div>
-        <div className="filter-cell" style={{ minWidth: 160 }}>
-          <label className="filter-label" htmlFor="citas-fecha-hasta">
-            Fecha hasta
-          </label>
-          <input
-            id="citas-fecha-hasta"
-            type="date"
-            value={params.fecha_hasta || ''}
-            onChange={(e) => handleDateChange('fecha_hasta', e.target.value)}
-            min={params.fecha_desde || undefined}
-            style={{
-              width: '100%',
-              minHeight: 40,
-              padding: 'var(--space-2) var(--space-3)',
-              borderRadius: 'var(--radius)',
-              border: '1px solid var(--color-borde-claro)',
-              background: 'var(--color-fondo-card)',
-              color: 'var(--color-texto-primario)',
-              fontSize: 'var(--text-base)',
-            }}
-          />
-        </div>
-      </div>
       </div>
       {(error || updateError) && (
         <div
