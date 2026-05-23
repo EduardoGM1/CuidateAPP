@@ -371,6 +371,9 @@ const MESES = [
 function ReporteComorbilidadesHeatmapCard({ summaryFromParent }) {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const isDoctor = useAuthStore((s) => s.isDoctor);
+  const admin = isAdmin();
+  /** Admin cuenta como "doctor" en authStore; solo doctores reales usan /dashboard/doctor/summary */
+  const doctorSolo = isDoctor() && !admin;
   const [modulos, setModulos] = useState([]);
   const [filtroModulo, setFiltroModulo] = useState('');
   const [estadoFiltro, setEstadoFiltro] = useState('');
@@ -381,15 +384,15 @@ function ReporteComorbilidadesHeatmapCard({ summaryFromParent }) {
   const [error, setError] = useState(null);
 
   const filtrosPorDefecto = !estadoFiltro && !periodoFiltro;
-  const puedeUsarSummaryPadre = isDoctor() && summaryFromParent?.chartData && filtrosPorDefecto;
+  const puedeUsarSummaryPadre = doctorSolo && summaryFromParent?.chartData && filtrosPorDefecto;
 
   useEffect(() => {
-    if (isAdmin()) {
+    if (admin) {
       getModulos()
         .then((list) => setModulos(Array.isArray(list) ? list : []))
         .catch(() => setModulos([]));
     }
-  }, [isAdmin]);
+  }, [admin]);
 
   useEffect(() => {
     if (!puedeUsarSummaryPadre) return;
@@ -410,7 +413,29 @@ function ReporteComorbilidadesHeatmapCard({ summaryFromParent }) {
     setLoading(true);
     setError(null);
     try {
-      if (isDoctor()) {
+      if (admin) {
+        const params = { limit: PAGE_SIZE_MAX, estado: 'activos' };
+        if (filtroModulo && parseInt(filtroModulo, 10) > 0) {
+          params.modulo = parseInt(filtroModulo, 10);
+        }
+        const res = await getPacientes(params);
+        const pacientes = res?.pacientes ?? (Array.isArray(res) ? res : []);
+        const freq = {};
+        (pacientes || []).forEach((p) => {
+          const coms = p.comorbilidades ?? [];
+          if (!Array.isArray(coms)) return;
+          coms.forEach((c) => {
+            const nombre = c?.nombre ?? c?.nombre_comorbilidad ?? (typeof c === 'string' ? c : '');
+            if (nombre) freq[nombre] = (freq[nombre] || 0) + 1;
+          });
+        });
+        const list = Object.entries(freq)
+          .map(([nombre, frecuencia]) => ({ nombre, frecuencia }))
+          .sort((a, b) => b.frecuencia - a.frecuencia);
+        setDatos(list);
+        return;
+      }
+      if (doctorSolo) {
         const params = {};
         if (estadoFiltro) params.estado = estadoFiltro;
         if (periodoFiltro) params.periodo = periodoFiltro;
@@ -462,22 +487,22 @@ function ReporteComorbilidadesHeatmapCard({ summaryFromParent }) {
     } finally {
       setLoading(false);
     }
-  }, [isDoctor, filtroModulo, estadoFiltro, periodoFiltro, rangoMeses.mesInicio, rangoMeses.mesFin, rangoMeses.año]);
+  }, [admin, doctorSolo, filtroModulo, estadoFiltro, periodoFiltro, rangoMeses.mesInicio, rangoMeses.mesFin, rangoMeses.año]);
 
-  const skipLoadParaEsperarSummary = isDoctor() && filtrosPorDefecto && (summaryFromParent == null || summaryFromParent?.chartData != null);
+  const skipLoadParaEsperarSummary = doctorSolo && filtrosPorDefecto && (summaryFromParent == null || summaryFromParent?.chartData != null);
   useEffect(() => {
     if (skipLoadParaEsperarSummary) return;
     load();
   }, [load, skipLoadParaEsperarSummary]);
 
-  const descripcion = isAdmin()
+  const descripcion = admin
     ? 'Heatmap de comorbilidades según frecuencia en pacientes activos. Filtro por módulo.'
     : 'Heatmap de comorbilidades según frecuencia en tus pacientes. Filtra por estado y agrupa por periodo.';
 
   return (
     <ReporteCardWrapper title="Comorbilidades más frecuentes" description={descripcion}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem', alignItems: 'flex-end' }}>
-        {isAdmin() && modulos.length > 0 && (
+        {admin && modulos.length > 0 && (
           <Select
             label="Módulo"
             placeholder="Todos"
@@ -493,7 +518,7 @@ function ReporteComorbilidadesHeatmapCard({ summaryFromParent }) {
             style={{ marginBottom: 0, minWidth: 180 }}
           />
         )}
-        {isDoctor() && (
+        {doctorSolo && (
           <>
             <Select
               label="Estado"
