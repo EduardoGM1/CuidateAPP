@@ -8,6 +8,11 @@ import { SistemaAuditoria, Usuario } from '../models/associations.js';
 import { sendSuccess, sendError, sendServerError } from '../utils/responseHelpers.js';
 import logger from '../utils/logger.js';
 import exportAuditoriaService from '../services/exportAuditoriaService.js';
+import {
+  usuarioIncludeAuditoria,
+  formatUsuarioAuditoriaDisplay,
+  enrichAuditoriaRegistro,
+} from '../utils/auditoriaUsuarioDisplay.js';
 
 /**
  * Obtener historial de auditoría
@@ -62,23 +67,13 @@ export const getAuditoria = async (req, res) => {
     // Obtener registros con paginación
     const { count, rows } = await SistemaAuditoria.findAndCountAll({
       where,
-      include: [
-        {
-          model: Usuario,
-          attributes: ['id_usuario', 'email', 'rol'],
-          required: false
-        }
-      ],
+      include: [usuarioIncludeAuditoria],
       order: [['fecha_creacion', 'DESC']],
       limit: parseInt(limit),
       offset: finalOffset
     });
 
-    // Formatear datos para incluir información del usuario
-    const auditoriaFormateada = rows.map(registro => ({
-      ...registro.toJSON(),
-      usuario_nombre: registro.Usuario?.email || 'Sistema Automático'
-    }));
+    const auditoriaFormateada = rows.map((registro) => enrichAuditoriaRegistro(registro));
 
     return sendSuccess(res, {
       auditoria: auditoriaFormateada,
@@ -105,20 +100,14 @@ export const getAuditoriaById = async (req, res) => {
 
     const { id } = req.params;
     const registro = await SistemaAuditoria.findByPk(id, {
-      include: [
-        {
-          model: Usuario,
-          attributes: ['id_usuario', 'email', 'rol'],
-          required: false
-        }
-      ]
+      include: [usuarioIncludeAuditoria],
     });
 
     if (!registro) {
       return sendError(res, 'Registro de auditoría no encontrado', 404);
     }
 
-    return sendSuccess(res, { registro });
+    return sendSuccess(res, { registro: enrichAuditoriaRegistro(registro) });
   } catch (error) {
     logger.error('Error obteniendo registro de auditoría', error);
     return sendServerError(res, 'Error al obtener el registro de auditoría');
@@ -274,19 +263,11 @@ export const exportarAuditoria = async (req, res) => {
     // Obtener todos los registros (sin límite para exportación)
     const registros = await SistemaAuditoria.findAll({
       where,
-      include: [{
-        model: Usuario,
-        attributes: ['id_usuario', 'email', 'rol'],
-        required: false
-      }],
-      order: [['fecha_creacion', 'DESC']]
+      include: [usuarioIncludeAuditoria],
+      order: [['fecha_creacion', 'DESC']],
     });
 
-    // Formatear datos
-    const datosFormateados = registros.map(registro => ({
-      ...registro.toJSON(),
-      usuario_nombre: registro.Usuario?.email || 'Sistema Automático'
-    }));
+    const datosFormateados = registros.map((registro) => enrichAuditoriaRegistro(registro));
 
     // Exportar según formato
     let contenido;

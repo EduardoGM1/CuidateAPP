@@ -5,7 +5,7 @@ import { PageHeader, DataCard } from '../../components/shared';
 import { LoadingSpinner, Button } from '../../components/ui';
 import { parsePositiveInt } from '../../utils/params';
 import { sanitizeForDisplay, displayText } from '../../utils/sanitize';
-import { formatDateTime } from '../../utils/format';
+import { formatDateTime, formatAuditoriaUsuarioDisplay } from '../../utils/format';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
 export default function AuditoriaDetail() {
@@ -84,7 +84,7 @@ export default function AuditoriaDetail() {
     { label: 'Fecha', value: formatDateTime(r.fecha_creacion) },
     { label: 'Tipo de acción', value: sanitizeForDisplay(r.tipo_accion) || '—' },
     { label: 'Entidad afectada', value: sanitizeForDisplay(r.entidad_afectada) || '—' },
-    { label: 'Usuario', value: sanitizeForDisplay(r.usuario_nombre ?? r.Usuario?.email) || '—' },
+    { label: 'Usuario', value: sanitizeForDisplay(formatAuditoriaUsuarioDisplay(r)) },
     { label: 'Severidad', value: sanitizeForDisplay(r.severidad) || '—' },
     { label: 'IP', value: sanitizeForDisplay(r.ip_address) || '—' },
     { label: 'Descripción', value: displayText(r.descripcion) || '—' },

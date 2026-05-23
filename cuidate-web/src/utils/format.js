@@ -45,6 +45,21 @@ export function formatWelcomeDisplayName(user) {
   return '';
 }
 
+/**
+ * Usuario en listado/detalle de auditoría: nombre legible y correo si aplica.
+ * @param {{ usuario_nombre?: string, usuario_email?: string, Usuario?: { email?: string } }} registro
+ * @returns {string}
+ */
+export function formatAuditoriaUsuarioDisplay(registro) {
+  if (registro == null) return '—';
+  const nombre = String(registro.usuario_nombre ?? '').trim();
+  const email = String(registro.usuario_email ?? registro.Usuario?.email ?? '').trim();
+  if (nombre && email && nombre !== email && !nombre.includes('@')) {
+    return `${nombre} (${email})`;
+  }
+  return nombre || email || '—';
+}
+
 const MESES_ABREV = [
   'ene', 'feb', 'mar', 'abr', 'may', 'jun',
   'jul', 'ago', 'sep', 'oct', 'nov', 'dic',

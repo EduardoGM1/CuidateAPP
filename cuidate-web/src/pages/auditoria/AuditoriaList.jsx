@@ -5,7 +5,7 @@ import { Table, Button, Input } from '../../components/ui';
 import { downloadAsFile, downloadBlob } from '../../utils/reportUtils';
 import { PageHeader, SearchFilterBar } from '../../components/shared';
 import { sanitizeForDisplay, displayText } from '../../utils/sanitize';
-import { formatDateTime } from '../../utils/format';
+import { formatDateTime, formatAuditoriaUsuarioDisplay } from '../../utils/format';
 import { PAGE_SIZE_DEFAULT } from '../../utils/constants';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 
@@ -17,7 +17,11 @@ const COLUMNS = [
   },
   { key: 'tipo_accion', label: 'Tipo', render: (row) => sanitizeForDisplay(row.tipo_accion) || '—' },
   { key: 'entidad_afectada', label: 'Entidad', render: (row) => sanitizeForDisplay(row.entidad_afectada) || '—' },
-  { key: 'usuario_nombre', label: 'Usuario', render: (row) => sanitizeForDisplay(row.usuario_nombre) || '—' },
+  {
+    key: 'usuario_nombre',
+    label: 'Usuario',
+    render: (row) => sanitizeForDisplay(formatAuditoriaUsuarioDisplay(row)),
+  },
   {
     key: 'descripcion',
     label: 'Descripción',
@@ -132,7 +136,10 @@ export default function AuditoriaList() {
       label: 'Usuario',
       options: [
         { value: '', label: 'Todos' },
-        ...usuarios.map((u) => ({ value: String(u.id_usuario), label: sanitizeForDisplay(u.email) || '—' })),
+        ...usuarios.map((u) => ({
+          value: String(u.id_usuario),
+          label: sanitizeForDisplay(u.nombre || u.email) || '—',
+        })),
       ],
     });
   }
