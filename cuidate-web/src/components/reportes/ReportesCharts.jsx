@@ -15,7 +15,7 @@ import {
 import { Card } from '../ui';
 import { CHART_COLORS, PIE_COLORS } from './chartConfig';
 
-const CHART_HEIGHT = 220;
+const CHART_HEIGHT = 200;
 const HORIZONTAL_BAR_ROW_HEIGHT = 44;
 
 /** Recorta etiqueta larga (eje Y) manteniendo el nombre completo en el tooltip. */
@@ -81,14 +81,14 @@ export function ReportesPieChart({ title, data = [], nameKey = 'name', valueKey 
       <h3 className="saas-chart-title">{title}</h3>
       <div className="saas-chart-inner">
         <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-          <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+          <PieChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
             <Pie
               data={list}
               dataKey={valueKey}
               nameKey={nameKey}
               cx="50%"
-              cy="45%"
-              outerRadius={65}
+              cy="48%"
+              outerRadius="72%"
               label={false}
             >
               {list.map((_, i) => (

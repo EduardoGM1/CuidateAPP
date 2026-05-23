@@ -1329,30 +1329,32 @@ select:focus-visible {
 }
 .saas-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-5);
-  margin-bottom: var(--space-8);
+  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 .saas-stat-card {
   background: var(--color-fondo-card);
   border-radius: var(--radius-xl);
-  padding: var(--space-6);
+  padding: var(--space-4) var(--space-5);
   border: 1px solid rgba(0,0,0,0.06);
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   transition: box-shadow var(--transition), border-color var(--transition);
+  min-width: 0;
 }
 .saas-stat-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   border-color: rgba(45, 212, 191, 0.35);
 }
 .saas-stat-card .saas-stat-icon {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-3);
   background: var(--color-fondo-verde-suave);
   color: var(--color-primario);
 }
@@ -1427,11 +1429,23 @@ select:focus-visible {
 }
 .saas-charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--space-6);
+  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
 }
-.saas-chart-card {
-  padding: var(--space-5);
+.saas-chart-card.ant-card {
+  background: var(--color-fondo-card);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  min-width: 0;
+  height: 100%;
+}
+.saas-chart-card.ant-card > .ant-card-body {
+  padding: var(--space-3) var(--space-4);
+}
+.saas-chart-card:not(.ant-card) {
+  padding: var(--space-3) var(--space-4);
   background: var(--color-fondo-card);
   border-radius: var(--radius-xl);
   border: 1px solid rgba(0,0,0,0.06);
@@ -1441,10 +1455,12 @@ select:focus-visible {
   font-size: var(--text-base);
   font-weight: var(--font-semibold);
   color: var(--color-texto-primario);
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-2);
+  line-height: 1.35;
 }
 .saas-chart-inner {
-  min-height: 220px;
+  min-height: 200px;
+  width: 100%;
 }
 .saas-chart-inner--horizontal-bar {
   width: 100%;
