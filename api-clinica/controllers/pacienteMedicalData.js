@@ -456,7 +456,7 @@ export const getPacienteSignosVitales = async (req, res) => {
 export const getPacienteSignosVitalesEvolucion = async (req, res) => {
   try {
     const { id } = req.params;
-    const { fechaInicio, fechaFin, maxPoints: maxPointsQ } = req.query;
+    const { fechaInicio, fechaFin, maxPoints: maxPointsQ, monthlyOnly } = req.query;
 
     if (!id || isNaN(id)) {
       return res.status(400).json({ success: false, error: 'ID de paciente inválido' });
@@ -484,7 +484,8 @@ export const getPacienteSignosVitalesEvolucion = async (req, res) => {
     const ymdInicio = fechaInicio ? String(fechaInicio).trim().slice(0, 10) : null;
     const ymdFin = fechaFin ? String(fechaFin).trim().slice(0, 10) : null;
     const where = buildSignosDateWhere(pacienteId, ymdInicio, ymdFin, sequelize, Op);
-    const maxPoints = Math.min(Math.max(parseInt(maxPointsQ, 10) || 120, 1), 200);
+    const onlyMonthly = monthlyOnly === '1' || monthlyOnly === 'true';
+    const maxPoints = Math.min(Math.max(parseInt(maxPointsQ, 10) || 60, 1), 80);
 
     const total = await SignoVital.count({ where });
 
@@ -514,24 +515,26 @@ export const getPacienteSignosVitalesEvolucion = async (req, res) => {
       };
     });
 
-    let rows;
-    if (total <= maxPoints) {
-      rows = await SignoVital.findAll({
-        where,
-        order: [['fecha_medicion', 'ASC']],
-        raw: false,
-      });
-    } else {
-      rows = await SignoVital.findAll({
+    let data = [];
+    if (!onlyMonthly && total > 0) {
+      const chartAttrs = [
+        'id_signo', 'id_paciente', 'id_cita', 'fecha_medicion', 'peso_kg', 'talla_m', 'imc',
+        'medida_cintura_cm', 'presion_sistolica', 'presion_diastolica', 'glucosa_mg_dl',
+        'colesterol_mg_dl', 'colesterol_ldl', 'colesterol_hdl', 'trigliceridos_mg_dl',
+        'hba1c_porcentaje', 'registrado_por', 'fecha_creacion',
+      ];
+      const limPts = total <= maxPoints ? total : maxPoints;
+      let rows = await SignoVital.findAll({
+        attributes: chartAttrs,
         where,
         order: [['fecha_medicion', 'DESC']],
-        limit: maxPoints,
-        raw: false,
+        limit: limPts,
+        raw: true,
+        hooks: false,
       });
       rows.reverse();
+      data = rows.map((row) => formatSignoVitalRow(row, { lite: true }));
     }
-
-    const data = rows.map((signo) => formatSignoVitalRow(signo, { lite: true }));
 
     logger.info('Signos vitales evolución', {
       pacienteId,

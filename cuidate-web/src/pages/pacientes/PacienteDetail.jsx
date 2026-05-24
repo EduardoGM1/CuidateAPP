@@ -192,6 +192,7 @@ export default function PacienteDetail() {
   const [signosLoading, setSignosLoading] = useState(false);
   const [chartSignos, setChartSignos] = useState({ data: [], total: 0, monthly: [], truncated: false });
   const [chartSignosLoading, setChartSignosLoading] = useState(false);
+  const [chartPointsLoading, setChartPointsLoading] = useState(false);
   const [chartSignosError, setChartSignosError] = useState(null);
   const chartSignosAbortRef = useRef(null);
   const [diagnosticos, setDiagnosticos] = useState({ data: [], total: 0 });
@@ -596,21 +597,34 @@ export default function PacienteDetail() {
     try {
       const { fechaInicio, fechaFin } = getDateRangeForFilter(filtro);
       const params = {
-        maxPoints: filtro === FILTROS_TIEMPO.COMPLETO ? 200 : 120,
-        timeout: 45000,
+        maxPoints: filtro === FILTROS_TIEMPO.COMPLETO ? 80 : 60,
+        timeout: 60000,
         signal: ac.signal,
       };
       if (fechaInicio) params.fechaInicio = formatYmdLocal(fechaInicio);
       if (fechaFin) params.fechaFin = formatYmdLocal(fechaFin);
 
-      const res = await getPacienteSignosVitalesEvolucion(parsedId, params);
+      const monthlyParams = { ...params, monthlyOnly: true, timeout: 20000 };
+      const monthlyRes = await getPacienteSignosVitalesEvolucion(parsedId, monthlyParams);
       if (ac.signal.aborted) return;
       setChartSignos({
-        data: res.data ?? [],
-        total: res.total ?? 0,
-        monthly: res.monthly ?? [],
-        truncated: res.truncated ?? false,
+        data: [],
+        total: monthlyRes.total ?? 0,
+        monthly: monthlyRes.monthly ?? [],
+        truncated: false,
       });
+      setChartSignosLoading(false);
+      setChartPointsLoading(true);
+
+      const res = await getPacienteSignosVitalesEvolucion(parsedId, params);
+      if (ac.signal.aborted) return;
+      setChartSignos((prev) => ({
+        ...prev,
+        data: res.data ?? [],
+        total: res.total ?? prev.total,
+        monthly: prev.monthly?.length ? prev.monthly : (res.monthly ?? []),
+        truncated: res.truncated ?? false,
+      }));
     } catch (err) {
       if (ac.signal.aborted || err?.code === 'ERR_CANCELED') return;
       const msg =
@@ -620,7 +634,10 @@ export default function PacienteDetail() {
       setChartSignosError(msg);
       setChartSignos({ data: [], total: 0, monthly: [], truncated: false });
     } finally {
-      if (!ac.signal.aborted) setChartSignosLoading(false);
+      if (!ac.signal.aborted) {
+        setChartSignosLoading(false);
+        setChartPointsLoading(false);
+      }
     }
   }, [parsedId]);
 
@@ -3696,6 +3713,7 @@ export default function PacienteDetail() {
               monthlyFromApi={chartSignos.monthly}
               truncated={chartSignos.truncated}
               signosLoading={chartSignosLoading}
+              chartPointsLoading={chartPointsLoading}
               signosError={chartSignosError}
               onRetry={loadChartSignos}
               onFilterChange={loadChartSignos}
@@ -4083,6 +4101,7 @@ function PacienteGraficosEvolucion({
   monthlyFromApi,
   truncated,
   signosLoading,
+  chartPointsLoading,
   signosError,
   onRetry,
   onFilterChange,
@@ -4174,7 +4193,7 @@ function PacienteGraficosEvolucion({
       <div>
         <LoadingSpinner />
         <p style={{ marginTop: 'var(--space-3)', fontSize: 'var(--text-sm)', color: 'var(--color-texto-secundario)' }}>
-          Cargando signos vitales ({FILTRO_LABELS[filtroTiempo] ?? filtroTiempo})…
+          Cargando resumen ({FILTRO_LABELS[filtroTiempo] ?? filtroTiempo})…
         </p>
       </div>
     );
@@ -4221,6 +4240,11 @@ function PacienteGraficosEvolucion({
   return (
     <div style={{ overflowX: 'auto' }}>
       <TimeRangeFilter value={filtroTiempo} onChange={handleFiltroChange} />
+      {chartPointsLoading && (
+        <p style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--text-sm)', color: 'var(--color-texto-secundario)' }}>
+          Cargando detalle para gráficas de línea…
+        </p>
+      )}
       <p
         style={{
           margin: '0 0 var(--space-4)',

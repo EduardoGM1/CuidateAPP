@@ -71,6 +71,7 @@ export async function getPacienteSignosVitalesEvolucion(pacienteId, params = {})
   if (params.fechaInicio) q.set('fechaInicio', String(params.fechaInicio).slice(0, 10));
   if (params.fechaFin) q.set('fechaFin', String(params.fechaFin).slice(0, 10));
   if (params.maxPoints != null) q.set('maxPoints', String(params.maxPoints));
+  if (params.monthlyOnly) q.set('monthlyOnly', '1');
   const config = { timeout: params.timeout ?? 45000 };
   if (params.signal) config.signal = params.signal;
   const { data: body } = await client.get(`${BASE}/${id}/signos-vitales/evolucion?${q.toString()}`, config);
