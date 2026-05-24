@@ -28,6 +28,11 @@ import {
   validateAndNormalizeSignosVitalesBody,
   mapSignosVitalesDbError,
 } from '../utils/signosVitalesValidation.js';
+import {
+  formatSignoVitalRow,
+  buildSignosDateWhere,
+  MESES_ABREV_EVOLUCION,
+} from '../utils/signoVitalResponse.js';
 
 /**
  * Helper function para desencriptar un campo si está encriptado
@@ -393,25 +398,7 @@ export const getPacienteSignosVitales = async (req, res) => {
     // Filtro por rango YYYY-MM-DD en SQL (DATE(fecha_medicion)) — paginación real, sin cargar todo el historial.
     const ymdInicio = fechaInicio ? String(fechaInicio).trim().slice(0, 10) : null;
     const ymdFin = fechaFin ? String(fechaFin).trim().slice(0, 10) : null;
-    const hasRangoFechas = !!(ymdInicio || ymdFin);
-
-    const where = { id_paciente: pacienteId };
-    if (hasRangoFechas) {
-      const dateClauses = [];
-      if (ymdInicio) {
-        dateClauses.push(
-          sequelize.where(sequelize.fn('DATE', sequelize.col('fecha_medicion')), { [Op.gte]: ymdInicio })
-        );
-      }
-      if (ymdFin) {
-        dateClauses.push(
-          sequelize.where(sequelize.fn('DATE', sequelize.col('fecha_medicion')), { [Op.lte]: ymdFin })
-        );
-      }
-      if (dateClauses.length) {
-        where[Op.and] = dateClauses;
-      }
-    }
+    const where = buildSignosDateWhere(pacienteId, ymdInicio, ymdFin, sequelize, Op);
 
     const orderDir = sort === 'ASC' ? 'ASC' : 'DESC';
     const lim = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 500);
@@ -425,138 +412,15 @@ export const getPacienteSignosVitales = async (req, res) => {
       raw: false,
     });
 
-    // Formatear datos - usar toJSON() para asegurar que los hooks de desencriptación se apliquen
-    const signosFormateados = signosVitales.rows.map(signo => {
+    const signosFormateados = signosVitales.rows.map((signo) => {
       try {
-        const signoData = signo.toJSON ? signo.toJSON() : signo;
-        
-        // Desencriptar campos numéricos si están encriptados (fallback si los hooks no funcionaron)
-        const numericFields = ['presion_sistolica', 'presion_diastolica', 'glucosa_mg_dl', 
-                               'colesterol_mg_dl', 'colesterol_ldl', 'colesterol_hdl', 
-                               'trigliceridos_mg_dl', 'hba1c_porcentaje'];
-        
-        const decryptedData = { ...signoData };
-        
-        // Desencriptar campos numéricos
-        numericFields.forEach(field => {
-          const valorOriginal = decryptedData[field];
-          
-          // Si el valor es null o undefined, mantenerlo así
-          if (valorOriginal === null || valorOriginal === undefined) {
-            return; // Continuar con el siguiente campo
-          }
-          
-          // Si ya es un número válido, los hooks ya lo desencriptaron correctamente
-          if (typeof valorOriginal === 'number') {
-            if (!isNaN(valorOriginal) && isFinite(valorOriginal)) {
-              // Ya está desencriptado y es un número válido, mantenerlo
-              decryptedData[field] = valorOriginal;
-            } else {
-              // Es NaN o Infinity, establecer a null
-              decryptedData[field] = null;
-            }
-            return; // Continuar con el siguiente campo
-          }
-          
-          // Si es string, procesarlo
-          if (typeof valorOriginal === 'string') {
-            const valorTrimmed = valorOriginal.trim();
-            
-            // Si está vacío, establecer a null
-            if (valorTrimmed === '') {
-              decryptedData[field] = null;
-              return; // Continuar con el siguiente campo
-            }
-            
-            // Verificar si es un número válido como string (ya desencriptado por hooks)
-            const numValue = parseFloat(valorTrimmed);
-            if (!isNaN(numValue) && isFinite(numValue) && valorTrimmed === String(numValue)) {
-              // Es un número válido como string, los hooks ya lo desencriptaron
-              decryptedData[field] = numValue;
-              return; // Continuar con el siguiente campo
-            }
-            
-            // No es un número válido, puede estar encriptado, intentar desencriptar
-            const decrypted = decryptFieldIfNeeded(valorTrimmed);
-            
-            // Si se desencriptó (el valor cambió y no es null)
-            if (decrypted !== valorTrimmed && decrypted !== null && decrypted !== undefined) {
-              // Intentar convertir a número
-              const numValueDecrypted = parseFloat(decrypted);
-              if (!isNaN(numValueDecrypted) && isFinite(numValueDecrypted)) {
-                decryptedData[field] = numValueDecrypted;
-              } else {
-                // No se pudo convertir a número, establecer a null para evitar NaN
-                logger.warn(`No se pudo convertir a número el campo ${field} desencriptado: ${decrypted}`);
-                decryptedData[field] = null;
-              }
-            } else {
-              // No se desencriptó, puede que no esté encriptado o ya esté desencriptado
-              // Si parece estar encriptado (formato iv:tag:data o JSON), establecer a null
-              const parts = valorTrimmed.split(':');
-              const isEncryptedFormat = (parts.length === 3 && parts[0].length > 0 && parts[1].length > 0 && parts[2].length > 0) ||
-                                       (valorTrimmed.startsWith('{') && valorTrimmed.includes('encrypted'));
-              
-              if (isEncryptedFormat) {
-                // Parece estar encriptado pero no se pudo desencriptar, establecer a null
-                logger.warn(`No se pudo desencriptar el campo ${field}, parece estar encriptado: ${valorTrimmed.substring(0, 50)}`);
-                decryptedData[field] = null;
-              } else {
-                // No parece estar encriptado, intentar convertir a número si es posible
-                const numValueOriginal = parseFloat(valorTrimmed);
-                if (!isNaN(numValueOriginal) && isFinite(numValueOriginal)) {
-                  decryptedData[field] = numValueOriginal;
-                } else {
-                  // No es un número válido, establecer a null
-                  decryptedData[field] = null;
-                }
-              }
-            }
-          } else {
-            // Otro tipo de dato (boolean, etc.), establecer a null para campos numéricos
-            decryptedData[field] = null;
-          }
-        });
-        
-        // Desencriptar observaciones (omitir en modo lite para listados/gráficos)
-        let observaciones = null;
-        if (!liteMode && decryptedData.observaciones) {
-          observaciones = decryptFieldIfNeeded(decryptedData.observaciones);
-        }
-        
-        const row = {
-          id_signo: decryptedData.id_signo,
-          id_paciente: decryptedData.id_paciente,
-          id_cita: decryptedData.id_cita,
-          fecha_medicion: decryptedData.fecha_medicion,
-          peso_kg: decryptedData.peso_kg,
-          talla_m: decryptedData.talla_m,
-          imc: decryptedData.imc,
-          medida_cintura_cm: decryptedData.medida_cintura_cm,
-          presion_sistolica: decryptedData.presion_sistolica,
-          presion_diastolica: decryptedData.presion_diastolica,
-          glucosa_mg_dl: decryptedData.glucosa_mg_dl,
-          colesterol_mg_dl: decryptedData.colesterol_mg_dl,
-          colesterol_ldl: decryptedData.colesterol_ldl,
-          colesterol_hdl: decryptedData.colesterol_hdl,
-          trigliceridos_mg_dl: decryptedData.trigliceridos_mg_dl,
-          hba1c_porcentaje: decryptedData.hba1c_porcentaje,
-          registrado_por: decryptedData.registrado_por,
-          fecha_creacion: decryptedData.fecha_creacion
-        };
-        if (!liteMode) row.observaciones = observaciones;
-        return row;
+        return formatSignoVitalRow(signo, { lite: liteMode });
       } catch (mapError) {
         logger.error('Error mapeando signo vital individual', {
           error: mapError.message,
           signoId: signo.id_signo || 'unknown',
-          stack: mapError.stack
         });
-        // Retornar objeto mínimo para no romper todo el array
-        return {
-          id_signo: signo.id_signo,
-          error: 'Error procesando datos del signo vital'
-        };
+        return { id_signo: signo.id_signo, error: 'Error procesando datos del signo vital' };
       }
     });
 
@@ -581,6 +445,115 @@ export const getPacienteSignosVitales = async (req, res) => {
       success: false,
       error: 'Error interno del servidor',
       details: error.message
+    });
+  }
+};
+
+/**
+ * Signos vitales optimizados para gráficos de evolución (agregados SQL + muestra limitada).
+ * GET /api/pacientes/:id/signos-vitales/evolucion
+ */
+export const getPacienteSignosVitalesEvolucion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fechaInicio, fechaFin, maxPoints: maxPointsQ } = req.query;
+
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ success: false, error: 'ID de paciente inválido' });
+    }
+
+    const pacienteId = parseInt(id, 10);
+    const paciente = await Paciente.findOne({ where: { id_paciente: pacienteId, activo: true } });
+    if (!paciente) {
+      return res.status(404).json({ success: false, error: 'Paciente no encontrado o inactivo' });
+    }
+
+    if (req.user.rol === 'Doctor') {
+      const doctor = await Doctor.findOne({ where: { id_usuario: req.user.id } });
+      if (!doctor) {
+        return res.status(403).json({ success: false, error: 'Doctor no encontrado' });
+      }
+      const asignacion = await DoctorPaciente.findOne({
+        where: { id_doctor: doctor.id_doctor, id_paciente: pacienteId },
+      });
+      if (!asignacion) {
+        return res.status(403).json({ success: false, error: 'No tienes acceso a este paciente' });
+      }
+    }
+
+    const ymdInicio = fechaInicio ? String(fechaInicio).trim().slice(0, 10) : null;
+    const ymdFin = fechaFin ? String(fechaFin).trim().slice(0, 10) : null;
+    const where = buildSignosDateWhere(pacienteId, ymdInicio, ymdFin, sequelize, Op);
+    const maxPoints = Math.min(Math.max(parseInt(maxPointsQ, 10) || 120, 1), 200);
+
+    const total = await SignoVital.count({ where });
+
+    const monthlyRaw = await SignoVital.findAll({
+      attributes: [
+        [sequelize.fn('DATE_FORMAT', sequelize.col('fecha_medicion'), '%Y-%m'), 'mesKey'],
+        [sequelize.fn('COUNT', sequelize.col('id_signo')), 'totalRegistros'],
+      ],
+      where,
+      group: [sequelize.fn('DATE_FORMAT', sequelize.col('fecha_medicion'), '%Y-%m')],
+      order: [[sequelize.literal('mesKey'), 'ASC']],
+      raw: true,
+    });
+
+    const monthly = monthlyRaw.map((row) => {
+      const mesKey = row.mesKey;
+      const [y, mo] = String(mesKey).split('-').map(Number);
+      const fecha = new Date(y, mo - 1, 1);
+      const totalRegistros = Number(row.totalRegistros) || 0;
+      return {
+        mesKey,
+        mesLabel: `${MESES_ABREV_EVOLUCION[fecha.getMonth()]} ${y}`,
+        fecha: fecha.toISOString(),
+        totalRegistros,
+        registros: totalRegistros,
+        signos: [],
+      };
+    });
+
+    let rows;
+    if (total <= maxPoints) {
+      rows = await SignoVital.findAll({
+        where,
+        order: [['fecha_medicion', 'ASC']],
+        raw: false,
+      });
+    } else {
+      rows = await SignoVital.findAll({
+        where,
+        order: [['fecha_medicion', 'DESC']],
+        limit: maxPoints,
+        raw: false,
+      });
+      rows.reverse();
+    }
+
+    const data = rows.map((signo) => formatSignoVitalRow(signo, { lite: true }));
+
+    logger.info('Signos vitales evolución', {
+      pacienteId,
+      total,
+      returned: data.length,
+      monthlyBuckets: monthly.length,
+    });
+
+    res.json({
+      success: true,
+      data,
+      monthly,
+      total,
+      truncated: total > maxPoints,
+      maxPoints,
+    });
+  } catch (error) {
+    logger.error('Error obteniendo signos vitales evolución:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error interno del servidor',
+      details: error.message,
     });
   }
 };

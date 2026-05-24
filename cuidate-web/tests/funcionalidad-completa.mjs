@@ -111,6 +111,30 @@ async function run() {
     const idPac = pacientes[0].id_paciente ?? pacientes[0].id;
     const rDet = await request('GET', `/api/pacientes/${idPac}`, null, token);
     log('GET /api/pacientes/:id', rDet.ok, rDet.ok ? `id: ${idPac}` : (rDet.data?.error || `status ${rDet.status}`));
+
+    const qaPac = pacientes.find((p) => {
+      const n = `${p.nombre || ''} ${p.apellido_paterno || ''}`.toUpperCase();
+      return n.includes('QA');
+    });
+    const idQa = qaPac?.id_paciente ?? qaPac?.id ?? idPac;
+    const now = new Date();
+    const fin = now.toISOString().slice(0, 10);
+    const ini = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()).toISOString().slice(0, 10);
+    const t0 = Date.now();
+    const rEvo = await request(
+      'GET',
+      `/api/pacientes/${idQa}/signos-vitales/evolucion?fechaInicio=${ini}&fechaFin=${fin}&maxPoints=120`,
+      null,
+      token
+    );
+    const ms = Date.now() - t0;
+    const total = rEvo.data?.total ?? 0;
+    const pts = Array.isArray(rEvo.data?.data) ? rEvo.data.data.length : 0;
+    log(
+      'GET /api/pacientes/:id/signos-vitales/evolucion',
+      rEvo.ok && ms < 20000,
+      rEvo.ok ? `paciente ${idQa}, total=${total}, puntos=${pts}, ${ms}ms` : (rEvo.data?.error || `status ${rEvo.status}`)
+    );
   } else {
     log('GET /api/pacientes/:id (skip)', true, 'sin pacientes');
   }

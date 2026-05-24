@@ -9,6 +9,7 @@ import { autoEncryptRequest, autoDecryptResponse } from '../middlewares/autoDecr
 import { 
   getPacienteCitas,
   getPacienteSignosVitales,
+  getPacienteSignosVitalesEvolucion,
   createPacienteSignosVitales,
   updatePacienteSignosVitales,
   deletePacienteSignosVitales,
@@ -130,6 +131,12 @@ router.get('/:id/citas',
  * - limit: Límite aplicado
  * - offset: Offset aplicado
  */
+router.get('/:id/signos-vitales/evolucion',
+  authorizePatientAccess,
+  searchRateLimit,
+  getPacienteSignosVitalesEvolucion
+);
+
 router.get('/:id/signos-vitales', 
   authorizePatientAccess,
   searchRateLimit,

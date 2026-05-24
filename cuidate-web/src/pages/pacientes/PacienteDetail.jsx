@@ -17,6 +17,7 @@ import {
 import {
   getPacienteCitas,
   getPacienteSignosVitales,
+  getPacienteSignosVitalesEvolucion,
   getPacienteDiagnosticos,
   getPacienteMedicamentos,
   getPacienteTomasMedicamento,
@@ -189,7 +190,7 @@ export default function PacienteDetail() {
   const [citasLoading, setCitasLoading] = useState(false);
   const [signos, setSignos] = useState({ data: [], total: 0 });
   const [signosLoading, setSignosLoading] = useState(false);
-  const [chartSignos, setChartSignos] = useState({ data: [], total: 0 });
+  const [chartSignos, setChartSignos] = useState({ data: [], total: 0, monthly: [], truncated: false });
   const [chartSignosLoading, setChartSignosLoading] = useState(false);
   const [chartSignosError, setChartSignosError] = useState(null);
   const chartSignosAbortRef = useRef(null);
@@ -584,7 +585,7 @@ export default function PacienteDetail() {
     }
   }, [parsedId]);
 
-  /** Signos vitales para gráficos; por defecto últimos 3 meses (más rápido). Completo pagina todo el historial. */
+  /** Signos vitales para gráficos (endpoint /evolucion: agregados SQL + muestra limitada). */
   const loadChartSignos = useCallback(async (filtro = FILTROS_TIEMPO.ULTIMOS_3_MESES) => {
     if (parsedId === 0) return;
     chartSignosAbortRef.current?.abort();
@@ -594,38 +595,22 @@ export default function PacienteDetail() {
     setChartSignosError(null);
     try {
       const { fechaInicio, fechaFin } = getDateRangeForFilter(filtro);
-      const esCompleto = filtro === FILTROS_TIEMPO.COMPLETO;
-      const baseParams = {
-        sort: esCompleto ? 'ASC' : 'DESC',
-        lite: true,
-        timeout: esCompleto ? 120000 : 60000,
+      const params = {
+        maxPoints: filtro === FILTROS_TIEMPO.COMPLETO ? 200 : 120,
+        timeout: 45000,
         signal: ac.signal,
       };
-      if (fechaInicio) baseParams.fechaInicio = formatYmdLocal(fechaInicio);
-      if (fechaFin) baseParams.fechaFin = formatYmdLocal(fechaFin);
+      if (fechaInicio) params.fechaInicio = formatYmdLocal(fechaInicio);
+      if (fechaFin) params.fechaFin = formatYmdLocal(fechaFin);
 
-      const pageSize = esCompleto ? 200 : 500;
-      let offset = 0;
-      let total = 0;
-      const all = [];
-      const maxPages = esCompleto ? 50 : 4;
-      let pages = 0;
-      do {
-        if (ac.signal.aborted) return;
-        const page = await getPacienteSignosVitales(parsedId, {
-          ...baseParams,
-          limit: pageSize,
-          offset,
-        });
-        const rows = page?.data ?? [];
-        total = page?.total ?? rows.length;
-        all.push(...rows);
-        offset += pageSize;
-        pages += 1;
-        if (rows.length === 0) break;
-      } while (all.length < total && pages < maxPages);
+      const res = await getPacienteSignosVitalesEvolucion(parsedId, params);
       if (ac.signal.aborted) return;
-      setChartSignos({ data: all, total: total || all.length });
+      setChartSignos({
+        data: res.data ?? [],
+        total: res.total ?? 0,
+        monthly: res.monthly ?? [],
+        truncated: res.truncated ?? false,
+      });
     } catch (err) {
       if (ac.signal.aborted || err?.code === 'ERR_CANCELED') return;
       const msg =
@@ -633,10 +618,27 @@ export default function PacienteDetail() {
           ? 'La carga tardó demasiado. Intenta de nuevo.'
           : err?.response?.data?.error || err?.message || 'No se pudieron cargar los signos vitales.';
       setChartSignosError(msg);
-      setChartSignos({ data: [], total: 0 });
+      setChartSignos({ data: [], total: 0, monthly: [], truncated: false });
     } finally {
       if (!ac.signal.aborted) setChartSignosLoading(false);
     }
+  }, [parsedId]);
+
+  const fetchChartMonthSignos = useCallback(async (mesKey) => {
+    if (!mesKey || parsedId === 0) return [];
+    const [y, mo] = mesKey.split('-').map(Number);
+    const lastDay = new Date(y, mo, 0).getDate();
+    const fechaInicio = `${mesKey}-01`;
+    const fechaFin = `${mesKey}-${String(lastDay).padStart(2, '0')}`;
+    const res = await getPacienteSignosVitales(parsedId, {
+      fechaInicio,
+      fechaFin,
+      limit: 100,
+      sort: 'DESC',
+      lite: true,
+      timeout: 30000,
+    });
+    return res?.data ?? [];
   }, [parsedId]);
 
   const loadDiagnosticos = useCallback(async () => {
@@ -813,6 +815,12 @@ export default function PacienteDetail() {
   }, [modalSection, loadCitas, loadSignos, loadChartSignos, loadDiagnosticos, loadMedicamentos, loadTomasMedicamento, loadRedApoyo, loadVacunacion, loadComorbilidades, loadDeteccionesComplicaciones, loadSesionesEducativas, loadSaludBucal, loadDeteccionesTuberculosis, loadDoctoresAsignados, isAdmin]);
 
   useEffect(() => () => chartSignosAbortRef.current?.abort(), []);
+
+  useEffect(() => {
+    if (modalSection !== 'graficos') {
+      chartSignosAbortRef.current?.abort();
+    }
+  }, [modalSection]);
 
   useEffect(() => {
     if (!formaModalOpen || parsedId === 0) return;
@@ -3685,10 +3693,13 @@ export default function PacienteDetail() {
             <h2 className="patient-section-title">Gráficos de evolución</h2>
             <PacienteGraficosEvolucion
               signosData={chartSignos.data}
+              monthlyFromApi={chartSignos.monthly}
+              truncated={chartSignos.truncated}
               signosLoading={chartSignosLoading}
               signosError={chartSignosError}
               onRetry={loadChartSignos}
               onFilterChange={loadChartSignos}
+              onFetchMonthSignos={fetchChartMonthSignos}
             />
           </Card>
         );
@@ -4067,7 +4078,16 @@ function getSignoValores(signo) {
   return items;
 }
 
-function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onRetry, onFilterChange }) {
+function PacienteGraficosEvolucion({
+  signosData,
+  monthlyFromApi,
+  truncated,
+  signosLoading,
+  signosError,
+  onRetry,
+  onFilterChange,
+  onFetchMonthSignos,
+}) {
   const [filtroTiempo, setFiltroTiempo] = useState(FILTROS_TIEMPO.ULTIMOS_3_MESES);
 
   const handleFiltroChange = (nuevoFiltro) => {
@@ -4076,6 +4096,8 @@ function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onR
   };
   const [detalleMesOpen, setDetalleMesOpen] = useState(false);
   const [mesSeleccionado, setMesSeleccionado] = useState(null);
+  const [mesSignos, setMesSignos] = useState([]);
+  const [mesSignosLoading, setMesSignosLoading] = useState(false);
   const [diaFiltro, setDiaFiltro] = useState('todos');
   const [registroDetalleOpen, setRegistroDetalleOpen] = useState(false);
   const [registroDetalle, setRegistroDetalle] = useState(null);
@@ -4117,10 +4139,35 @@ function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onR
     };
   }), [sorted]);
 
-  const monthlyData = useMemo(
-    () => aggregateSignosByMonth(signosFiltrados).map((m) => ({ ...m, registros: m.totalRegistros })),
-    [signosFiltrados]
-  );
+  const monthlyData = useMemo(() => {
+    if (Array.isArray(monthlyFromApi) && monthlyFromApi.length > 0) {
+      return monthlyFromApi.map((m) => ({ ...m, registros: m.totalRegistros ?? m.registros }));
+    }
+    return aggregateSignosByMonth(signosFiltrados).map((m) => ({ ...m, registros: m.totalRegistros }));
+  }, [monthlyFromApi, signosFiltrados]);
+
+  const openMesDetalle = useCallback(async (payload) => {
+    if (!payload?.mesKey) return;
+    setMesSeleccionado(payload);
+    setDetalleMesOpen(true);
+    setDiaFiltro('todos');
+    const cached = payload.signos?.length ? payload.signos : null;
+    if (cached?.length) {
+      setMesSignos(cached);
+      return;
+    }
+    if (!onFetchMonthSignos) return;
+    setMesSignosLoading(true);
+    setMesSignos([]);
+    try {
+      const rows = await onFetchMonthSignos(payload.mesKey);
+      setMesSignos(rows);
+    } catch {
+      setMesSignos([]);
+    } finally {
+      setMesSignosLoading(false);
+    }
+  }, [onFetchMonthSignos]);
 
   if (signosLoading) {
     return (
@@ -4148,11 +4195,11 @@ function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onR
     );
   }
 
-  if (!signosData?.length) {
+  if (!signosData?.length && !monthlyData.length) {
     return <EmptyState message="No hay datos de signos vitales para graficar. Registra mediciones en la pestaña Signos vitales." />;
   }
 
-  if (signosFiltrados.length === 0) {
+  if (signosFiltrados.length === 0 && monthlyData.length === 0) {
     return (
       <div>
         <TimeRangeFilter value={filtroTiempo} onChange={handleFiltroChange} />
@@ -4185,8 +4232,9 @@ function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onR
         {FILTRO_LABELS[filtroTiempo] ?? filtroTiempo}: {signosFiltrados.length} registro
         {signosFiltrados.length === 1 ? '' : 's'}
         {mesesEnPeriodo > 0 ? ` en ${mesesEnPeriodo} mes${mesesEnPeriodo === 1 ? '' : 'es'}` : ''}
+        {truncated ? ' (muestra reciente para rendimiento; el total incluye todos los registros del período)' : ''}
         {filtroTiempo === FILTROS_TIEMPO.COMPLETO && (signosData?.length ?? 0) > 0
-          ? ` (${signosData.length} en historial cargado)`
+          ? ` · ${signosData.length} puntos en gráfica`
           : ''}
       </p>
 
@@ -4208,10 +4256,7 @@ function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onR
                 radius={[4, 4, 0, 0]}
                 name="Registros"
                 onClick={(payload) => {
-                  if (payload && (payload.signos || payload.mesKey)) {
-                    setMesSeleccionado(payload);
-                    setDetalleMesOpen(true);
-                  }
+                  if (payload?.mesKey) openMesDetalle(payload);
                 }}
                 style={{ cursor: 'pointer' }}
               />
@@ -4223,14 +4268,17 @@ function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onR
       {/* Modal desglose por mes (paridad con app móvil) */}
       <Modal
         open={detalleMesOpen}
-        onClose={() => { setDetalleMesOpen(false); setMesSeleccionado(null); }}
+        onClose={() => { setDetalleMesOpen(false); setMesSeleccionado(null); setMesSignos([]); }}
         title={mesSeleccionado ? `Desglose: ${mesSeleccionado.mesLabel}` : 'Desglose'}
         footer={null}
         width={560}
         destroyOnClose
       >
         {mesSeleccionado && (() => {
-          const signosMes = mesSeleccionado.signos || [];
+          if (mesSignosLoading) {
+            return <LoadingSpinner />;
+          }
+          const signosMes = mesSignos.length ? mesSignos : (mesSeleccionado.signos || []);
           const diasUnicos = [];
           const seen = new Set();
           signosMes.forEach((s) => {
