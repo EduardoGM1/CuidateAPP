@@ -39,7 +39,7 @@ function endOfLocalDay(date) {
 }
 
 /** Evita desfases por UTC en cadenas YYYY-MM-DD */
-function parseFechaMedicion(raw) {
+export function parseFechaMedicion(raw) {
   if (!raw) return null;
   if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}/.test(raw)) {
     const [y, m, day] = raw.slice(0, 10).split('-').map(Number);
