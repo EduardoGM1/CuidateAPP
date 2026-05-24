@@ -111,6 +111,7 @@ import TimeRangeFilter, {
   FILTROS_TIEMPO,
   FILTRO_LABELS,
   getDateRangeForFilter,
+  formatYmdLocal,
 } from '../../components/charts/TimeRangeFilter';
 import { aggregateSignosByMonth } from '../../components/charts/monthlyChartUtils';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
@@ -593,14 +594,15 @@ export default function PacienteDetail() {
     setChartSignosError(null);
     try {
       const { fechaInicio, fechaFin } = getDateRangeForFilter(filtro);
+      const esCompleto = filtro === FILTROS_TIEMPO.COMPLETO;
       const baseParams = {
-        sort: 'ASC',
+        sort: esCompleto ? 'ASC' : 'DESC',
         lite: true,
-        timeout: filtro === FILTROS_TIEMPO.COMPLETO ? 120000 : 60000,
+        timeout: esCompleto ? 120000 : 60000,
         signal: ac.signal,
       };
-      if (fechaInicio) baseParams.fechaInicio = fechaInicio.toISOString().slice(0, 10);
-      if (fechaFin) baseParams.fechaFin = fechaFin.toISOString().slice(0, 10);
+      if (fechaInicio) baseParams.fechaInicio = formatYmdLocal(fechaInicio);
+      if (fechaFin) baseParams.fechaFin = formatYmdLocal(fechaFin);
 
       const pageSize = 100;
       let offset = 0;
@@ -4180,8 +4182,8 @@ function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onR
         {FILTRO_LABELS[filtroTiempo] ?? filtroTiempo}: {signosFiltrados.length} registro
         {signosFiltrados.length === 1 ? '' : 's'}
         {mesesEnPeriodo > 0 ? ` en ${mesesEnPeriodo} mes${mesesEnPeriodo === 1 ? '' : 'es'}` : ''}
-        {(signosData?.length ?? 0) > signosFiltrados.length
-          ? ` (de ${signosData.length} en total)`
+        {filtroTiempo === FILTROS_TIEMPO.COMPLETO && (signosData?.length ?? 0) > 0
+          ? ` (${signosData.length} en historial cargado)`
           : ''}
       </p>
 

@@ -19,6 +19,15 @@ const OPCIONES = [
   { key: FILTROS_TIEMPO.ULTIMOS_3_MESES, label: 'Últimos 3 meses' },
 ];
 
+/** YYYY-MM-DD en calendario local (evita desfase de toISOString/UTC en query params). */
+export function formatYmdLocal(date) {
+  const d = date instanceof Date ? date : new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function startOfLocalDay(date) {
   const d = date instanceof Date ? date : new Date(date);
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);

@@ -390,12 +390,24 @@ export const getPacienteSignosVitales = async (req, res) => {
       }
     }
 
-    // Filtro opcional por rango de fechas (reduce consumo de datos en app)
+    // Filtro opcional por rango de fechas (YYYY-MM-DD, día local inicio/fin)
     const whereClause = { id_paciente: pacienteId };
+    const parseYmdBoundary = (value, endOfDay = false) => {
+      const s = String(value || '').trim().slice(0, 10);
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+      if (!m) return null;
+      const y = Number(m[1]);
+      const mo = Number(m[2]) - 1;
+      const d = Number(m[3]);
+      if (endOfDay) return new Date(y, mo, d, 23, 59, 59, 999);
+      return new Date(y, mo, d, 0, 0, 0, 0);
+    };
     if (fechaInicio || fechaFin) {
       const fechaFilter = {};
-      if (fechaInicio) fechaFilter[Op.gte] = new Date(fechaInicio);
-      if (fechaFin) fechaFilter[Op.lte] = new Date(fechaFin);
+      const inicio = fechaInicio ? parseYmdBoundary(fechaInicio, false) : null;
+      const fin = fechaFin ? parseYmdBoundary(fechaFin, true) : null;
+      if (inicio) fechaFilter[Op.gte] = inicio;
+      if (fin) fechaFilter[Op.lte] = fin;
       if (Object.keys(fechaFilter).length > 0) {
         whereClause.fecha_medicion = fechaFilter;
       }

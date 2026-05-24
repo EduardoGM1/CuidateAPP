@@ -3,6 +3,8 @@
  * Paridad con lógica de MonthlyVitalSignsBarChart en móvil.
  */
 
+import { parseFechaMedicion } from './TimeRangeFilter';
+
 const MESES_ABREV = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 function startOfMonth(date) {
@@ -21,8 +23,8 @@ export function aggregateSignosByMonth(signos) {
   const byMonth = {};
   signos.forEach((s) => {
     const raw = s.fecha_medicion || s.fecha_registro || s.fecha_creacion;
-    const d = raw ? new Date(raw) : null;
-    if (!d || Number.isNaN(d.getTime())) return;
+    const d = parseFechaMedicion(raw);
+    if (!d) return;
     const start = startOfMonth(d);
     const mesKey = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`;
     if (!byMonth[mesKey]) {
