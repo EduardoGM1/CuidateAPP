@@ -404,12 +404,21 @@ export const getPacienteSignosVitales = async (req, res) => {
     const lim = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 500);
     const off = Math.max(parseInt(offset, 10) || 0, 0);
 
+    const liteAttrs = [
+      'id_signo', 'id_paciente', 'id_cita', 'fecha_medicion', 'peso_kg', 'talla_m', 'imc',
+      'medida_cintura_cm', 'presion_sistolica', 'presion_diastolica', 'glucosa_mg_dl',
+      'colesterol_mg_dl', 'colesterol_ldl', 'colesterol_hdl', 'trigliceridos_mg_dl',
+      'hba1c_porcentaje', 'registrado_por', 'fecha_creacion',
+    ];
+
     const signosVitales = await SignoVital.findAndCountAll({
       where,
       order: [['fecha_medicion', orderDir]],
       limit: lim,
       offset: off,
-      raw: false,
+      ...(liteMode
+        ? { attributes: liteAttrs, raw: true, hooks: false }
+        : { raw: false }),
     });
 
     const signosFormateados = signosVitales.rows.map((signo) => {
@@ -418,7 +427,7 @@ export const getPacienteSignosVitales = async (req, res) => {
       } catch (mapError) {
         logger.error('Error mapeando signo vital individual', {
           error: mapError.message,
-          signoId: signo.id_signo || 'unknown',
+          signoId: signo.id_signo || signo?.id_signo || 'unknown',
         });
         return { id_signo: signo.id_signo, error: 'Error procesando datos del signo vital' };
       }

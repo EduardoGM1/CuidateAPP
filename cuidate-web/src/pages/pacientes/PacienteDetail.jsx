@@ -643,19 +643,31 @@ export default function PacienteDetail() {
 
   const fetchChartMonthSignos = useCallback(async (mesKey) => {
     if (!mesKey || parsedId === 0) return [];
-    const [y, mo] = mesKey.split('-').map(Number);
+    const [y, mo] = String(mesKey).split('-').map(Number);
     const lastDay = new Date(y, mo, 0).getDate();
-    const fechaInicio = `${mesKey}-01`;
-    const fechaFin = `${mesKey}-${String(lastDay).padStart(2, '0')}`;
-    const res = await getPacienteSignosVitales(parsedId, {
-      fechaInicio,
-      fechaFin,
-      limit: 100,
-      sort: 'DESC',
-      lite: true,
-      timeout: 30000,
-    });
-    return res?.data ?? [];
+    const fechaInicio = `${y}-${String(mo).padStart(2, '0')}-01`;
+    const fechaFin = `${y}-${String(mo).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    const pageSize = 200;
+    let offset = 0;
+    let total = 0;
+    const all = [];
+    do {
+      const page = await getPacienteSignosVitales(parsedId, {
+        fechaInicio,
+        fechaFin,
+        limit: pageSize,
+        offset,
+        sort: 'DESC',
+        lite: true,
+        timeout: 90000,
+      });
+      const rows = page?.data ?? [];
+      total = page?.total ?? rows.length;
+      all.push(...rows);
+      offset += pageSize;
+      if (rows.length === 0) break;
+    } while (all.length < total && offset < 2000);
+    return all;
   }, [parsedId]);
 
   const loadDiagnosticos = useCallback(async () => {
@@ -3718,6 +3730,7 @@ export default function PacienteDetail() {
               onRetry={loadChartSignos}
               onFilterChange={loadChartSignos}
               onFetchMonthSignos={fetchChartMonthSignos}
+              signosDataForMonth={chartSignos.data}
             />
           </Card>
         );
@@ -4106,6 +4119,7 @@ function PacienteGraficosEvolucion({
   onRetry,
   onFilterChange,
   onFetchMonthSignos,
+  signosDataForMonth,
 }) {
   const [filtroTiempo, setFiltroTiempo] = useState(FILTROS_TIEMPO.ULTIMOS_3_MESES);
 
@@ -4117,6 +4131,7 @@ function PacienteGraficosEvolucion({
   const [mesSeleccionado, setMesSeleccionado] = useState(null);
   const [mesSignos, setMesSignos] = useState([]);
   const [mesSignosLoading, setMesSignosLoading] = useState(false);
+  const [mesSignosError, setMesSignosError] = useState(null);
   const [diaFiltro, setDiaFiltro] = useState('todos');
   const [registroDetalleOpen, setRegistroDetalleOpen] = useState(false);
   const [registroDetalle, setRegistroDetalle] = useState(null);
@@ -4165,28 +4180,45 @@ function PacienteGraficosEvolucion({
     return aggregateSignosByMonth(signosFiltrados).map((m) => ({ ...m, registros: m.totalRegistros }));
   }, [monthlyFromApi, signosFiltrados]);
 
+  const filterSignosByMesKey = useCallback((rows, mesKey) => {
+    if (!mesKey || !Array.isArray(rows)) return [];
+    return rows.filter((s) => {
+      const d = parseFechaMedicion(s.fecha_medicion || s.fecha_registro || s.fecha_creacion);
+      if (!d) return false;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      return key === mesKey;
+    });
+  }, []);
+
   const openMesDetalle = useCallback(async (payload) => {
-    if (!payload?.mesKey) return;
-    setMesSeleccionado(payload);
+    const row = payload?.payload ?? payload;
+    if (!row?.mesKey) return;
+    setMesSeleccionado(row);
     setDetalleMesOpen(true);
     setDiaFiltro('todos');
-    const cached = payload.signos?.length ? payload.signos : null;
-    if (cached?.length) {
-      setMesSignos(cached);
-      return;
-    }
+    setMesSignosError(null);
+    const cached = row.signos?.length
+      ? row.signos
+      : filterSignosByMesKey(signosDataForMonth, row.mesKey);
+    if (cached.length) setMesSignos(cached);
     if (!onFetchMonthSignos) return;
+    const needFetch = !cached.length || (row.totalRegistros ?? 0) > cached.length;
+    if (!needFetch) return;
     setMesSignosLoading(true);
-    setMesSignos([]);
     try {
-      const rows = await onFetchMonthSignos(payload.mesKey);
+      const rows = await onFetchMonthSignos(row.mesKey);
       setMesSignos(rows);
-    } catch {
-      setMesSignos([]);
+    } catch (err) {
+      if (!cached.length) setMesSignos([]);
+      setMesSignosError(
+        err?.code === 'ECONNABORTED'
+          ? 'La carga del detalle tardó demasiado. Intenta de nuevo.'
+          : err?.response?.data?.error || err?.message || 'No se pudo cargar el detalle del mes.'
+      );
     } finally {
       setMesSignosLoading(false);
     }
-  }, [onFetchMonthSignos]);
+  }, [onFetchMonthSignos, signosDataForMonth, filterSignosByMesKey]);
 
   if (signosLoading) {
     return (
@@ -4279,8 +4311,9 @@ function PacienteGraficosEvolucion({
                 fill={CHART_COLORS.primary}
                 radius={[4, 4, 0, 0]}
                 name="Registros"
-                onClick={(payload) => {
-                  if (payload?.mesKey) openMesDetalle(payload);
+                onClick={(data) => {
+                  const row = data?.payload ?? data;
+                  if (row?.mesKey) openMesDetalle(row);
                 }}
                 style={{ cursor: 'pointer' }}
               />
