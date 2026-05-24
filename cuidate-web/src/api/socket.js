@@ -16,10 +16,19 @@ function getSocketURL() {
 }
 
 let socket = null;
+let socketToken = null;
+
+function teardownSocket() {
+  if (!socket) return;
+  socket.removeAllListeners();
+  socket.disconnect();
+  socket = null;
+  socketToken = null;
+}
 
 /**
  * Conecta al servidor Socket.IO con el token actual.
- * Si ya hay una conexión activa, la reutiliza.
+ * Si ya hay una conexión activa con el mismo token, la reutiliza.
  * @param {string} [token] - Token JWT (si no se pasa, se usa el de localStorage).
  * @returns {import('socket.io-client').Socket | null}
  */
@@ -30,12 +39,21 @@ export function connect(token) {
   const url = getSocketURL();
   if (!url) return null;
 
-  if (socket?.connected) return socket;
+  if (socket?.connected && socketToken === t) return socket;
 
+  if (socket) teardownSocket();
+
+  socketToken = t;
   socket = io(url, {
     auth: { token: t },
-    transports: ['websocket', 'polling'],
+    // Polling primero: evita "WebSocket closed before established" tras proxy/nginx o reconexión rápida
+    transports: ['polling', 'websocket'],
+    upgrade: true,
     path: '/socket.io',
+    reconnection: true,
+    reconnectionAttempts: 10,
+    reconnectionDelay: 1000,
+    timeout: 20000,
   });
 
   socket.on('connect_error', (err) => {
@@ -49,10 +67,7 @@ export function connect(token) {
  * Desconecta y limpia la instancia (ej. al cerrar sesión).
  */
 export function disconnect() {
-  if (socket) {
-    socket.disconnect();
-    socket = null;
-  }
+  teardownSocket();
 }
 
 /**

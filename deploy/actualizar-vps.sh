@@ -69,11 +69,21 @@ fi
 bash deploy/rebuild-cuidate-web.sh "${REBUILD_ARGS[@]}"
 
 echo ""
+echo "--- Nginx Socket.IO ---"
+if [ -f "$APP_ROOT/deploy/ensure-nginx-socketio.sh" ]; then
+  bash "$APP_ROOT/deploy/ensure-nginx-socketio.sh" || echo "[WARN] ensure-nginx-socketio falló; revisar nginx -t"
+else
+  echo "[WARN] Sin ensure-nginx-socketio.sh (git pull pendiente)"
+fi
+
+echo ""
 echo "--- Verificación ---"
 pm2 status || true
 sleep 2
 HTTP_CODE="$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/health 2>/dev/null || echo '000')"
 echo "GET http://127.0.0.1:3000/health → HTTP $HTTP_CODE"
+SOCKET_CODE="$(curl -sk -o /dev/null -w '%{http_code}' --max-time 15 "https://127.0.0.1/socket.io/?EIO=4&transport=polling" -H 'Host: cuidateapp.com.mx' 2>/dev/null || echo '000')"
+echo "GET /socket.io (HTTPS local) → HTTP $SOCKET_CODE"
 echo "Commit desplegado: $(git -C "$APP_ROOT" log -1 --oneline)"
 echo ""
 echo "[OK] Actualización terminada."

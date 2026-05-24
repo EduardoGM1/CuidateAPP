@@ -13,8 +13,11 @@ if (!password) {
   process.exit(1);
 }
 
-const cmd =
-  'cd /var/www/CuidateAPP 2>/dev/null || cd /var/www/cuidateapp/CuidateAPP; bash deploy/actualizar-vps.sh';
+const cmd = [
+  'cd /var/www/CuidateAPP 2>/dev/null || cd /var/www/cuidateapp/CuidateAPP',
+  'git fetch origin main && git pull origin main',
+  'bash deploy/actualizar-vps.sh',
+].join(' && ');
 
 const conn = new Client();
 conn.on('keyboard-interactive', (_n, _i, _l, prompts, finish) => {
