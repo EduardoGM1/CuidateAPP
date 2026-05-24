@@ -604,10 +604,12 @@ export default function PacienteDetail() {
       if (fechaInicio) baseParams.fechaInicio = formatYmdLocal(fechaInicio);
       if (fechaFin) baseParams.fechaFin = formatYmdLocal(fechaFin);
 
-      const pageSize = 100;
+      const pageSize = esCompleto ? 200 : 500;
       let offset = 0;
       let total = 0;
       const all = [];
+      const maxPages = esCompleto ? 50 : 4;
+      let pages = 0;
       do {
         if (ac.signal.aborted) return;
         const page = await getPacienteSignosVitales(parsedId, {
@@ -619,8 +621,9 @@ export default function PacienteDetail() {
         total = page?.total ?? rows.length;
         all.push(...rows);
         offset += pageSize;
+        pages += 1;
         if (rows.length === 0) break;
-      } while (all.length < total && offset < 10000);
+      } while (all.length < total && pages < maxPages);
       if (ac.signal.aborted) return;
       setChartSignos({ data: all, total: total || all.length });
     } catch (err) {

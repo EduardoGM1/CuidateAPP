@@ -390,58 +390,40 @@ export const getPacienteSignosVitales = async (req, res) => {
       }
     }
 
-    // Filtro por rango de fechas (YYYY-MM-DD). Se aplica en memoria tras cargar por paciente
-    // (en algunos entornos el Op.gte/lte sobre DATE no filtraba correctamente en MySQL).
-    const parseYmdBoundary = (value, endOfDay = false) => {
-      const s = String(value || '').trim().slice(0, 10);
-      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
-      if (!m) return null;
-      const y = Number(m[1]);
-      const mo = Number(m[2]) - 1;
-      const d = Number(m[3]);
-      if (endOfDay) return new Date(y, mo, d, 23, 59, 59, 999);
-      return new Date(y, mo, d, 0, 0, 0, 0);
-    };
-    const inicio = fechaInicio ? parseYmdBoundary(fechaInicio, false) : null;
-    const fin = fechaFin ? parseYmdBoundary(fechaFin, true) : null;
-    const hasRangoFechas = !!(inicio || fin);
+    // Filtro por rango YYYY-MM-DD en SQL (DATE(fecha_medicion)) — paginación real, sin cargar todo el historial.
+    const ymdInicio = fechaInicio ? String(fechaInicio).trim().slice(0, 10) : null;
+    const ymdFin = fechaFin ? String(fechaFin).trim().slice(0, 10) : null;
+    const hasRangoFechas = !!(ymdInicio || ymdFin);
 
-    const matchesRangoFechas = (signo) => {
-      if (!hasRangoFechas) return true;
-      const fm = signo?.fecha_medicion;
-      if (!fm) return false;
-      const d = new Date(fm);
-      if (Number.isNaN(d.getTime())) return false;
-      if (inicio && d < inicio) return false;
-      if (fin && d > fin) return false;
-      return true;
-    };
+    const where = { id_paciente: pacienteId };
+    if (hasRangoFechas) {
+      const dateClauses = [];
+      if (ymdInicio) {
+        dateClauses.push(
+          sequelize.where(sequelize.fn('DATE', sequelize.col('fecha_medicion')), { [Op.gte]: ymdInicio })
+        );
+      }
+      if (ymdFin) {
+        dateClauses.push(
+          sequelize.where(sequelize.fn('DATE', sequelize.col('fecha_medicion')), { [Op.lte]: ymdFin })
+        );
+      }
+      if (dateClauses.length) {
+        where[Op.and] = dateClauses;
+      }
+    }
 
     const orderDir = sort === 'ASC' ? 'ASC' : 'DESC';
     const lim = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 500);
     const off = Math.max(parseInt(offset, 10) || 0, 0);
 
-    let signosVitales;
-    if (hasRangoFechas) {
-      const allRows = await SignoVital.findAll({
-        where: { id_paciente: pacienteId },
-        order: [['fecha_medicion', orderDir]],
-        raw: false,
-      });
-      const filtered = allRows.filter(matchesRangoFechas);
-      signosVitales = {
-        rows: filtered.slice(off, off + lim),
-        count: filtered.length,
-      };
-    } else {
-      signosVitales = await SignoVital.findAndCountAll({
-        where: { id_paciente: pacienteId },
-        order: [['fecha_medicion', orderDir]],
-        limit: lim,
-        offset: off,
-        raw: false,
-      });
-    }
+    const signosVitales = await SignoVital.findAndCountAll({
+      where,
+      order: [['fecha_medicion', orderDir]],
+      limit: lim,
+      offset: off,
+      raw: false,
+    });
 
     // Formatear datos - usar toJSON() para asegurar que los hooks de desencriptación se apliquen
     const signosFormateados = signosVitales.rows.map(signo => {
