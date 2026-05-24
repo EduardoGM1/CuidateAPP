@@ -6,7 +6,7 @@ import { getConversacion, createMensaje, marcarConversacionLeida, marcarMensajeC
 import { useSocketEvent } from '../../contexts/SocketContext';
 import { PageHeader } from '../../components/shared';
 import { Button, Input, LoadingSpinner, EmptyState } from '../../components/ui';
-import { formatDateTime, formatNombreCompleto } from '../../utils/format';
+import { formatDateTime, formatNombreCompleto, parseApiDate } from '../../utils/format';
 import { sanitizeForDisplay } from '../../utils/sanitize';
 import { parsePositiveInt } from '../../utils/params';
 import VoiceMessagePlayer from '../../components/chat/VoiceMessagePlayer';
@@ -82,7 +82,9 @@ export default function ChatConversacion() {
       setMensajes((prev) => {
         const exists = prev.some((m) => (m.id_mensaje ?? m.id) === (msg.id_mensaje ?? msg.id));
         if (exists) return prev;
-        return [...prev, msg].sort((a, b) => new Date(a.fecha_envio || 0) - new Date(b.fecha_envio || 0));
+        return [...prev, msg].sort(
+          (a, b) => (parseApiDate(a.fecha_envio)?.getTime() ?? 0) - (parseApiDate(b.fecha_envio)?.getTime() ?? 0)
+        );
       });
     },
     [matchesConversacion]
@@ -122,7 +124,9 @@ export default function ChatConversacion() {
   useSocketEvent('mensajes_marcados_leidos', onMensajesMarcadosLeidos, Boolean(idDoctor) && pacienteId > 0);
 
   const sortMensajes = useCallback((list) => {
-    return [...list].sort((a, b) => new Date(a.fecha_envio || 0) - new Date(b.fecha_envio || 0));
+    return [...list].sort(
+      (a, b) => (parseApiDate(a.fecha_envio)?.getTime() ?? 0) - (parseApiDate(b.fecha_envio)?.getTime() ?? 0)
+    );
   }, []);
 
   const handleSend = async (e) => {

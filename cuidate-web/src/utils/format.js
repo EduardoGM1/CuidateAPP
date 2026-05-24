@@ -86,14 +86,30 @@ function formatTime12hPmFromDate(d) {
 }
 
 /**
+ * Convierte valores de fecha del API a Date (evita fallos si llega {} u otro objeto inválido).
+ * @param {unknown} value
+ * @returns {Date|null}
+ */
+export function parseApiDate(value) {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
+/**
  * Formatea fecha a dd/mmm/yyyy (ej: 20/feb/2026).
  * @param {string|Date|null|undefined} date
  * @returns {string}
  */
 export function formatDate(date) {
-  if (date == null) return '—';
-  const d = typeof date === 'string' ? new Date(date) : date;
-  if (Number.isNaN(d.getTime())) return '—';
+  const d = parseApiDate(date);
+  if (!d) return '—';
   const dia = String(d.getDate()).padStart(2, '0');
   const mes = MESES_ABREV[d.getMonth()];
   const year = d.getFullYear();
@@ -106,9 +122,8 @@ export function formatDate(date) {
  * @returns {string}
  */
 export function formatDateTime(date) {
-  if (date == null) return '—';
-  const d = typeof date === 'string' ? new Date(date) : date;
-  if (Number.isNaN(d.getTime())) return '—';
+  const d = parseApiDate(date);
+  if (!d) return '—';
 
   const dia = String(d.getDate()).padStart(2, '0');
   const mes = MESES_ABREV[d.getMonth()];
@@ -132,9 +147,8 @@ export function formatDateTimeAmPm(date) {
  * @returns {string}
  */
 export function formatTime(date) {
-  if (date == null) return '—';
-  const d = typeof date === 'string' ? new Date(date) : date;
-  if (Number.isNaN(d.getTime())) return '—';
+  const d = parseApiDate(date);
+  if (!d) return '—';
   return formatTime12hPmFromDate(d);
 }
 
@@ -144,9 +158,8 @@ export function formatTime(date) {
  * @returns {string}
  */
 export function formatDateWithWeekday(date) {
-  if (date == null) return '—';
-  const d = typeof date === 'string' ? new Date(date) : date;
-  if (Number.isNaN(d.getTime())) return '—';
+  const d = parseApiDate(date);
+  if (!d) return '—';
   const diaSemana = DIAS_SEMANA[d.getDay()];
   const dia = String(d.getDate()).padStart(2, '0');
   const mes = MESES_ABREV[d.getMonth()];

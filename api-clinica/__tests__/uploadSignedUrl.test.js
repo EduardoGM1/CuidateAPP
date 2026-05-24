@@ -1,4 +1,9 @@
-import { signUploadPublicUrl, verifyUploadSignature, normalizeUploadPath } from '../utils/uploadSignedUrl.js';
+import {
+  signUploadPublicUrl,
+  verifyUploadSignature,
+  normalizeUploadPath,
+  serializeWithSignedUploads,
+} from '../utils/uploadSignedUrl.js';
 
 describe('uploadSignedUrl', () => {
   beforeAll(() => {
@@ -20,5 +25,15 @@ describe('uploadSignedUrl', () => {
 
   it('rechaza firma expirada o inválida', () => {
     expect(verifyUploadSignature('/uploads/audio/a.m4a', '1', 'deadbeef')).toBe(false);
+  });
+
+  it('serializa Date como ISO (no como objeto vacío)', () => {
+    const fecha = new Date('2026-05-18T15:30:00.000Z');
+    const out = serializeWithSignedUploads([
+      { id_mensaje: 1, mensaje_texto: 'Hola', fecha_envio: fecha },
+    ]);
+    expect(typeof out[0].fecha_envio).toBe('string');
+    expect(out[0].fecha_envio).toContain('2026');
+    expect(out[0].fecha_envio).not.toEqual({});
   });
 });

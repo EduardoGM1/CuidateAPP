@@ -12,6 +12,12 @@ export default function StaleAssetsFallback({ autoReload = false }) {
   const [reloadFailed, setReloadFailed] = useState(false);
 
   useEffect(() => {
+    if (routeError && !isChunkLoadError(routeError)) {
+      console.error('[RouteError]', routeError);
+    }
+  }, [routeError]);
+
+  useEffect(() => {
     if (!autoReload || !stale) return;
     const didReload = reloadOnceForStaleChunk();
     if (!didReload) setReloadFailed(true);

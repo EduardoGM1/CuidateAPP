@@ -63,6 +63,10 @@ const SIGNED_UPLOAD_KEYS = new Set(['mensaje_audio_url', 'url', 'audioUrl']);
 export function signUploadFieldsInPayload(data) {
   if (data == null) return data;
 
+  if (data instanceof Date) {
+    return data.toISOString();
+  }
+
   if (Array.isArray(data)) {
     return data.map((item) => signUploadFieldsInPayload(item));
   }

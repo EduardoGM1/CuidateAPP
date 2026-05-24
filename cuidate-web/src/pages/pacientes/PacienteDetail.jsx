@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Joyride, { STATUS } from 'react-joyride';
 import { message } from 'antd';
 import { useQueryClient } from '@tanstack/react-query';
@@ -105,7 +105,7 @@ import {
   Line,
   Legend,
 } from 'recharts';
-import TimeRangeFilter, { filterSignosByTimeRange, FILTROS_TIEMPO } from '../../components/charts/TimeRangeFilter';
+import TimeRangeFilter, { filterSignosByTimeRange, FILTROS_TIEMPO, FILTRO_LABELS } from '../../components/charts/TimeRangeFilter';
 import { aggregateSignosByMonth } from '../../components/charts/monthlyChartUtils';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 import { createJoyrideStyles, JOYRIDE_LOCALE } from '../../onboarding/joyrideTheme';
@@ -560,12 +560,34 @@ export default function PacienteDetail() {
     if (parsedId > 0) loadCitas();
   }, [parsedId, loadCitas]);
 
-  const loadSignos = useCallback(async () => {
+  /** @param {{ forCharts?: boolean }} [opts] — forCharts: historial completo para gráficos de evolución */
+  const loadSignos = useCallback(async (opts = {}) => {
     if (parsedId === 0) return;
+    const forCharts = !!opts.forCharts;
     setSignosLoading(true);
     try {
-      const res = await getPacienteSignosVitales(parsedId, { limit: 15 });
-      setSignos(res);
+      if (!forCharts) {
+        const res = await getPacienteSignosVitales(parsedId, { limit: 15, sort: 'DESC' });
+        setSignos(res);
+        return;
+      }
+      const pageSize = 500;
+      let offset = 0;
+      let total = 0;
+      const all = [];
+      do {
+        const page = await getPacienteSignosVitales(parsedId, {
+          limit: pageSize,
+          offset,
+          sort: 'ASC',
+        });
+        const rows = page?.data ?? [];
+        total = page?.total ?? rows.length;
+        all.push(...rows);
+        offset += pageSize;
+        if (rows.length === 0) break;
+      } while (all.length < total && offset < 10000);
+      setSignos({ data: all, total: total || all.length });
     } catch {
       setSignos({ data: [], total: 0 });
     } finally {
@@ -727,7 +749,8 @@ export default function PacienteDetail() {
     if (!modalSection) return;
     if (modalSection === 'citas' || modalSection === 'diagnosticos' || modalSection === 'historial-consultas') loadCitas();
     if (modalSection === 'diagnosticos') loadDiagnosticos();
-    else if (modalSection === 'signos' || modalSection === 'graficos' || modalSection === 'monitoreo') loadSignos();
+    else if (modalSection === 'graficos') loadSignos({ forCharts: true });
+    else if (modalSection === 'signos' || modalSection === 'monitoreo') loadSignos();
     else if (modalSection === 'medicacion') {
       loadMedicamentos();
       loadTomasMedicamento();
@@ -4001,20 +4024,24 @@ function PacienteGraficosEvolucion({ pacienteId, signosData, loadSignos, signosL
   const [registroDetalle, setRegistroDetalle] = useState(null);
 
   useEffect(() => {
-    if (pacienteId && (!signosData || signosData.length === 0)) loadSignos?.();
-  }, [pacienteId, signosData?.length, loadSignos]);
+    if (pacienteId) loadSignos?.({ forCharts: true });
+  }, [pacienteId, loadSignos]);
 
   useEffect(() => {
     setDiaFiltro('todos');
   }, [mesSeleccionado]);
 
-  if (signosLoading || !signosData?.length) {
-    return signosLoading ? <LoadingSpinner /> : <EmptyState message="No hay datos de signos vitales para graficar. Registra mediciones en la pestaña Signos vitales." />;
-  }
+  const signosFiltrados = useMemo(
+    () => filterSignosByTimeRange(signosData ?? [], filtroTiempo),
+    [signosData, filtroTiempo]
+  );
 
-  const signosFiltrados = filterSignosByTimeRange(signosData, filtroTiempo);
-  const sorted = [...signosFiltrados].sort((a, b) => new Date(a.fecha_medicion) - new Date(b.fecha_medicion));
-  const chartData = sorted.map((s) => {
+  const sorted = useMemo(
+    () => [...signosFiltrados].sort((a, b) => new Date(a.fecha_medicion) - new Date(b.fecha_medicion)),
+    [signosFiltrados]
+  );
+
+  const chartData = useMemo(() => sorted.map((s) => {
     const imc = s.imc ?? calcIMC(s.peso_kg, s.talla_m);
     return {
       ...s,
@@ -4030,9 +4057,29 @@ function PacienteGraficosEvolucion({ pacienteId, signosData, loadSignos, signosL
       colesterol_hdl: s.colesterol_hdl != null ? Number(s.colesterol_hdl) : null,
       hba1c_porcentaje: s.hba1c_porcentaje != null ? Number(s.hba1c_porcentaje) : null,
     };
-  });
+  }), [sorted]);
 
-  const monthlyData = aggregateSignosByMonth(signosFiltrados).map((m) => ({ ...m, registros: m.totalRegistros }));
+  const monthlyData = useMemo(
+    () => aggregateSignosByMonth(signosFiltrados).map((m) => ({ ...m, registros: m.totalRegistros })),
+    [signosFiltrados]
+  );
+
+  if (signosLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!signosData?.length) {
+    return <EmptyState message="No hay datos de signos vitales para graficar. Registra mediciones en la pestaña Signos vitales." />;
+  }
+
+  if (signosFiltrados.length === 0) {
+    return (
+      <div>
+        <TimeRangeFilter value={filtroTiempo} onChange={setFiltroTiempo} />
+        <EmptyState message="No hay registros en el período seleccionado. Prueba con «Completo» u otro rango." />
+      </div>
+    );
+  }
 
   const hasPeso = chartData.some((d) => d.peso_kg != null);
   const hasGlucosa = chartData.some((d) => d.glucosa_mg_dl != null);
@@ -4042,9 +4089,26 @@ function PacienteGraficosEvolucion({ pacienteId, signosData, loadSignos, signosL
   const hasHbA1c = chartData.some((d) => d.hba1c_porcentaje != null);
   const hasAnyChart = hasPeso || hasGlucosa || hasPA || hasIMC || hasColesterol || hasHbA1c;
 
+  const mesesEnPeriodo = monthlyData.length;
+
   return (
     <div style={{ overflowX: 'auto' }}>
       <TimeRangeFilter value={filtroTiempo} onChange={setFiltroTiempo} />
+      <p
+        style={{
+          margin: '0 0 var(--space-4)',
+          fontSize: 'var(--text-sm)',
+          color: 'var(--color-texto-secundario)',
+        }}
+        aria-live="polite"
+      >
+        {FILTRO_LABELS[filtroTiempo] ?? filtroTiempo}: {signosFiltrados.length} registro
+        {signosFiltrados.length === 1 ? '' : 's'}
+        {mesesEnPeriodo > 0 ? ` en ${mesesEnPeriodo} mes${mesesEnPeriodo === 1 ? '' : 'es'}` : ''}
+        {(signosData?.length ?? 0) > signosFiltrados.length
+          ? ` (de ${signosData.length} en total)`
+          : ''}
+      </p>
 
       {monthlyData.length > 0 && (
         <div style={{ ...chartSectionStyle, marginBottom: 'var(--space-6)' }}>
@@ -4053,7 +4117,7 @@ function PacienteGraficosEvolucion({ pacienteId, signosData, loadSignos, signosL
             Haz clic en una barra para ver el desglose de signos vitales de ese mes.
           </p>
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={monthlyData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <BarChart key={`meses-${filtroTiempo}`} data={monthlyData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
               <XAxis dataKey="mesLabel" tick={{ fontSize: 11, fill: 'var(--color-texto-secundario)' }} />
               <YAxis domain={[0, 'auto']} tick={{ fontSize: 11, fill: 'var(--color-texto-secundario)' }} allowDecimals={false} />
@@ -4176,7 +4240,7 @@ function PacienteGraficosEvolucion({ pacienteId, signosData, loadSignos, signosL
             Haz clic en un punto para ver el registro de esa fecha.
           </p>
           <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <LineChart key={`peso-${filtroTiempo}`} data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
               <XAxis dataKey="fecha" tick={{ fontSize: 11, fill: 'var(--color-texto-secundario)' }} />
               <YAxis domain={['auto', 'auto']} tick={{ fontSize: 11, fill: 'var(--color-texto-secundario)' }} />
@@ -4328,7 +4392,7 @@ function PacienteGraficosEvolucion({ pacienteId, signosData, loadSignos, signosL
         </p>
       )}
 
-      <ComparativaEvolucionSignos signosVitales={signosData} />
+      <ComparativaEvolucionSignos signosVitales={signosFiltrados} />
     </div>
   );
 }

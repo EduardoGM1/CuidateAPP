@@ -19,50 +19,99 @@ const OPCIONES = [
   { key: FILTROS_TIEMPO.ULTIMOS_3_MESES, label: 'Últimos 3 meses' },
 ];
 
+function startOfLocalDay(date) {
+  const d = date instanceof Date ? date : new Date(date);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+}
+
+function endOfLocalDay(date) {
+  const d = date instanceof Date ? date : new Date(date);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+}
+
+/** Evita desfases por UTC en cadenas YYYY-MM-DD */
+function parseFechaMedicion(raw) {
+  if (!raw) return null;
+  if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    const [y, m, day] = raw.slice(0, 10).split('-').map(Number);
+    return new Date(y, m - 1, day, 12, 0, 0, 0);
+  }
+  const f = new Date(raw);
+  return Number.isNaN(f.getTime()) ? null : f;
+}
+
+function getSignoFecha(signo) {
+  const raw = signo?.fecha_medicion || signo?.fecha_registro || signo?.fecha_creacion;
+  return parseFechaMedicion(raw);
+}
+
+/**
+ * Rango de fechas para un filtro (útil para consultas API con fechaInicio/fechaFin).
+ * @param {string} filtro
+ * @param {Date} [referencia] - Fecha de referencia (por defecto: ahora)
+ * @returns {{ fechaInicio: Date|null, fechaFin: Date|null }}
+ */
+export function getDateRangeForFilter(filtro, referencia = new Date()) {
+  const ahora = new Date(referencia);
+  const finDia = endOfLocalDay(ahora);
+
+  switch (filtro) {
+    case FILTROS_TIEMPO.COMPLETO:
+      return { fechaInicio: null, fechaFin: null };
+    case FILTROS_TIEMPO.AÑO_ACTUAL:
+      return {
+        fechaInicio: startOfLocalDay(new Date(ahora.getFullYear(), 0, 1)),
+        fechaFin: finDia,
+      };
+    case FILTROS_TIEMPO.ULTIMOS_3_MESES: {
+      const d = new Date(ahora);
+      d.setMonth(d.getMonth() - 3);
+      return { fechaInicio: startOfLocalDay(d), fechaFin: finDia };
+    }
+    case FILTROS_TIEMPO.ULTIMOS_6_MESES: {
+      const d = new Date(ahora);
+      d.setMonth(d.getMonth() - 6);
+      return { fechaInicio: startOfLocalDay(d), fechaFin: finDia };
+    }
+    case FILTROS_TIEMPO.ULTIMOS_12_MESES: {
+      const d = new Date(ahora);
+      d.setMonth(d.getMonth() - 12);
+      return { fechaInicio: startOfLocalDay(d), fechaFin: finDia };
+    }
+    default:
+      return { fechaInicio: null, fechaFin: null };
+  }
+}
+
+/** Etiquetas para mostrar en UI */
+export const FILTRO_LABELS = {
+  [FILTROS_TIEMPO.COMPLETO]: 'Completo',
+  [FILTROS_TIEMPO.AÑO_ACTUAL]: 'Año actual',
+  [FILTROS_TIEMPO.ULTIMOS_12_MESES]: 'Últimos 12 meses',
+  [FILTROS_TIEMPO.ULTIMOS_6_MESES]: 'Últimos 6 meses',
+  [FILTROS_TIEMPO.ULTIMOS_3_MESES]: 'Últimos 3 meses',
+};
+
+function enRango(fecha, inicio, fin) {
+  if (!fecha) return false;
+  if (inicio && fecha < inicio) return false;
+  if (fin && fecha > fin) return false;
+  return true;
+}
+
 /**
  * Filtra un array de signos vitales por el rango de tiempo seleccionado.
  * @param {Array} signos - Array de registros con fecha_medicion (o fecha_registro/fecha_creacion)
  * @param {string} filtro - Uno de FILTROS_TIEMPO
+ * @param {Date} [referencia] - Fecha de referencia para rangos relativos
  * @returns {Array}
  */
-export function filterSignosByTimeRange(signos, filtro) {
+export function filterSignosByTimeRange(signos, filtro, referencia = new Date()) {
   if (!Array.isArray(signos) || signos.length === 0) return [];
   if (filtro === FILTROS_TIEMPO.COMPLETO) return signos;
 
-  const ahora = new Date();
-
-  let fechaLimite = null;
-  let fechaFin = null;
-
-  switch (filtro) {
-    case FILTROS_TIEMPO.AÑO_ACTUAL:
-      fechaLimite = new Date(ahora.getFullYear(), 0, 1);
-      fechaFin = new Date(ahora.getFullYear(), 11, 31, 23, 59, 59);
-      return signos.filter((s) => {
-        const f = new Date(s.fecha_medicion || s.fecha_registro || s.fecha_creacion);
-        return !Number.isNaN(f.getTime()) && f >= fechaLimite && f <= fechaFin;
-      });
-    case FILTROS_TIEMPO.ULTIMOS_3_MESES:
-      fechaLimite = new Date(ahora);
-      fechaLimite.setMonth(fechaLimite.getMonth() - 3);
-      break;
-    case FILTROS_TIEMPO.ULTIMOS_6_MESES:
-      fechaLimite = new Date(ahora);
-      fechaLimite.setMonth(fechaLimite.getMonth() - 6);
-      break;
-    case FILTROS_TIEMPO.ULTIMOS_12_MESES:
-      fechaLimite = new Date(ahora);
-      fechaLimite.setMonth(fechaLimite.getMonth() - 12);
-      break;
-    default:
-      return signos;
-  }
-
-  if (!fechaLimite) return signos;
-  return signos.filter((s) => {
-    const f = new Date(s.fecha_medicion || s.fecha_registro || s.fecha_creacion);
-    return !Number.isNaN(f.getTime()) && f >= fechaLimite;
-  });
+  const { fechaInicio, fechaFin } = getDateRangeForFilter(filtro, referencia);
+  return signos.filter((s) => enRango(getSignoFecha(s), fechaInicio, fechaFin));
 }
 
 export default function TimeRangeFilter({ value, onChange }) {

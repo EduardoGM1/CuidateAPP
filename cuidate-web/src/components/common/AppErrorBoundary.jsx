@@ -17,9 +17,7 @@ export default class AppErrorBoundary extends Component {
       reloadOnceForStaleChunk();
       return;
     }
-    if (import.meta.env.DEV) {
-      console.error('[AppErrorBoundary]', error, info?.componentStack);
-    }
+    console.error('[AppErrorBoundary]', error, info?.componentStack);
   }
 
   handleRetry = () => {
