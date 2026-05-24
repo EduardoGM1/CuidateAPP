@@ -106,7 +106,12 @@ import {
   Line,
   Legend,
 } from 'recharts';
-import TimeRangeFilter, { filterSignosByTimeRange, FILTROS_TIEMPO, FILTRO_LABELS } from '../../components/charts/TimeRangeFilter';
+import TimeRangeFilter, {
+  filterSignosByTimeRange,
+  FILTROS_TIEMPO,
+  FILTRO_LABELS,
+  getDateRangeForFilter,
+} from '../../components/charts/TimeRangeFilter';
 import { aggregateSignosByMonth } from '../../components/charts/monthlyChartUtils';
 import { useOnboardingPageReady } from '../../onboarding/useOnboardingPageReady';
 import { createJoyrideStyles, JOYRIDE_LOCALE } from '../../onboarding/joyrideTheme';
@@ -578,8 +583,8 @@ export default function PacienteDetail() {
     }
   }, [parsedId]);
 
-  /** Historial completo para gráficos (estado separado; evita pisar el listado de la pestaña Signos). */
-  const loadChartSignos = useCallback(async () => {
+  /** Signos vitales para gráficos; por defecto últimos 3 meses (más rápido). Completo pagina todo el historial. */
+  const loadChartSignos = useCallback(async (filtro = FILTROS_TIEMPO.ULTIMOS_3_MESES) => {
     if (parsedId === 0) return;
     chartSignosAbortRef.current?.abort();
     const ac = new AbortController();
@@ -587,6 +592,16 @@ export default function PacienteDetail() {
     setChartSignosLoading(true);
     setChartSignosError(null);
     try {
+      const { fechaInicio, fechaFin } = getDateRangeForFilter(filtro);
+      const baseParams = {
+        sort: 'ASC',
+        lite: true,
+        timeout: filtro === FILTROS_TIEMPO.COMPLETO ? 120000 : 60000,
+        signal: ac.signal,
+      };
+      if (fechaInicio) baseParams.fechaInicio = fechaInicio.toISOString().slice(0, 10);
+      if (fechaFin) baseParams.fechaFin = fechaFin.toISOString().slice(0, 10);
+
       const pageSize = 100;
       let offset = 0;
       let total = 0;
@@ -594,12 +609,9 @@ export default function PacienteDetail() {
       do {
         if (ac.signal.aborted) return;
         const page = await getPacienteSignosVitales(parsedId, {
+          ...baseParams,
           limit: pageSize,
           offset,
-          sort: 'ASC',
-          lite: true,
-          timeout: 120000,
-          signal: ac.signal,
         });
         const rows = page?.data ?? [];
         total = page?.total ?? rows.length;
@@ -776,7 +788,7 @@ export default function PacienteDetail() {
     if (!modalSection) return;
     if (modalSection === 'citas' || modalSection === 'diagnosticos' || modalSection === 'historial-consultas') loadCitas();
     if (modalSection === 'diagnosticos') loadDiagnosticos();
-    else if (modalSection === 'graficos') loadChartSignos();
+    else if (modalSection === 'graficos') loadChartSignos(FILTROS_TIEMPO.ULTIMOS_3_MESES);
     else if (modalSection === 'signos' || modalSection === 'monitoreo') loadSignos();
     else if (modalSection === 'medicacion') {
       loadMedicamentos();
@@ -3671,6 +3683,7 @@ export default function PacienteDetail() {
               signosLoading={chartSignosLoading}
               signosError={chartSignosError}
               onRetry={loadChartSignos}
+              onFilterChange={loadChartSignos}
             />
           </Card>
         );
@@ -4049,8 +4062,13 @@ function getSignoValores(signo) {
   return items;
 }
 
-function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onRetry }) {
-  const [filtroTiempo, setFiltroTiempo] = useState(FILTROS_TIEMPO.COMPLETO);
+function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onRetry, onFilterChange }) {
+  const [filtroTiempo, setFiltroTiempo] = useState(FILTROS_TIEMPO.ULTIMOS_3_MESES);
+
+  const handleFiltroChange = (nuevoFiltro) => {
+    setFiltroTiempo(nuevoFiltro);
+    onFilterChange?.(nuevoFiltro);
+  };
   const [detalleMesOpen, setDetalleMesOpen] = useState(false);
   const [mesSeleccionado, setMesSeleccionado] = useState(null);
   const [diaFiltro, setDiaFiltro] = useState('todos');
@@ -4104,7 +4122,7 @@ function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onR
       <div>
         <LoadingSpinner />
         <p style={{ marginTop: 'var(--space-3)', fontSize: 'var(--text-sm)', color: 'var(--color-texto-secundario)' }}>
-          Cargando historial de signos vitales para los gráficos…
+          Cargando signos vitales ({FILTRO_LABELS[filtroTiempo] ?? filtroTiempo})…
         </p>
       </div>
     );
@@ -4116,7 +4134,7 @@ function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onR
         <EmptyState message={signosError} />
         {onRetry && (
           <div style={{ marginTop: 'var(--space-3)', textAlign: 'center' }}>
-            <Button type="button" variant="primary" onClick={onRetry}>
+            <Button type="button" variant="primary" onClick={() => onRetry(filtroTiempo)}>
               Reintentar carga
             </Button>
           </div>
@@ -4132,7 +4150,7 @@ function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onR
   if (signosFiltrados.length === 0) {
     return (
       <div>
-        <TimeRangeFilter value={filtroTiempo} onChange={setFiltroTiempo} />
+        <TimeRangeFilter value={filtroTiempo} onChange={handleFiltroChange} />
         <EmptyState message="No hay registros en el período seleccionado. Prueba con «Completo» u otro rango." />
       </div>
     );
@@ -4150,7 +4168,7 @@ function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onR
 
   return (
     <div style={{ overflowX: 'auto' }}>
-      <TimeRangeFilter value={filtroTiempo} onChange={setFiltroTiempo} />
+      <TimeRangeFilter value={filtroTiempo} onChange={handleFiltroChange} />
       <p
         style={{
           margin: '0 0 var(--space-4)',
