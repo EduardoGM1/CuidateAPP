@@ -52,7 +52,11 @@ export async function getPacienteSignosVitales(pacienteId, params = {}) {
   if (params.sort) q.set('sort', params.sort);
   if (params.fechaInicio) q.set('fechaInicio', String(params.fechaInicio).slice(0, 10));
   if (params.fechaFin) q.set('fechaFin', String(params.fechaFin).slice(0, 10));
-  const { data } = await client.get(`${BASE}/${id}/signos-vitales?${q.toString()}`);
+  if (params.lite) q.set('lite', '1');
+  const config = {};
+  if (params.timeout != null) config.timeout = params.timeout;
+  if (params.signal) config.signal = params.signal;
+  const { data } = await client.get(`${BASE}/${id}/signos-vitales?${q.toString()}`, config);
   return toListAndTotal(data);
 }
 

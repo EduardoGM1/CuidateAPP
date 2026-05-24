@@ -336,7 +336,8 @@ export const getPacienteCitas = async (req, res) => {
 export const getPacienteSignosVitales = async (req, res) => {
   try {
     const { id } = req.params;
-    const { limit = 10, offset = 0, sort = 'DESC', fechaInicio, fechaFin } = req.query;
+    const { limit = 10, offset = 0, sort = 'DESC', fechaInicio, fechaFin, lite } = req.query;
+    const liteMode = lite === '1' || lite === 'true';
 
     // Validar parámetros
     if (!id || isNaN(id)) {
@@ -502,12 +503,13 @@ export const getPacienteSignosVitales = async (req, res) => {
           }
         });
         
-        // Desencriptar observaciones
-        if (decryptedData.observaciones) {
-          decryptedData.observaciones = decryptFieldIfNeeded(decryptedData.observaciones);
+        // Desencriptar observaciones (omitir en modo lite para listados/gráficos)
+        let observaciones = null;
+        if (!liteMode && decryptedData.observaciones) {
+          observaciones = decryptFieldIfNeeded(decryptedData.observaciones);
         }
         
-        return {
+        const row = {
           id_signo: decryptedData.id_signo,
           id_paciente: decryptedData.id_paciente,
           id_cita: decryptedData.id_cita,
@@ -525,9 +527,10 @@ export const getPacienteSignosVitales = async (req, res) => {
           trigliceridos_mg_dl: decryptedData.trigliceridos_mg_dl,
           hba1c_porcentaje: decryptedData.hba1c_porcentaje,
           registrado_por: decryptedData.registrado_por,
-          observaciones: decryptedData.observaciones,
           fecha_creacion: decryptedData.fecha_creacion
         };
+        if (!liteMode) row.observaciones = observaciones;
+        return row;
       } catch (mapError) {
         logger.error('Error mapeando signo vital individual', {
           error: mapError.message,

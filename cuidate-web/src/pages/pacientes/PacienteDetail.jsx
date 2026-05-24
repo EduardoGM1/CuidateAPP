@@ -87,6 +87,7 @@ import {
   formatDate,
   formatDateTime,
   formatDateTimeAmPm,
+  parseApiDate,
   formatNombreCompleto,
   formatHorarioPrescriptoMedicamento,
   formatHoraAdministracionRegistrada,
@@ -182,6 +183,10 @@ export default function PacienteDetail() {
   const [citasLoading, setCitasLoading] = useState(false);
   const [signos, setSignos] = useState({ data: [], total: 0 });
   const [signosLoading, setSignosLoading] = useState(false);
+  const [chartSignos, setChartSignos] = useState({ data: [], total: 0 });
+  const [chartSignosLoading, setChartSignosLoading] = useState(false);
+  const [chartSignosError, setChartSignosError] = useState(null);
+  const chartSignosAbortRef = useRef(null);
   const [diagnosticos, setDiagnosticos] = useState({ data: [], total: 0 });
   const [diagnosticosLoading, setDiagnosticosLoading] = useState(false);
   const [medicamentos, setMedicamentos] = useState({ data: [], total: 0 });
@@ -560,26 +565,41 @@ export default function PacienteDetail() {
     if (parsedId > 0) loadCitas();
   }, [parsedId, loadCitas]);
 
-  /** @param {{ forCharts?: boolean }} [opts] — forCharts: historial completo para gráficos de evolución */
-  const loadSignos = useCallback(async (opts = {}) => {
+  const loadSignos = useCallback(async () => {
     if (parsedId === 0) return;
-    const forCharts = !!opts.forCharts;
     setSignosLoading(true);
     try {
-      if (!forCharts) {
-        const res = await getPacienteSignosVitales(parsedId, { limit: 15, sort: 'DESC' });
-        setSignos(res);
-        return;
-      }
-      const pageSize = 500;
+      const res = await getPacienteSignosVitales(parsedId, { limit: 15, sort: 'DESC' });
+      setSignos(res);
+    } catch {
+      setSignos({ data: [], total: 0 });
+    } finally {
+      setSignosLoading(false);
+    }
+  }, [parsedId]);
+
+  /** Historial completo para gráficos (estado separado; evita pisar el listado de la pestaña Signos). */
+  const loadChartSignos = useCallback(async () => {
+    if (parsedId === 0) return;
+    chartSignosAbortRef.current?.abort();
+    const ac = new AbortController();
+    chartSignosAbortRef.current = ac;
+    setChartSignosLoading(true);
+    setChartSignosError(null);
+    try {
+      const pageSize = 100;
       let offset = 0;
       let total = 0;
       const all = [];
       do {
+        if (ac.signal.aborted) return;
         const page = await getPacienteSignosVitales(parsedId, {
           limit: pageSize,
           offset,
           sort: 'ASC',
+          lite: true,
+          timeout: 120000,
+          signal: ac.signal,
         });
         const rows = page?.data ?? [];
         total = page?.total ?? rows.length;
@@ -587,11 +607,18 @@ export default function PacienteDetail() {
         offset += pageSize;
         if (rows.length === 0) break;
       } while (all.length < total && offset < 10000);
-      setSignos({ data: all, total: total || all.length });
-    } catch {
-      setSignos({ data: [], total: 0 });
+      if (ac.signal.aborted) return;
+      setChartSignos({ data: all, total: total || all.length });
+    } catch (err) {
+      if (ac.signal.aborted || err?.code === 'ERR_CANCELED') return;
+      const msg =
+        err?.code === 'ECONNABORTED'
+          ? 'La carga tardó demasiado. Intenta de nuevo.'
+          : err?.response?.data?.error || err?.message || 'No se pudieron cargar los signos vitales.';
+      setChartSignosError(msg);
+      setChartSignos({ data: [], total: 0 });
     } finally {
-      setSignosLoading(false);
+      if (!ac.signal.aborted) setChartSignosLoading(false);
     }
   }, [parsedId]);
 
@@ -749,7 +776,7 @@ export default function PacienteDetail() {
     if (!modalSection) return;
     if (modalSection === 'citas' || modalSection === 'diagnosticos' || modalSection === 'historial-consultas') loadCitas();
     if (modalSection === 'diagnosticos') loadDiagnosticos();
-    else if (modalSection === 'graficos') loadSignos({ forCharts: true });
+    else if (modalSection === 'graficos') loadChartSignos();
     else if (modalSection === 'signos' || modalSection === 'monitoreo') loadSignos();
     else if (modalSection === 'medicacion') {
       loadMedicamentos();
@@ -766,7 +793,9 @@ export default function PacienteDetail() {
       loadDoctoresAsignados();
       if (isAdmin()) getDoctores({ limit: 200 }).then((l) => setListaDoctores(Array.isArray(l) ? l : [])).catch(() => setListaDoctores([]));
     }
-  }, [modalSection, loadCitas, loadSignos, loadDiagnosticos, loadMedicamentos, loadTomasMedicamento, loadRedApoyo, loadVacunacion, loadComorbilidades, loadDeteccionesComplicaciones, loadSesionesEducativas, loadSaludBucal, loadDeteccionesTuberculosis, loadDoctoresAsignados, isAdmin]);
+  }, [modalSection, loadCitas, loadSignos, loadChartSignos, loadDiagnosticos, loadMedicamentos, loadTomasMedicamento, loadRedApoyo, loadVacunacion, loadComorbilidades, loadDeteccionesComplicaciones, loadSesionesEducativas, loadSaludBucal, loadDeteccionesTuberculosis, loadDoctoresAsignados, isAdmin]);
+
+  useEffect(() => () => chartSignosAbortRef.current?.abort(), []);
 
   useEffect(() => {
     if (!formaModalOpen || parsedId === 0) return;
@@ -3637,7 +3666,12 @@ export default function PacienteDetail() {
         return (
           <Card className="patient-section-card">
             <h2 className="patient-section-title">Gráficos de evolución</h2>
-            <PacienteGraficosEvolucion pacienteId={parsedId} signosData={signos.data} loadSignos={loadSignos} signosLoading={signosLoading} />
+            <PacienteGraficosEvolucion
+              signosData={chartSignos.data}
+              signosLoading={chartSignosLoading}
+              signosError={chartSignosError}
+              onRetry={loadChartSignos}
+            />
           </Card>
         );
       default:
@@ -4015,17 +4049,13 @@ function getSignoValores(signo) {
   return items;
 }
 
-function PacienteGraficosEvolucion({ pacienteId, signosData, loadSignos, signosLoading }) {
+function PacienteGraficosEvolucion({ signosData, signosLoading, signosError, onRetry }) {
   const [filtroTiempo, setFiltroTiempo] = useState(FILTROS_TIEMPO.COMPLETO);
   const [detalleMesOpen, setDetalleMesOpen] = useState(false);
   const [mesSeleccionado, setMesSeleccionado] = useState(null);
   const [diaFiltro, setDiaFiltro] = useState('todos');
   const [registroDetalleOpen, setRegistroDetalleOpen] = useState(false);
   const [registroDetalle, setRegistroDetalle] = useState(null);
-
-  useEffect(() => {
-    if (pacienteId) loadSignos?.({ forCharts: true });
-  }, [pacienteId, loadSignos]);
 
   useEffect(() => {
     setDiaFiltro('todos');
@@ -4037,7 +4067,12 @@ function PacienteGraficosEvolucion({ pacienteId, signosData, loadSignos, signosL
   );
 
   const sorted = useMemo(
-    () => [...signosFiltrados].sort((a, b) => new Date(a.fecha_medicion) - new Date(b.fecha_medicion)),
+    () =>
+      [...signosFiltrados].sort((a, b) => {
+        const ta = parseApiDate(a.fecha_medicion)?.getTime() ?? 0;
+        const tb = parseApiDate(b.fecha_medicion)?.getTime() ?? 0;
+        return ta - tb;
+      }),
     [signosFiltrados]
   );
 
@@ -4065,7 +4100,29 @@ function PacienteGraficosEvolucion({ pacienteId, signosData, loadSignos, signosL
   );
 
   if (signosLoading) {
-    return <LoadingSpinner />;
+    return (
+      <div>
+        <LoadingSpinner />
+        <p style={{ marginTop: 'var(--space-3)', fontSize: 'var(--text-sm)', color: 'var(--color-texto-secundario)' }}>
+          Cargando historial de signos vitales para los gráficos…
+        </p>
+      </div>
+    );
+  }
+
+  if (signosError) {
+    return (
+      <div>
+        <EmptyState message={signosError} />
+        {onRetry && (
+          <div style={{ marginTop: 'var(--space-3)', textAlign: 'center' }}>
+            <Button type="button" variant="primary" onClick={onRetry}>
+              Reintentar carga
+            </Button>
+          </div>
+        )}
+      </div>
+    );
   }
 
   if (!signosData?.length) {
