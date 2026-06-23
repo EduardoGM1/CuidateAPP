@@ -1,6 +1,7 @@
 import { Medicamento } from '../models/associations.js';
 import { sendSuccess, sendError, sendNotFound, sendServerError } from '../utils/responseHelpers.js';
 import logger from '../utils/logger.js';
+import { findOrCreateMedicamentoByNombre } from '../utils/medicamentoCatalog.js';
 import { Op } from 'sequelize';
 
 /**
@@ -131,6 +132,35 @@ export const createMedicamento = async (req, res) => {
     }
     
     return sendServerError(res, 'Error al crear medicamento');
+  }
+};
+
+/**
+ * Buscar medicamento por nombre o crearlo en catálogo (doctores al prescribir).
+ * POST /api/medicamentos/find-or-create
+ */
+export const findOrCreateMedicamento = async (req, res) => {
+  try {
+    const { nombre_medicamento, descripcion } = req.body ?? {};
+    const { medicamento, created } = await findOrCreateMedicamentoByNombre(nombre_medicamento, {
+      descripcion,
+    });
+
+    logger.info('find-or-create medicamento', {
+      id: medicamento.id_medicamento,
+      nombre: medicamento.nombre_medicamento,
+      created,
+      userId: req.user?.id,
+      rol: req.user?.rol,
+    });
+
+    return sendSuccess(res, { medicamento, created }, created ? 201 : 200);
+  } catch (error) {
+    if (error.statusCode === 400) {
+      return sendError(res, error.message, 400);
+    }
+    logger.error('Error en find-or-create medicamento', error);
+    return sendServerError(res, 'Error al registrar medicamento');
   }
 };
 

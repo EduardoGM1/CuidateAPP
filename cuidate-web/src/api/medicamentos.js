@@ -42,3 +42,14 @@ export async function deleteMedicamento(id) {
   if (parsed === 0) throw new Error('ID de medicamento inválido');
   await client.delete(`${BASE}/${parsed}`);
 }
+
+/** Buscar o crear medicamento por nombre (Doctor al prescribir fuera de catálogo). */
+export async function findOrCreateMedicamento(body) {
+  const nombre = (body?.nombre_medicamento || '').toString().trim();
+  if (nombre.length < 2) throw new Error('El nombre del medicamento debe tener al menos 2 caracteres');
+  const { data } = await client.post(`${BASE}/find-or-create`, {
+    nombre_medicamento: nombre.slice(0, 150),
+    descripcion: body?.descripcion?.toString().trim().slice(0, 500) || undefined,
+  });
+  return norm(data)?.medicamento ?? norm(data);
+}

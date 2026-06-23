@@ -150,6 +150,18 @@ const COMORBILIDAD_FORM_INITIAL = {
   recibe_tratamiento_farmacologico: false,
 };
 
+const OTRO_MEDICAMENTO_VALUE = '__otro__';
+
+const MEDICACION_ROW_INITIAL = {
+  id_medicamento: '',
+  nombre_otro: '',
+  dosis: '',
+  frecuencia: '',
+  horarios: [],
+  via_administracion: '',
+  observaciones: '',
+};
+
 const DETECCION_FORM_INITIAL = {
   tipo_complicacion: '',
   fecha_deteccion: '',
@@ -372,7 +384,7 @@ export default function PacienteDetail() {
     fecha_inicio: '',
     fecha_fin: '',
     observaciones: '',
-    medicamentos: [{ id_medicamento: '', dosis: '', frecuencia: '', horarios: [], via_administracion: '', observaciones: '' }],
+    medicamentos: [{ ...MEDICACION_ROW_INITIAL }],
   });
   const [medicamentosCatalog, setMedicamentosCatalog] = useState([]);
   const [medicacionSubmitting, setMedicacionSubmitting] = useState(false);
@@ -1532,9 +1544,21 @@ export default function PacienteDetail() {
       }
       case 'medicacion': {
         const handleCreatePlanMedicacion = async () => {
-          const items = medicacionForm.medicamentos.filter((m) => m.id_medicamento && parsePositiveInt(m.id_medicamento, 0) > 0);
+          const items = medicacionForm.medicamentos.filter((m) => {
+            if (m.id_medicamento === OTRO_MEDICAMENTO_VALUE) {
+              return (m.nombre_otro || '').trim().length >= 2;
+            }
+            return parsePositiveInt(m.id_medicamento, 0) > 0;
+          });
           if (items.length === 0) {
-            setMedicacionError('Selecciona al menos un medicamento.');
+            setMedicacionError('Selecciona al menos un medicamento del catálogo o escribe el nombre en "Otro medicamento".');
+            return;
+          }
+          const otroSinNombre = items.some(
+            (m) => m.id_medicamento === OTRO_MEDICAMENTO_VALUE && (m.nombre_otro || '').trim().length < 2
+          );
+          if (otroSinNombre) {
+            setMedicacionError('Escribe el nombre del medicamento (mínimo 2 caracteres).');
             return;
           }
           const fechaInicio = (medicacionForm.fecha_inicio || '').trim();
@@ -1550,14 +1574,17 @@ export default function PacienteDetail() {
             observaciones: medicacionForm.observaciones?.trim() || undefined,
             medicamentos: items.map((m) => {
               const horarios = Array.isArray(m.horarios) ? m.horarios.filter((h) => h && String(h).trim()) : [];
-              return {
-                id_medicamento: parsePositiveInt(m.id_medicamento, 0),
+              const base = {
                 dosis: (m.dosis || '').trim() || undefined,
                 frecuencia: (m.frecuencia || '').trim() || undefined,
                 horarios: horarios.length > 0 ? horarios : undefined,
                 via_administracion: (m.via_administracion || '').trim() || undefined,
                 observaciones: (m.observaciones || '').trim() || undefined,
               };
+              if (m.id_medicamento === OTRO_MEDICAMENTO_VALUE) {
+                return { ...base, nombre_medicamento: (m.nombre_otro || '').trim() };
+              }
+              return { ...base, id_medicamento: parsePositiveInt(m.id_medicamento, 0) };
             }),
           };
           try {
@@ -1572,7 +1599,7 @@ export default function PacienteDetail() {
               fecha_inicio: '',
               fecha_fin: '',
               observaciones: '',
-              medicamentos: [{ id_medicamento: '', dosis: '', frecuencia: '', horarios: [], via_administracion: '', observaciones: '' }],
+              medicamentos: [{ ...MEDICACION_ROW_INITIAL }],
             });
             setEditingPlanMedicacion(null);
             setMedicacionModalOpen(false);
@@ -1587,7 +1614,7 @@ export default function PacienteDetail() {
         const addMedicamentoRow = () => {
           setMedicacionForm((f) => ({
             ...f,
-            medicamentos: [...f.medicamentos, { id_medicamento: '', dosis: '', frecuencia: '', horarios: [], via_administracion: '', observaciones: '' }],
+            medicamentos: [...f.medicamentos, { ...MEDICACION_ROW_INITIAL }],
           }));
         };
         const addHorarioRow = (medIndex) => {
@@ -1620,8 +1647,45 @@ export default function PacienteDetail() {
         const updateMedicamentoRow = (index, field, value) => {
           setMedicacionForm((f) => ({
             ...f,
-            medicamentos: f.medicamentos.map((m, i) => (i === index ? { ...m, [field]: value } : m)),
+            medicamentos: f.medicamentos.map((m, i) => {
+              if (i !== index) return m;
+              if (field === 'id_medicamento') {
+                if (value === OTRO_MEDICAMENTO_VALUE) {
+                  return { ...m, id_medicamento: OTRO_MEDICAMENTO_VALUE, nombre_otro: m.nombre_otro || '' };
+                }
+                return { ...m, id_medicamento: value ?? '', nombre_otro: '' };
+              }
+              return { ...m, [field]: value };
+            }),
           }));
+        };
+        const mapMedicamentoPlanRow = (med) => {
+          const id = med.id_medicamento ?? med.id ?? '';
+          const nombre = sanitizeForDisplay(med.nombre_medicamento ?? med.medicamento) || '';
+          const inCatalog = id && medicamentosCatalog.some(
+            (c) => String(c.id_medicamento ?? c.id) === String(id)
+          );
+          if (!inCatalog && nombre) {
+            return {
+              ...MEDICACION_ROW_INITIAL,
+              id_medicamento: OTRO_MEDICAMENTO_VALUE,
+              nombre_otro: nombre,
+              dosis: med.dosis || '',
+              frecuencia: med.frecuencia || '',
+              horarios: Array.isArray(med.horarios) ? [...med.horarios] : (med.horario ? [med.horario] : []),
+              via_administracion: med.via_administracion || '',
+              observaciones: med.observaciones || '',
+            };
+          }
+          return {
+            ...MEDICACION_ROW_INITIAL,
+            id_medicamento: String(id),
+            dosis: med.dosis || '',
+            frecuencia: med.frecuencia || '',
+            horarios: Array.isArray(med.horarios) ? [...med.horarios] : (med.horario ? [med.horario] : []),
+            via_administracion: med.via_administracion || '',
+            observaciones: med.observaciones || '',
+          };
         };
         return (
           <Card className="patient-section-card">
@@ -1637,7 +1701,7 @@ export default function PacienteDetail() {
                       fecha_inicio: '',
                       fecha_fin: '',
                       observaciones: '',
-                      medicamentos: [{ id_medicamento: '', dosis: '', frecuencia: '', horarios: [], via_administracion: '', observaciones: '' }],
+                      medicamentos: [{ ...MEDICACION_ROW_INITIAL }],
                     });
                     setMedicacionModalOpen(true);
                   }}
@@ -1686,20 +1750,9 @@ export default function PacienteDetail() {
                           variant="primary"
                           size="small"
                           onClick={() => {
-                            const mapMed = (med) => {
-                              const hrs = med.horarios && Array.isArray(med.horarios) ? med.horarios : (med.horario ? [med.horario] : []);
-                              return {
-                                id_medicamento: String(med.id_medicamento ?? med.id ?? ''),
-                                dosis: med.dosis ?? '',
-                                frecuencia: med.frecuencia ?? '',
-                                horarios: hrs.map((h) => (typeof h === 'string' ? h.slice(0, 5) : '')),
-                                via_administracion: med.via_administracion ?? '',
-                                observaciones: med.observaciones ?? '',
-                              };
-                            };
                             const meds = Array.isArray(m.medicamentos) && m.medicamentos.length > 0
-                              ? m.medicamentos.map(mapMed)
-                              : (m.id_medicamento != null ? [mapMed(m)] : [{ id_medicamento: '', dosis: '', frecuencia: '', horarios: [], via_administracion: '', observaciones: '' }]);
+                              ? m.medicamentos.map(mapMedicamentoPlanRow)
+                              : (m.id_medicamento != null ? [mapMedicamentoPlanRow(m)] : [{ ...MEDICACION_ROW_INITIAL }]);
                             setMedicacionError('');
                             setMedicacionForm({
                               fecha_inicio: m.fecha_inicio ? String(m.fecha_inicio).slice(0, 10) : '',
@@ -1842,18 +1895,8 @@ export default function PacienteDetail() {
                             size="small"
                             onClick={() => {
                               const meds = Array.isArray(p.medicamentos) && p.medicamentos.length > 0
-                                ? p.medicamentos.map((med) => {
-                                    const hrs = med.horarios && Array.isArray(med.horarios) ? med.horarios : (med.horario ? [med.horario] : []);
-                                    return {
-                                      id_medicamento: String(med.id_medicamento ?? med.id ?? ''),
-                                      dosis: med.dosis ?? '',
-                                      frecuencia: med.frecuencia ?? '',
-                                      horarios: hrs.map((h) => (typeof h === 'string' ? h.slice(0, 5) : '')),
-                                      via_administracion: med.via_administracion ?? '',
-                                      observaciones: med.observaciones ?? '',
-                                    };
-                                  })
-                                : [{ id_medicamento: '', dosis: '', frecuencia: '', horarios: [], via_administracion: '', observaciones: '' }];
+                                ? p.medicamentos.map(mapMedicamentoPlanRow)
+                                : [{ ...MEDICACION_ROW_INITIAL }];
                               setMedicacionForm({
                                 fecha_inicio: p.fecha_inicio ? String(p.fecha_inicio).slice(0, 10) : '',
                                 fecha_fin: p.fecha_fin ? String(p.fecha_fin).slice(0, 10) : '',
@@ -1911,10 +1954,13 @@ export default function PacienteDetail() {
                         placeholder="Seleccionar"
                         value={row.id_medicamento || undefined}
                         onChange={(v) => updateMedicamentoRow(idx, 'id_medicamento', v ?? '')}
-                        options={medicamentosCatalog.map((med) => ({
-                          value: String(med.id_medicamento ?? med.id),
-                          label: sanitizeForDisplay(med.nombre_medicamento ?? med.nombre) || '—',
-                        }))}
+                        options={[
+                          ...medicamentosCatalog.map((med) => ({
+                            value: String(med.id_medicamento ?? med.id),
+                            label: sanitizeForDisplay(med.nombre_medicamento ?? med.nombre) || '—',
+                          })),
+                          { value: OTRO_MEDICAMENTO_VALUE, label: 'Otro medicamento…' },
+                        ]}
                       />
                       <Input
                         label="Dosis"
@@ -1929,6 +1975,15 @@ export default function PacienteDetail() {
                         placeholder="Ej: cada 8 h"
                       />
                     </div>
+                    {row.id_medicamento === OTRO_MEDICAMENTO_VALUE && (
+                      <Input
+                        label="Nombre del medicamento *"
+                        value={row.nombre_otro || ''}
+                        onChange={(e) => updateMedicamentoRow(idx, 'nombre_otro', e.target.value)}
+                        placeholder="Ej: Metformina XR 750 mg"
+                        style={{ marginTop: '0.5rem' }}
+                      />
+                    )}
                     <div style={{ marginTop: '0.5rem' }}>
                       <span style={{ display: 'block', marginBottom: 4, fontWeight: 500, fontSize: 'var(--text-sm)', color: 'var(--color-texto-primario)' }}>Horarios (opcional)</span>
                       {(row.horarios || []).map((h, hi) => (
@@ -4325,7 +4380,7 @@ function PacienteGraficosEvolucion({
       {/* Modal desglose por mes (paridad con app móvil) */}
       <Modal
         open={detalleMesOpen}
-        onClose={() => { setDetalleMesOpen(false); setMesSeleccionado(null); setMesSignos([]); }}
+        onClose={() => { setDetalleMesOpen(false); setMesSeleccionado(null); setMesSignos([]); setMesSignosError(null); }}
         title={mesSeleccionado ? `Desglose: ${mesSeleccionado.mesLabel}` : 'Desglose'}
         footer={null}
         width={560}
@@ -4375,9 +4430,16 @@ function PacienteGraficosEvolucion({
                   />
                 </div>
               )}
+              {mesSignosError && (
+                <p style={{ color: 'var(--color-error)', marginBottom: 'var(--space-3)', fontSize: 'var(--text-sm)' }}>
+                  {mesSignosError}
+                </p>
+              )}
               <h4 style={{ marginBottom: 'var(--space-3)', fontSize: 'var(--text-base)' }}>Registros ({registrosFiltrados.length})</h4>
               {registrosFiltrados.length === 0 ? (
-                <p style={{ color: 'var(--color-texto-secundario)' }}>No hay registros para el filtro seleccionado.</p>
+                <p style={{ color: 'var(--color-texto-secundario)' }}>
+                  {mesSignosLoading ? 'Cargando registros…' : 'No hay registros para el filtro seleccionado.'}
+                </p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
                   {registrosFiltrados.map((signo, idx) => {

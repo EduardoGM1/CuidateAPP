@@ -33,6 +33,7 @@ import {
   buildSignosDateWhere,
   MESES_ABREV_EVOLUCION,
 } from '../utils/signoVitalResponse.js';
+import { resolveMedicamentoIdForPlan } from '../utils/medicamentoCatalog.js';
 
 /**
  * Helper function para desencriptar un campo si está encriptado
@@ -1925,20 +1926,17 @@ export const createPacientePlanMedicacion = async (req, res) => {
       });
     }
 
-    // Validar cada medicamento
+    // Validar y resolver medicamentos (catálogo o nombre libre → find-or-create)
+    const resolvedMedicamentos = [];
     for (const med of medicamentos) {
-      if (!med.id_medicamento || isNaN(med.id_medicamento)) {
-        return res.status(400).json({
+      try {
+        const id_medicamento = await resolveMedicamentoIdForPlan(med);
+        resolvedMedicamentos.push({ ...med, id_medicamento });
+      } catch (resolveErr) {
+        const status = resolveErr.statusCode || 400;
+        return res.status(status).json({
           success: false,
-          error: 'ID de medicamento inválido'
-        });
-      }
-
-      const medicamento = await Medicamento.findByPk(med.id_medicamento);
-      if (!medicamento) {
-        return res.status(404).json({
-          success: false,
-          error: `Medicamento con ID ${med.id_medicamento} no encontrado`
+          error: resolveErr.message || 'Medicamento inválido',
         });
       }
     }
@@ -1976,7 +1974,7 @@ export const createPacientePlanMedicacion = async (req, res) => {
     const plan = await PlanMedicacion.create(planData);
 
     // Crear los detalles del plan (medicamentos)
-    for (const med of medicamentos) {
+    for (const med of resolvedMedicamentos) {
       // Procesar horarios: aceptar array o string único
       let horariosArray = [];
       if (med.horarios && Array.isArray(med.horarios)) {
@@ -2138,18 +2136,16 @@ export const updatePacientePlanMedicacion = async (req, res) => {
       });
     }
 
+    const resolvedMedicamentos = [];
     for (const med of medicamentos) {
-      if (!med.id_medicamento || isNaN(med.id_medicamento)) {
-        return res.status(400).json({
+      try {
+        const id_medicamento = await resolveMedicamentoIdForPlan(med);
+        resolvedMedicamentos.push({ ...med, id_medicamento });
+      } catch (resolveErr) {
+        const status = resolveErr.statusCode || 400;
+        return res.status(status).json({
           success: false,
-          error: 'ID de medicamento inválido'
-        });
-      }
-      const medicamento = await Medicamento.findByPk(med.id_medicamento);
-      if (!medicamento) {
-        return res.status(404).json({
-          success: false,
-          error: `Medicamento con ID ${med.id_medicamento} no encontrado`
+          error: resolveErr.message || 'Medicamento inválido',
         });
       }
     }
@@ -2187,7 +2183,7 @@ export const updatePacientePlanMedicacion = async (req, res) => {
       where: { id_plan: idPlan }
     });
 
-    for (const med of medicamentos) {
+    for (const med of resolvedMedicamentos) {
       let horariosArray = [];
       if (med.horarios && Array.isArray(med.horarios)) {
         horariosArray = med.horarios.filter(h => h && h.trim());
