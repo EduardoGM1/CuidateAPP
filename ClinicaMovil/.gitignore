@@ -70,6 +70,11 @@ android/app/src/main/assets/index.android.bundle
 
 # testing
 /coverage
+test-results*.txt
+test-output.txt
+
+# Assets generados por Metro en res/ (se regeneran al compilar)
+android/app/src/main/res/drawable-*/node_modules_*
 
 # Yarn
 .yarn/*

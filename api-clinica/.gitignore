@@ -17,6 +17,9 @@ pids/
 # Coverage directory used by tools like istanbul
 coverage/
 
+# Archivos subidos en runtime (audio, etc.)
+uploads/
+
 # OS generated files
 .DS_Store
 Thumbs.db

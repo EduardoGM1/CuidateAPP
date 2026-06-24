@@ -90,3 +90,25 @@ pnpm-lock.yaml
 *.apk
 *.aab
 
+# Salidas de tests (regenerables)
+**/test-results*.txt
+**/test-output.txt
+test-results/
+playwright-report/
+blob-report/
+
+# Uploads runtime API
+api-clinica/uploads/
+
+# Snapshots locales / exports de sesión
+version-antes-de-acordiones/
+docs/**/cursor_*.md
+docs/cursor_*.md
+
+# Scripts temporales de deploy
+**/_tmp-*.mjs
+**/_tmp_*.py
+
+# Audio subido en pruebas
+*.m4a
+
