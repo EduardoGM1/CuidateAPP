@@ -100,10 +100,14 @@ blob-report/
 # Uploads runtime API
 api-clinica/uploads/
 
-# Snapshots locales / exports de sesión
-version-antes-de-acordiones/
+# Exports Cursor / notas temporales de sesión
 docs/**/cursor_*.md
 docs/cursor_*.md
+docs/**/ANALISIS-*.md
+docs/**/RESUMEN-*.md
+docs/**/SOLUCION-*.md
+docs/**/CORRECCION-*.md
+docs/markdown/
 
 # Scripts temporales de deploy
 **/_tmp-*.mjs
