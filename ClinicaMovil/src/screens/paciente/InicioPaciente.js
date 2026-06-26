@@ -331,6 +331,15 @@ const InicioPaciente = () => {
           />
 
           <BigIconButton
+            icon="📋"
+            label="Mi Historial"
+            subLabel="Evolución e historial médico"
+            color="orange"
+            onPress={() => handleNavigate('HistorialMedico', 'mi historial médico')}
+            speakText="Mi historial. Ver evolución e historial médico completo"
+          />
+
+          <BigIconButton
             icon="💬"
             label="Chat con Doctor"
             subLabel="Hablar con tu médico"

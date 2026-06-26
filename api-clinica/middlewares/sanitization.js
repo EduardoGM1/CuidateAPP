@@ -126,6 +126,23 @@ export const sanitizeStrings = (req, res, next) => {
     return value;
   };
 
+  const URL_FIELD_KEYS = new Set([
+    'mensaje_audio_url',
+    'url',
+    'audioUrl',
+    'audio_url',
+    'foto_url',
+    'imagen_url',
+    'avatar_url',
+  ]);
+
+  const shouldPreserveUrlField = (key, value) => {
+    if (URL_FIELD_KEYS.has(key)) return true;
+    if (typeof value !== 'string') return false;
+    const v = value.trim();
+    return /^https?:\/\//i.test(v) || v.startsWith('/uploads/');
+  };
+
   const sanitizeObject = (obj) => {
     if (typeof obj !== 'object' || obj === null) return obj;
     
@@ -138,6 +155,8 @@ export const sanitizeStrings = (req, res, next) => {
           sanitized[key] = sanitizeObject(obj[key]);
         } else if (Array.isArray(obj[key])) {
           sanitized[key] = obj[key].map(item => sanitizeValue(item));
+        } else if (shouldPreserveUrlField(key, obj[key])) {
+          sanitized[key] = obj[key];
         } else {
           sanitized[key] = sanitizeValue(obj[key]);
         }

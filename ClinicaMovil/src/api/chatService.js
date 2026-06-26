@@ -10,6 +10,26 @@ import { getApiConfig, getApiConfigWithFallback, testApiConnectivity, API_CONFIG
 import { ensureApiClient } from './gestionService';
 import { storageService } from '../services/storageService';
 
+/** Ruta persistente /uploads/audio/... sin dominio ni firma. */
+function toPersistableAudioPath(url) {
+  if (!url || typeof url !== 'string') return null;
+  let s = url.trim()
+    .replace(/&amp;/g, '&')
+    .replace(/&#x2F;/gi, '/')
+    .replace(/&#x3D;/gi, '=');
+  try {
+    if (s.startsWith('http://') || s.startsWith('https://')) {
+      s = new URL(s).pathname;
+    }
+  } catch {
+    // ignore
+  }
+  const match = s.match(/\/uploads\/audio\/[^?#]+/i);
+  if (match) return match[0];
+  if (s.startsWith('/uploads/')) return s.split('?')[0];
+  return null;
+}
+
 // Variable local para almacenar la configuración dinámica detectada
 let currentApiConfig = null;
 
@@ -269,10 +289,10 @@ const performUploadWithXHR = (formData, uploadUrl, token, deviceId, options = {}
             return;
           }
 
-          // Si la URL es relativa, construir la URL completa
-          if (audioUrl.startsWith('/')) {
-            const baseURL = uploadUrl.split('/api/')[0];
-            audioUrl = `${baseURL}${audioUrl}`;
+          audioUrl = toPersistableAudioPath(audioUrl);
+          if (!audioUrl) {
+            reject(new Error('URL de audio del servidor no válida'));
+            return;
           }
 
           Logger.info('ChatService: Archivo subido exitosamente', { audioUrl });

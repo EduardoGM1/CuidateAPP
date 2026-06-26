@@ -133,8 +133,8 @@ export default function VoiceMessagePlayer({
       role="region"
       aria-label="Reproducir mensaje de voz"
     >
-      <audio ref={audioRef} preload="metadata" crossOrigin="anonymous">
-        <source src={fullUrl} type={fullUrl.toLowerCase().endsWith('.m4a') ? 'audio/mp4' : undefined} />
+      <audio ref={audioRef} preload="metadata">
+        <source src={fullUrl} type={fullUrl.toLowerCase().includes('.m4a') ? 'audio/mp4' : 'audio/mpeg'} />
       </audio>
       <button
         type="button"

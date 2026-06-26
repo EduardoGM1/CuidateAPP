@@ -2,6 +2,32 @@ import crypto from 'crypto';
 
 const DEFAULT_TTL_SEC = 3600;
 
+/** Decodifica entidades HTML en URLs (p. ej. tras sanitizeStrings en rutas antiguas). */
+export function decodeHtmlEntitiesInUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  let s = url;
+  let prev;
+  do {
+    prev = s;
+    s = s.replace(/&amp;/g, '&');
+    s = s.replace(/&#x2F;/gi, '/').replace(/&#x2F/gi, '/');
+    s = s.replace(/&#x3A;/gi, ':').replace(/&#x3A/gi, ':');
+    s = s.replace(/&#x3D;/gi, '=').replace(/&#x3D/gi, '=');
+    s = s.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+  } while (s !== prev);
+  return s;
+}
+
+/**
+ * Ruta persistente en BD: solo /uploads/... sin query ni dominio.
+ * Recupera URLs corruptas con entidades HTML.
+ */
+export function persistUploadPath(urlOrPath) {
+  if (!urlOrPath || typeof urlOrPath !== 'string') return null;
+  const decoded = decodeHtmlEntitiesInUrl(urlOrPath.trim());
+  return normalizeUploadPath(decoded);
+}
+
 function signingSecret() {
   const secret = process.env.UPLOAD_SIGN_SECRET || process.env.JWT_SECRET;
   if (!secret) throw new Error('UPLOAD_SIGN_SECRET o JWT_SECRET requerido para URLs de uploads');
@@ -75,8 +101,9 @@ export function signUploadFieldsInPayload(data) {
 
   const out = {};
   for (const [key, value] of Object.entries(data)) {
-    if (SIGNED_UPLOAD_KEYS.has(key) && typeof value === 'string' && value.includes('/uploads/')) {
-      out[key] = signUploadPublicUrl(value);
+    if (SIGNED_UPLOAD_KEYS.has(key) && typeof value === 'string') {
+      const pathOnly = persistUploadPath(value);
+      out[key] = pathOnly ? signUploadPublicUrl(pathOnly) : value;
     } else if (value && typeof value === 'object') {
       out[key] = signUploadFieldsInPayload(value);
     } else {

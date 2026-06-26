@@ -2,6 +2,8 @@ import {
   signUploadPublicUrl,
   verifyUploadSignature,
   normalizeUploadPath,
+  persistUploadPath,
+  decodeHtmlEntitiesInUrl,
   serializeWithSignedUploads,
 } from '../utils/uploadSignedUrl.js';
 
@@ -25,6 +27,16 @@ describe('uploadSignedUrl', () => {
 
   it('rechaza firma expirada o inválida', () => {
     expect(verifyUploadSignature('/uploads/audio/a.m4a', '1', 'deadbeef')).toBe(false);
+  });
+
+  it('recupera URLs corruptas por HTML entities y firma de nuevo', () => {
+    const corrupted =
+      '&#x2F;uploads&#x2F;audio&#x2F;x.m4a?exp&#x3D;1&amp;sig&#x3D;abc';
+    expect(persistUploadPath(corrupted)).toBe('/uploads/audio/x.m4a');
+    const out = serializeWithSignedUploads([
+      { id_mensaje: 2, mensaje_audio_url: corrupted },
+    ]);
+    expect(out[0].mensaje_audio_url).toMatch(/^\/uploads\/audio\/x\.m4a\?exp=/);
   });
 
   it('serializa Date como ISO (no como objeto vacío)', () => {

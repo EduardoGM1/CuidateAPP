@@ -8,7 +8,7 @@ import emailService from '../services/emailService.js';
 import realtimeService from '../services/realtimeService.js';
 import { crearNotificacionDoctor } from './cita.js';
 import multer from 'multer';
-import { serializeWithSignedUploads, signUploadPublicUrl } from '../utils/uploadSignedUrl.js';
+import { serializeWithSignedUploads, signUploadPublicUrl, persistUploadPath } from '../utils/uploadSignedUrl.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -326,12 +326,18 @@ export const createMensaje = async (req, res) => {
       mensaje_texto_length: mensaje_texto ? mensaje_texto.length : 0
     });
     
+    const audioPathPersistido = mensaje_audio_url ? persistUploadPath(mensaje_audio_url) : null;
+    if (mensaje_audio_url && !audioPathPersistido) {
+      logger.warn('mensaje_audio_url no válida', { mensaje_audio_url });
+      return res.status(400).json({ success: false, error: 'mensaje_audio_url no válida' });
+    }
+
     const mensaje = await MensajeChat.create({
       id_paciente: parseInt(id_paciente),
       id_doctor: doctorId,
       remitente,
       mensaje_texto: mensaje_texto ? mensaje_texto.trim() : null,
-      mensaje_audio_url: mensaje_audio_url || null,
+      mensaje_audio_url: audioPathPersistido,
       mensaje_audio_duracion: mensaje_audio_duracion || null,
       mensaje_audio_transcripcion: mensaje_audio_transcripcion || null,
       leido: false,
@@ -344,7 +350,7 @@ export const createMensaje = async (req, res) => {
     const payload = {
       id_paciente: mensaje.id_paciente,
       id_doctor: mensaje.id_doctor,
-      mensaje: mensaje.toJSON(),
+      mensaje: serializeWithSignedUploads(mensaje),
     };
     if (remitente === 'Paciente' && doctorId) {
       try {
@@ -598,7 +604,7 @@ export const marcarComoLeido = async (req, res) => {
       req.app.get('io').emit('mensaje_actualizado', {
         id_paciente: mensaje.id_paciente,
         id_doctor: mensaje.id_doctor,
-        mensaje: mensaje.toJSON(),
+        mensaje: serializeWithSignedUploads(mensaje),
       });
     }
     
@@ -1015,7 +1021,7 @@ export const updateMensaje = async (req, res) => {
       updateData.mensaje_texto = mensaje_texto.trim();
     }
     if (mensaje_audio_url !== undefined) {
-      updateData.mensaje_audio_url = mensaje_audio_url;
+      updateData.mensaje_audio_url = mensaje_audio_url ? persistUploadPath(mensaje_audio_url) : null;
     }
     if (mensaje_audio_duracion !== undefined) {
       updateData.mensaje_audio_duracion = mensaje_audio_duracion;
@@ -1034,7 +1040,7 @@ export const updateMensaje = async (req, res) => {
       req.app.get('io').emit('mensaje_actualizado', {
         id_paciente: mensaje.id_paciente,
         id_doctor: mensaje.id_doctor,
-        mensaje: mensaje.toJSON(),
+        mensaje: serializeWithSignedUploads(mensaje),
       });
     }
     

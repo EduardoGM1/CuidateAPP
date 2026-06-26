@@ -9,6 +9,7 @@ import { Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Logger from './logger';
+import { storageService } from './storageService';
 
 const CACHE_METADATA_KEY = '@audio_cache_metadata';
 const MAX_CACHE_SIZE = 100 * 1024 * 1024; // 100 MB
@@ -122,11 +123,35 @@ class AudioCacheService {
 
     Logger.info('AudioCacheService: Descargando audio', { url, cachePath });
 
-    // Descargar archivo
-    const downloadResult = await RNFS.downloadFile({
-      fromUrl: url,
-      toFile: cachePath,
-    }).promise;
+    const token = await storageService.getAuthToken().catch(() => null);
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const downloadOnce = async (downloadUrl, headers = {}) =>
+      RNFS.downloadFile({
+        fromUrl: downloadUrl,
+        toFile: cachePath,
+        headers,
+      }).promise;
+
+    let downloadResult = await downloadOnce(url, authHeaders);
+
+    // Si falla la URL firmada (expirada/corrupta), reintentar con JWT y ruta sin query
+    if (downloadResult.statusCode !== 200 && token) {
+      const barePath = url.split('?')[0];
+      let retryUrl = barePath;
+      if (!/^https?:\/\//i.test(barePath)) {
+        try {
+          const { getApiConfigWithFallback } = await import('../config/apiConfig');
+          const cfg = await getApiConfigWithFallback();
+          const base = cfg?.baseURL?.replace(/\/$/, '');
+          if (base) retryUrl = `${base}${barePath.startsWith('/') ? '' : '/'}${barePath}`;
+        } catch (e) {
+          Logger.warn('AudioCacheService: No se pudo resolver baseURL para reintento', e);
+        }
+      }
+      Logger.info('AudioCacheService: Reintentando descarga con JWT', { retryUrl });
+      downloadResult = await downloadOnce(retryUrl, authHeaders);
+    }
 
     if (downloadResult.statusCode === 200) {
       // Verificar que el archivo existe

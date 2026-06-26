@@ -22,6 +22,16 @@ function sendUploadFile(req, res) {
   if (!fs.existsSync(absolute)) {
     return res.status(404).json({ error: 'Archivo no encontrado' });
   }
+  const ext = path.extname(absolute).toLowerCase();
+  const mimeByExt = {
+    '.m4a': 'audio/mp4',
+    '.mp3': 'audio/mpeg',
+    '.wav': 'audio/wav',
+    '.aac': 'audio/aac',
+  };
+  if (mimeByExt[ext]) {
+    res.setHeader('Content-Type', mimeByExt[ext]);
+  }
   return res.sendFile(absolute);
 }
 
