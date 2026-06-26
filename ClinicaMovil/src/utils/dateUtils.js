@@ -163,6 +163,23 @@ export const formatRelativeTime = (timestamp) => {
 };
 
 /**
+ * Convierte valores de fecha del API a Date (evita fallos si llega {} u otro objeto inválido).
+ * @param {unknown} value
+ * @returns {Date|null}
+ */
+export const parseApiDate = (value) => {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+};
+
+/**
  * Valida si una fecha es válida
  * @param {string|Date} timestamp - Fecha a validar
  * @returns {boolean} True si la fecha es válida
@@ -335,6 +352,7 @@ export default {
   formatTime12h,
   formatTime12hPm,
   formatRelativeTime,
+  parseApiDate,
   isValidDate,
   getDaysDifference,
   formatAppointmentDate,

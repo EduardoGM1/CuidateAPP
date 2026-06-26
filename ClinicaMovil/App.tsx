@@ -145,7 +145,7 @@ function AppNavigationRoot() {
       <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
       <NavOnboardingController navigationRootState={navigationRootState} />
       <AppNavigator />
-      <AccessibilityFAB navigationRef={navigationRef} />
+      <AccessibilityFAB />
     </NavigationContainer>
   );
 }

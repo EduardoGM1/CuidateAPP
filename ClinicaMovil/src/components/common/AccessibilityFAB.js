@@ -1,5 +1,5 @@
 /**
- * Botón flotante global de accesibilidad (tamaño de letra, contraste, configuración).
+ * Botón flotante global de accesibilidad (solo tamaño de letra).
  */
 
 import React, { useCallback, useState } from 'react';
@@ -9,35 +9,27 @@ import {
   TouchableOpacity,
   StyleSheet,
   Pressable,
-  Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AppText from './AppText';
 import { useAccessibility } from '../../context/AccessibilityContext';
-import { useAuth } from '../../context/AuthContext';
-import { isPacienteRole } from '../../onboarding/navOnboardingUtils';
 import { FONT_SCALE_LABELS, FONT_SCALE_ORDER } from '../../constants/accessibility';
 import { COLORES } from '../../utils/constantes';
 import hapticService from '../../services/hapticService';
 import useTTS from '../../hooks/useTTS';
 
-const AccessibilityFAB = ({ navigationRef }) => {
+const AccessibilityFAB = () => {
   const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
-  const { isAuthenticated, userRole } = useAuth();
   const { speak } = useTTS();
   const {
     fontScale,
-    highContrast,
     setFontScale,
-    setHighContrast,
     canIncreaseFont,
     canDecreaseFont,
     systemFontScale,
   } = useAccessibility();
-
-  const isPatient = isAuthenticated && isPacienteRole(userRole);
 
   const openPanel = useCallback(() => {
     hapticService.light();
@@ -66,34 +58,6 @@ const AccessibilityFAB = ({ navigationRef }) => {
     await speak(`Tamaño de letra: ${FONT_SCALE_LABELS[next]}`);
   }, [fontScale, setFontScale, speak]);
 
-  const handleContrast = useCallback(
-    async (value) => {
-      hapticService.selection();
-      await setHighContrast(value);
-      await speak(value ? 'Alto contraste activado' : 'Alto contraste desactivado');
-    },
-    [setHighContrast, speak]
-  );
-
-  const handleOpenSettings = useCallback(() => {
-    closePanel();
-    if (!navigationRef?.current?.isReady?.()) return;
-    try {
-      if (isPatient) {
-        navigationRef.current.navigate('Configuracion');
-      }
-    } catch {
-      // Pantalla no disponible en este stack
-    }
-  }, [closePanel, navigationRef, isPatient]);
-
-  const handleListenHelp = useCallback(async () => {
-    hapticService.light();
-    await speak(
-      'Accesibilidad. Usa los botones menos y más para cambiar el tamaño de la letra. Puedes activar alto contraste para ver mejor.'
-    );
-  }, [speak]);
-
   return (
     <>
       <TouchableOpacity
@@ -102,13 +66,12 @@ const AccessibilityFAB = ({ navigationRef }) => {
           {
             bottom: Math.max(insets.bottom, 12) + 12,
             right: Math.max(insets.right, 12) + 12,
-            backgroundColor: highContrast ? COLORES.NEGRO : COLORES.NAV_PACIENTE,
           },
         ]}
         onPress={openPanel}
         accessibilityRole="button"
         accessibilityLabel="Accesibilidad"
-        accessibilityHint="Abre opciones de tamaño de letra y contraste"
+        accessibilityHint="Abre opciones de tamaño de letra"
         activeOpacity={0.85}
       >
         <Icon name="accessibility" size={28} color={COLORES.TEXTO_EN_PRIMARIO} />
@@ -117,11 +80,7 @@ const AccessibilityFAB = ({ navigationRef }) => {
       <Modal visible={open} transparent animationType="slide" onRequestClose={closePanel}>
         <Pressable style={styles.backdrop} onPress={closePanel}>
           <Pressable
-            style={[
-              styles.sheet,
-              highContrast && styles.sheetHighContrast,
-              { paddingBottom: Math.max(insets.bottom, 16) + 8 },
-            ]}
+            style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) + 8 }]}
             onPress={(e) => e.stopPropagation()}
           >
             <View style={styles.handle} />
@@ -157,26 +116,6 @@ const AccessibilityFAB = ({ navigationRef }) => {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.switchRow}>
-              <AppText style={styles.switchLabel}>Alto contraste</AppText>
-              <Switch
-                value={highContrast}
-                onValueChange={handleContrast}
-                trackColor={{ false: COLORES.SWITCH_TRACK_OFF, true: COLORES.NAV_PACIENTE }}
-                thumbColor={COLORES.TEXTO_EN_PRIMARIO}
-              />
-            </View>
-
-            <TouchableOpacity style={styles.actionBtn} onPress={handleListenHelp}>
-              <AppText style={styles.actionBtnText}>🔊 Escuchar ayuda</AppText>
-            </TouchableOpacity>
-
-            {isPatient && (
-              <TouchableOpacity style={styles.actionBtnSecondary} onPress={handleOpenSettings}>
-                <AppText style={styles.actionBtnSecondaryText}>Más opciones (TTS, PIN…)</AppText>
-              </TouchableOpacity>
-            )}
-
             <TouchableOpacity style={styles.closeBtn} onPress={closePanel}>
               <AppText style={styles.closeBtnText}>Cerrar</AppText>
             </TouchableOpacity>
@@ -193,6 +132,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
+    backgroundColor: COLORES.NAV_PACIENTE,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 8,
@@ -213,11 +153,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
     paddingTop: 12,
-  },
-  sheetHighContrast: {
-    backgroundColor: '#000',
-    borderTopWidth: 2,
-    borderColor: '#FFF',
   },
   handle: {
     alignSelf: 'center',
@@ -279,43 +214,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: COLORES.TEXTO_PRIMARIO,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    paddingVertical: 4,
-  },
-  switchLabel: {
-    fontSize: 16,
-    color: COLORES.TEXTO_PRIMARIO,
-    flex: 1,
-  },
-  actionBtn: {
-    backgroundColor: COLORES.NAV_PACIENTE,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  actionBtnText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORES.TEXTO_EN_PRIMARIO,
-  },
-  actionBtnSecondary: {
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: COLORES.NAV_PACIENTE,
-  },
-  actionBtnSecondaryText: {
-    fontSize: 15,
-    color: COLORES.NAV_PACIENTE,
-    fontWeight: '600',
   },
   closeBtn: {
     paddingVertical: 12,

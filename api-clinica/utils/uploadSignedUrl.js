@@ -104,6 +104,8 @@ export function signUploadFieldsInPayload(data) {
     if (SIGNED_UPLOAD_KEYS.has(key) && typeof value === 'string') {
       const pathOnly = persistUploadPath(value);
       out[key] = pathOnly ? signUploadPublicUrl(pathOnly) : value;
+    } else if (value instanceof Date) {
+      out[key] = value.toISOString();
     } else if (value && typeof value === 'object') {
       out[key] = signUploadFieldsInPayload(value);
     } else {

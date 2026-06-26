@@ -9,6 +9,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
 import useWebSocket from './useWebSocket';
 import chatService from '../api/chatService';
+import { normalizeFechaEnvio } from '../utils/chatUtils';
 import offlineService from '../services/offlineService';
 import chatNotificationService from '../services/chatNotificationService';
 import hapticService from '../services/hapticService';
@@ -262,7 +263,13 @@ const useChat = ({ pacienteId, doctorId: doctorIdProp, remitente, onNuevoMensaje
         if (data.mensaje && data.mensaje.id_mensaje) {
           setMensajes(prev => prev.map(m => 
             m.id_mensaje === data.mensaje.id_mensaje 
-              ? { ...m, ...data.mensaje, estado: data.mensaje.leido ? 'leido' : 'enviado' }
+              ? {
+                  ...m,
+                  ...data.mensaje,
+                  fecha_envio:
+                    normalizeFechaEnvio(data.mensaje.fecha_envio) ?? m.fecha_envio,
+                  estado: data.mensaje.leido ? 'leido' : 'enviado',
+                }
               : m
           ));
         } else {
@@ -442,7 +449,12 @@ const useChat = ({ pacienteId, doctorId: doctorIdProp, remitente, onNuevoMensaje
         
         setMensajes(prev => prev.map(m => 
           m.id_mensaje === mensajeLocal.id_mensaje 
-            ? { ...nuevoMensaje, estado: 'enviado' }
+            ? {
+                ...nuevoMensaje,
+                estado: 'enviado',
+                fecha_envio:
+                  normalizeFechaEnvio(nuevoMensaje?.fecha_envio) ?? mensajeLocal.fecha_envio,
+              }
             : m
         ));
         

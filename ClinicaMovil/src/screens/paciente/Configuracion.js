@@ -25,9 +25,21 @@ import Logger from '../../services/logger';
 import { COLORES } from '../../utils/constantes';
 import ttsService from '../../services/ttsService';
 import BackHeader from '../../components/common/BackHeader';
-import AppText from '../../components/common/AppText';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { FONT_SCALE_LABELS, FONT_SCALE_ORDER, FONT_SCALE_TO_LEGACY } from '../../constants/accessibility';
+
+/** Etiqueta fija en chips: no escala con la preferencia global de fuente. */
+const ChipLabel = ({ children, active }) => (
+  <Text
+    allowFontScaling={false}
+    numberOfLines={1}
+    adjustsFontSizeToFit
+    minimumFontScale={0.75}
+    style={[styles.chipLabel, active && styles.chipLabelActive]}
+  >
+    {children}
+  </Text>
+);
 
 const Configuracion = () => {
   const navigation = useNavigation();
@@ -217,25 +229,19 @@ const Configuracion = () => {
                     style={[styles.rateButton, ttsRate === 0.7 && styles.rateButtonActive]}
                     onPress={() => handleTtsRateChange(0.7)}
                   >
-                    <Text style={[styles.rateButtonText, ttsRate === 0.7 && styles.rateButtonTextActive]}>
-                      Lenta
-                    </Text>
+                    <ChipLabel active={ttsRate === 0.7}>Lenta</ChipLabel>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.rateButton, ttsRate === 0.9 && styles.rateButtonActive]}
                     onPress={() => handleTtsRateChange(0.9)}
                   >
-                    <Text style={[styles.rateButtonText, ttsRate === 0.9 && styles.rateButtonTextActive]}>
-                      Normal
-                    </Text>
+                    <ChipLabel active={ttsRate === 0.9}>Normal</ChipLabel>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.rateButton, ttsRate === 1.1 && styles.rateButtonActive]}
                     onPress={() => handleTtsRateChange(1.1)}
                   >
-                    <Text style={[styles.rateButtonText, ttsRate === 1.1 && styles.rateButtonTextActive]}>
-                      Rápida
-                    </Text>
+                    <ChipLabel active={ttsRate === 1.1}>Rápida</ChipLabel>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -247,25 +253,19 @@ const Configuracion = () => {
                     style={[styles.rateButton, ttsVolume === 0.5 && styles.rateButtonActive]}
                     onPress={() => handleTtsVolumeChange(0.5)}
                   >
-                    <Text style={[styles.rateButtonText, ttsVolume === 0.5 && styles.rateButtonTextActive]}>
-                      Bajo
-                    </Text>
+                    <ChipLabel active={ttsVolume === 0.5}>Bajo</ChipLabel>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.rateButton, ttsVolume === 0.75 && styles.rateButtonActive]}
                     onPress={() => handleTtsVolumeChange(0.75)}
                   >
-                    <Text style={[styles.rateButtonText, ttsVolume === 0.75 && styles.rateButtonTextActive]}>
-                      Medio
-                    </Text>
+                    <ChipLabel active={ttsVolume === 0.75}>Medio</ChipLabel>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.rateButton, ttsVolume === 1.0 && styles.rateButtonActive]}
                     onPress={() => handleTtsVolumeChange(1.0)}
                   >
-                    <Text style={[styles.rateButtonText, ttsVolume === 1.0 && styles.rateButtonTextActive]}>
-                      Alto
-                    </Text>
+                    <ChipLabel active={ttsVolume === 1.0}>Alto</ChipLabel>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -302,25 +302,19 @@ const Configuracion = () => {
                 style={[styles.rateButton, ttsRate === 0.7 && styles.rateButtonActive]}
                 onPress={() => handleTtsRateChange(0.7)}
               >
-                <Text style={[styles.rateButtonText, ttsRate === 0.7 && styles.rateButtonTextActive]}>
-                  Lenta
-                </Text>
+                <ChipLabel active={ttsRate === 0.7}>Lenta</ChipLabel>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.rateButton, ttsRate === 0.9 && styles.rateButtonActive]}
                 onPress={() => handleTtsRateChange(0.9)}
               >
-                <Text style={[styles.rateButtonText, ttsRate === 0.9 && styles.rateButtonTextActive]}>
-                  Normal
-                </Text>
+                <ChipLabel active={ttsRate === 0.9}>Normal</ChipLabel>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.rateButton, ttsRate === 1.1 && styles.rateButtonActive]}
                 onPress={() => handleTtsRateChange(1.1)}
               >
-                <Text style={[styles.rateButtonText, ttsRate === 1.1 && styles.rateButtonTextActive]}>
-                  Rápida
-                </Text>
+                <ChipLabel active={ttsRate === 1.1}>Rápida</ChipLabel>
               </TouchableOpacity>
             </View>
           </View>
@@ -334,14 +328,7 @@ const Configuracion = () => {
                   style={[styles.fontSizeButton, fontScale === key && styles.fontSizeButtonActive]}
                   onPress={() => handleFontScaleChange(key)}
                 >
-                  <AppText
-                    style={[
-                      styles.fontSizeButtonText,
-                      fontScale === key && styles.fontSizeButtonTextActive,
-                    ]}
-                  >
-                    {FONT_SCALE_LABELS[key]}
-                  </AppText>
+                  <ChipLabel active={fontScale === key}>{FONT_SCALE_LABELS[key]}</ChipLabel>
                 </TouchableOpacity>
               ))}
             </View>
@@ -518,59 +505,56 @@ const styles = StyleSheet.create({
   },
   rateButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
     marginTop: 12,
   },
   rateButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
     borderRadius: 12,
     backgroundColor: COLORES.FONDO,
     borderWidth: 2,
     borderColor: COLORES.BORDE_CLARO,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 40,
   },
   rateButtonActive: {
     borderColor: COLORES.NAV_PACIENTE,
     backgroundColor: COLORES.FONDO_VERDE_SUAVE,
   },
-  rateButtonText: {
-    fontSize: 16,
+  chipLabel: {
+    fontSize: 12,
     fontWeight: '600',
     color: COLORES.TEXTO_SECUNDARIO,
+    textAlign: 'center',
   },
-  rateButtonTextActive: {
+  chipLabelActive: {
     color: COLORES.EXITO,
     fontWeight: 'bold',
   },
   fontSizeButtons: {
     flexDirection: 'row',
-    gap: 12,
+    flexWrap: 'wrap',
+    gap: 8,
     marginTop: 12,
   },
   fontSizeButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    width: '48%',
+    paddingVertical: 10,
+    paddingHorizontal: 6,
     borderRadius: 12,
     backgroundColor: COLORES.FONDO,
     borderWidth: 2,
     borderColor: COLORES.BORDE_CLARO,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 40,
   },
   fontSizeButtonActive: {
     borderColor: COLORES.NAV_PACIENTE,
     backgroundColor: COLORES.FONDO_VERDE_SUAVE,
-  },
-  fontSizeButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORES.TEXTO_SECUNDARIO,
-  },
-  fontSizeButtonTextActive: {
-    color: COLORES.EXITO,
-    fontWeight: 'bold',
   },
   infoSection: {
     marginTop: 20,

@@ -6,6 +6,35 @@
  */
 
 import { formatNombreCompleto, inicialesDesdeNombreCompleto } from './formatNombreCompleto';
+import { parseApiDate, formatTime12hPm } from './dateUtils';
+
+/**
+ * Normaliza fecha_envio del API a ISO string (descarta {} u objetos inválidos).
+ * @param {unknown} fecha
+ * @returns {string|null}
+ */
+export const normalizeFechaEnvio = (fecha) => {
+  const d = parseApiDate(fecha);
+  return d ? d.toISOString() : null;
+};
+
+/**
+ * Normaliza fecha_envio en un mensaje de chat.
+ * @param {Object} mensaje
+ * @returns {Object}
+ */
+export const normalizeMensajeChat = (mensaje) => {
+  if (!mensaje || typeof mensaje !== 'object') return mensaje;
+  const fecha = normalizeFechaEnvio(mensaje.fecha_envio);
+  if (!fecha) return mensaje;
+  return { ...mensaje, fecha_envio: fecha };
+};
+
+/** @param {Object[]} mensajes */
+export const normalizeMensajesChat = (mensajes) => {
+  if (!Array.isArray(mensajes)) return [];
+  return mensajes.map(normalizeMensajeChat);
+};
 
 /**
  * Obtener iniciales del paciente (orden: Apellido paterno, Apellido materno, Nombre)
@@ -56,7 +85,8 @@ export const agruparMensajesPorFecha = (mensajes) => {
   let grupoActual = null;
 
   mensajes.forEach((mensaje) => {
-    const fecha = new Date(mensaje.fecha_envio);
+    const fecha = parseApiDate(mensaje.fecha_envio);
+    if (!fecha) return;
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const ayer = new Date(hoy);
@@ -162,19 +192,33 @@ export const obtenerColorEstado = (estado) => {
  * @returns {string} Fecha formateada
  */
 export const formatearFechaMensaje = (fecha) => {
-  if (!fecha) return '';
-  const date = new Date(fecha);
+  const date = parseApiDate(fecha);
+  if (!date) return '';
+
   const ahora = new Date();
-  const diff = ahora - date;
-  const minutos = Math.floor(diff / 60000);
-  
-  if (minutos < 1) return 'Ahora';
-  if (minutos < 60) return `Hace ${minutos} min`;
-  if (minutos < 1440) return `Hace ${Math.floor(minutos / 60)} h`;
-  // Usar formateo manual en español
+  const hoy = new Date(ahora);
+  hoy.setHours(0, 0, 0, 0);
+  const diaMensaje = new Date(date);
+  diaMensaje.setHours(0, 0, 0, 0);
+
+  const hora = formatTime12hPm(date);
+
+  if (diaMensaje.getTime() === hoy.getTime()) {
+    return hora;
+  }
+
+  const ayer = new Date(hoy);
+  ayer.setDate(ayer.getDate() - 1);
+  if (diaMensaje.getTime() === ayer.getTime()) {
+    return `Ayer, ${hora}`;
+  }
+
   const dia = String(date.getDate()).padStart(2, '0');
   const mes = String(date.getMonth() + 1).padStart(2, '0');
-  return `${dia}/${mes}`;
+  if (date.getFullYear() === ahora.getFullYear()) {
+    return `${dia}/${mes}, ${hora}`;
+  }
+  return `${dia}/${mes}/${date.getFullYear()}, ${hora}`;
 };
 
 

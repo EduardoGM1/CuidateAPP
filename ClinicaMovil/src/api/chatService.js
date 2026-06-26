@@ -5,7 +5,7 @@
 import { Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 import axios from 'axios';
-import Logger from '../services/logger';
+import { normalizeMensajeChat, normalizeMensajesChat } from '../utils/chatUtils';
 import { getApiConfig, getApiConfigWithFallback, testApiConnectivity, API_CONFIG } from '../config/apiConfig';
 import { ensureApiClient } from './gestionService';
 import { storageService } from '../services/storageService';
@@ -65,7 +65,7 @@ export const getConversacion = async (idPaciente, idDoctor = null) => {
       success: response.data?.success
     });
     
-    return response.data?.data || [];
+    return normalizeMensajesChat(response.data?.data || []);
   } catch (error) {
     // Log más detallado del error
     if (error.response) {
@@ -143,7 +143,7 @@ export const getMensajesPaciente = async (idPaciente, limit = 500) => {
     if (response.data?.success === false) {
       return [];
     }
-    return response.data?.data || [];
+    return normalizeMensajesChat(response.data?.data || []);
   } catch (error) {
     Logger.warn('ChatService: getMensajesPaciente falló', {
       message: error.message,
@@ -202,7 +202,7 @@ export const getMensajesNoLeidos = async (idPaciente) => {
     
     // NOTA: No incluir /api porque apiClient ya lo tiene en baseURL
     const response = await apiClient.get(`/mensajes-chat/paciente/${idPaciente}/no-leidos`);
-    return response.data?.data || [];
+    return normalizeMensajesChat(response.data?.data || []);
   } catch (error) {
     Logger.error('Error obteniendo mensajes no leídos:', error);
     throw error;
@@ -234,7 +234,7 @@ export const enviarMensajeTexto = async (idPaciente, idDoctor, remitente, mensaj
       mensaje_texto: textoLimpio,
     });
     
-    return response.data?.data;
+    return normalizeMensajeChat(response.data?.data);
   } catch (error) {
     Logger.error('Error enviando mensaje de texto:', error);
     throw error;
@@ -419,7 +419,7 @@ export const enviarMensajeAudio = async (idPaciente, idDoctor, remitente, audioU
       mensaje_audio_transcripcion: transcripcion,
     });
     
-    return response.data?.data;
+    return normalizeMensajeChat(response.data?.data);
   } catch (error) {
     Logger.error('Error enviando mensaje de audio:', error);
     throw error;
@@ -480,7 +480,7 @@ export const actualizarMensaje = async (idMensaje, mensajeTexto) => {
       mensaje_texto: textoLimpio,
     });
     
-    return response.data?.data;
+    return normalizeMensajeChat(response.data?.data);
   } catch (error) {
     Logger.error('Error actualizando mensaje:', error);
     throw error;
