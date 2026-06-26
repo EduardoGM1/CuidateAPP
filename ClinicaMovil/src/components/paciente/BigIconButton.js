@@ -1,31 +1,22 @@
 /**
  * Componente: Botón Grande con Ícono
- * 
- * Botón accesible mínimo 80x80px para pacientes rurales.
- * Incluye TTS automático, feedback háptico y visual.
+ *
+ * Botón accesible para pacientes. Escala con AccessibilityContext.
  */
 
-import React, { memo } from 'react';
-import { TouchableOpacity, Text, View, StyleSheet, Animated } from 'react-native';
+import React, { memo, useMemo } from 'react';
+import { TouchableOpacity, View, StyleSheet, Animated } from 'react-native';
 import useTTS from '../../hooks/useTTS';
 import hapticService from '../../services/hapticService';
 import audioFeedbackService from '../../services/audioFeedbackService';
 import Badge from './Badge';
 import { COLORES } from '../../utils/constantes';
+import AppText from '../common/AppText';
+import { useAccessibilityOptional } from '../../context/AccessibilityContext';
 
-/**
- * Botón grande accesible para pacientes
- * @param {Object} props
- * @param {string} props.icon - Ícono/emoji (80x80px mínimo visual)
- * @param {string} props.label - Texto del botón
- * @param {string} props.subLabel - Texto secundario (opcional)
- * @param {Function} props.onPress - Función al presionar
- * @param {string} props.color - Color del borde (green, red, blue, orange)
- * @param {boolean} props.autoSpeak - Hablar automáticamente al tocar (default: true)
- * @param {string} props.speakText - Texto a pronunciar (default: label)
- * @param {number} props.badgeCount - Contador para mostrar en badge (opcional)
- * @param {string} props.badgeVariant - Variante del badge (default, warning, danger, success)
- */
+const BASE_CARD_HEIGHT = 220;
+const BASE_TEXT_HEIGHT = 72;
+
 const BigIconButton = memo(({
   icon,
   label,
@@ -40,9 +31,20 @@ const BigIconButton = memo(({
   badgeVariant = 'default',
 }) => {
   const { speak } = useTTS();
+  const accessibility = useAccessibilityOptional();
+  const m = accessibility?.fontScaleMultiplier ?? 1;
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
-  // Colores por tipo (Design System: desde COLORES)
+  const layout = useMemo(
+    () => ({
+      cardHeight: Math.round(BASE_CARD_HEIGHT * m),
+      textHeight: Math.round(BASE_TEXT_HEIGHT * m),
+      iconSize: Math.round(80 * m),
+      iconBox: Math.round(100 * m),
+    }),
+    [m]
+  );
+
   const colorStyles = {
     green: { border: COLORES.EXITO_LIGHT, bg: '#F1F8E9' },
     red: { border: COLORES.ERROR_LIGHT, bg: '#FFEBEE' },
@@ -56,55 +58,46 @@ const BigIconButton = memo(({
   const handlePress = async () => {
     if (disabled) return;
 
-    // Animación de escala
     Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
+      Animated.timing(scaleAnim, { toValue: 0.95, duration: 100, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
     ]).start();
 
-    // Feedback háptico
     hapticService.medium();
-
-    // Feedback auditivo
     audioFeedbackService.playTap();
 
-    // TTS automático
     if (autoSpeak) {
-      const textToSpeak = speakText || label;
-      await speak(textToSpeak);
+      await speak(speakText || label);
     }
 
-    // Ejecutar acción
-    if (onPress) {
-      onPress();
-    }
+    if (onPress) onPress();
   };
 
   const handleLongPress = async () => {
     if (disabled) return;
-    
-    // En long press, pronunciar descripción completa
     const fullText = subLabel ? `${label}. ${subLabel}` : label;
     await speak(fullText);
     hapticService.heavy();
   };
 
   return (
-    <Animated.View style={[styles.wrapper, { transform: [{ scale: scaleAnim }] }, style]}>
+    <Animated.View
+      style={[
+        styles.wrapper,
+        { minHeight: layout.cardHeight + 20 },
+        { transform: [{ scale: scaleAnim }] },
+        style,
+      ]}
+    >
       <TouchableOpacity
         style={[
           styles.button,
           {
             borderColor: selectedColor.border,
             backgroundColor: disabled ? COLORES.TEXTO_DISABLED : selectedColor.bg,
+            height: layout.cardHeight,
+            minHeight: layout.cardHeight,
+            maxHeight: layout.cardHeight,
           },
           disabled && styles.disabled,
         ]}
@@ -116,23 +109,37 @@ const BigIconButton = memo(({
         accessibilityLabel={`${label}. ${subLabel || ''}${badgeCount ? `. ${badgeCount} notificaciones` : ''}`}
         accessibilityHint="Presiona para abrir. Mantén presionado para escuchar descripción completa."
       >
-        <View style={styles.iconContainer}>
-          <Text style={styles.icon}>{icon}</Text>
+        <View
+          style={[
+            styles.iconContainer,
+            {
+              width: layout.iconBox,
+              height: layout.iconBox,
+              minWidth: layout.iconBox,
+              minHeight: layout.iconBox,
+              maxWidth: layout.iconBox,
+              maxHeight: layout.iconBox,
+            },
+          ]}
+        >
+          <AppText style={[styles.icon, { fontSize: layout.iconSize, lineHeight: layout.iconBox }]}>
+            {icon}
+          </AppText>
           {badgeCount !== undefined && badgeCount > 0 && (
             <View style={styles.badgeContainer}>
               <Badge count={badgeCount} variant={badgeVariant} size="medium" />
             </View>
           )}
         </View>
-        <View style={styles.textContainer}>
-          <Text style={[styles.label, disabled && styles.disabledText]} numberOfLines={1}>
+        <View style={[styles.textContainer, { height: layout.textHeight, minHeight: layout.textHeight, maxHeight: layout.textHeight }]}>
+          <AppText style={styles.label} numberOfLines={2}>
             {label}
-          </Text>
-          {subLabel && (
-            <Text style={[styles.subLabel, disabled && styles.disabledText]} numberOfLines={2}>
+          </AppText>
+          {subLabel ? (
+            <AppText style={styles.subLabel} numberOfLines={3}>
               {subLabel}
-            </Text>
-          )}
+            </AppText>
+          ) : null}
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -141,32 +148,23 @@ const BigIconButton = memo(({
 
 BigIconButton.displayName = 'BigIconButton';
 
-const CARD_HEIGHT = 220; // Altura fija para todas las cards (icono + texto + padding sin recorte)
-
 const styles = StyleSheet.create({
   wrapper: {
     width: '100%',
-    minHeight: CARD_HEIGHT + 20, // card + marginVertical
     flexShrink: 0,
     alignSelf: 'center',
   },
   button: {
     width: '100%',
-    height: CARD_HEIGHT,
-    minHeight: CARD_HEIGHT,
-    maxHeight: CARD_HEIGHT,
     borderRadius: 24,
-    paddingVertical: 20,
-    paddingHorizontal: 24,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
     elevation: 8,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     marginVertical: 10,
@@ -176,61 +174,46 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     position: 'relative',
-    marginBottom: 10, // ✅ Margen aumentado proporcionalmente
-    width: 100, // ✅ 100px fijo para todas las cards
-    height: 100, // ✅ 100px fijo para todas las cards
-    minWidth: 100, // ✅ Ancho mínimo fijo
-    minHeight: 100, // ✅ Altura mínima fija
-    maxWidth: 100, // ✅ Ancho máximo fijo
-    maxHeight: 100, // ✅ Altura máxima fija
+    marginBottom: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0, // ✅ Evitar que se encoja
-    flexGrow: 0, // ✅ Evitar que crezca
+    flexShrink: 0,
+    flexGrow: 0,
   },
   icon: {
-    fontSize: 80, // ✅ Tamaño de ícono aumentado proporcionalmente
-    lineHeight: 100, // ✅ Asegurar altura de 100px
-    textAlign: 'center', // ✅ Centrar el ícono
+    textAlign: 'center',
   },
   badgeContainer: {
     position: 'absolute',
-    top: -4, // ✅ Ajustado para no afectar el tamaño de la card
-    right: -4, // ✅ Ajustado para no afectar el tamaño de la card
-    zIndex: 1, // ✅ Asegurar que el badge esté por encima
-    // ✅ El badge no debe afectar el layout de la card
+    top: -4,
+    right: -4,
+    zIndex: 1,
   },
   textContainer: {
     width: '100%',
     alignItems: 'center',
-    justifyContent: 'flex-start', // ✅ Alinear al inicio para mantener altura
-    flexShrink: 0, // ✅ No permitir que se encoja
-    flexGrow: 0, // ✅ No permitir que crezca
-    height: 60, // ✅ Altura fija para el contenedor de texto
-    minHeight: 60, // ✅ Altura mínima fija
-    maxHeight: 60, // ✅ Altura máxima fija
+    justifyContent: 'flex-start',
+    flexShrink: 0,
+    flexGrow: 0,
   },
   label: {
-    fontSize: 22, // ✅ Tamaño de fuente aumentado
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#333',
     textAlign: 'center',
-    marginBottom: 4, // ✅ Margen aumentado proporcionalmente
+    marginBottom: 4,
     width: '100%',
-    lineHeight: 28, // ✅ Altura de línea aumentada
+    lineHeight: 28,
   },
   subLabel: {
-    fontSize: 16, // ✅ Tamaño de fuente aumentado
+    fontSize: 16,
     color: '#666',
     textAlign: 'center',
     width: '100%',
-    lineHeight: 22, // ✅ Altura de línea aumentada
+    lineHeight: 22,
   },
   disabled: {
     opacity: 0.5,
-  },
-  disabledText: {
-    color: '#999',
   },
 });
 

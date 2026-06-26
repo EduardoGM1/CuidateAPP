@@ -17,7 +17,7 @@ export const PATIENT_SHELL_STEPS = [
     key: 'inicio',
     title: 'Pantalla principal',
     body:
-      'En la pantalla de inicio tienes un botón para cada cosa importante. Si quieres escuchar las indicaciones, usa el audio que te ofrezca cada pantalla. Desliza hacia abajo cuando quieras actualizar tus datos.',
+      'En la pantalla de inicio tienes un botón para cada cosa importante. Usa el botón de accesibilidad (♿) en la esquina para cambiar el tamaño de la letra. Si quieres escuchar las indicaciones, usa el audio que te ofrezca cada pantalla.',
   },
   {
     key: 'ayuda',

@@ -59,6 +59,8 @@ import offlineService from './src/services/offlineService';
 import { Platform, Alert } from 'react-native';
 import { useSessionManager } from './src/hooks/useSessionManager';
 import { isPacienteRole } from './src/onboarding/navOnboardingUtils';
+import { AccessibilityProvider } from './src/context/AccessibilityContext';
+import AccessibilityFAB from './src/components/common/AccessibilityFAB';
 
 // Componente de carga
 const LoadingScreen = () => (
@@ -143,6 +145,7 @@ function AppNavigationRoot() {
       <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
       <NavOnboardingController navigationRootState={navigationRootState} />
       <AppNavigator />
+      <AccessibilityFAB navigationRef={navigationRef} />
     </NavigationContainer>
   );
 }
@@ -230,9 +233,11 @@ const App = () => {
         <PersistGate loading={<LoadingScreen />} persistor={persistor}>
           <PaperProvider>
             <AuthProvider>
-              <SafeAreaProvider>
-                <AppNavigationRoot />
-              </SafeAreaProvider>
+              <AccessibilityProvider>
+                <SafeAreaProvider>
+                  <AppNavigationRoot />
+                </SafeAreaProvider>
+              </AccessibilityProvider>
             </AuthProvider>
           </PaperProvider>
         </PersistGate>

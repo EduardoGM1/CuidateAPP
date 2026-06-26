@@ -25,17 +25,20 @@ import Logger from '../../services/logger';
 import { COLORES } from '../../utils/constantes';
 import ttsService from '../../services/ttsService';
 import BackHeader from '../../components/common/BackHeader';
+import AppText from '../../components/common/AppText';
+import { useAccessibility } from '../../context/AccessibilityContext';
+import { FONT_SCALE_LABELS, FONT_SCALE_ORDER, FONT_SCALE_TO_LEGACY } from '../../constants/accessibility';
 
 const Configuracion = () => {
   const navigation = useNavigation();
   const { speak, stopAndClear, createTimeout } = useTTS();
   
+  const { fontScale, highContrast, setFontScale, setHighContrast } = useAccessibility();
+  
   // Estados de configuración
   const [ttsEnabled, setTtsEnabled] = useState(true);
   const [ttsRate, setTtsRate] = useState(0.9);
   const [ttsVolume, setTtsVolume] = useState(1.0); // Volumen TTS (0.0-1.0)
-  const [altoContraste, setAltoContraste] = useState(false);
-  const [tamanoFuente, setTamanoFuente] = useState('normal'); // pequeño, normal, grande
   const [notificaciones, setNotificaciones] = useState(true);
   const [loading, setLoading] = useState(true);
 
@@ -49,8 +52,6 @@ const Configuracion = () => {
         setTtsEnabled(config.ttsEnabled !== false);
         setTtsRate(config.ttsRate || 0.9);
         setTtsVolume(volumeToSet);
-        setAltoContraste(config.altoContraste || false);
-        setTamanoFuente(config.tamanoFuente || 'normal');
         setNotificaciones(config.notificaciones !== false);
         
         // Aplicar volumen y velocidad al servicio TTS después de cargar
@@ -78,8 +79,9 @@ const Configuracion = () => {
         ttsEnabled,
         ttsRate,
         ttsVolume,
-        altoContraste,
-        tamanoFuente,
+        altoContraste: highContrast,
+        tamanoFuente: FONT_SCALE_TO_LEGACY[fontScale] || 'normal',
+        fontScale,
         notificaciones,
       };
       await storageService.setItem('configuracion_paciente', config);
@@ -102,7 +104,7 @@ const Configuracion = () => {
       Logger.error('Error guardando configuración:', error);
       audioFeedbackService.playError();
     }
-  }, [ttsEnabled, ttsRate, ttsVolume, altoContraste, tamanoFuente, notificaciones, speak]);
+  }, [ttsEnabled, ttsRate, ttsVolume, highContrast, fontScale, notificaciones, speak]);
 
   // Cargar datos al entrar
   useFocusEffect(
@@ -125,7 +127,7 @@ const Configuracion = () => {
     if (!loading) {
       guardarConfiguracion();
     }
-  }, [ttsEnabled, ttsRate, ttsVolume, altoContraste, tamanoFuente, notificaciones, loading, guardarConfiguracion]);
+  }, [ttsEnabled, ttsRate, ttsVolume, highContrast, fontScale, notificaciones, loading, guardarConfiguracion]);
 
   const handleTtsRateChange = async (nuevoRate) => {
     hapticService.selection();
@@ -147,10 +149,10 @@ const Configuracion = () => {
     await speak(`Volumen de voz: ${porcentaje} por ciento`);
   };
 
-  const handleTamanoFuenteChange = async (nuevoTamano) => {
+  const handleFontScaleChange = async (key) => {
     hapticService.selection();
-    setTamanoFuente(nuevoTamano);
-    await speak(`Tamaño de fuente: ${nuevoTamano}`);
+    await setFontScale(key);
+    await speak(`Tamaño de fuente: ${FONT_SCALE_LABELS[key]}`);
   };
 
   if (loading) {
@@ -164,14 +166,8 @@ const Configuracion = () => {
     );
   }
 
-  const tamanoFuenteStyles = {
-    pequeño: { fontSize: 14 },
-    normal: { fontSize: 18 },
-    grande: { fontSize: 24 },
-  };
-
   return (
-    <SafeAreaView style={[styles.container, altoContraste && styles.containerAltoContraste]}>
+    <SafeAreaView style={[styles.container, highContrast && styles.containerAltoContraste]}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {/* Header */}
         <BackHeader
@@ -193,11 +189,11 @@ const Configuracion = () => {
 
         {/* Sección: Texto a Voz */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, tamanoFuenteStyles[tamanoFuente]]}>🔊 Texto a Voz</Text>
+          <Text style={[styles.sectionTitle]}>🔊 Texto a Voz</Text>
           
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, tamanoFuenteStyles[tamanoFuente]]}>Activar TTS</Text>
+              <Text style={[styles.settingLabel]}>Activar TTS</Text>
               <Text style={styles.settingDescription}>Leer mensajes en voz alta</Text>
             </View>
             <Switch
@@ -215,7 +211,7 @@ const Configuracion = () => {
           {ttsEnabled && (
             <>
               <View style={styles.settingItem}>
-                <Text style={[styles.settingLabel, tamanoFuenteStyles[tamanoFuente]]}>Velocidad de Voz</Text>
+                <Text style={[styles.settingLabel]}>Velocidad de Voz</Text>
                 <View style={styles.rateButtons}>
                   <TouchableOpacity
                     style={[styles.rateButton, ttsRate === 0.7 && styles.rateButtonActive]}
@@ -245,7 +241,7 @@ const Configuracion = () => {
               </View>
 
               <View style={styles.settingItem}>
-                <Text style={[styles.settingLabel, tamanoFuenteStyles[tamanoFuente]]}>Volumen de Voz</Text>
+                <Text style={[styles.settingLabel]}>Volumen de Voz</Text>
                 <View style={styles.rateButtons}>
                   <TouchableOpacity
                     style={[styles.rateButton, ttsVolume === 0.5 && styles.rateButtonActive]}
@@ -279,18 +275,18 @@ const Configuracion = () => {
 
         {/* Sección: Accesibilidad */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, tamanoFuenteStyles[tamanoFuente]]}>♿ Accesibilidad</Text>
+          <Text style={[styles.sectionTitle]}>♿ Accesibilidad</Text>
           
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, tamanoFuenteStyles[tamanoFuente]]}>Modo Alto Contraste</Text>
+              <Text style={[styles.settingLabel]}>Modo Alto Contraste</Text>
               <Text style={styles.settingDescription}>Mejorar visibilidad</Text>
             </View>
             <Switch
-              value={altoContraste}
+              value={highContrast}
               onValueChange={(value) => {
                 hapticService.selection();
-                setAltoContraste(value);
+                setHighContrast(value);
                 speak(value ? 'Modo alto contraste activado' : 'Modo alto contraste desactivado');
               }}
               trackColor={{ false: COLORES.SWITCH_TRACK_OFF, true: COLORES.NAV_PACIENTE }}
@@ -299,7 +295,7 @@ const Configuracion = () => {
           </View>
 
           <View style={styles.settingItem}>
-            <Text style={[styles.settingLabel, tamanoFuenteStyles[tamanoFuente]]}>Velocidad de voz (TTS)</Text>
+            <Text style={[styles.settingLabel]}>Velocidad de voz (TTS)</Text>
             <Text style={styles.settingDescription}>Más lenta para escuchar mejor, más rápida para avanzar</Text>
             <View style={styles.rateButtons}>
               <TouchableOpacity
@@ -330,43 +326,35 @@ const Configuracion = () => {
           </View>
 
           <View style={styles.settingItem}>
-            <Text style={[styles.settingLabel, tamanoFuenteStyles[tamanoFuente]]}>Tamaño de Fuente</Text>
+            <Text style={[styles.settingLabel]}>Tamaño de Fuente</Text>
             <View style={styles.fontSizeButtons}>
-              <TouchableOpacity
-                style={[styles.fontSizeButton, tamanoFuente === 'pequeño' && styles.fontSizeButtonActive]}
-                onPress={() => handleTamanoFuenteChange('pequeño')}
-              >
-                <Text style={[styles.fontSizeButtonText, tamanoFuente === 'pequeño' && styles.fontSizeButtonTextActive]}>
-                  Pequeño
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.fontSizeButton, tamanoFuente === 'normal' && styles.fontSizeButtonActive]}
-                onPress={() => handleTamanoFuenteChange('normal')}
-              >
-                <Text style={[styles.fontSizeButtonText, tamanoFuente === 'normal' && styles.fontSizeButtonTextActive]}>
-                  Normal
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.fontSizeButton, tamanoFuente === 'grande' && styles.fontSizeButtonActive]}
-                onPress={() => handleTamanoFuenteChange('grande')}
-              >
-                <Text style={[styles.fontSizeButtonText, tamanoFuente === 'grande' && styles.fontSizeButtonTextActive]}>
-                  Grande
-                </Text>
-              </TouchableOpacity>
+              {FONT_SCALE_ORDER.map((key) => (
+                <TouchableOpacity
+                  key={key}
+                  style={[styles.fontSizeButton, fontScale === key && styles.fontSizeButtonActive]}
+                  onPress={() => handleFontScaleChange(key)}
+                >
+                  <AppText
+                    style={[
+                      styles.fontSizeButtonText,
+                      fontScale === key && styles.fontSizeButtonTextActive,
+                    ]}
+                  >
+                    {FONT_SCALE_LABELS[key]}
+                  </AppText>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
         </View>
 
         {/* Sección: Notificaciones */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, tamanoFuenteStyles[tamanoFuente]]}>🔔 Notificaciones</Text>
+          <Text style={[styles.sectionTitle]}>🔔 Notificaciones</Text>
           
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, tamanoFuenteStyles[tamanoFuente]]}>Activar Notificaciones</Text>
+              <Text style={[styles.settingLabel]}>Activar Notificaciones</Text>
               <Text style={styles.settingDescription}>Recordatorios y alertas</Text>
             </View>
             <Switch
@@ -384,7 +372,7 @@ const Configuracion = () => {
 
         {/* Sección: Seguridad */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, tamanoFuenteStyles[tamanoFuente]]}>🔒 Seguridad</Text>
+          <Text style={[styles.sectionTitle]}>🔒 Seguridad</Text>
           
           <TouchableOpacity
             style={styles.securityButton}
@@ -397,7 +385,7 @@ const Configuracion = () => {
             <View style={styles.securityButtonContent}>
               <Text style={styles.securityButtonIcon}>🔐</Text>
               <View style={styles.securityButtonInfo}>
-                <Text style={[styles.securityButtonLabel, tamanoFuenteStyles[tamanoFuente]]}>Cambiar PIN</Text>
+                <Text style={[styles.securityButtonLabel]}>Cambiar PIN</Text>
                 <Text style={styles.securityButtonDescription}>Actualiza tu PIN de acceso</Text>
               </View>
               <Text style={styles.securityButtonArrow}>→</Text>
@@ -407,7 +395,7 @@ const Configuracion = () => {
 
         {/* Privacidad */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, tamanoFuenteStyles[tamanoFuente]]}>🔒 Privacidad</Text>
+          <Text style={[styles.sectionTitle]}>🔒 Privacidad</Text>
           <TouchableOpacity
             style={styles.securityButton}
             onPress={() => {
@@ -419,7 +407,7 @@ const Configuracion = () => {
             <View style={styles.securityButtonContent}>
               <Text style={styles.securityButtonIcon}>📄</Text>
               <View style={styles.securityButtonInfo}>
-                <Text style={[styles.securityButtonLabel, tamanoFuenteStyles[tamanoFuente]]}>
+                <Text style={[styles.securityButtonLabel]}>
                   Aviso de Privacidad
                 </Text>
                 <Text style={styles.securityButtonDescription}>
@@ -433,7 +421,7 @@ const Configuracion = () => {
 
         {/* Información */}
         <View style={styles.infoSection}>
-          <Text style={[styles.infoText, tamanoFuenteStyles[tamanoFuente]]}>
+          <Text style={[styles.infoText]}>
             💡 Los cambios se guardan automáticamente
           </Text>
         </View>

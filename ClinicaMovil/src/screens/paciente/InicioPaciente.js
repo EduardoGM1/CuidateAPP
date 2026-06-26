@@ -33,9 +33,12 @@ import Logger from '../../services/logger';
 import { COLORES } from '../../utils/constantes';
 import useWebSocket from '../../hooks/useWebSocket';
 import OfflineIndicator from '../../components/common/OfflineIndicator';
+import AppText from '../../components/common/AppText';
+import { useAccessibility } from '../../context/AccessibilityContext';
 import { PACIENTE_TEXTO_BIENVENIDA } from '../../onboarding/patientOnboardingContent';
 
 const InicioPaciente = () => {
+  const { highContrast } = useAccessibility();
   const navigation = useNavigation();
   const { logout, userData } = useAuth();
   const { paciente, loading, medicamentos, citas, signosVitales, refresh } = usePacienteData();
@@ -247,7 +250,7 @@ const InicioPaciente = () => {
   }, [paciente, loading, userData, speak, obtenerPrimerNombre, nombreCompleto, nombrePaciente, stopAndClear, createTimeout]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, highContrast && styles.containerHighContrast]}>
       <OfflineIndicator />
       <ScrollView
         style={styles.scrollView}
@@ -264,10 +267,10 @@ const InicioPaciente = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.saludo}>
+          <AppText style={styles.saludo}>
             Hola {nombrePaciente}
-          </Text>
-          <Text style={styles.textoBienvenida}>{PACIENTE_TEXTO_BIENVENIDA}</Text>
+          </AppText>
+          <AppText style={styles.textoBienvenida}>{PACIENTE_TEXTO_BIENVENIDA}</AppText>
           <TouchableOpacity
             style={styles.listenButton}
             onPress={async () => {
@@ -280,7 +283,7 @@ const InicioPaciente = () => {
               }
             }}
           >
-            <Text style={styles.listenButtonText}>🔊 Escuchar</Text>
+            <AppText style={styles.listenButtonText}>🔊 Escuchar</AppText>
           </TouchableOpacity>
         </View>
 
@@ -364,7 +367,7 @@ const InicioPaciente = () => {
           style={styles.logoutButton}
           onPress={handleLogout}
         >
-          <Text style={styles.logoutText}>Cerrar Sesión</Text>
+          <AppText style={styles.logoutText}>Cerrar Sesión</AppText>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -375,6 +378,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORES.NAV_PACIENTE_FONDO,
+  },
+  containerHighContrast: {
+    backgroundColor: '#000',
   },
   scrollView: {
     flex: 1,

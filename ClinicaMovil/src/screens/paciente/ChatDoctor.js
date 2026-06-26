@@ -60,9 +60,7 @@ const ChatDoctor = () => {
   const tituloCabecera = route.params?.nombreDoctor
     ? `💬 ${route.params.nombreDoctor}`
     : '💬 Chat con Doctor';
-  
-  const [fontSize, setFontSize] = useState(16);
-  const [mostrarModalFontSize, setMostrarModalFontSize] = useState(false);
+
   const [mostrarModalOpciones, setMostrarModalOpciones] = useState(false);
   const [mensajeSeleccionado, setMensajeSeleccionado] = useState(null);
   const [editandoMensaje, setEditandoMensaje] = useState(false);
@@ -107,20 +105,6 @@ const ChatDoctor = () => {
       }
     },
   });
-
-  // Cargar tamaño de fuente guardado
-  useEffect(() => {
-    const cargarFontSize = async () => {
-      try {
-        const { storageService } = require('../../services/storageService');
-        const saved = await storageService.getItem('chat_font_size');
-        if (saved) setFontSize(parseInt(saved, 10));
-      } catch (error) {
-        Logger.warn('Error cargando tamaño de fuente:', error);
-      }
-    };
-    cargarFontSize();
-  }, []);
 
 
   // Cargar datos al entrar
@@ -346,19 +330,6 @@ const ChatDoctor = () => {
     }
   }, [handleEnviarTextoConTTS]);
 
-  // Cambiar tamaño de fuente
-  const handleCambiarFontSize = useCallback(async (nuevoSize) => {
-    setFontSize(nuevoSize);
-    try {
-      const { storageService } = require('../../services/storageService');
-      await storageService.setItem('chat_font_size', nuevoSize.toString());
-      hapticService.light();
-      await speak(`Tamaño de fuente cambiado`);
-    } catch (error) {
-      Logger.error('Error guardando tamaño de fuente:', error);
-    }
-  }, [speak]);
-
 
   if (loading) {
     return (
@@ -402,16 +373,6 @@ const ChatDoctor = () => {
           <Text style={styles.title} numberOfLines={2}>{tituloCabecera}</Text>
           
           <View style={styles.headerRight}>
-            <TouchableOpacity
-              style={styles.settingsButton}
-              onPress={() => {
-                hapticService.light();
-                setMostrarModalFontSize(true);
-              }}
-            >
-              <Icon name="accessibility" size={24} color={COLORES.TEXTO_SECUNDARIO || '#666'} />
-            </TouchableOpacity>
-            
             <TouchableOpacity
               style={styles.listenButton}
               onPress={async () => {
@@ -461,7 +422,6 @@ const ChatDoctor = () => {
                 onPress={() => handleLeerMensaje(mensaje)}
                 onLongPressStart={handleLongPressStart}
                 onLongPressEnd={handleLongPressEnd}
-                fontSize={fontSize}
                 style={[
                   mensaje.remitente === 'Paciente' ? styles.mensajePaciente : styles.mensajeDoctor
                 ]}
@@ -521,80 +481,6 @@ const ChatDoctor = () => {
             )}
           </TouchableOpacity>
         </View>
-
-        {/* Modal de tamaño de fuente */}
-        <Modal
-          visible={mostrarModalFontSize}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setMostrarModalFontSize(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Tamaño de fuente</Text>
-              <Text style={styles.modalSubtitle}>Selecciona el tamaño de fuente</Text>
-              
-              <TouchableOpacity
-                style={[styles.modalOption, fontSize === 14 && styles.modalOptionSelected]}
-                onPress={() => {
-                  handleCambiarFontSize(14);
-                  setMostrarModalFontSize(false);
-                }}
-              >
-                <Text style={[styles.modalOptionText, fontSize === 14 && styles.modalOptionTextSelected]}>
-                  Pequeño (14px)
-                </Text>
-                {fontSize === 14 && <Text style={styles.modalCheckmark}>✓</Text>}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalOption, fontSize === 16 && styles.modalOptionSelected]}
-                onPress={() => {
-                  handleCambiarFontSize(16);
-                  setMostrarModalFontSize(false);
-                }}
-              >
-                <Text style={[styles.modalOptionText, fontSize === 16 && styles.modalOptionTextSelected]}>
-                  Mediano (16px)
-                </Text>
-                {fontSize === 16 && <Text style={styles.modalCheckmark}>✓</Text>}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalOption, fontSize === 18 && styles.modalOptionSelected]}
-                onPress={() => {
-                  handleCambiarFontSize(18);
-                  setMostrarModalFontSize(false);
-                }}
-              >
-                <Text style={[styles.modalOptionText, fontSize === 18 && styles.modalOptionTextSelected]}>
-                  Grande (18px)
-                </Text>
-                {fontSize === 18 && <Text style={styles.modalCheckmark}>✓</Text>}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalOption, fontSize === 20 && styles.modalOptionSelected]}
-                onPress={() => {
-                  handleCambiarFontSize(20);
-                  setMostrarModalFontSize(false);
-                }}
-              >
-                <Text style={[styles.modalOptionText, fontSize === 20 && styles.modalOptionTextSelected]}>
-                  GRANDE (20px)
-                </Text>
-                {fontSize === 20 && <Text style={styles.modalCheckmark}>✓</Text>}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.modalCancelButton}
-                onPress={() => setMostrarModalFontSize(false)}
-              >
-                <Text style={styles.modalCancelText}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
 
         {/* Modal de opciones de mensaje */}
         <Modal

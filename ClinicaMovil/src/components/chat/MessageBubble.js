@@ -3,8 +3,9 @@
  */
 
 import React, { memo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import VoicePlayer from './VoicePlayer';
+import AppText from '../common/AppText';
 import chatService from '../../api/chatService';
 import { obtenerEstadoMensaje, obtenerIconoEstado, obtenerColorEstado, formatearFechaMensaje } from '../../utils/chatUtils';
 
@@ -16,7 +17,6 @@ import { obtenerEstadoMensaje, obtenerIconoEstado, obtenerColorEstado, formatear
  * @param {Function} props.onPress - Callback cuando se presiona el mensaje
  * @param {Function} props.onLongPressStart - Callback cuando se inicia long press
  * @param {Function} props.onLongPressEnd - Callback cuando se termina long press
- * @param {number} props.fontSize - Tamaño de fuente (opcional, solo para pacientes)
  * @param {Object} props.style - Estilos adicionales
  */
 const MessageBubble = memo(({
@@ -25,7 +25,6 @@ const MessageBubble = memo(({
   onPress,
   onLongPressStart,
   onLongPressEnd,
-  fontSize,
   style,
 }) => {
   const esRemitente = mensaje.remitente === remitenteActual;
@@ -45,13 +44,12 @@ const MessageBubble = memo(({
       onPressOut={onLongPressEnd}
     >
       {mensaje.mensaje_texto ? (
-        <Text style={[
+        <AppText style={[
           styles.mensajeTexto,
           esRemitente && styles.mensajeTextoRemitente,
-          fontSize && { fontSize }
         ]}>
           {typeof mensaje.mensaje_texto === 'string' ? mensaje.mensaje_texto : String(mensaje.mensaje_texto || '')}
-        </Text>
+        </AppText>
       ) : mensaje.mensaje_audio_url ? (
         <VoicePlayer
           audioUrl={mensaje.mensaje_audio_url}
@@ -66,26 +64,25 @@ const MessageBubble = memo(({
           }}
         />
       ) : (
-        <Text style={[
+        <AppText style={[
           styles.mensajeTexto,
           esRemitente && styles.mensajeTextoRemitente,
-          fontSize && { fontSize }
         ]}>
           🎤 Mensaje de voz
-        </Text>
+        </AppText>
       )}
       
       <View style={styles.mensajeFooter}>
-        <Text style={[
+        <AppText style={[
           styles.mensajeFecha,
           esRemitente && styles.mensajeFechaRemitente
         ]}>
           {formatearFechaMensaje(mensaje.fecha_envio)}
-        </Text>
+        </AppText>
         {esRemitente && estado && (
-          <Text style={[styles.estadoIcono, { color: estadoColor }]}>
+          <AppText style={[styles.estadoIcono, { color: estadoColor }]}>
             {estadoIcono}
-          </Text>
+          </AppText>
         )}
       </View>
       
