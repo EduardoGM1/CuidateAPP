@@ -1,19 +1,24 @@
 import { Router } from 'express';
-import { SecurityValidator } from '../middlewares/securityValidator.js';
-import MassAssignmentProtection from '../middlewares/massAssignmentProtection.js';
-import AdvancedRateLimiting from '../middlewares/advancedRateLimiting.js';
+import {
+  getPlanesMedicacion,
+  getPlanMedicacion,
+  getPlanesByDiagnostico,
+  createPlanMedicacion,
+  updatePlanMedicacion,
+  deletePlanMedicacion,
+} from '../controllers/planMedicacion.js';
 import { authenticateToken, authorizeRoles } from '../middlewares/auth.js';
-import { handleValidationErrors } from '../middlewares/errorHandler.js';
 import { searchRateLimit, writeRateLimit } from '../middlewares/rateLimiting.js';
 
 const router = Router();
 
-// Todas las rutas requieren autenticación
 router.use(authenticateToken);
 
-// Rutas básicas - implementar según necesidad
-router.get('/', authorizeRoles('Admin'), searchRateLimit, (req, res) => {
-  res.json({ message: 'Endpoint funcionando' });
-});
+router.get('/', authorizeRoles('Admin', 'Doctor'), searchRateLimit, getPlanesMedicacion);
+router.get('/diagnostico/:diagnosticoId', authorizeRoles('Admin', 'Doctor'), searchRateLimit, getPlanesByDiagnostico);
+router.get('/:id', authorizeRoles('Admin', 'Doctor'), searchRateLimit, getPlanMedicacion);
+router.post('/', authorizeRoles('Admin', 'Doctor'), writeRateLimit, createPlanMedicacion);
+router.put('/:id', authorizeRoles('Admin', 'Doctor'), writeRateLimit, updatePlanMedicacion);
+router.delete('/:id', authorizeRoles('Admin'), writeRateLimit, deletePlanMedicacion);
 
 export default router;

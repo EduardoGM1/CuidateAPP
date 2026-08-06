@@ -1,4 +1,5 @@
 import { PlanMedicacion, PlanDetalle, Medicamento } from '../models/associations.js';
+import { ok, created, fail } from '../utils/apiResponse.js';
 
 const planDetalleInclude = {
   model: PlanDetalle,
@@ -15,9 +16,9 @@ export const getPlanesMedicacion = async (req, res) => {
     const planes = await PlanMedicacion.findAll({
       include: [planDetalleInclude],
     });
-    res.json(planes);
+    return ok(res, planes);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return fail(res, 500, error.message);
   }
 };
 
@@ -27,11 +28,11 @@ export const getPlanMedicacion = async (req, res) => {
       include: [planDetalleInclude],
     });
     if (!plan) {
-      return res.status(404).json({ error: 'Plan de medicación no encontrado' });
+      return fail(res, 404, 'Plan de medicación no encontrado');
     }
-    res.json(plan);
+    return ok(res, plan);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return fail(res, 500, error.message);
   }
 };
 
@@ -41,18 +42,18 @@ export const getPlanesByDiagnostico = async (req, res) => {
       where: { id_cita: req.params.diagnosticoId },
       include: [planDetalleInclude],
     });
-    res.json(planes);
+    return ok(res, planes);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return fail(res, 500, error.message);
   }
 };
 
 export const createPlanMedicacion = async (req, res) => {
   try {
     const plan = await PlanMedicacion.create(req.body);
-    res.status(201).json(plan);
+    return created(res, plan);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return fail(res, 400, error.message);
   }
 };
 
@@ -62,12 +63,12 @@ export const updatePlanMedicacion = async (req, res) => {
       where: { id_plan: req.params.id },
     });
     if (!updated) {
-      return res.status(404).json({ error: 'Plan de medicación no encontrado' });
+      return fail(res, 404, 'Plan de medicación no encontrado');
     }
     const plan = await PlanMedicacion.findByPk(req.params.id);
-    res.json(plan);
+    return ok(res, plan);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return fail(res, 400, error.message);
   }
 };
 
@@ -77,10 +78,10 @@ export const deletePlanMedicacion = async (req, res) => {
       where: { id_plan: req.params.id },
     });
     if (!deleted) {
-      return res.status(404).json({ error: 'Plan de medicación no encontrado' });
+      return fail(res, 404, 'Plan de medicación no encontrado');
     }
-    res.status(204).send();
+    return ok(res, { deleted: true });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return fail(res, 400, error.message);
   }
 };
