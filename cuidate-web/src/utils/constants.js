@@ -20,7 +20,6 @@ export const LOGIN_REASON_SESSION_EXPIRED = 'session_expired';
 
 export const API_PATHS = {
   LOGIN: '/api/auth/login',
-  DASHBOARD: '/api/dashboard',
   PACIENTES: '/api/pacientes',
   CITAS: '/api/citas',
   DOCTORES: '/api/doctores',
@@ -50,6 +49,8 @@ export const API_PATHS = {
   MEDICAMENTOS: '/api/medicamentos',
   VACUNAS: '/api/vacunas',
   MENSAJES_CHAT: '/api/mensajes-chat',
+  PRIVACY_CONSENT: '/api/privacy-consent',
+  PRIVACY_CONSENT_STATUS: '/api/privacy-consent/status',
 };
 
 export const PAGE_SIZE_DEFAULT = 20;
