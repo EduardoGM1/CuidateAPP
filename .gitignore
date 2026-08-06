@@ -90,6 +90,10 @@ pnpm-lock.yaml
 *.apk
 *.aab
 
+# Artefactos locales voluminosos (no versionar)
+cuidate-web.zip
+*.zip
+
 # Salidas de tests (regenerables)
 **/test-results*.txt
 **/test-output.txt
