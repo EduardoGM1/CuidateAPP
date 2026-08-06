@@ -104,11 +104,17 @@ export const globalErrorHandler = (err, req, res, next) => {
     });
   }
 
-  // Error genérico para producción
-  res.status(500).json({
-    error: 'Error interno del servidor',
+  const status = err.statusCode && err.statusCode >= 400 && err.statusCode < 600
+    ? err.statusCode
+    : 500;
+  res.status(status).json({
+    success: false,
+    error: status >= 500 ? 'Error interno del servidor' : (err.message || 'Error en la solicitud'),
     timestamp: new Date().toISOString(),
-    requestId: req.id || 'unknown'
+    requestId: req.id || 'unknown',
+    ...(process.env.NODE_ENV === 'development' && status >= 500
+      ? { details: err.message }
+      : {}),
   });
 };
 

@@ -1,6 +1,11 @@
 import crypto from 'crypto';
 
-// Simple CSRF protection implementation
+/**
+ * CSRF opcional (Bearer-first API).
+ * Web y móvil autentican con Authorization: Bearer — no hay cookie de sesión,
+ * por lo que CSRF no se aplica globalmente a mutaciones (rompería clientes nativos).
+ * GET /api/csrf-token queda disponible por compatibilidad; no es obligatorio.
+ */
 const csrfTokens = new Map();
 
 export const csrfProtection = (req, res, next) => {

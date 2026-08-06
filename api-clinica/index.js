@@ -25,7 +25,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import { createSSLServer, forceHTTPS } from "./config/ssl.js";
 import { requestMonitoring, healthCheck as monitoringHealthCheck, memoryMonitoring } from "./middlewares/monitoring.js";
-// import { scheduleBackups } from "./scripts/backup-system.js"; // Archivo eliminado en limpieza
 import scheduledTasksService from "./services/scheduledTasksService.js";
 import { ensureTicketResueltoAtColumn } from "./utils/ensureTicketResueltoAt.js";
 import { ensureConsentimientosPrivacidadTable } from "./utils/ensureConsentimientosPrivacidadTable.js";
@@ -78,6 +77,8 @@ import reportRoutes from "./routes/reportRoutes.js"; // ✅ Rutas de reportes (P
 import medicamentoTomaRoutes from "./routes/medicamentoToma.js"; // ✅ Rutas de toma de medicamentos
 import privacyConsentRoutes from "./routes/privacyConsent.js";
 import { getCsrfToken } from "./middlewares/csrfProtection.js";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger.js";
 
 // Import mobile services
 import realtimeService from "./services/realtimeService.js";
@@ -283,7 +284,10 @@ app.use("/api/planes-medicacion", planMedicacionRoutes);
 app.use("/api/red-apoyo", redApoyoRoutes);
 app.use("/api/mensajes-chat", mensajeChatRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/test", testRoutes);
+// Rutas de prueba de seguridad: nunca en production
+if (NODE_ENV !== 'production') {
+  app.use("/api/test", testRoutes);
+}
 app.use("/api/mobile", mobileRoutes); // ✅ Rutas móviles
 app.use("/api/modulos", moduloRoutes); // ✅ Rutas de módulos
 app.use("/api/instituciones-salud", institucionSaludRoutes); // ✅ Catálogo instituciones de salud
@@ -296,6 +300,12 @@ app.use("/api/doctores", notificacionRoutes); // ✅ Notificaciones de doctores
 app.use("/api/reportes", reportRoutes); // ✅ Reportes PDF/CSV
 app.use("/api/medicamentos-toma", medicamentoTomaRoutes); // ✅ Toma de medicamentos
 app.use("/api/privacy-consent", privacyConsentRoutes);
+
+// OpenAPI / Swagger UI (nunca en production)
+if (NODE_ENV !== 'production') {
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { explorer: true }));
+  logger.info('📚 Swagger UI en /api/docs');
+}
 
 // Health check endpoint for monitoring
 app.get('/health', monitoringHealthCheck);

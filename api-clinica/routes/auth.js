@@ -29,32 +29,33 @@ import ReDoSProtection from '../middlewares/reDoSProtection.js';
 
 const router = Router();
 
-// Rate limiting estricto para autenticación - DESHABILITADO EN DESARROLLO
-if (process.env.NODE_ENV === 'production') {
-  router.use(AdvancedRateLimiting.authLimiter()); // Rate limiting avanzado para auth
-  router.use(AdvancedRateLimiting.bruteForceLimiter()); // Protección contra fuerza bruta
+/** Solo con RELAX_AUTH_VALIDATION=1 en development se omiten validadores (Postman/DX). */
+const relaxAuthValidation =
+  process.env.NODE_ENV === 'development' && process.env.RELAX_AUTH_VALIDATION === '1';
+
+// Rate limiting estricto salvo desarrollo local relajado
+if (!relaxAuthValidation) {
+  router.use(AdvancedRateLimiting.authLimiter());
+  router.use(AdvancedRateLimiting.bruteForceLimiter());
 }
 
 router.post('/register', 
-  // Middlewares de seguridad - DESHABILITADOS EN DESARROLLO PARA POSTMAN
-  ...(process.env.NODE_ENV === 'production' ? [
+  ...(relaxAuthValidation ? [] : [
     MassAssignmentProtection.validateOperation('userRegistration'),
     SecurityValidator.validateEmail(),
     SecurityValidator.validatePassword(),
-    SecurityValidator.validateRole(),
     SecurityValidator.handleValidationErrors
-  ] : []),
+  ]),
   register
 );
 
 router.post('/login', 
-  // Middlewares de seguridad - DESHABILITADOS EN DESARROLLO PARA POSTMAN
-  ...(process.env.NODE_ENV === 'production' ? [
+  ...(relaxAuthValidation ? [] : [
     MassAssignmentProtection.validateOperation('userRegistration'),
     SecurityValidator.validateEmail(),
     SecurityValidator.validatePassword(),
     SecurityValidator.handleValidationErrors
-  ] : []),
+  ]),
   login
 );
 
@@ -135,66 +136,58 @@ router.delete('/usuarios/:id',
 
 // Cambiar contraseña (requiere autenticación y contraseña actual)
 router.put('/change-password',
-  authenticateToken, // ✅ REQUIERE AUTENTICACIÓN
-  // Middlewares de seguridad - DESHABILITADOS EN DESARROLLO PARA POSTMAN
-  ...(process.env.NODE_ENV === 'production' ? [
+  authenticateToken,
+  ...(relaxAuthValidation ? [] : [
     MassAssignmentProtection.validateOperation('passwordUpdate'),
     SecurityValidator.validatePassword(),
     SecurityValidator.handleValidationErrors
-  ] : []),
+  ]),
   changePassword
 );
 
 // Recuperación de contraseña - Solicitar reset (público)
 router.post('/forgot-password',
-  // Rate limiting estricto para prevenir abuso
   AdvancedRateLimiting.authLimiter(),
   authRateLimit,
-  // Middlewares de seguridad
-  ...(process.env.NODE_ENV === 'production' ? [
+  ...(relaxAuthValidation ? [] : [
     SecurityValidator.validateEmail(),
     SecurityValidator.handleValidationErrors
-  ] : []),
+  ]),
   forgotPassword
 );
 
 // Recuperación de contraseña - Resetear con token (público). Body: { token, newPassword }
 router.post('/reset-password',
-  // Rate limiting estricto
   AdvancedRateLimiting.authLimiter(),
   authRateLimit,
-  // Middlewares de seguridad (valida newPassword, no password)
-  ...(process.env.NODE_ENV === 'production' ? [
+  ...(relaxAuthValidation ? [] : [
     SecurityValidator.validateNewPassword(),
     SecurityValidator.handleValidationErrors
-  ] : []),
+  ]),
   resetPassword
 );
 
 // Cambiar contraseña de otro usuario (solo Admin, sin requerir contraseña actual)
 router.put('/admin/change-password',
-  authenticateToken, // ✅ REQUIERE AUTENTICACIÓN
-  authorizeRoles(['Admin']), // ✅ SOLO ADMIN
-  // Middlewares de seguridad
-  ...(process.env.NODE_ENV === 'production' ? [
+  authenticateToken,
+  authorizeRoles(['Admin']),
+  ...(relaxAuthValidation ? [] : [
     MassAssignmentProtection.validateOperation('passwordUpdate'),
     SecurityValidator.validatePassword(),
     SecurityValidator.handleValidationErrors
-  ] : []),
+  ]),
   adminChangePassword
 );
 
 // Endpoint legacy: updatePassword (DEPRECATED - mantener para compatibilidad)
-// Si el usuario es Admin autenticado, redirige a adminChangePassword
 router.put('/update-password', 
-  authenticateToken, // Agregar autenticación para verificar si es Admin
-  // Middlewares de seguridad - DESHABILITADOS EN DESARROLLO PARA POSTMAN
-  ...(process.env.NODE_ENV === 'production' ? [
+  authenticateToken,
+  ...(relaxAuthValidation ? [] : [
     MassAssignmentProtection.validateOperation('passwordUpdate'),
     SecurityValidator.validateEmail(),
     SecurityValidator.validatePassword(),
     SecurityValidator.handleValidationErrors
-  ] : []),
+  ]),
   updatePassword
 );
 

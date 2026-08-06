@@ -17,9 +17,9 @@ export const register = async (req, res) => {
   try {
     logger.info('Register request received', { 
       email: req.body.email,
-      rol: req.body.rol 
+      rolSolicitado: req.body.rol 
     });
-    const { email, password, rol } = req.body;
+    const { email, password, rol: rolSolicitado } = req.body;
     
     // Validación adicional de datos recibidos
     if (!email || !password) {
@@ -28,10 +28,20 @@ export const register = async (req, res) => {
         details: {
           email_received: !!email,
           password_received: !!password,
-          rol_received: rol || 'undefined'
         }
       });
     }
+
+    // Registro público: solo Paciente. Roles privilegiados → POST /api/auth/usuarios (Admin).
+    const rolNormalizado = String(rolSolicitado || 'Paciente').trim();
+    if (rolNormalizado && !/^paciente$/i.test(rolNormalizado)) {
+      return res.status(403).json({
+        success: false,
+        error: 'No autorizado',
+        message: 'El registro público solo permite rol Paciente. Un Admin debe crear Doctor/Admin vía POST /api/auth/usuarios.',
+      });
+    }
+    const rol = 'Paciente';
     
     const existingUser = await Usuario.findOne({ where: { email } });
     if (existingUser) {
@@ -46,7 +56,7 @@ export const register = async (req, res) => {
     const usuario = await Usuario.create({
       email,
       password_hash,
-      rol: rol || 'Paciente'
+      rol
     });
 
     setImmediate(() => {
