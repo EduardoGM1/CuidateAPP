@@ -1,52 +1,12 @@
-import axios from 'axios';
 import ReactNativeBiometrics from 'react-native-biometrics';
 import Logger from '../services/logger';
-import { getApiConfig, getApiConfigWithFallback } from '../config/apiConfig';
 import { storageService } from '../services/storageService';
+import { ensureApiClient } from './httpClient';
 
-// Configuración dinámica de la API (misma URL que gestionService para evitar fallos en datos tras login OK)
-let API_CONFIG = null;
+/** Alias compatible: mismo cliente Axios compartido (token/refresh/headers). */
+const createApiClient = ensureApiClient;
 
-// Función para inicializar la configuración (usa fallback para coincidir con el resto de la app)
-const initializeApiConfig = async () => {
-  if (!API_CONFIG) {
-    try {
-      API_CONFIG = await getApiConfigWithFallback();
-      Logger.info('Auth API Config inicializada (fallback)', {
-        baseURL: API_CONFIG.baseURL,
-        timeout: API_CONFIG.timeout
-      });
-    } catch (e) {
-      API_CONFIG = await getApiConfig();
-      Logger.info('Auth API Config inicializada (sync)', {
-        baseURL: API_CONFIG.baseURL,
-        timeout: API_CONFIG.timeout
-      });
-    }
-  }
-  return API_CONFIG;
-};
-
-// Función para crear cliente API dinámico
-const createApiClient = async () => {
-  const config = await initializeApiConfig();
-  // IMPORTANTE: Agregar /api al baseURL para que coincida con las rutas del backend
-  const baseURL = `${config.baseURL}/api`;
-  
-  if (__DEV__) {
-    Logger.info('AuthService: Creando cliente API', { baseURL });
-  }
-  
-  return axios.create({
-    baseURL: baseURL,
-    timeout: config.timeout,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-};
-
-// Headers específicos para móvil
+// Headers específicos para móvil (el interceptor de httpClient también los aplica)
 const getMobileHeaders = () => ({
   'Content-Type': 'application/json',
   'X-Device-ID': 'mobile-device-123', // TODO: Obtener ID real del dispositivo
@@ -569,5 +529,4 @@ export default {
   doctorAuthService,
   biometricService,
   createApiClient,
-  getApiConfig: initializeApiConfig
 };

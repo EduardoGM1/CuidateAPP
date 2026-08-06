@@ -5,9 +5,10 @@
 import { Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 import axios from 'axios';
+import Logger from '../services/logger';
 import { normalizeMensajeChat, normalizeMensajesChat } from '../utils/chatUtils';
 import { getApiConfig, getApiConfigWithFallback, testApiConnectivity, API_CONFIG } from '../config/apiConfig';
-import { ensureApiClient } from './gestionService';
+import { ensureApiClient } from './httpClient';
 import { storageService } from '../services/storageService';
 
 /** Ruta persistente /uploads/audio/... sin dominio ni firma. */
