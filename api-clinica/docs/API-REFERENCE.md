@@ -423,14 +423,13 @@ Authorization: Bearer <token>
 ## 🔐 **ENDPOINTS DE AUTENTICACIÓN**
 
 ### **POST /api/auth/register**
-Registra un nuevo usuario en el sistema.
+Registro público: **solo** crea usuarios con rol `Paciente`. Solicitar `Doctor`/`Admin` responde **403**; un Admin debe usar `POST /api/auth/usuarios`.
 
 **Body**:
 ```json
 {
   "email": "usuario@example.com",
-  "password": "SecurePass123",
-  "rol": "Paciente"
+  "password": "SecurePass123"
 }
 ```
 
@@ -1169,118 +1168,54 @@ Authorization: Bearer <token>
 
 ---
 
-## 🔐 **ENDPOINTS DE AUTENTICACIÓN DE PACIENTES**
+## 🔐 **AUTENTICACIÓN DE PACIENTES (auth-unified)**
 
-### **POST /api/paciente-auth/login-pin**
-Login de paciente con PIN de 4 dígitos.
+> **Legacy:** `/api/paciente-auth/*` responde **410 Gone**. Usar siempre `/api/auth-unified/*`.
+> Guía: [PATIENT-AUTH-GUIDE.md](PATIENT-AUTH-GUIDE.md) · Seguridad: [SECURITY-AUTH.md](SECURITY-AUTH.md)
 
-**Headers**:
-```http
-Content-Type: application/json
-```
+### **POST /api/auth-unified/login-paciente**
+Login con PIN (4 dígitos) o biometría.
 
-**Body**:
+**Body (PIN, recomendado)**:
 ```json
 {
-  "curp": "PEGJ900515HDFRRN01",
-  "pin": "1234"
+  "pin": "1234",
+  "device_id": "opcional"
 }
 ```
 
-**Respuesta**:
+**Body (PIN + id_paciente, compatibilidad)**:
 ```json
 {
-  "message": "Login exitoso con PIN",
+  "id_paciente": 1,
+  "pin": "1234",
+  "device_id": "opcional"
+}
+```
+
+**Respuesta** (forma típica):
+```json
+{
+  "success": true,
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "paciente": {
+  "refresh_token": "...",
+  "user": {
+    "id": 1,
     "id_paciente": 1,
     "nombre": "Juan",
-    "apellido_paterno": "Pérez",
-    "curp": "PEGJ900515HDFRRN01"
+    "rol": "Paciente"
   }
 }
 ```
 
-### **POST /api/paciente-auth/login-biometric**
-Login de paciente con autenticación biométrica.
+### **POST /api/auth-unified/setup-pin**
+Configura PIN (disponible según entorno; en producción suele requerir flujo controlado).
 
-**Headers**:
-```http
-Content-Type: application/json
-```
+### **POST /api/auth-unified/setup-biometric**
+Configura credencial biométrica del dispositivo.
 
-**Body**:
-```json
-{
-  "curp": "PEGJ900515HDFRRN01",
-  "biometric_data": "biometric_signature_base64"
-}
-```
-
-**Respuesta**:
-```json
-{
-  "message": "Login exitoso con biometría",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "paciente": {
-    "id_paciente": 1,
-    "nombre": "Juan",
-    "apellido_paterno": "Pérez",
-    "curp": "PEGJ900515HDFRRN01"
-  }
-}
-```
-
-### **POST /api/paciente-auth/register-pin**
-Registra PIN de 4 dígitos para un paciente.
-
-**Headers**:
-```http
-Content-Type: application/json
-Authorization: Bearer <token>
-```
-
-**Body**:
-```json
-{
-  "paciente_id": 1,
-  "pin": "1234"
-}
-```
-
-**Respuesta**:
-```json
-{
-  "message": "PIN registrado exitosamente",
-  "success": true
-}
-```
-
-### **POST /api/paciente-auth/register-biometric**
-Registra datos biométricos para un paciente.
-
-**Headers**:
-```http
-Content-Type: application/json
-Authorization: Bearer <token>
-```
-
-**Body**:
-```json
-{
-  "paciente_id": 1,
-  "biometric_data": "biometric_template_base64",
-  "biometric_type": "fingerprint"
-}
-```
-
-**Respuesta**:
-```json
-{
-  "message": "Datos biométricos registrados exitosamente",
-  "success": true
-}
-```
+### **PUT /api/auth-unified/admin/reset-patient-pin**
+Admin/Doctor restablece PIN de un paciente (JWT requerido).
 
 ---
 

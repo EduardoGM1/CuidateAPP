@@ -32,7 +32,9 @@ Guías permanentes del monorepo. El código fuente vive en `api-clinica/`, `cuid
 ## API y móvil
 
 - API: [api-clinica/docs/README.md](../api-clinica/docs/README.md)
+- Auth/seguridad API: [api-clinica/docs/SECURITY-AUTH.md](../api-clinica/docs/SECURITY-AUTH.md)
 - Móvil: [ClinicaMovil/docs/README.md](../ClinicaMovil/docs/README.md)
+- Smoke post-deploy: [SMOKE-CHECKLIST.md](SMOKE-CHECKLIST.md)
 
 ## Infraestructura
 
