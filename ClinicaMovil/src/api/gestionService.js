@@ -3384,7 +3384,4 @@ gestionService.createVacuna = vacunasCrud.create;
 gestionService.updateVacuna = vacunasCrud.update;
 gestionService.deleteVacuna = vacunasCrud.delete;
 
-// Exportar ensureApiClient para uso en otros servicios
-export { ensureApiClient };
-
 export default gestionService;
