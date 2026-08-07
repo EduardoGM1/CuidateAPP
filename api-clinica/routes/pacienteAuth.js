@@ -7,7 +7,8 @@ import { Router } from 'express';
 
 const router = Router();
 
-router.all('*', (req, res) => {
+// Express 5 / path-to-regexp no acepta '*'; middleware sin path cubre el montaje.
+router.use((req, res) => {
   res.status(410).json({
     success: false,
     error: 'Este endpoint está deprecated',
